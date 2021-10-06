@@ -1,0 +1,9 @@
+{
+  "name": "kava-bridge-contract",
+  "version": "0.0.1",
+  "description": "Kava Bridge Ethereum contract for cross-chain transfers.",
+  "private": true,
+  "devDependencies": {
+    "hardhat": "^2.6.5"
+  }
+}
