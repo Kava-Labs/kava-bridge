@@ -8,7 +8,6 @@ export const testKavaAddrs = [
   "kava1wn74shl496ktcfgqsc6yf0vvenhgq0hwuw6z2a",
 ];
 
-export const baseDec = 1000000000000000000n; // 18 decimal places
 export const bech32Prefix = "kava";
 
 export function kavaAddrToBytes32(kavaAddr: string): Uint8Array {
