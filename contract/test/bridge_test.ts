@@ -90,6 +90,22 @@ describe("Bridge", function () {
         .withArgs(token.address, await sender.getAddress(), toAddr, amount);
     });
 
+    it("should index token, sender, toAddr in the Lock event", async function () {
+     const event = bridge.interface.events['Lock(address,address,bytes32,uint256)'];
+
+     const tokenParam = event.inputs[0];
+     expect(tokenParam.name).to.equal('token');
+     expect(tokenParam.indexed).to.be.true;
+
+     const senderParam = event.inputs[1];
+     expect(senderParam.name).to.equal('sender');
+     expect(senderParam.indexed).to.be.true;
+
+     const toAddrParam = event.inputs[2];
+     expect(toAddrParam.name).to.equal('toAddr');
+     expect(toAddrParam.indexed).to.be.true;
+    });
+
     it("should transfer the token amount to the contract", async function () {
       const lockTx = bridge.lock(token.address, toAddr, amount);
 
@@ -178,6 +194,18 @@ describe("Bridge", function () {
       await expect(unlockTx)
         .to.emit(bridge, "Unlock")
         .withArgs(token.address, toAddr, amount);
+    });
+
+    it("should index token, toAddr in the Unlock event", async function () {
+     const event = bridge.interface.events['Unlock(address,address,uint256)'];
+
+     const tokenParam = event.inputs[0];
+     expect(tokenParam.name).to.equal('token');
+     expect(tokenParam.indexed).to.be.true;
+
+     const toAddrParam = event.inputs[1];
+     expect(toAddrParam.name).to.equal('toAddr');
+     expect(toAddrParam.indexed).to.be.true;
     });
 
     it("should transfer the token amount to the toAddr from contract", async function () {

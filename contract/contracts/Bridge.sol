@@ -8,9 +8,14 @@ contract Bridge {
 
     address private _relayer;
 
-    event Lock(address token, address sender, bytes32 toAddr, uint256 amount);
+    event Lock(
+        address indexed token,
+        address indexed sender,
+        bytes32 indexed toAddr,
+        uint256 amount
+    );
 
-    event Unlock(address token, address toAddr, uint256 amount);
+    event Unlock(address indexed token, address indexed toAddr, uint256 amount);
 
     constructor(address relayer_) {
         _relayer = relayer_;
@@ -31,10 +36,7 @@ contract Bridge {
         address toAddr,
         uint256 amount
     ) public {
-        require(
-            msg.sender == _relayer,
-            "Bridge: untrusted address"
-        );
+        require(msg.sender == _relayer, "Bridge: untrusted address");
 
         IERC20(token).safeTransfer(toAddr, amount);
 
