@@ -21,6 +21,10 @@ contract Bridge {
         _relayer = relayer_;
     }
 
+    function relayer() public view returns (address) {
+      return _relayer;
+    }
+
     function lock(
         address token,
         bytes32 toAddr,

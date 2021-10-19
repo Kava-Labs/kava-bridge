@@ -1,6 +1,7 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
 import { Contract, Signer } from "ethers";
+import { deployBridge } from '../scripts/deploy';
 import { kavaAddrToBytes32, tokens, testKavaAddrs } from "./utils";
 
 describe("Bridge", function () {
@@ -16,8 +17,6 @@ describe("Bridge", function () {
   let receiver: Signer;
 
   beforeEach(async function () {
-    const Bridge = await ethers.getContractFactory("Bridge");
-
     // returns 10 signers in order of owner, addr1, addr2...
     const signers = await ethers.getSigners();
 
@@ -27,20 +26,22 @@ describe("Bridge", function () {
     sender = signers[2];
     receiver = signers[3];
 
-    // deploy bridge with relayer set, and sender connected
-    bridge = await Bridge.deploy(await relayer.getAddress());
-    // wait for bridge to be deployed
-    await bridge.deployed();
-    // connect sender
+    bridge = await deployBridge(await relayer.getAddress());
   });
 
-  it("should not allow native eth transfers", async function () {
-    const tx = sender.sendTransaction({
-      to: bridge.address,
-      value: tokens(1),
+  describe("initialization", function () {
+    it("should set the correct relayer address", async function () {
+      expect(await bridge.relayer()).to.eq(await relayer.getAddress());
     });
 
-    await expect(tx).to.be.reverted;
+    it("should not allow native eth transfers", async function () {
+      const tx = sender.sendTransaction({
+        to: bridge.address,
+        value: tokens(1),
+      });
+
+      await expect(tx).to.be.reverted;
+    });
   });
 
   describe("#lock", function () {
@@ -153,7 +154,7 @@ describe("Bridge", function () {
     });
   });
 
-  describe("unlock", function () {
+  describe("#unlock", function () {
     let token: Contract;
     let toAddr: string;
     let amount: bigint;

@@ -4,27 +4,45 @@
 // When running the script with `npx hardhat run <script>` you'll find the Hardhat
 // Runtime Environment's members available in the global scope.
 import { ethers } from "hardhat";
+import { Contract } from 'ethers';
 
-async function main() {
+export async function main(): Promise<string> {
   // Hardhat always runs the compile task when running scripts with its command
   // line interface.
   //
   // If this script is run directly using `node` you may want to call compile
   // manually to make sure everything is compiled
   // await hre.run('compile');
+  //
+  const addr = process.env.KAVA_BRIDGE_RELAYER_ADDRESS;
 
-  // We get the contract to deploy
+  if (!addr) {
+    throw new Error("relayer address not set");
+  }
+
+  const relayer = ethers.utils.getAddress(addr);
+  const bridge = await deployBridge(relayer);
+
+  return bridge.address;
+}
+
+export async function deployBridge(relayer: string): Promise<Contract> {
   const Bridge = await ethers.getContractFactory("Bridge");
-  const bridge = await Bridge.deploy();
+  const bridge = await Bridge.deploy(relayer);
 
   await bridge.deployed();
 
-  console.log("Bridge deployed to:", bridge.address);
+  return bridge;
 }
 
+// Only run main() when the script is run directly
+if (require.main === module) {
 // We recommend this pattern to be able to use async/await everywhere
 // and properly handle errors.
-main().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
-});
+  main().then((bridgeAddress: string) => {
+    console.log(bridgeAddress);
+  }).catch((error) => {
+    console.error(error);
+    process.exitCode = 1;
+  });
+}
