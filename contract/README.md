@@ -27,5 +27,5 @@ npm run test-watch
 ## Deploy with Hardhat
 
 ```
-KAVA_BRIDGE_RELAYER_ADDRESS=0x8ba1f109551bd432803012645ac136ddd64dba72 npx hardhat run scripts/deploy.ts
+KAVA_BRIDGE_RELAYER_ADDRESS=0x6B1088f788b412Ad1280F95240d56B886A64bc05 npx hardhat run scripts/deploy.ts
 ```
