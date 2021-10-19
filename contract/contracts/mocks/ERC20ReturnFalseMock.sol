@@ -30,7 +30,7 @@ contract ERC20ReturnFalseMock {
     }
 
     function allowance(address, address) public view returns (uint256) {
-        require(_dummy == 0, "dummy invalid"); // Duummy read from a state variable so that the function is view
+        require(_dummy == 0, "dummy invalid"); // Dummy read from a state variable so that the function is view
         return 0;
     }
 }
