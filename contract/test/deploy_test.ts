@@ -1,10 +1,10 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
-import { main, deployBridge } from '../scripts/deploy';
+import { main, deployBridge } from "../scripts/deploy";
 
 describe("deploy script", function () {
   describe("main", function () {
-    it("sets the relayer address from the environment", async function() {
+    it("sets the relayer address from the environment", async function () {
       const signers = await ethers.getSigners();
       const relayer = await signers[1].getAddress();
 

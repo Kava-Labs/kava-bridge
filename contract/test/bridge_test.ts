@@ -1,7 +1,7 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
 import { Contract, Signer } from "ethers";
-import { deployBridge } from '../scripts/deploy';
+import { deployBridge } from "../scripts/deploy";
 import { kavaAddrToBytes32, tokens, testKavaAddrs } from "./utils";
 
 describe("Bridge", function () {
@@ -92,19 +92,20 @@ describe("Bridge", function () {
     });
 
     it("should index token, sender, toAddr in the Lock event", async function () {
-     const event = bridge.interface.events['Lock(address,address,bytes32,uint256)'];
+      const event =
+        bridge.interface.events["Lock(address,address,bytes32,uint256)"];
 
-     const tokenParam = event.inputs[0];
-     expect(tokenParam.name).to.equal('token');
-     expect(tokenParam.indexed).to.be.true;
+      const tokenParam = event.inputs[0];
+      expect(tokenParam.name).to.equal("token");
+      expect(tokenParam.indexed).to.equal(true);
 
-     const senderParam = event.inputs[1];
-     expect(senderParam.name).to.equal('sender');
-     expect(senderParam.indexed).to.be.true;
+      const senderParam = event.inputs[1];
+      expect(senderParam.name).to.equal("sender");
+      expect(senderParam.indexed).to.equal(true);
 
-     const toAddrParam = event.inputs[2];
-     expect(toAddrParam.name).to.equal('toAddr');
-     expect(toAddrParam.indexed).to.be.true;
+      const toAddrParam = event.inputs[2];
+      expect(toAddrParam.name).to.equal("toAddr");
+      expect(toAddrParam.indexed).to.equal(true);
     });
 
     it("should transfer the token amount to the contract", async function () {
@@ -198,15 +199,15 @@ describe("Bridge", function () {
     });
 
     it("should index token, toAddr in the Unlock event", async function () {
-     const event = bridge.interface.events['Unlock(address,address,uint256)'];
+      const event = bridge.interface.events["Unlock(address,address,uint256)"];
 
-     const tokenParam = event.inputs[0];
-     expect(tokenParam.name).to.equal('token');
-     expect(tokenParam.indexed).to.be.true;
+      const tokenParam = event.inputs[0];
+      expect(tokenParam.name).to.equal("token");
+      expect(tokenParam.indexed).to.equal(true);
 
-     const toAddrParam = event.inputs[1];
-     expect(toAddrParam.name).to.equal('toAddr');
-     expect(toAddrParam.indexed).to.be.true;
+      const toAddrParam = event.inputs[1];
+      expect(toAddrParam.name).to.equal("toAddr");
+      expect(toAddrParam.indexed).to.equal(true);
     });
 
     it("should transfer the token amount to the toAddr from contract", async function () {
@@ -258,9 +259,7 @@ describe("Bridge", function () {
     it("should not be callable from an untrusted address", async function () {
       bridge = await bridge.connect(sender);
       const unlockTx = bridge.unlock(token.address, toAddr, amount);
-      await expect(unlockTx).to.be.revertedWith(
-        "Bridge: untrusted address"
-      );
+      await expect(unlockTx).to.be.revertedWith("Bridge: untrusted address");
     });
 
     it("should not be callable from a re-entrant ERC20 contract", async function () {
@@ -269,9 +268,7 @@ describe("Bridge", function () {
       await token.deployed();
 
       const unlockTx = bridge.unlock(token.address, toAddr, amount);
-      await expect(unlockTx).to.be.revertedWith(
-        "Bridge: untrusted address"
-      );
+      await expect(unlockTx).to.be.revertedWith("Bridge: untrusted address");
     });
   });
 });

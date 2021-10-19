@@ -4,7 +4,7 @@
 // When running the script with `npx hardhat run <script>` you'll find the Hardhat
 // Runtime Environment's members available in the global scope.
 import { ethers } from "hardhat";
-import { Contract } from 'ethers';
+import { Contract } from "ethers";
 
 export async function main(): Promise<string> {
   // Hardhat always runs the compile task when running scripts with its command
@@ -37,12 +37,14 @@ export async function deployBridge(relayer: string): Promise<Contract> {
 
 // Only run main() when the script is run directly
 if (require.main === module) {
-// We recommend this pattern to be able to use async/await everywhere
-// and properly handle errors.
-  main().then((bridgeAddress: string) => {
-    console.log(bridgeAddress);
-  }).catch((error) => {
-    console.error(error);
-    process.exitCode = 1;
-  });
+  // We recommend this pattern to be able to use async/await everywhere
+  // and properly handle errors.
+  main()
+    .then((bridgeAddress: string) => {
+      console.log(bridgeAddress);
+    })
+    .catch((error) => {
+      console.error(error);
+      process.exitCode = 1;
+    });
 }
