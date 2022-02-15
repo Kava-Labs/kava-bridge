@@ -3,7 +3,7 @@ install: ## Install kava-bridge
 	go install
 
 .PHONY: lint
-lint: # Run golint
+lint: ## Run golint
 	golint -set_exit_status ./...
 
 .PHONY: golangci-lint
@@ -11,7 +11,7 @@ golangci-lint: ## Run golangci-lint
 	golangci-lint run
 
 .PHONY: vet
-vet: # Run go bet
+vet: ## Run go vet
 	go vet ./...
 
 .PHONY: build

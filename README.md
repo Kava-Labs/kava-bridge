@@ -17,7 +17,9 @@ cover                         Run tests with coverage and save to coverage.html
 golangci-lint                 Run golangci-lint
 help                          Display this help message
 install                       Install kava-bridge
+lint                          Run golint
 test                          Run go test
+vet                           Run go vet
 watch                         Run tests on file changes
 ```
 
