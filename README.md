@@ -28,7 +28,6 @@ watch                         Run tests on file changes
 ```
 make install
 ```
-
 Installs `kava-bridge` to `$GOPATH/bin`
 
 ### Test
@@ -36,12 +35,10 @@ Installs `kava-bridge` to `$GOPATH/bin`
 ```
 make test
 ```
-
 Runs all unit tests.
 
 ```
 make watch
 ```
-
 Runs all unit tests on file changes
 
