@@ -120,9 +120,7 @@ describe("Bridge", function () {
 
     it("should fail when ERC20 transferFrom amount exceeds allowance", async function () {
       const lockTx = bridge.lock(token.address, toAddr, 2n * amount);
-      await expect(lockTx).to.be.revertedWith(
-        "ERC20: transfer amount exceeds allowance"
-      );
+      await expect(lockTx).to.be.revertedWith("ERC20: insufficient allowance");
     });
 
     it("should not revert when ERC20 transferFrom returns no value", async function () {
