@@ -15,6 +15,6 @@ jobs:
         with:
           node-version: '16'
           cache: 'npm'
-          cache-dependency-path: subdir/package-lock.json
+          cache-dependency-path: contract/package-lock.json
       - run: cd contract && npm install
       - run: cd contract && npm test
