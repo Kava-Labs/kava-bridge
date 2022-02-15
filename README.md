@@ -33,7 +33,6 @@ Installs `kava-bridge` to `$GOPATH/bin`
 
 ```
 make test
-
 ```
 
 Runs all unit tests.
