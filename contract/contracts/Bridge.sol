@@ -1,26 +1,35 @@
+// SPDX-License-Identifier: MIT
+
 pragma solidity ^0.8.9;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 /// @title A contract for cross-chain ERC20 transfers using a single trusted relayer
 /// @author Kava Labs, LLC
 contract Bridge {
     using SafeERC20 for IERC20;
+    using SafeMath for uint256;
 
     /// @notice the trusted relayer with the ability to unlock funds
     address private _relayer;
+
+    /// @notice sequence that increments per lock event
+    uint256 private _sequence = 0;
 
     /// @notice Represents an ERC20 token lock emitted during a lock call
     /// @param token The ERC20 token address
     /// @param sender The Ethereum address of the sender that locked the funds
     /// @param toAddr The Kava address bytes padded to 32 bytes to send the locked funds to
     /// @param amount The amount that was locked
+    /// @param sequence The unique lock sequence
     event Lock(
         address indexed token,
         address indexed sender,
         bytes32 indexed toAddr,
-        uint256 amount
+        uint256 amount,
+        uint256 sequence
     );
 
     /// @notice Represents an ERC20 token unlock emitted during an unlock call
@@ -52,9 +61,10 @@ contract Bridge {
         bytes32 toAddr,
         uint256 amount
     ) public {
+        _sequence = _sequence.add(1);
         IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
 
-        emit Lock(token, msg.sender, toAddr, amount);
+        emit Lock(token, msg.sender, toAddr, amount, _sequence);
     }
 
     /// @notice Unlocks an ERC20 amount and emits an Unlock event

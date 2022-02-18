@@ -48,14 +48,16 @@ describe("Bridge", function () {
     let token: Contract;
     let toAddr: string;
     let amount: bigint;
+    let sequence: bigint;
 
     beforeEach(async function () {
       // connect sender to the bridge
-      bridge = await bridge.connect(sender);
+      bridge = bridge.connect(sender);
 
       // assign valid attribute for #lock
       toAddr = ethers.utils.hexlify(kavaAddrToBytes32(testKavaAddrs[0]));
       amount = tokens(1);
+      sequence = BigInt(1);
 
       // deploy an ERC20 token
       const Token = await ethers.getContractFactory("ERC20Mock");
@@ -71,7 +73,7 @@ describe("Bridge", function () {
       await token.transfer(await sender.getAddress(), 10n * amount);
 
       // allow bridge to transfer erc20 tokens on users behalf
-      const tokenCon = await token.connect(sender);
+      const tokenCon = token.connect(sender);
       await tokenCon.approve(bridge.address, amount);
     });
 
@@ -82,18 +84,18 @@ describe("Bridge", function () {
       await expect(lockTx).to.be.reverted;
     });
 
-    it("should emit a Lock event with (token, sender, to, amount)", async function () {
+    it("should emit a Lock event with (token, sender, to, amount, sequence)", async function () {
       await token.approve(bridge.address, tokens(10));
       const lockTx = bridge.lock(token.address, toAddr, amount);
 
       await expect(lockTx)
         .to.emit(bridge, "Lock")
-        .withArgs(token.address, await sender.getAddress(), toAddr, amount);
+        .withArgs(token.address, await sender.getAddress(), toAddr, amount, sequence);
     });
 
     it("should index token, sender, toAddr in the Lock event", async function () {
       const event =
-        bridge.interface.events["Lock(address,address,bytes32,uint256)"];
+        bridge.interface.events["Lock(address,address,bytes32,uint256,uint256)"];
 
       const tokenParam = event.inputs[0];
       expect(tokenParam.name).to.equal("token");
@@ -160,7 +162,7 @@ describe("Bridge", function () {
 
     beforeEach(async function () {
       // connect relayer to the bridge
-      bridge = await bridge.connect(relayer);
+      bridge = bridge.connect(relayer);
 
       // assign valid attribute for #lock
       toAddr = await receiver.getAddress();
