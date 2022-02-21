@@ -85,17 +85,46 @@ describe("Bridge", function () {
     });
 
     it("should emit a Lock event with (token, sender, to, amount, sequence)", async function () {
-      await token.approve(bridge.address, tokens(10));
       const lockTx = bridge.lock(token.address, toAddr, amount);
 
       await expect(lockTx)
         .to.emit(bridge, "Lock")
-        .withArgs(token.address, await sender.getAddress(), toAddr, amount, sequence);
+        .withArgs(
+          token.address,
+          await sender.getAddress(),
+          toAddr,
+          amount,
+          sequence
+        );
+    });
+
+    it("should emit a Lock event with incrementing sequence", async function () {
+      // Increase sender allowance to 10 before locking
+      const tokenCon = token.connect(sender);
+      await tokenCon.approve(bridge.address, 10n * amount);
+
+      for (let i = 0; i < 10; i++) {
+        const lockTx = bridge.lock(token.address, toAddr, amount);
+
+        await expect(lockTx)
+          .to.emit(bridge, "Lock")
+          .withArgs(
+            token.address,
+            await sender.getAddress(),
+            toAddr,
+            amount,
+            sequence
+          );
+
+        sequence = sequence + 1n
+      }
     });
 
     it("should index token, sender, toAddr in the Lock event", async function () {
       const event =
-        bridge.interface.events["Lock(address,address,bytes32,uint256,uint256)"];
+        bridge.interface.events[
+          "Lock(address,address,bytes32,uint256,uint256)"
+        ];
 
       const tokenParam = event.inputs[0];
       expect(tokenParam.name).to.equal("token");
@@ -190,7 +219,6 @@ describe("Bridge", function () {
     });
 
     it("should emit a Unlock event with (token, to, amount)", async function () {
-      await token.approve(bridge.address, tokens(10));
       const unlockTx = bridge.unlock(token.address, toAddr, amount);
 
       await expect(unlockTx)
