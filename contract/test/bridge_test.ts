@@ -116,7 +116,7 @@ describe("Bridge", function () {
             sequence
           );
 
-        sequence = sequence + 1n
+        sequence = sequence + 1n;
       }
     });
 
@@ -181,6 +181,16 @@ describe("Bridge", function () {
       await expect(lockTx).to.be.revertedWith(
         "SafeERC20: ERC20 operation did not succeed"
       );
+    });
+
+    it("should not be callable from a re-entrant ERC20 contract", async function () {
+      const Token = await ethers.getContractFactory("ERC20EvilLockMock");
+      // Target evil token to bridge contract
+      token = await Token.deploy(bridge.address);
+      await token.deployed();
+
+      const attackTx = token.attack(toAddr, amount);
+      await expect(attackTx).to.be.revertedWith("ReentrancyGuard: reentrant call");
     });
   });
 
@@ -285,7 +295,7 @@ describe("Bridge", function () {
     });
 
     it("should not be callable from an untrusted address", async function () {
-      bridge = await bridge.connect(sender);
+      bridge = bridge.connect(sender);
       const unlockTx = bridge.unlock(token.address, toAddr, amount);
       await expect(unlockTx).to.be.revertedWith("Bridge: untrusted address");
     });
@@ -296,7 +306,7 @@ describe("Bridge", function () {
       await token.deployed();
 
       const unlockTx = bridge.unlock(token.address, toAddr, amount);
-      await expect(unlockTx).to.be.revertedWith("Bridge: untrusted address");
+      await expect(unlockTx).to.be.revertedWith("ReentrancyGuard: reentrant call");
     });
   });
 });

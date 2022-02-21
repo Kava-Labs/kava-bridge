@@ -5,10 +5,11 @@ pragma solidity ^0.8.9;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 /// @title A contract for cross-chain ERC20 transfers using a single trusted relayer
 /// @author Kava Labs, LLC
-contract Bridge {
+contract Bridge is ReentrancyGuard {
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
 
@@ -60,7 +61,7 @@ contract Bridge {
         address token,
         bytes32 toAddr,
         uint256 amount
-    ) public {
+    ) public nonReentrant {
         _sequence = _sequence.add(1);
         IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
 
@@ -77,7 +78,7 @@ contract Bridge {
         address token,
         address toAddr,
         uint256 amount
-    ) public {
+    ) public nonReentrant {
         require(msg.sender == _relayer, "Bridge: untrusted address");
 
         IERC20(token).safeTransfer(toAddr, amount);
