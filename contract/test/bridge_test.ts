@@ -192,12 +192,12 @@ describe("Bridge", function () {
     });
 
     it("should not be callable from a re-entrant ERC20 contract", async function () {
-      const Token = await ethers.getContractFactory("ERC20EvilLockMock");
-      // Target evil token to bridge contract
-      token = await Token.deploy(bridge.address);
+      const Token = await ethers.getContractFactory("ERC20EvilMock");
+      token = await Token.deploy();
       await token.deployed();
 
-      const attackTx = token.attack(toAddr, amount);
+      // Target evil token to bridge contract
+      const attackTx = token.attackLock(bridge.address, toAddr, amount);
       await expect(attackTx).to.be.revertedWith(
         "ReentrancyGuard: reentrant call"
       );
@@ -314,7 +314,7 @@ describe("Bridge", function () {
     });
 
     it("should not be callable from a re-entrant ERC20 contract", async function () {
-      const Token = await ethers.getContractFactory("ERC20EvilUnlockMock");
+      const Token = await ethers.getContractFactory("ERC20EvilMock");
       token = await Token.deploy();
       await token.deployed();
 
