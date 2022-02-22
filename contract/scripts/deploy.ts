@@ -4,7 +4,7 @@
 // When running the script with `npx hardhat run <script>` you'll find the Hardhat
 // Runtime Environment's members available in the global scope.
 import { ethers } from "hardhat";
-import { Contract } from "ethers";
+import { Bridge } from '../typechain-types'
 
 export async function main(): Promise<string> {
   // Hardhat always runs the compile task when running scripts with its command
@@ -26,9 +26,9 @@ export async function main(): Promise<string> {
   return bridge.address;
 }
 
-export async function deployBridge(relayer: string): Promise<Contract> {
-  const Bridge = await ethers.getContractFactory("Bridge");
-  const bridge = await Bridge.deploy(relayer);
+export async function deployBridge(relayer: string): Promise<Bridge> {
+  const bridgeFactory = await ethers.getContractFactory("Bridge");
+  const bridge = await bridgeFactory.deploy(relayer);
 
   await bridge.deployed();
 
