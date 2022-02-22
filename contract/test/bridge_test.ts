@@ -98,6 +98,14 @@ describe("Bridge", function () {
         );
     });
 
+    it("should start sequence at 1", async function () {
+      const lockTx = bridge.lock(token.address, toAddr, amount);
+
+      await expect(lockTx)
+        .to.emit(bridge, "Lock")
+        .withArgs(token.address, await sender.getAddress(), toAddr, amount, 1n);
+    });
+
     it("should emit a Lock event with incrementing sequence", async function () {
       // Increase sender allowance to 10 before locking
       const tokenCon = token.connect(sender);
@@ -190,7 +198,9 @@ describe("Bridge", function () {
       await token.deployed();
 
       const attackTx = token.attack(toAddr, amount);
-      await expect(attackTx).to.be.revertedWith("ReentrancyGuard: reentrant call");
+      await expect(attackTx).to.be.revertedWith(
+        "ReentrancyGuard: reentrant call"
+      );
     });
   });
 
@@ -239,7 +249,8 @@ describe("Bridge", function () {
     });
 
     it("should index token, toAddr in the Unlock event", async function () {
-      const event = bridge.interface.events["Unlock(address,address,uint256,uint256)"];
+      const event =
+        bridge.interface.events["Unlock(address,address,uint256,uint256)"];
 
       const tokenParam = event.inputs[0];
       expect(tokenParam.name).to.equal("token");
@@ -308,7 +319,9 @@ describe("Bridge", function () {
       await token.deployed();
 
       const unlockTx = bridge.unlock(token.address, toAddr, amount);
-      await expect(unlockTx).to.be.revertedWith("ReentrancyGuard: reentrant call");
+      await expect(unlockTx).to.be.revertedWith(
+        "ReentrancyGuard: reentrant call"
+      );
     });
   });
 });
