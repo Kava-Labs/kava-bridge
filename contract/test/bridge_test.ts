@@ -198,6 +198,7 @@ describe("Bridge", function () {
     let token: Contract;
     let toAddr: string;
     let amount: bigint;
+    let sequence: bigint;
 
     beforeEach(async function () {
       // connect relayer to the bridge
@@ -206,6 +207,7 @@ describe("Bridge", function () {
       // assign valid attribute for #lock
       toAddr = await receiver.getAddress();
       amount = tokens(1);
+      sequence = 1n;
 
       // deploy an ERC20 token
       const Token = await ethers.getContractFactory("ERC20Mock");
@@ -228,16 +230,16 @@ describe("Bridge", function () {
       await expect(unlockTx).to.be.reverted;
     });
 
-    it("should emit a Unlock event with (token, to, amount)", async function () {
+    it("should emit a Unlock event with (token, to, amount, sequence)", async function () {
       const unlockTx = bridge.unlock(token.address, toAddr, amount);
 
       await expect(unlockTx)
         .to.emit(bridge, "Unlock")
-        .withArgs(token.address, toAddr, amount);
+        .withArgs(token.address, toAddr, amount, sequence);
     });
 
     it("should index token, toAddr in the Unlock event", async function () {
-      const event = bridge.interface.events["Unlock(address,address,uint256)"];
+      const event = bridge.interface.events["Unlock(address,address,uint256,uint256)"];
 
       const tokenParam = event.inputs[0];
       expect(tokenParam.name).to.equal("token");

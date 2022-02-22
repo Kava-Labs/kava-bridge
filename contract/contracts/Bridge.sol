@@ -4,19 +4,17 @@ pragma solidity ^0.8.9;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 /// @title A contract for cross-chain ERC20 transfers using a single trusted relayer
 /// @author Kava Labs, LLC
 contract Bridge is ReentrancyGuard {
     using SafeERC20 for IERC20;
-    using SafeMath for uint256;
 
-    /// @notice the trusted relayer with the ability to unlock funds
+    /// @notice The trusted relayer with the ability to unlock funds
     address private _relayer;
 
-    /// @notice sequence that increments per lock event
+    /// @notice The sequence that increments per lock and unlock events. This *can* overflow and is expected behavior.
     uint256 private _sequence = 0;
 
     /// @notice Represents an ERC20 token lock emitted during a lock call
@@ -24,7 +22,7 @@ contract Bridge is ReentrancyGuard {
     /// @param sender The Ethereum address of the sender that locked the funds
     /// @param toAddr The Kava address bytes padded to 32 bytes to send the locked funds to
     /// @param amount The amount that was locked
-    /// @param sequence The unique lock sequence
+    /// @param sequence The unique lock/unlock sequence
     event Lock(
         address indexed token,
         address indexed sender,
@@ -37,7 +35,13 @@ contract Bridge is ReentrancyGuard {
     /// @param token The ERC20 token address
     /// @param toAddr The Ethereum address the funds were unlocked to
     /// @param amount The amount that was unlocked
-    event Unlock(address indexed token, address indexed toAddr, uint256 amount);
+    /// @param sequence The unique lock/unlock sequence
+    event Unlock(
+        address indexed token,
+        address indexed toAddr,
+        uint256 amount,
+        uint256 sequence
+    );
 
     /// @notice Initialize with a relayer address
     /// @param relayer_ The Ethereum addres of the trusted relayer
@@ -62,7 +66,7 @@ contract Bridge is ReentrancyGuard {
         bytes32 toAddr,
         uint256 amount
     ) public nonReentrant {
-        _sequence = _sequence.add(1);
+        _sequence = _sequence + 1;
         IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
 
         emit Lock(token, msg.sender, toAddr, amount, _sequence);
@@ -81,8 +85,9 @@ contract Bridge is ReentrancyGuard {
     ) public nonReentrant {
         require(msg.sender == _relayer, "Bridge: untrusted address");
 
+        _sequence = _sequence + 1;
         IERC20(token).safeTransfer(toAddr, amount);
 
-        emit Unlock(token, toAddr, amount);
+        emit Unlock(token, toAddr, amount, _sequence);
     }
 }
