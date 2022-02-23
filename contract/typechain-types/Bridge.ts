@@ -40,8 +40,8 @@ export interface BridgeInterface extends utils.Interface {
   decodeFunctionResult(functionFragment: "unlock", data: BytesLike): Result;
 
   events: {
-    "Lock(address,address,bytes32,uint256)": EventFragment;
-    "Unlock(address,address,uint256)": EventFragment;
+    "Lock(address,address,bytes32,uint256,uint256)": EventFragment;
+    "Unlock(address,address,uint256,uint256)": EventFragment;
   };
 
   getEvent(nameOrSignatureOrTopic: "Lock"): EventFragment;
@@ -49,15 +49,21 @@ export interface BridgeInterface extends utils.Interface {
 }
 
 export type LockEvent = TypedEvent<
-  [string, string, string, BigNumber],
-  { token: string; sender: string; toAddr: string; amount: BigNumber }
+  [string, string, string, BigNumber, BigNumber],
+  {
+    token: string;
+    sender: string;
+    toAddr: string;
+    amount: BigNumber;
+    sequence: BigNumber;
+  }
 >;
 
 export type LockEventFilter = TypedEventFilter<LockEvent>;
 
 export type UnlockEvent = TypedEvent<
-  [string, string, BigNumber],
-  { token: string; toAddr: string; amount: BigNumber }
+  [string, string, BigNumber, BigNumber],
+  { token: string; toAddr: string; amount: BigNumber; sequence: BigNumber }
 >;
 
 export type UnlockEventFilter = TypedEventFilter<UnlockEvent>;
@@ -142,28 +148,32 @@ export interface Bridge extends BaseContract {
   };
 
   filters: {
-    "Lock(address,address,bytes32,uint256)"(
+    "Lock(address,address,bytes32,uint256,uint256)"(
       token?: string | null,
       sender?: string | null,
       toAddr?: BytesLike | null,
-      amount?: null
+      amount?: null,
+      sequence?: null
     ): LockEventFilter;
     Lock(
       token?: string | null,
       sender?: string | null,
       toAddr?: BytesLike | null,
-      amount?: null
+      amount?: null,
+      sequence?: null
     ): LockEventFilter;
 
-    "Unlock(address,address,uint256)"(
+    "Unlock(address,address,uint256,uint256)"(
       token?: string | null,
       toAddr?: string | null,
-      amount?: null
+      amount?: null,
+      sequence?: null
     ): UnlockEventFilter;
     Unlock(
       token?: string | null,
       toAddr?: string | null,
-      amount?: null
+      amount?: null,
+      sequence?: null
     ): UnlockEventFilter;
   };
 

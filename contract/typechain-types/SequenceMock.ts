@@ -4,7 +4,6 @@
 import {
   BaseContract,
   BigNumber,
-  BigNumberish,
   BytesLike,
   CallOverrides,
   ContractTransaction,
@@ -17,29 +16,29 @@ import { FunctionFragment, Result } from "@ethersproject/abi";
 import { Listener, Provider } from "@ethersproject/providers";
 import { TypedEventFilter, TypedEvent, TypedListener, OnEvent } from "./common";
 
-export interface ERC20EvilUnlockMockInterface extends utils.Interface {
-  contractName: "ERC20EvilUnlockMock";
+export interface SequenceMockInterface extends utils.Interface {
+  contractName: "SequenceMock";
   functions: {
-    "transfer(address,uint256)": FunctionFragment;
+    "get()": FunctionFragment;
+    "increment()": FunctionFragment;
   };
 
-  encodeFunctionData(
-    functionFragment: "transfer",
-    values: [string, BigNumberish]
-  ): string;
+  encodeFunctionData(functionFragment: "get", values?: undefined): string;
+  encodeFunctionData(functionFragment: "increment", values?: undefined): string;
 
-  decodeFunctionResult(functionFragment: "transfer", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "get", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "increment", data: BytesLike): Result;
 
   events: {};
 }
 
-export interface ERC20EvilUnlockMock extends BaseContract {
-  contractName: "ERC20EvilUnlockMock";
+export interface SequenceMock extends BaseContract {
+  contractName: "SequenceMock";
   connect(signerOrProvider: Signer | Provider | string): this;
   attach(addressOrName: string): this;
   deployed(): Promise<this>;
 
-  interface: ERC20EvilUnlockMockInterface;
+  interface: SequenceMockInterface;
 
   queryFilter<TEvent extends TypedEvent>(
     event: TypedEventFilter<TEvent>,
@@ -61,41 +60,39 @@ export interface ERC20EvilUnlockMock extends BaseContract {
   removeListener: OnEvent<this>;
 
   functions: {
-    transfer(
-      to: string,
-      amount: BigNumberish,
+    get(overrides?: CallOverrides): Promise<[BigNumber]>;
+
+    increment(
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
   };
 
-  transfer(
-    to: string,
-    amount: BigNumberish,
+  get(overrides?: CallOverrides): Promise<BigNumber>;
+
+  increment(
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
   callStatic: {
-    transfer(
-      to: string,
-      amount: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<boolean>;
+    get(overrides?: CallOverrides): Promise<BigNumber>;
+
+    increment(overrides?: CallOverrides): Promise<void>;
   };
 
   filters: {};
 
   estimateGas: {
-    transfer(
-      to: string,
-      amount: BigNumberish,
+    get(overrides?: CallOverrides): Promise<BigNumber>;
+
+    increment(
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
   };
 
   populateTransaction: {
-    transfer(
-      to: string,
-      amount: BigNumberish,
+    get(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    increment(
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
   };

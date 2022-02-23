@@ -29,9 +29,9 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.Bridge__factory>;
     getContractFactory(
-      name: "ERC20EvilUnlockMock",
+      name: "ERC20EvilMock",
       signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.ERC20EvilUnlockMock__factory>;
+    ): Promise<Contracts.ERC20EvilMock__factory>;
     getContractFactory(
       name: "ERC20Mock",
       signerOrOptions?: ethers.Signer | FactoryOptions
@@ -48,6 +48,10 @@ declare module "hardhat/types/runtime" {
       name: "ERC20ReturnTrueMock",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.ERC20ReturnTrueMock__factory>;
+    getContractFactory(
+      name: "SequenceMock",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.SequenceMock__factory>;
 
     getContractAt(
       name: "ERC20",
@@ -70,10 +74,10 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.Bridge>;
     getContractAt(
-      name: "ERC20EvilUnlockMock",
+      name: "ERC20EvilMock",
       address: string,
       signer?: ethers.Signer
-    ): Promise<Contracts.ERC20EvilUnlockMock>;
+    ): Promise<Contracts.ERC20EvilMock>;
     getContractAt(
       name: "ERC20Mock",
       address: string,
@@ -94,6 +98,11 @@ declare module "hardhat/types/runtime" {
       address: string,
       signer?: ethers.Signer
     ): Promise<Contracts.ERC20ReturnTrueMock>;
+    getContractAt(
+      name: "SequenceMock",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.SequenceMock>;
 
     // default types
     getContractFactory(
