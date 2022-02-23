@@ -16,7 +16,7 @@ jobs:
           node-version: '16'
           cache: 'npm'
           cache-dependency-path: contract/package-lock.json
-      - run: cd contract && npm install
+      - run: cd contract && npm ci
       - run: cd contract && npm test
   relayer:
     runs-on: ubuntu-latest

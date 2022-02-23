@@ -2,7 +2,7 @@
   "name": "kava-bridge-contract",
   "version": "0.0.1",
   "engines": {
-    "node": ">=14.0.0"
+    "node": ">=16.0.0"
   },
   "description": "Kava Bridge Ethereum contract for cross-chain transfers.",
   "private": true,
