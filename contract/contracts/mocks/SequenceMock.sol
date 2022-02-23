@@ -6,6 +6,7 @@ pragma solidity ^0.8.9;
 import "../Sequence.sol";
 
 contract SequenceMock is Sequence {
+    // solhint-disable-next-line no-empty-blocks
     constructor(uint256 initialValue) Sequence(initialValue) {}
 
     function increment() external {
