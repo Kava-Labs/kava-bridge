@@ -31,5 +31,13 @@ cover: ## Run tests with coverage and save to coverage.html
 watch: ## Run tests on file changes
 	while sleep 0.5; do find . -type f -name '*.go' | entr -d go test ./...; done
 
+.PHONY: help
 help: ## Display this help message
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
+
+.PHONY: clean
+clean: ## Clean up build and temporary files
+	rm c.out coverage.html
+
+
+
