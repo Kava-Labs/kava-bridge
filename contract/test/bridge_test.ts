@@ -3,10 +3,11 @@ import { ethers } from "hardhat";
 import { Contract, Signer } from "ethers";
 import { deployBridge } from "../scripts/deploy";
 import { kavaAddrToBytes32, tokens, testKavaAddrs } from "./utils";
+import type { Bridge } from '../typechain-types'
 
 describe("Bridge", function () {
   // the main bridge contract
-  let bridge: Contract;
+  let bridge: Bridge;
   // the deployer of the contracts
   let deployer: Signer;
   // relayer provided to the bridge upon deployment
@@ -48,14 +49,16 @@ describe("Bridge", function () {
     let token: Contract;
     let toAddr: string;
     let amount: bigint;
+    let sequence: bigint;
 
     beforeEach(async function () {
       // connect sender to the bridge
-      bridge = await bridge.connect(sender);
+      bridge = bridge.connect(sender);
 
       // assign valid attribute for #lock
       toAddr = ethers.utils.hexlify(kavaAddrToBytes32(testKavaAddrs[0]));
       amount = tokens(1);
+      sequence = BigInt(1);
 
       // deploy an ERC20 token
       const Token = await ethers.getContractFactory("ERC20Mock");
@@ -71,29 +74,67 @@ describe("Bridge", function () {
       await token.transfer(await sender.getAddress(), 10n * amount);
 
       // allow bridge to transfer erc20 tokens on users behalf
-      const tokenCon = await token.connect(sender);
+      const tokenCon = token.connect(sender);
       await tokenCon.approve(bridge.address, amount);
     });
 
     it("should not be payable", async function () {
       const lockTx = bridge.lock(token.address, toAddr, amount, {
+        // @ts-ignore: Type is not payable, but we still want to test it
         value: tokens(1),
       });
       await expect(lockTx).to.be.reverted;
     });
 
-    it("should emit a Lock event with (token, sender, to, amount)", async function () {
-      await token.approve(bridge.address, tokens(10));
+    it("should emit a Lock event with (token, sender, to, amount, sequence)", async function () {
       const lockTx = bridge.lock(token.address, toAddr, amount);
 
       await expect(lockTx)
         .to.emit(bridge, "Lock")
-        .withArgs(token.address, await sender.getAddress(), toAddr, amount);
+        .withArgs(
+          token.address,
+          await sender.getAddress(),
+          toAddr,
+          amount,
+          sequence
+        );
+    });
+
+    it("should start sequence at 1", async function () {
+      const lockTx = bridge.lock(token.address, toAddr, amount);
+
+      await expect(lockTx)
+        .to.emit(bridge, "Lock")
+        .withArgs(token.address, await sender.getAddress(), toAddr, amount, 1n);
+    });
+
+    it("should emit a Lock event with incrementing sequence", async function () {
+      // Increase sender allowance to 10 before locking
+      const tokenCon = token.connect(sender);
+      await tokenCon.approve(bridge.address, 10n * amount);
+
+      for (let i = 0; i < 10; i++) {
+        const lockTx = bridge.lock(token.address, toAddr, amount);
+
+        await expect(lockTx)
+          .to.emit(bridge, "Lock")
+          .withArgs(
+            token.address,
+            await sender.getAddress(),
+            toAddr,
+            amount,
+            sequence
+          );
+
+        sequence = sequence + 1n;
+      }
     });
 
     it("should index token, sender, toAddr in the Lock event", async function () {
       const event =
-        bridge.interface.events["Lock(address,address,bytes32,uint256)"];
+        bridge.interface.events[
+          "Lock(address,address,bytes32,uint256,uint256)"
+        ];
 
       const tokenParam = event.inputs[0];
       expect(tokenParam.name).to.equal("token");
@@ -151,20 +192,34 @@ describe("Bridge", function () {
         "SafeERC20: ERC20 operation did not succeed"
       );
     });
+
+    it("should not be callable from a re-entrant ERC20 contract", async function () {
+      const Token = await ethers.getContractFactory("ERC20EvilMock");
+      token = await Token.deploy();
+      await token.deployed();
+
+      // Target evil token to bridge contract
+      const attackTx = token.attackLock(bridge.address, toAddr, amount);
+      await expect(attackTx).to.be.revertedWith(
+        "ReentrancyGuard: reentrant call"
+      );
+    });
   });
 
   describe("#unlock", function () {
     let token: Contract;
     let toAddr: string;
     let amount: bigint;
+    let sequence: bigint;
 
     beforeEach(async function () {
       // connect relayer to the bridge
-      bridge = await bridge.connect(relayer);
+      bridge = bridge.connect(relayer);
 
       // assign valid attribute for #lock
       toAddr = await receiver.getAddress();
       amount = tokens(1);
+      sequence = 1n;
 
       // deploy an ERC20 token
       const Token = await ethers.getContractFactory("ERC20Mock");
@@ -182,22 +237,23 @@ describe("Bridge", function () {
 
     it("should not be payable", async function () {
       const unlockTx = bridge.unlock(token.address, toAddr, amount, {
+        // @ts-ignore: Type is not payable, but we still want to test it
         value: tokens(1),
       });
       await expect(unlockTx).to.be.reverted;
     });
 
-    it("should emit a Unlock event with (token, to, amount)", async function () {
-      await token.approve(bridge.address, tokens(10));
+    it("should emit a Unlock event with (token, to, amount, sequence)", async function () {
       const unlockTx = bridge.unlock(token.address, toAddr, amount);
 
       await expect(unlockTx)
         .to.emit(bridge, "Unlock")
-        .withArgs(token.address, toAddr, amount);
+        .withArgs(token.address, toAddr, amount, sequence);
     });
 
     it("should index token, toAddr in the Unlock event", async function () {
-      const event = bridge.interface.events["Unlock(address,address,uint256)"];
+      const event =
+        bridge.interface.events["Unlock(address,address,uint256,uint256)"];
 
       const tokenParam = event.inputs[0];
       expect(tokenParam.name).to.equal("token");
@@ -255,18 +311,20 @@ describe("Bridge", function () {
     });
 
     it("should not be callable from an untrusted address", async function () {
-      bridge = await bridge.connect(sender);
+      bridge = bridge.connect(sender);
       const unlockTx = bridge.unlock(token.address, toAddr, amount);
       await expect(unlockTx).to.be.revertedWith("Bridge: untrusted address");
     });
 
     it("should not be callable from a re-entrant ERC20 contract", async function () {
-      const Token = await ethers.getContractFactory("ERC20EvilUnlockMock");
+      const Token = await ethers.getContractFactory("ERC20EvilMock");
       token = await Token.deploy();
       await token.deployed();
 
       const unlockTx = bridge.unlock(token.address, toAddr, amount);
-      await expect(unlockTx).to.be.revertedWith("Bridge: untrusted address");
+      await expect(unlockTx).to.be.revertedWith(
+        "ReentrancyGuard: reentrant call"
+      );
     });
   });
 });
