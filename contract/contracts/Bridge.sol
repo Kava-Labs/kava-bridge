@@ -5,17 +5,15 @@ pragma solidity ^0.8.9;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "./Sequence.sol";
 
 /// @title A contract for cross-chain ERC20 transfers using a single trusted relayer
 /// @author Kava Labs, LLC
-contract Bridge is ReentrancyGuard {
+contract Bridge is ReentrancyGuard, Sequence(0) {
     using SafeERC20 for IERC20;
 
     /// @notice The trusted relayer with the ability to unlock funds
     address private _relayer;
-
-    /// @notice The sequence that increments per lock and unlock events. This *can* overflow and is expected behavior.
-    uint256 private _sequence = 0;
 
     /// @notice Represents an ERC20 token lock emitted during a lock call
     /// @param token The ERC20 token address
@@ -43,7 +41,7 @@ contract Bridge is ReentrancyGuard {
         uint256 sequence
     );
 
-    /// @notice Initialize with a relayer address
+    /// @notice Initialize with a relayer address with a starting sequence of 0
     /// @param relayer_ The Ethereum addres of the trusted relayer
     constructor(address relayer_) {
         _relayer = relayer_;
@@ -66,10 +64,10 @@ contract Bridge is ReentrancyGuard {
         bytes32 toAddr,
         uint256 amount
     ) public nonReentrant {
-        _sequence = _sequence + 1;
+        incrementSequence();
         IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
 
-        emit Lock(token, msg.sender, toAddr, amount, _sequence);
+        emit Lock(token, msg.sender, toAddr, amount, getSequence());
     }
 
     /// @notice Unlocks an ERC20 amount and emits an Unlock event
@@ -85,9 +83,9 @@ contract Bridge is ReentrancyGuard {
     ) public nonReentrant {
         require(msg.sender == _relayer, "Bridge: untrusted address");
 
-        _sequence = _sequence + 1;
+        incrementSequence();
         IERC20(token).safeTransfer(toAddr, amount);
 
-        emit Unlock(token, toAddr, amount, _sequence);
+        emit Unlock(token, toAddr, amount, getSequence());
     }
 }
