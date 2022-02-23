@@ -3,10 +3,11 @@ import { ethers } from "hardhat";
 import { Contract, Signer } from "ethers";
 import { deployBridge } from "../scripts/deploy";
 import { kavaAddrToBytes32, tokens, testKavaAddrs } from "./utils";
+import type { Bridge } from '../typechain-types'
 
 describe("Bridge", function () {
   // the main bridge contract
-  let bridge: Contract;
+  let bridge: Bridge;
   // the deployer of the contracts
   let deployer: Signer;
   // relayer provided to the bridge upon deployment
@@ -79,6 +80,7 @@ describe("Bridge", function () {
 
     it("should not be payable", async function () {
       const lockTx = bridge.lock(token.address, toAddr, amount, {
+        // @ts-ignore: Type is not payable, but we still want to test it
         value: tokens(1),
       });
       await expect(lockTx).to.be.reverted;
@@ -235,6 +237,7 @@ describe("Bridge", function () {
 
     it("should not be payable", async function () {
       const unlockTx = bridge.unlock(token.address, toAddr, amount, {
+        // @ts-ignore: Type is not payable, but we still want to test it
         value: tokens(1),
       });
       await expect(unlockTx).to.be.reverted;
