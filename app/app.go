@@ -27,7 +27,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/server/config"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	"github.com/cosmos/cosmos-sdk/simapp"
-	simappparams "github.com/cosmos/cosmos-sdk/simapp/params"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/version"
@@ -96,6 +95,7 @@ import (
 	feemarkettypes "github.com/tharsis/ethermint/x/feemarket/types"
 
 	"github.com/kava-labs/kava-bridge/app/ante"
+	bridgeparams "github.com/kava-labs/kava-bridge/app/params"
 	"github.com/kava-labs/kava-bridge/x/bridge"
 	bridgekeeper "github.com/kava-labs/kava-bridge/x/bridge/keeper"
 	bridgetypes "github.com/kava-labs/kava-bridge/x/bridge/types"
@@ -220,8 +220,8 @@ type BridgeApp struct {
 	configurator module.Configurator
 }
 
-// NewBridgeApp returns a reference to a new initialized kava bridge application.
-func NewBridgeApp(
+// NewApp returns a reference to a new initialized kava bridge application.
+func NewApp(
 	logger log.Logger,
 	db dbm.DB,
 	traceStore io.Writer,
@@ -229,7 +229,7 @@ func NewBridgeApp(
 	skipUpgradeHeights map[int64]bool,
 	homePath string,
 	invCheckPeriod uint,
-	encodingConfig simappparams.EncodingConfig,
+	encodingConfig bridgeparams.EncodingConfig,
 	appOpts servertypes.AppOptions,
 	baseAppOptions ...func(*baseapp.BaseApp),
 ) *BridgeApp {

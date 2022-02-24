@@ -12,13 +12,11 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/libs/log"
 	dbm "github.com/tendermint/tm-db"
-
-	"github.com/kava-labs/kava-bridge/app/encoding"
 )
 
 func TestBridgeAppExport(t *testing.T) {
 	db := dbm.NewMemDB()
-	app := NewBridgeApp(log.NewTMLogger(
+	app := NewApp(log.NewTMLogger(
 		log.NewSyncWriter(os.Stdout)),
 		db,
 		nil,
@@ -26,7 +24,7 @@ func TestBridgeAppExport(t *testing.T) {
 		map[int64]bool{},
 		DefaultNodeHome,
 		0,
-		encoding.MakeConfig(ModuleBasics),
+		MakeEncodingConfig(),
 		simapp.EmptyAppOptions{},
 	)
 
@@ -45,7 +43,7 @@ func TestBridgeAppExport(t *testing.T) {
 	app.Commit()
 
 	// Making a new app object with the db, so that initchain hasn't been called
-	app2 := NewBridgeApp(log.NewTMLogger(
+	app2 := NewApp(log.NewTMLogger(
 		log.NewSyncWriter(os.Stdout)),
 		db,
 		nil,
@@ -53,7 +51,7 @@ func TestBridgeAppExport(t *testing.T) {
 		map[int64]bool{},
 		DefaultNodeHome,
 		0,
-		encoding.MakeConfig(ModuleBasics),
+		MakeEncodingConfig(),
 		simapp.EmptyAppOptions{},
 	)
 	_, err = app2.ExportAppStateAndValidators(false, []string{})

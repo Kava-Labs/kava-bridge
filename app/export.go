@@ -13,12 +13,12 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	"github.com/kava-labs/kava-bridge/app/encoding"
+	"github.com/kava-labs/kava-bridge/app/params"
 )
 
 // NewDefaultGenesisState generates the default state for the application.
 func NewDefaultGenesisState() simapp.GenesisState {
-	encCfg := encoding.MakeConfig(ModuleBasics)
+	encCfg := params.MakeEncodingConfig()
 	return ModuleBasics.DefaultGenesis(encCfg.Marshaler)
 }
 
