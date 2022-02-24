@@ -5,6 +5,7 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/auth/ante"
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
+	bridgekeeper "github.com/kava-labs/kava-bridge/x/bridge/keeper"
 	"github.com/kava-labs/kava-bridge/x/bridge/types"
 )
 
@@ -16,7 +17,7 @@ func NewAnteHandler(
 	accountKeeper ante.AccountKeeper,
 	bankKeeper types.BankKeeper,
 	feegrantKeeper ante.FeegrantKeeper,
-	// TODO: Add bridge keeper
+	bridgeKeeper bridgekeeper.Keeper,
 	signModeHandler authsigning.SignModeHandler,
 	sigGasConsumer ante.SignatureVerificationGasConsumer,
 	addressFetchers ...AddressFetcher,

@@ -85,7 +85,6 @@ import (
 	upgradekeeper "github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
-	"github.com/kava-labs/kava-bridge/app/ante"
 	srvflags "github.com/tharsis/ethermint/server/flags"
 	ethermint "github.com/tharsis/ethermint/types"
 	"github.com/tharsis/ethermint/x/evm"
@@ -95,6 +94,11 @@ import (
 	"github.com/tharsis/ethermint/x/feemarket"
 	feemarketkeeper "github.com/tharsis/ethermint/x/feemarket/keeper"
 	feemarkettypes "github.com/tharsis/ethermint/x/feemarket/types"
+
+	"github.com/kava-labs/kava-bridge/app/ante"
+	"github.com/kava-labs/kava-bridge/x/bridge"
+	bridgekeeper "github.com/kava-labs/kava-bridge/x/bridge/keeper"
+	bridgetypes "github.com/kava-labs/kava-bridge/x/bridge/types"
 
 	// Force-load the tracer engines to trigger registration due to Go-Ethereum v1.10.15 changes
 	_ "github.com/ethereum/go-ethereum/eth/tracers/js"
@@ -144,6 +148,9 @@ var (
 		// Ethermint modules
 		evm.AppModuleBasic{},
 		feemarket.AppModuleBasic{},
+
+		// Bridge modules
+		bridge.AppModuleBasic{},
 	)
 
 	// module account permissions
@@ -155,6 +162,7 @@ var (
 		stakingtypes.NotBondedPoolName: {authtypes.Burner, authtypes.Staking},
 		govtypes.ModuleName:            {authtypes.Burner},
 		evmtypes.ModuleName:            {authtypes.Minter, authtypes.Burner}, // used for secure addition and subtraction of balance using module account
+		bridgetypes.ModuleName:         nil,                                  // Bridge only mint and burns ERC20 tokens so Cosmos mint/burn is not needed
 	}
 
 	// module accounts that are allowed to receive tokens
@@ -201,13 +209,12 @@ type EthermintApp struct {
 	AuthzKeeper      authzkeeper.Keeper
 	EvidenceKeeper   evidencekeeper.Keeper
 
-	// make scoped keepers public for test purposes
-	ScopedIBCKeeper      capabilitykeeper.ScopedKeeper
-	ScopedTransferKeeper capabilitykeeper.ScopedKeeper
-
 	// Ethermint keepers
 	EvmKeeper       *evmkeeper.Keeper
 	FeeMarketKeeper feemarketkeeper.Keeper
+
+	// Bridge keepers
+	BridgeKeeper bridgekeeper.Keeper
 
 	// the module manager
 	mm *module.Manager
@@ -257,6 +264,8 @@ func NewEthermintApp(
 		feegrant.StoreKey, authzkeeper.StoreKey,
 		// ethermint keys
 		evmtypes.StoreKey, feemarkettypes.StoreKey,
+		// kava bridge keys
+		bridgetypes.StoreKey,
 	)
 
 	// Add the EVM transient store key
@@ -334,6 +343,14 @@ func NewEthermintApp(
 		tracer,
 	)
 
+	app.BridgeKeeper = bridgekeeper.NewKeeper(
+		appCodec,
+		keys[bridgetypes.StoreKey],
+		app.GetSubspace(bridgetypes.ModuleName),
+		app.BankKeeper,
+		app.AccountKeeper,
+	)
+
 	// register the proposal types
 	govRouter := govtypes.NewRouter()
 	govRouter.AddRoute(govtypes.RouterKey, govtypes.ProposalHandler).
@@ -392,6 +409,9 @@ func NewEthermintApp(
 		// Ethermint app modules
 		evm.NewAppModule(app.EvmKeeper, app.AccountKeeper),
 		feemarket.NewAppModule(app.FeeMarketKeeper),
+
+		// Kava bridge modules
+		bridge.NewAppModule(app.BridgeKeeper, app.AccountKeeper),
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that
@@ -420,6 +440,8 @@ func NewEthermintApp(
 		feegrant.ModuleName,
 		paramstypes.ModuleName,
 		vestingtypes.ModuleName,
+		// TODO: If we require begin blockers
+		bridgetypes.ModuleName,
 	)
 
 	// NOTE: fee market module must go last in order to retrieve the block gas used.
@@ -443,6 +465,7 @@ func NewEthermintApp(
 		paramstypes.ModuleName,
 		upgradetypes.ModuleName,
 		vestingtypes.ModuleName,
+		bridgetypes.ModuleName,
 	)
 
 	// NOTE: The genutils module must occur after staking so that pools are
@@ -470,6 +493,8 @@ func NewEthermintApp(
 		// Ethermint modules
 		evmtypes.ModuleName,
 		feemarkettypes.ModuleName,
+		// Kava bridge module
+		bridgetypes.ModuleName,
 
 		// NOTE: crisis module must go at the end to check for invariants on each module
 		crisistypes.ModuleName,
@@ -502,6 +527,7 @@ func NewEthermintApp(
 		authzmodule.NewAppModule(appCodec, app.AuthzKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry),
 		evm.NewAppModule(app.EvmKeeper, app.AccountKeeper),
 		feemarket.NewAppModule(app.FeeMarketKeeper),
+		bridge.NewAppModule(app.BridgeKeeper, app.AccountKeeper),
 	)
 
 	app.sm.RegisterStoreDecoders()
@@ -519,6 +545,7 @@ func NewEthermintApp(
 		app.AccountKeeper,
 		app.BankKeeper,
 		app.FeeGrantKeeper,
+		app.BridgeKeeper,
 		encodingConfig.TxConfig.SignModeHandler(),
 		authante.DefaultSigVerificationGasConsumer,
 	)
@@ -711,5 +738,7 @@ func initParamsKeeper(
 	// ethermint subspaces
 	paramsKeeper.Subspace(evmtypes.ModuleName)
 	paramsKeeper.Subspace(feemarkettypes.ModuleName)
+	// Kava bridge subspaces
+	paramsKeeper.Subspace(bridgetypes.ModuleName)
 	return paramsKeeper
 }
