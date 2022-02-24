@@ -16,7 +16,7 @@ import (
 	"github.com/kava-labs/kava-bridge/app/encoding"
 )
 
-func TestEthermintAppExport(t *testing.T) {
+func TestBridgeAppExport(t *testing.T) {
 	db := dbm.NewMemDB()
 	app := NewBridgeApp(log.NewTMLogger(
 		log.NewSyncWriter(os.Stdout)),
