@@ -1,8 +1,15 @@
 package types
 
 import (
+	"context"
+
+	"github.com/ethereum/go-ethereum/core"
+	"github.com/ethereum/go-ethereum/core/vm"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+
+	"github.com/tharsis/ethermint/x/evm/types"
 )
 
 // AccountKeeper defines the expected interface needed to retrieve account info.
@@ -23,4 +30,11 @@ type BankKeeper interface {
 	SetDenomMetaData(ctx sdk.Context, denomMetaData banktypes.Metadata)
 	HasSupply(ctx sdk.Context, denom string) bool
 	GetBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin
+}
+
+// EvmKeeper defines the expected interface needed to make EVM transactions.
+type EvmKeeper interface {
+	// This is actually a gRPC query method
+	EstimateGas(ctx context.Context, req *types.EthCallRequest) (*types.EstimateGasResponse, error)
+	ApplyMessage(ctx sdk.Context, msg core.Message, tracer vm.EVMLogger, commit bool) (*types.MsgEthereumTxResponse, error)
 }

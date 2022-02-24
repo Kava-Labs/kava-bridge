@@ -99,10 +99,8 @@ import (
 	"github.com/kava-labs/kava-bridge/x/bridge"
 	bridgekeeper "github.com/kava-labs/kava-bridge/x/bridge/keeper"
 	bridgetypes "github.com/kava-labs/kava-bridge/x/bridge/types"
-
-	// Force-load the tracer engines to trigger registration due to Go-Ethereum v1.10.15 changes
-	_ "github.com/ethereum/go-ethereum/eth/tracers/js"
-	_ "github.com/ethereum/go-ethereum/eth/tracers/native"
+	// _ "github.com/ethereum/go-ethereum/eth/tracers/js"
+	// _ "github.com/ethereum/go-ethereum/eth/tracers/native"
 )
 
 func init() {
@@ -171,14 +169,10 @@ var (
 	}
 )
 
-var _ simapp.App = (*EthermintApp)(nil)
+var _ simapp.App = (*BridgeApp)(nil)
 
-// var _ server.Application (*EthermintApp)(nil)
-
-// EthermintApp implements an extended ABCI application. It is an application
-// that may process transactions through Ethereum's EVM running atop of
-// Tendermint consensus.
-type EthermintApp struct {
+// BridgeApp implements an extended ABCI application.
+type BridgeApp struct {
 	*baseapp.BaseApp
 
 	// encoding
@@ -226,8 +220,8 @@ type EthermintApp struct {
 	configurator module.Configurator
 }
 
-// NewEthermintApp returns a reference to a new initialized Ethermint application.
-func NewEthermintApp(
+// NewBridgeApp returns a reference to a new initialized kava bridge application.
+func NewBridgeApp(
 	logger log.Logger,
 	db dbm.DB,
 	traceStore io.Writer,
@@ -238,7 +232,7 @@ func NewEthermintApp(
 	encodingConfig simappparams.EncodingConfig,
 	appOpts servertypes.AppOptions,
 	baseAppOptions ...func(*baseapp.BaseApp),
-) *EthermintApp {
+) *BridgeApp {
 	appCodec := encodingConfig.Marshaler
 	cdc := encodingConfig.Amino
 	interfaceRegistry := encodingConfig.InterfaceRegistry
@@ -272,7 +266,7 @@ func NewEthermintApp(
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey, evmtypes.TransientKey)
 	memKeys := sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
 
-	app := &EthermintApp{
+	app := &BridgeApp{
 		BaseApp:           bApp,
 		cdc:               cdc,
 		appCodec:          appCodec,
@@ -349,6 +343,7 @@ func NewEthermintApp(
 		app.GetSubspace(bridgetypes.ModuleName),
 		app.BankKeeper,
 		app.AccountKeeper,
+		app.EvmKeeper,
 	)
 
 	// register the proposal types
@@ -566,20 +561,20 @@ func NewEthermintApp(
 }
 
 // Name returns the name of the App
-func (app *EthermintApp) Name() string { return app.BaseApp.Name() }
+func (app *BridgeApp) Name() string { return app.BaseApp.Name() }
 
 // BeginBlocker updates every begin block
-func (app *EthermintApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
+func (app *BridgeApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
 	return app.mm.BeginBlock(ctx, req)
 }
 
 // EndBlocker updates every end block
-func (app *EthermintApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
+func (app *BridgeApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
 	return app.mm.EndBlock(ctx, req)
 }
 
 // InitChainer updates at chain initialization
-func (app *EthermintApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
+func (app *BridgeApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
 	var genesisState simapp.GenesisState
 	if err := json.Unmarshal(req.AppStateBytes, &genesisState); err != nil {
 		panic(err)
@@ -589,12 +584,12 @@ func (app *EthermintApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain)
 }
 
 // LoadHeight loads state at a particular height
-func (app *EthermintApp) LoadHeight(height int64) error {
+func (app *BridgeApp) LoadHeight(height int64) error {
 	return app.LoadVersion(height)
 }
 
 // ModuleAccountAddrs returns all the app's module account addresses.
-func (app *EthermintApp) ModuleAccountAddrs() map[string]bool {
+func (app *BridgeApp) ModuleAccountAddrs() map[string]bool {
 	modAccAddrs := make(map[string]bool)
 	for acc := range maccPerms {
 		modAccAddrs[authtypes.NewModuleAddress(acc).String()] = true
@@ -605,7 +600,7 @@ func (app *EthermintApp) ModuleAccountAddrs() map[string]bool {
 
 // BlockedAddrs returns all the app's module account addresses that are not
 // allowed to receive external tokens.
-func (app *EthermintApp) BlockedAddrs() map[string]bool {
+func (app *BridgeApp) BlockedAddrs() map[string]bool {
 	blockedAddrs := make(map[string]bool)
 	for acc := range maccPerms {
 		blockedAddrs[authtypes.NewModuleAddress(acc).String()] = !allowedReceivingModAcc[acc]
@@ -614,64 +609,64 @@ func (app *EthermintApp) BlockedAddrs() map[string]bool {
 	return blockedAddrs
 }
 
-// LegacyAmino returns EthermintApp's amino codec.
+// LegacyAmino returns BridgeApp's amino codec.
 //
 // NOTE: This is solely to be used for testing purposes as it may be desirable
 // for modules to register their own custom testing types.
-func (app *EthermintApp) LegacyAmino() *codec.LegacyAmino {
+func (app *BridgeApp) LegacyAmino() *codec.LegacyAmino {
 	return app.cdc
 }
 
-// AppCodec returns EthermintApp's app codec.
+// AppCodec returns BridgeApp's app codec.
 //
 // NOTE: This is solely to be used for testing purposes as it may be desirable
 // for modules to register their own custom testing types.
-func (app *EthermintApp) AppCodec() codec.Codec {
+func (app *BridgeApp) AppCodec() codec.Codec {
 	return app.appCodec
 }
 
-// InterfaceRegistry returns EthermintApp's InterfaceRegistry
-func (app *EthermintApp) InterfaceRegistry() types.InterfaceRegistry {
+// InterfaceRegistry returns BridgeApp's InterfaceRegistry
+func (app *BridgeApp) InterfaceRegistry() types.InterfaceRegistry {
 	return app.interfaceRegistry
 }
 
 // GetKey returns the KVStoreKey for the provided store key.
 //
 // NOTE: This is solely to be used for testing purposes.
-func (app *EthermintApp) GetKey(storeKey string) *sdk.KVStoreKey {
+func (app *BridgeApp) GetKey(storeKey string) *sdk.KVStoreKey {
 	return app.keys[storeKey]
 }
 
 // GetTKey returns the TransientStoreKey for the provided store key.
 //
 // NOTE: This is solely to be used for testing purposes.
-func (app *EthermintApp) GetTKey(storeKey string) *sdk.TransientStoreKey {
+func (app *BridgeApp) GetTKey(storeKey string) *sdk.TransientStoreKey {
 	return app.tkeys[storeKey]
 }
 
 // GetMemKey returns the MemStoreKey for the provided mem key.
 //
 // NOTE: This is solely used for testing purposes.
-func (app *EthermintApp) GetMemKey(storeKey string) *sdk.MemoryStoreKey {
+func (app *BridgeApp) GetMemKey(storeKey string) *sdk.MemoryStoreKey {
 	return app.memKeys[storeKey]
 }
 
 // GetSubspace returns a param subspace for a given module name.
 //
 // NOTE: This is solely to be used for testing purposes.
-func (app *EthermintApp) GetSubspace(moduleName string) paramstypes.Subspace {
+func (app *BridgeApp) GetSubspace(moduleName string) paramstypes.Subspace {
 	subspace, _ := app.ParamsKeeper.GetSubspace(moduleName)
 	return subspace
 }
 
 // SimulationManager implements the SimulationApp interface
-func (app *EthermintApp) SimulationManager() *module.SimulationManager {
+func (app *BridgeApp) SimulationManager() *module.SimulationManager {
 	return app.sm
 }
 
 // RegisterAPIRoutes registers all application module routes with the provided
 // API server.
-func (app *EthermintApp) RegisterAPIRoutes(apiSvr *api.Server, apiConfig config.APIConfig) {
+func (app *BridgeApp) RegisterAPIRoutes(apiSvr *api.Server, apiConfig config.APIConfig) {
 	clientCtx := apiSvr.ClientCtx
 	rpc.RegisterRoutes(clientCtx, apiSvr.Router)
 
@@ -692,11 +687,11 @@ func (app *EthermintApp) RegisterAPIRoutes(apiSvr *api.Server, apiConfig config.
 	}
 }
 
-func (app *EthermintApp) RegisterTxService(clientCtx client.Context) {
+func (app *BridgeApp) RegisterTxService(clientCtx client.Context) {
 	authtx.RegisterTxService(app.BaseApp.GRPCQueryRouter(), clientCtx, app.BaseApp.Simulate, app.interfaceRegistry)
 }
 
-func (app *EthermintApp) RegisterTendermintService(clientCtx client.Context) {
+func (app *BridgeApp) RegisterTendermintService(clientCtx client.Context) {
 	tmservice.RegisterTendermintService(app.BaseApp.GRPCQueryRouter(), clientCtx, app.interfaceRegistry)
 }
 
