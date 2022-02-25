@@ -2,6 +2,10 @@
 install: ## Install kava-bridge
 	go install -mod=readonly ./cmd/kava-bridged
 
+start: install
+	./contrib/devnet/init-new-chain.sh
+	kava-bridged start
+
 .PHONY: lint
 lint: ## Run golint
 	golint -set_exit_status ./...
