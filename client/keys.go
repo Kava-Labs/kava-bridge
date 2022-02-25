@@ -92,8 +92,8 @@ func runAddCmd(cmd *cobra.Command, args []string) error {
 	eth, _ := cmd.Flags().GetBool(ethFlag)
 	if eth {
 		cmd.Print("eth flag specified: using coin-type 60 and signing algorithm eth_secp256k1\n")
-		cmd.Flags().Set(flags.FlagKeyAlgorithm, string(hd.EthSecp256k1Type))
-		cmd.Flags().Set("coin-type", "60")
+		_ = cmd.Flags().Set(flags.FlagKeyAlgorithm, string(hd.EthSecp256k1Type))
+		_ = cmd.Flags().Set("coin-type", "60")
 	}
 
 	if err != nil {

@@ -9,10 +9,6 @@ import (
 	"github.com/kava-labs/kava-bridge/x/bridge/types"
 )
 
-const (
-	secp256k1VerifyCost uint64 = 21000
-)
-
 func NewAnteHandler(
 	accountKeeper ante.AccountKeeper,
 	bankKeeper types.BankKeeper,
