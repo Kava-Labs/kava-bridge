@@ -7,7 +7,7 @@ import (
 	svrcmd "github.com/cosmos/cosmos-sdk/server/cmd"
 
 	"github.com/kava-labs/kava-bridge/app"
-	"github.com/kava-labs/kava-bridge/cmd/bridged/cmd"
+	"github.com/kava-labs/kava-bridge/cmd/kava-bridged/cmd"
 )
 
 func main() {

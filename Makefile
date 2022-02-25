@@ -1,6 +1,6 @@
 .PHONY: install
 install: ## Install kava-bridge
-	go install -mod=readonly ./cmd/bridged
+	go install -mod=readonly ./cmd/kava-bridged
 
 .PHONY: lint
 lint: ## Run golint
