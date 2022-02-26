@@ -2,9 +2,10 @@
 
 The bridge module contains the following parameters:
 
-| Key                | Type               | Example             | Description                             |
-| ------------------ | ------------------ | ------------------- | --------------------------------------- |
-| EnabledERC20Tokens | EnabledERC20Tokens | []EnabledERC20Token | array of ERC20 tokens allowed to bridge |
+| Key                | Type               | Example                                       | Description                             |
+| ------------------ | ------------------ | --------------------------------------------- | --------------------------------------- |
+| EnabledERC20Tokens | EnabledERC20Tokens | []EnabledERC20Token                           | array of ERC20 tokens allowed to bridge |
+| Relayer            | sdk.AccAddress     | "kava123fxg0l602etulhhcdm0vt7l57qya5wjcrwhzz" | bridge relayer address                  |
 
 Each EnabledERC20Token has the following parameters:
 
