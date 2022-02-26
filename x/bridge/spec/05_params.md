@@ -17,5 +17,5 @@ Each EnabledERC20Token has the following parameters:
 | EnabledERC20Token.Decimals | uint8  | 18                                           | ERC20 token decimals      |
 
 Governance param change proposals are used to add new Ethereum ERC20s to the
-enabled whitelist. Ethereum ERC20s that are not in the list are rejected from
+enabled list. Ethereum ERC20s that are not in the list are rejected from
 being bridged to Kava.

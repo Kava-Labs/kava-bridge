@@ -1,7 +1,7 @@
 # Concepts
 
-The bridge module deploys an ERC-20 contract on the Kava EVM for cross-chain
-asset ERC-20 transfers.
+The bridge module deploys ERC20 contracts and mints ERC20 tokens on the Kava EVM
+for cross-chain ERC-20 token transfers.
 
 ## ERC20
 
@@ -10,6 +10,10 @@ on the Ethereum network. Kava ERC20 will refer to an ERC20 token deployed on the
 Kava EVM.
 
 ## Requirements
+
+Bridge Contract
+
+* The bridge contract must be deployed on Ethereum.
 
 Signer
 
@@ -52,14 +56,14 @@ stateDiagram-v2
 
         state if_has_permission <<choice>>
         state if_erc20_deployed <<choice>>
-        state if_erc20_whitelisted <<choice>>
+        state if_erc20_enabled <<choice>>
 
         BridgeModule --> if_has_permission
         if_has_permission --> Reject: Unknown Signer
-        if_has_permission --> if_erc20_whitelisted: Signer in Params
+        if_has_permission --> if_erc20_enabled: Signer in Params
 
-        if_erc20_whitelisted --> Reject: Unknown Ethereum ERC20 Addr
-        if_erc20_whitelisted --> if_erc20_deployed: Ethereum ERC20 Addr in Params
+        if_erc20_enabled --> Reject: Unknown Ethereum ERC20 Addr
+        if_erc20_enabled --> if_erc20_deployed: Ethereum ERC20 Addr in Params
 
         DeployERC20: Deploy ERC20
         MintERC20: Mint ERC20 amount for toAddr
