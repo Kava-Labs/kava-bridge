@@ -29,7 +29,7 @@ In order to bridge an approved Ethereum ERC20 tokens to Kava, the following
 steps are taken:
 
 1. User locks ERC20 tokens in the bridge contract on Ethereum. This emits an
-   event with the Ethereum ERC20 address, Ethereum sender address, destination
+   event with the Ethereum ERC20 address, Ethereum sender address, receiver
    Kava address, amount, and sequence.
 2. After a reasonable number of confirmations, the relayer will sign and submit
    a `MsgERC20FromEthereum` message to the Kava chain.
@@ -44,7 +44,7 @@ steps are taken:
 ```mermaid
 stateDiagram-v2
     state Ethereum {
-        User --> Contract: Lock(Ethereum ERC20 Addr, toAddr, amount)
+        User --> Contract: Lock(Ethereum ERC20 Addr, receiver, amount)
     }
     
     Contract --> Relayer
@@ -66,10 +66,11 @@ stateDiagram-v2
         if_erc20_enabled --> if_erc20_deployed: Ethereum ERC20 Addr in Params
 
         DeployERC20: Deploy ERC20
-        MintERC20: Mint ERC20 amount for toAddr
+        MintERC20: Mint ERC20 amount for receiver
         if_erc20_deployed --> DeployERC20: Kava ERC20 not deployed
         if_erc20_deployed --> MintERC20: Kava ERC20 exists
         DeployERC20 --> MintERC20
     }
+
 ```
 
