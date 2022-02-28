@@ -5,9 +5,15 @@
 ## Table of Contents
 
 - [bridge/v1beta1/genesis.proto](#bridge/v1beta1/genesis.proto)
-    - [EnabledERC20Token](#kava.bridge.v1beta1.EnabledERC20Token)
-    - [GenesisState](#kava.bridge.v1beta1.GenesisState)
-    - [Params](#kava.bridge.v1beta1.Params)
+    - [EnabledERC20Token](#bridge.v1beta1.EnabledERC20Token)
+    - [GenesisState](#bridge.v1beta1.GenesisState)
+    - [Params](#bridge.v1beta1.Params)
+  
+- [bridge/v1beta1/tx.proto](#bridge/v1beta1/tx.proto)
+    - [MsgBridgeERC20FromEthereum](#bridge.v1beta1.MsgBridgeERC20FromEthereum)
+    - [MsgBridgeERC20FromEthereumResponse](#bridge.v1beta1.MsgBridgeERC20FromEthereumResponse)
+  
+    - [Msg](#bridge.v1beta1.Msg)
   
 - [Scalar Value Types](#scalar-value-types)
 
@@ -20,7 +26,7 @@
 
 
 
-<a name="kava.bridge.v1beta1.EnabledERC20Token"></a>
+<a name="bridge.v1beta1.EnabledERC20Token"></a>
 
 ### EnabledERC20Token
 EnabledERC20Token defines an external ERC20 that is allowed to be bridged to Kava
@@ -28,17 +34,17 @@ EnabledERC20Token defines an external ERC20 that is allowed to be bridged to Kav
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `Address` | [bytes](#bytes) |  | Address of the contract on Ethereum |
-| `Name` | [string](#string) |  | Name of the token. |
-| `Symbol` | [string](#string) |  | Symbol of the ERC20 token, usually a shorter version of the name. |
-| `Decimals` | [uint32](#uint32) |  | Number of decimals the ERC20 uses to get its user representation. The max value is an unsigned 8 bit integer, but is an uint32 as the smallest protobuf integer type. |
+| `address` | [bytes](#bytes) |  | Address of the contract on Ethereum |
+| `name` | [string](#string) |  | Name of the token. |
+| `symbol` | [string](#string) |  | Symbol of the ERC20 token, usually a shorter version of the name. |
+| `decimals` | [uint32](#uint32) |  | Number of decimals the ERC20 uses to get its user representation. The max value is an unsigned 8 bit integer, but is an uint32 as the smallest protobuf integer type. |
 
 
 
 
 
 
-<a name="kava.bridge.v1beta1.GenesisState"></a>
+<a name="bridge.v1beta1.GenesisState"></a>
 
 ### GenesisState
 GenesisState defines the bridge module's genesis state.
@@ -46,14 +52,14 @@ GenesisState defines the bridge module's genesis state.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `params` | [Params](#kava.bridge.v1beta1.Params) |  | params defines all the paramaters of the module. |
+| `params` | [Params](#bridge.v1beta1.Params) |  | params defines all the paramaters of the module. |
 
 
 
 
 
 
-<a name="kava.bridge.v1beta1.Params"></a>
+<a name="bridge.v1beta1.Params"></a>
 
 ### Params
 Params defines the bridge module params
@@ -61,8 +67,8 @@ Params defines the bridge module params
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `enabled_erc20_tokens` | [EnabledERC20Token](#kava.bridge.v1beta1.EnabledERC20Token) | repeated |  |
-| `relayer` | [bytes](#bytes) |  |  |
+| `enabled_erc20_tokens` | [EnabledERC20Token](#bridge.v1beta1.EnabledERC20Token) | repeated | List of ERC20Tokens that are allowed to be bridged to Kava |
+| `relayer` | [bytes](#bytes) |  | Permissioned relayer address that is allowed to submit bridge messages |
 
 
 
@@ -73,6 +79,61 @@ Params defines the bridge module params
  <!-- end enums -->
 
  <!-- end HasExtensions -->
+
+ <!-- end services -->
+
+
+
+<a name="bridge/v1beta1/tx.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## bridge/v1beta1/tx.proto
+
+
+
+<a name="bridge.v1beta1.MsgBridgeERC20FromEthereum"></a>
+
+### MsgBridgeERC20FromEthereum
+MsgBridgeERC20FromEthereum defines a ERC20 bridge transfer from Ethereum.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `relayer` | [string](#string) |  |  |
+| `ethereum_erc20_address` | [bytes](#bytes) |  | Originating Ethereum ERC20 contract address |
+| `amount` | [string](#string) |  | ERC20 token amount to transfer |
+| `receiver` | [bytes](#bytes) |  | Receiver Kava address in hex format, not bech32 |
+| `sequence` | [string](#string) |  | Unique sequence per bridge event |
+
+
+
+
+
+
+<a name="bridge.v1beta1.MsgBridgeERC20FromEthereumResponse"></a>
+
+### MsgBridgeERC20FromEthereumResponse
+MsgBridgeERC20FromEthereumResponse defines the response value from
+
+
+
+
+
+ <!-- end messages -->
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
+
+
+<a name="bridge.v1beta1.Msg"></a>
+
+### Msg
+Msg defines the bridge Msg service.
+
+| Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
+| ----------- | ------------ | ------------- | ------------| ------- | -------- |
+| `BridgeERC20FromEthereum` | [MsgBridgeERC20FromEthereum](#bridge.v1beta1.MsgBridgeERC20FromEthereum) | [MsgBridgeERC20FromEthereumResponse](#bridge.v1beta1.MsgBridgeERC20FromEthereumResponse) | BridgeERC20FromEthereum defines a method for bridging ERC20 tokens from Ethereum. | |
 
  <!-- end services -->
 
