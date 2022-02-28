@@ -145,6 +145,7 @@ require (
 	github.com/deckarep/golang-set v1.8.0 // indirect
 	github.com/gogo/protobuf v1.3.3
 	github.com/jackpal/go-nat-pmp v1.0.2 // indirect
+	github.com/kava-labs/kava v0.16.1
 	golang.org/x/crypto v0.0.0-20220213190939-1e6e3497d506 // indirect
 	google.golang.org/genproto v0.0.0-20220211171837-173942840c17 // indirect
 )
