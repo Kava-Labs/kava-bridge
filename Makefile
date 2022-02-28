@@ -2,6 +2,7 @@
 install: ## Install kava-bridge
 	go install -mod=readonly ./cmd/kava-bridged
 
+.PHONY: start
 start: install
 	./contrib/devnet/init-new-chain.sh
 	kava-bridged start
