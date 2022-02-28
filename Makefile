@@ -1,4 +1,6 @@
 PROJECT_NAME=kava-bridge
+DOCKER:=docker
+DOCKER_BUF := $(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace bufbuild/buf
 
 .PHONY: install
 install: ## Install kava-bridge
