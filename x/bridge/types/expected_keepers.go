@@ -36,5 +36,5 @@ type BankKeeper interface {
 type EvmKeeper interface {
 	// This is actually a gRPC query method
 	EstimateGas(ctx context.Context, req *types.EthCallRequest) (*types.EstimateGasResponse, error)
-	ApplyMessage(ctx sdk.Context, msg core.Message, tracer vm.EVMLogger, commit bool) (*types.MsgEthereumTxResponse, error)
+	ApplyMessage(ctx sdk.Context, msg core.Message, tracer vm.Tracer, commit bool) (*types.MsgEthereumTxResponse, error)
 }
