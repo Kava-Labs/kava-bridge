@@ -14,6 +14,7 @@ require (
 	github.com/tendermint/tendermint v0.34.15
 	github.com/tendermint/tm-db v0.6.6
 	github.com/tharsis/ethermint v0.10.0-alpha1
+	google.golang.org/grpc v1.44.0
 )
 
 require (
@@ -129,7 +130,7 @@ require (
 	golang.org/x/sys v0.0.0-20211210111614-af8b64212486 // indirect
 	golang.org/x/term v0.0.0-20201126162022-7de9c90e9dd1 // indirect
 	golang.org/x/text v0.3.7 // indirect
-	google.golang.org/grpc v1.44.0 // indirect
+	google.golang.org/genproto v0.0.0-20211223182754-3ac035c7e7cb // indirect
 	google.golang.org/protobuf v1.27.1 // indirect
 	gopkg.in/ini.v1 v1.66.2 // indirect
 	gopkg.in/natefinch/npipe.v2 v2.0.0-20160621034901-c1b8fa8bdcce // indirect
@@ -145,9 +146,7 @@ require (
 	github.com/deckarep/golang-set v1.8.0 // indirect
 	github.com/gogo/protobuf v1.3.3
 	github.com/jackpal/go-nat-pmp v1.0.2 // indirect
-	github.com/kava-labs/kava v0.16.1
 	golang.org/x/crypto v0.0.0-20220213190939-1e6e3497d506 // indirect
-	google.golang.org/genproto v0.0.0-20220211171837-173942840c17 // indirect
 )
 
 replace (
