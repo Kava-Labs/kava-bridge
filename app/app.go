@@ -31,7 +31,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/cosmos/cosmos-sdk/x/auth"
-	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	authsims "github.com/cosmos/cosmos-sdk/x/auth/simulation"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
@@ -83,6 +82,7 @@ import (
 	upgradeclient "github.com/cosmos/cosmos-sdk/x/upgrade/client"
 	upgradekeeper "github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
+	evmante "github.com/tharsis/ethermint/app/ante"
 
 	srvflags "github.com/tharsis/ethermint/server/flags"
 	ethermint "github.com/tharsis/ethermint/types"
@@ -536,14 +536,17 @@ func NewApp(
 	app.SetInitChainer(app.InitChainer)
 	app.SetBeginBlocker(app.BeginBlocker)
 
-	anteHandler, err := ante.NewAnteHandler(
-		app.AccountKeeper,
-		app.BankKeeper,
-		app.FeeGrantKeeper,
-		app.BridgeKeeper,
-		encodingConfig.TxConfig.SignModeHandler(),
-		authante.DefaultSigVerificationGasConsumer,
-	)
+	anteOptions := ante.HandlerOptions{
+		AccountKeeper:   app.AccountKeeper,
+		BankKeeper:      app.BankKeeper,
+		EvmKeeper:       app.EvmKeeper,
+		FeeMarketKeeper: app.FeeMarketKeeper,
+		SignModeHandler: encodingConfig.TxConfig.SignModeHandler(),
+		SigGasConsumer:  evmante.DefaultSigVerificationGasConsumer,
+		AddressFetchers: nil,
+	}
+
+	anteHandler, err := ante.NewAnteHandler(anteOptions)
 	if err != nil {
 		panic(fmt.Sprintf("failed to create antehandler: %s", err))
 	}
