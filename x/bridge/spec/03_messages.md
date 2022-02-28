@@ -10,10 +10,10 @@ submit this message, otherwise the transaction will be rejected.
 // MsgERC20FromEthereum defines a cross-chain transfer of ERC20 tokens from Ethereum
 type MsgERC20FromEthereum struct {
     Relayer              sdk.AccAddress
-    EthereumERC20Address string
+    EthereumERC20Address []byte
     Amount               sdk.Int
-    // Hex Kava address
-    Receiver             string
+    // **Hex** Kava address, not bech32
+    Receiver             []byte
     // Unique sequence per bridge event
     Sequence             sdk.Int
 }
