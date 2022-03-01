@@ -13,9 +13,9 @@ func InitGenesis(
 	ctx sdk.Context,
 	k keeper.Keeper,
 	accountKeeper types.AccountKeeper,
-	// TODO: data types.GenesisState,
+	data types.GenesisState,
 ) []abci.ValidatorUpdate {
-	// TODO: k.SetParams(ctx, data.Params)
+	k.SetParams(ctx, data.Params)
 
 	// ensure bridge module account is set
 	if addr := accountKeeper.GetModuleAddress(types.ModuleName); addr == nil {

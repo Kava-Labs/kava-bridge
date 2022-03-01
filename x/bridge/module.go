@@ -150,11 +150,10 @@ func (am AppModule) EndBlock(ctx sdk.Context, req abci.RequestEndBlock) []abci.V
 // InitGenesis performs genesis initialization for the bridge module. It returns
 // no validator updates.
 func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, data json.RawMessage) []abci.ValidatorUpdate {
-	// TODO:
-	// var genesisState types.GenesisState
+	var genesisState types.GenesisState
 
-	// cdc.MustUnmarshalJSON(data, &genesisState)
-	// InitGenesis(ctx, am.keeper, am.ak, genesisState)
+	cdc.MustUnmarshalJSON(data, &genesisState)
+	InitGenesis(ctx, am.keeper, am.ak, genesisState)
 	return []abci.ValidatorUpdate{}
 }
 
