@@ -11,7 +11,7 @@
     "lint-fix": "eslint '**/*.{js,ts}' --fix",
     "prettier": "prettier '**/*.{json,sol,md}' --check",
     "prettier-fix": "prettier '**/*.{json,sol,md}' --write",
-    "solhint": "solhint 'contracts/**/*.sol'",
+    "solhint": "solhint 'contracts/**/*.sol' --max-warnings 0",
     "solhint-fix": "solhint 'contracts/**/*.sol' --fix",
     "coverage": "hardhat coverage",
     "dev": "hardhat watch dev",
