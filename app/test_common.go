@@ -23,6 +23,7 @@ import (
 	paramskeeper "github.com/cosmos/cosmos-sdk/x/params/keeper"
 	slashingkeeper "github.com/cosmos/cosmos-sdk/x/slashing/keeper"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
+	bridgekeeper "github.com/kava-labs/kava-bridge/x/bridge/keeper"
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/libs/log"
@@ -86,6 +87,8 @@ func (tApp TestApp) GetDistrKeeper() distkeeper.Keeper          { return tApp.Di
 func (tApp TestApp) GetGovKeeper() govkeeper.Keeper             { return tApp.GovKeeper }
 func (tApp TestApp) GetCrisisKeeper() crisiskeeper.Keeper       { return tApp.CrisisKeeper }
 func (tApp TestApp) GetParamsKeeper() paramskeeper.Keeper       { return tApp.ParamsKeeper }
+
+func (tApp TestApp) GetBridgeKeeper() bridgekeeper.Keeper { return tApp.BridgeKeeper }
 
 // LegacyAmino returns the app's amino codec.
 func (app *TestApp) LegacyAmino() *codec.LegacyAmino {

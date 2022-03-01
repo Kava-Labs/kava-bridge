@@ -2,7 +2,6 @@ package bridge
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	abci "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/kava-labs/kava-bridge/x/bridge/keeper"
 	"github.com/kava-labs/kava-bridge/x/bridge/types"
@@ -14,15 +13,13 @@ func InitGenesis(
 	k keeper.Keeper,
 	accountKeeper types.AccountKeeper,
 	data types.GenesisState,
-) []abci.ValidatorUpdate {
+) {
 	k.SetParams(ctx, data.Params)
 
 	// ensure bridge module account is set
-	if addr := accountKeeper.GetModuleAddress(types.ModuleName); addr == nil {
+	if addr := accountKeeper.GetModuleAccount(ctx, types.ModuleName); addr == nil {
 		panic("the bridge module account has not been set")
 	}
-
-	return []abci.ValidatorUpdate{}
 }
 
 // ExportGenesis exports genesis state of the bridge module
