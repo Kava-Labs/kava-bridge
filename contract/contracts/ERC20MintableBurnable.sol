@@ -3,13 +3,13 @@
 pragma solidity ^0.8.9;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 /// @title A contract for an mintable and burnable ERC20 that is handled by the bridge Cosmos SDK module account
 /// @author Kava Labs, LLC
 /// @custom:security-contact security@kava.io
-contract ERC20MintableBurnable is ERC20, ERC20Burnable, Ownable {
+contract ERC20MintableBurnable is ERC20, Ownable {
+    /// @notice The decimals places of the token.
     uint8 immutable private _decimals;
 
     /// @notice Registers the ERC20 token with mint and burn permissions for the
