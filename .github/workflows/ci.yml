@@ -9,6 +9,9 @@ on:
 jobs:
   contract:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./contract
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
@@ -16,8 +19,11 @@ jobs:
           node-version: '16'
           cache: 'npm'
           cache-dependency-path: contract/package-lock.json
-      - run: cd contract && npm ci
-      - run: cd contract && npm test
+      - run: npm ci
+      - run: npm test
+      - run: npm run lint
+      - run: npm run prettier
+      - run: npm run solhint
   relayer:
     runs-on: ubuntu-latest
     steps:
