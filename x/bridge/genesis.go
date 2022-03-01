@@ -25,7 +25,9 @@ func InitGenesis(
 	return []abci.ValidatorUpdate{}
 }
 
-// ExportGenesis exports genesis state of the EVM module
-func ExportGenesis(ctx sdk.Context, k *keeper.Keeper, ak types.AccountKeeper) {
-	// TODO:
+// ExportGenesis exports genesis state of the bridge module
+func ExportGenesis(ctx sdk.Context, k keeper.Keeper, ak types.AccountKeeper) *types.GenesisState {
+	return &types.GenesisState{
+		Params: k.GetParams(ctx),
+	}
 }

@@ -38,6 +38,12 @@ func NewParams(enabledERC20Tokens EnabledERC20Tokens, relayer sdk.AccAddress) Pa
 	}
 }
 
+// DefaultParams returns the default parameters for bridge.
+func DefaultParams() Params {
+	// TODO: Default relayer?
+	return NewParams(nil, nil)
+}
+
 func (p *Params) Validate() error {
 	if err := p.EnabledERC20Tokens.Validate(); err != nil {
 		return err
