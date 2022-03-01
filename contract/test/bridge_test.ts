@@ -3,7 +3,7 @@ import { ethers } from "hardhat";
 import { Contract, Signer } from "ethers";
 import { deployBridge } from "../scripts/deploy";
 import { kavaAddrToBytes32, tokens, testKavaAddrs } from "./utils";
-import type { Bridge } from '../typechain-types'
+import type { Bridge } from "../typechain-types";
 
 describe("Bridge", function () {
   // the main bridge contract

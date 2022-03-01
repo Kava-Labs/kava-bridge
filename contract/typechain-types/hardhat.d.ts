@@ -13,6 +13,10 @@ import * as Contracts from ".";
 declare module "hardhat/types/runtime" {
   interface HardhatEthersHelpers extends HardhatEthersHelpersBase {
     getContractFactory(
+      name: "Ownable",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.Ownable__factory>;
+    getContractFactory(
       name: "ERC20",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.ERC20__factory>;
@@ -28,6 +32,10 @@ declare module "hardhat/types/runtime" {
       name: "Bridge",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.Bridge__factory>;
+    getContractFactory(
+      name: "ERC20MintableBurnable",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.ERC20MintableBurnable__factory>;
     getContractFactory(
       name: "ERC20EvilMock",
       signerOrOptions?: ethers.Signer | FactoryOptions
@@ -54,6 +62,11 @@ declare module "hardhat/types/runtime" {
     ): Promise<Contracts.SequenceMock__factory>;
 
     getContractAt(
+      name: "Ownable",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.Ownable>;
+    getContractAt(
       name: "ERC20",
       address: string,
       signer?: ethers.Signer
@@ -73,6 +86,11 @@ declare module "hardhat/types/runtime" {
       address: string,
       signer?: ethers.Signer
     ): Promise<Contracts.Bridge>;
+    getContractAt(
+      name: "ERC20MintableBurnable",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.ERC20MintableBurnable>;
     getContractAt(
       name: "ERC20EvilMock",
       address: string,
