@@ -40,6 +40,7 @@ jobs:
       - run: npm run prettier
       - run: npm run solhint
   relayer:
+    name: Test Relayer
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -58,6 +59,7 @@ jobs:
       - run: make vet
       - run: make test
   relayer-lint:
+    name: Lint Relayer
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
