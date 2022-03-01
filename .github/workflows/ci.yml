@@ -7,7 +7,8 @@ on:
     branches: [ main ]
 
 jobs:
-  contract:
+  contract-test:
+    name: Test Contracts
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -21,6 +22,20 @@ jobs:
           cache-dependency-path: contract/package-lock.json
       - run: npm ci
       - run: npm test
+  contract-lint:
+    name: Lint Contracts
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./contract
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '16'
+          cache: 'npm'
+          cache-dependency-path: contract/package-lock.json
+      - run: npm ci
       - run: npm run lint
       - run: npm run prettier
       - run: npm run solhint
