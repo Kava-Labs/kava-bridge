@@ -1,7 +1,6 @@
 package types_test
 
 import (
-	"encoding/hex"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -35,7 +34,7 @@ func (suite *ParamsTestSuite) TestParamValidation() {
 			args{
 				enabledERC20Tokens: types.EnabledERC20Tokens{
 					types.NewEnabledERC20Token(
-						MustDecodeHexString("C02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
+						"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
 						"Wrapped Ether",
 						"WETH",
 						18,
@@ -52,7 +51,7 @@ func (suite *ParamsTestSuite) TestParamValidation() {
 			args{
 				enabledERC20Tokens: types.EnabledERC20Tokens{
 					types.NewEnabledERC20Token(
-						MustDecodeHexString("C02aaA39b223FE8D0A0e5C4F27eAD9083C756C"),
+						"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756C",
 						"Wrapped Ether",
 						"WETH",
 						18,
@@ -62,7 +61,7 @@ func (suite *ParamsTestSuite) TestParamValidation() {
 			},
 			errArgs{
 				expectPass: false,
-				contains:   "address length is incorrect, 19 but requires 20",
+				contains:   "address is not a valid hex address",
 			},
 		},
 		{
@@ -70,7 +69,7 @@ func (suite *ParamsTestSuite) TestParamValidation() {
 			args{
 				enabledERC20Tokens: types.EnabledERC20Tokens{
 					types.NewEnabledERC20Token(
-						MustDecodeHexString("C02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
+						"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
 						"",
 						"WETH",
 						18,
@@ -88,7 +87,7 @@ func (suite *ParamsTestSuite) TestParamValidation() {
 			args{
 				enabledERC20Tokens: types.EnabledERC20Tokens{
 					types.NewEnabledERC20Token(
-						MustDecodeHexString("C02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
+						"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
 						"Wrapped Ether",
 						"",
 						18,
@@ -106,7 +105,7 @@ func (suite *ParamsTestSuite) TestParamValidation() {
 			args{
 				enabledERC20Tokens: types.EnabledERC20Tokens{
 					types.NewEnabledERC20Token(
-						MustDecodeHexString("C02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
+						"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
 						"Wrapped Ether",
 						"WETH",
 						0,
@@ -124,7 +123,7 @@ func (suite *ParamsTestSuite) TestParamValidation() {
 			args{
 				enabledERC20Tokens: types.EnabledERC20Tokens{
 					types.NewEnabledERC20Token(
-						MustDecodeHexString("C02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
+						"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
 						"Wrapped Ether",
 						"WETH",
 						256,
@@ -142,7 +141,7 @@ func (suite *ParamsTestSuite) TestParamValidation() {
 			args{
 				enabledERC20Tokens: types.EnabledERC20Tokens{
 					types.NewEnabledERC20Token(
-						MustDecodeHexString("C02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
+						"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
 						"Wrapped Ether",
 						"WETH",
 						18,
@@ -170,15 +169,6 @@ func (suite *ParamsTestSuite) TestParamValidation() {
 			}
 		})
 	}
-}
-
-func MustDecodeHexString(s string) []byte {
-	bytes, err := hex.DecodeString(s)
-	if err != nil {
-		panic(err)
-	}
-
-	return bytes
 }
 
 func TestParamsTestSuite(t *testing.T) {

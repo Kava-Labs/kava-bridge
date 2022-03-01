@@ -14,9 +14,9 @@ var (
 // NewMsgBridgeERC20FromEthereum returns a new MsgBridgeERC20FromEthereum
 func NewMsgBridgeERC20FromEthereum(
 	relayer string,
-	ethereumERC20Address []byte,
+	ethereumERC20Address string,
 	amount sdk.Int,
-	receiver []byte,
+	receiver string,
 	sequence sdk.Int,
 ) MsgBridgeERC20FromEthereum {
 	return MsgBridgeERC20FromEthereum{
@@ -44,12 +44,10 @@ func (msg MsgBridgeERC20FromEthereum) ValidateBasic() error {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, err.Error())
 	}
 
-	if len(msg.EthereumERC20Address) != common.AddressLength {
-		return sdkerrors.Wrapf(
-			sdkerrors.ErrInvalidRequest,
-			"ethereum ERC20 address length should be %v but is %v",
-			common.AddressLength,
-			len(msg.EthereumERC20Address),
+	if !common.IsHexAddress(msg.EthereumERC20Address) {
+		return sdkerrors.Wrap(
+			sdkerrors.ErrInvalidAddress,
+			"ethereum ERC20 address is not a valid hex address",
 		)
 	}
 
@@ -57,12 +55,10 @@ func (msg MsgBridgeERC20FromEthereum) ValidateBasic() error {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "amount must be positive non-zero %s", msg.Amount)
 	}
 
-	if len(msg.Receiver) != common.AddressLength {
-		return sdkerrors.Wrapf(
+	if !common.IsHexAddress(msg.Receiver) {
+		return sdkerrors.Wrap(
 			sdkerrors.ErrInvalidAddress,
-			"receiver address length should be %v but is %v",
-			common.AddressLength,
-			len(msg.Receiver),
+			"receiver address is not a valid hex address",
 		)
 	}
 

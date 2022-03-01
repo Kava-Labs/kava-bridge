@@ -19,15 +19,15 @@ service Msg {
 message MsgBridgeERC20FromEthereum {
   string relayer = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
   // Originating Ethereum ERC20 contract address
-  bytes ethereum_erc20_address = 2 [(gogoproto.customname) = "EthereumERC20Address"];
+  string ethereum_erc20_address = 2 [(gogoproto.customname) = "EthereumERC20Address"];
   // ERC20 token amount to transfer
   string amount = 3 [
     (cosmos_proto.scalar)  = "cosmos.Int",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable)   = false
   ];
-  // Receiver Kava address in hex format, not bech32
-  bytes receiver = 4;
+  // Receiver hex address on Kava
+  string receiver = 4;
   // Unique sequence per bridge event
   string sequence = 5 [
     (cosmos_proto.scalar)  = "cosmos.Int",

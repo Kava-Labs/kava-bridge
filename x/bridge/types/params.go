@@ -76,7 +76,7 @@ func (tokens EnabledERC20Tokens) Validate() error {
 }
 
 // NewEnabledERC20Token returns a new EnabledERC20Token.
-func NewEnabledERC20Token(address []byte, name string, symbol string, decimals uint32) EnabledERC20Token {
+func NewEnabledERC20Token(address string, name string, symbol string, decimals uint32) EnabledERC20Token {
 	return EnabledERC20Token{
 		Address:  address,
 		Name:     name,
@@ -87,12 +87,8 @@ func NewEnabledERC20Token(address []byte, name string, symbol string, decimals u
 
 // Validate returns an error if the EnabledERC20Token is invalid.
 func (e EnabledERC20Token) Validate() error {
-	if len(e.Address) != common.AddressLength {
-		return fmt.Errorf(
-			"address length is incorrect, %v but requires %v",
-			len(e.Address),
-			common.AddressLength,
-		)
+	if !common.IsHexAddress(e.Address) {
+		return errors.New("address is not a valid hex address")
 	}
 
 	if e.Name == "" {

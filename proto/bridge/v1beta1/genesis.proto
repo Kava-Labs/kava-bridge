@@ -32,7 +32,7 @@ message Params {
 // EnabledERC20Token defines an external ERC20 that is allowed to be bridged to Kava
 message EnabledERC20Token {
   // Address of the contract on Ethereum
-  bytes address = 1;
+  string address = 1;
   // Name of the token.
   string name = 2;
   // Symbol of the ERC20 token, usually a shorter version of the name.

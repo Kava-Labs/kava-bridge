@@ -12,9 +12,9 @@ import (
 func TestMsgBridgeERC20FromEthereum(t *testing.T) {
 	type args struct {
 		relayer              string
-		ethereumERC20Address []byte
+		ethereumERC20Address string
 		amount               sdk.Int
-		receiver             []byte
+		receiver             string
 		sequence             sdk.Int
 	}
 	type errArgs struct {
@@ -31,9 +31,9 @@ func TestMsgBridgeERC20FromEthereum(t *testing.T) {
 			"valid",
 			args{
 				sdk.AccAddress("hi").String(),
-				MustDecodeHexString("C02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
+				"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
 				sdk.NewInt(1234),
-				MustDecodeHexString("4A59E9DDB116A04C5D40082D67C738D5C56DF124"),
+				"0x4A59E9DDB116A04C5D40082D67C738D5C56DF124",
 				sdk.NewInt(1),
 			},
 			errArgs{
@@ -44,9 +44,9 @@ func TestMsgBridgeERC20FromEthereum(t *testing.T) {
 			"valid - sequence 0 when overflow",
 			args{
 				sdk.AccAddress("hi").String(),
-				MustDecodeHexString("C02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
+				"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
 				sdk.NewInt(1234),
-				MustDecodeHexString("4A59E9DDB116A04C5D40082D67C738D5C56DF124"),
+				"0x4A59E9DDB116A04C5D40082D67C738D5C56DF124",
 				sdk.NewInt(0),
 			},
 			errArgs{
@@ -57,9 +57,9 @@ func TestMsgBridgeERC20FromEthereum(t *testing.T) {
 			"invalid - empty relayer",
 			args{
 				"",
-				MustDecodeHexString("C02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
+				"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
 				sdk.NewInt(1234),
-				MustDecodeHexString("4A59E9DDB116A04C5D40082D67C738D5C56DF124"),
+				"0x4A59E9DDB116A04C5D40082D67C738D5C56DF124",
 				sdk.NewInt(1),
 			},
 			errArgs{
@@ -71,37 +71,37 @@ func TestMsgBridgeERC20FromEthereum(t *testing.T) {
 			"invalid - erc20 hex address length",
 			args{
 				sdk.AccAddress("hi").String(),
-				MustDecodeHexString("C02aaA39b223FE8D0A0e5C4F27eAD9083C756C"),
+				"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756C",
 				sdk.NewInt(1234),
-				MustDecodeHexString("4A59E9DDB116A04C5D40082D67C738D5C56DF124"),
+				"0x4A59E9DDB116A04C5D40082D67C738D5C56DF124",
 				sdk.NewInt(1),
 			},
 			errArgs{
 				expectPass: false,
-				contains:   "ethereum ERC20 address length should be 20 but is 19",
+				contains:   "ethereum ERC20 address is not a valid hex address: invalid address",
 			},
 		},
 		{
 			"invalid - receiver hex address length",
 			args{
 				sdk.AccAddress("hi").String(),
-				MustDecodeHexString("C02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
+				"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
 				sdk.NewInt(1234),
-				MustDecodeHexString("4A59E9DDB116A04C5D40082D67C738D5C56DF1"),
+				"0x4A59E9DDB116A04C5D40082D67C738D5C56DF1",
 				sdk.NewInt(1),
 			},
 			errArgs{
 				expectPass: false,
-				contains:   "receiver address length should be 20 but is 19",
+				contains:   "receiver address is not a valid hex address: invalid address",
 			},
 		},
 		{
 			"invalid - negative amount",
 			args{
 				sdk.AccAddress("hi").String(),
-				MustDecodeHexString("C02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
+				"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
 				sdk.NewInt(-1234),
-				MustDecodeHexString("4A59E9DDB116A04C5D40082D67C738D5C56DF124"),
+				"0x4A59E9DDB116A04C5D40082D67C738D5C56DF124",
 				sdk.NewInt(1),
 			},
 			errArgs{
@@ -113,9 +113,9 @@ func TestMsgBridgeERC20FromEthereum(t *testing.T) {
 			"invalid - zero amount",
 			args{
 				sdk.AccAddress("hi").String(),
-				MustDecodeHexString("C02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
+				"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
 				sdk.NewInt(0),
-				MustDecodeHexString("4A59E9DDB116A04C5D40082D67C738D5C56DF124"),
+				"0x4A59E9DDB116A04C5D40082D67C738D5C56DF124",
 				sdk.NewInt(1),
 			},
 			errArgs{
@@ -127,9 +127,9 @@ func TestMsgBridgeERC20FromEthereum(t *testing.T) {
 			"invalid - negative sequence",
 			args{
 				sdk.AccAddress("hi").String(),
-				MustDecodeHexString("C02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
+				"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
 				sdk.NewInt(1234),
-				MustDecodeHexString("4A59E9DDB116A04C5D40082D67C738D5C56DF124"),
+				"0x4A59E9DDB116A04C5D40082D67C738D5C56DF124",
 				sdk.NewInt(-123),
 			},
 			errArgs{

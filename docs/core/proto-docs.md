@@ -34,7 +34,7 @@ EnabledERC20Token defines an external ERC20 that is allowed to be bridged to Kav
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `address` | [bytes](#bytes) |  | Address of the contract on Ethereum |
+| `address` | [string](#string) |  | Address of the contract on Ethereum |
 | `name` | [string](#string) |  | Name of the token. |
 | `symbol` | [string](#string) |  | Symbol of the ERC20 token, usually a shorter version of the name. |
 | `decimals` | [uint32](#uint32) |  | Number of decimals the ERC20 uses to get its user representation. The max value is an unsigned 8 bit integer, but is an uint32 as the smallest protobuf integer type. |
@@ -100,9 +100,9 @@ MsgBridgeERC20FromEthereum defines a ERC20 bridge transfer from Ethereum.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | `relayer` | [string](#string) |  |  |
-| `ethereum_erc20_address` | [bytes](#bytes) |  | Originating Ethereum ERC20 contract address |
+| `ethereum_erc20_address` | [string](#string) |  | Originating Ethereum ERC20 contract address |
 | `amount` | [string](#string) |  | ERC20 token amount to transfer |
-| `receiver` | [bytes](#bytes) |  | Receiver Kava address in hex format, not bech32 |
+| `receiver` | [string](#string) |  | Receiver hex address on Kava |
 | `sequence` | [string](#string) |  | Unique sequence per bridge event |
 
 
