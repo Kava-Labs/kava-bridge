@@ -3,19 +3,18 @@ import { Signer } from "ethers";
 import { ethers } from "hardhat";
 import {
   ERC20MintableBurnable,
-  ERC20MintableBurnable__factory,
+  ERC20MintableBurnable__factory as ERC20MintableBurnableFactory,
 } from "../typechain-types";
 
 describe("ERC20MintableBurnable", function () {
   let erc20: ERC20MintableBurnable;
-  let erc20Factory: ERC20MintableBurnable__factory;
-  let owner: Signer;
+  let erc20Factory: ERC20MintableBurnableFactory;
   let addr1: Signer;
 
   beforeEach(async function () {
     erc20Factory = await ethers.getContractFactory("ERC20MintableBurnable");
     erc20 = await erc20Factory.deploy("Wrapped Kava", "WKAVA", 6n);
-    [owner, addr1] = await ethers.getSigners();
+    addr1 = (await ethers.getSigners())[1];
   });
 
   describe("decimals", function () {
@@ -31,7 +30,7 @@ describe("ERC20MintableBurnable", function () {
       const tx = erc20.mint(await addr1.getAddress(), amount);
       await expect(tx).to.not.be.reverted;
 
-      const bal = await erc20.balanceOf(await addr1.getAddress())
+      const bal = await erc20.balanceOf(await addr1.getAddress());
       expect(bal).to.equal(amount);
     });
 

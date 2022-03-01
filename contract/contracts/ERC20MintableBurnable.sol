@@ -10,14 +10,18 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 /// @custom:security-contact security@kava.io
 contract ERC20MintableBurnable is ERC20, Ownable {
     /// @notice The decimals places of the token.
-    uint8 immutable private _decimals;
+    uint8 private immutable _decimals;
 
     /// @notice Registers the ERC20 token with mint and burn permissions for the
     ///         contract owner, by default the account that deploys this contract.
     /// @param name The name of the ERC20 token.
     /// @param symbol The symbol of the ERC20 token.
     /// @param decimals_ The number of decimals of the ERC20 token.
-    constructor(string memory name, string memory symbol, uint8 decimals_) ERC20(name, symbol) {
+    constructor(
+        string memory name,
+        string memory symbol,
+        uint8 decimals_
+    ) ERC20(name, symbol) {
         _decimals = decimals_;
     }
 

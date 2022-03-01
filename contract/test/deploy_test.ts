@@ -1,7 +1,6 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
 import { main, deployBridge } from "../scripts/deploy";
-import { Bridge__factory } from '../typechain-types'
 
 describe("deploy script", function () {
   describe("main", function () {
