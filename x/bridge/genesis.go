@@ -16,8 +16,8 @@ func InitGenesis(
 ) {
 	k.SetParams(ctx, data.Params)
 
-	// ensure bridge module account is set
-	if addr := accountKeeper.GetModuleAccount(ctx, types.ModuleName); addr == nil {
+	// Ensure bridge module account is set
+	if moduleAcc := accountKeeper.GetModuleAccount(ctx, types.ModuleName); moduleAcc == nil {
 		panic("the bridge module account has not been set")
 	}
 }
