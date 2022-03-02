@@ -1,6 +1,7 @@
 package contract
 
 import (
+	// Embed ERC20 JSON files
 	_ "embed"
 	"encoding/json"
 
@@ -11,7 +12,7 @@ import (
 
 var (
 	//go:embed ethermint_json/ERC20MintableBurnable.json
-	ERC20MintableBurnableJSON []byte // nolint: golint
+	ERC20MintableBurnableJSON []byte
 
 	// ERC20MintableBurnableContract is the compiled erc20 contract
 	ERC20MintableBurnableContract evmtypes.CompiledContract
