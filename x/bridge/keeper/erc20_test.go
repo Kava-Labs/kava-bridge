@@ -53,6 +53,7 @@ type ERC20TestSuite struct {
 
 func (suite *ERC20TestSuite) SetupTest() {
 	suite.app = app.NewTestApp()
+	cdc := suite.app.AppCodec()
 
 	// consensus key
 	consPriv, err := ethsecp256k1.GenerateKey()
@@ -70,6 +71,12 @@ func (suite *ERC20TestSuite) SetupTest() {
 
 	suite.key2, err = ethsecp256k1.GenerateKey()
 	suite.Require().NoError(err)
+
+	coins := sdk.NewCoins(sdk.NewInt64Coin("ukava", 1000_000_000_000_000_000))
+	authGS := app.NewFundedGenStateWithSameCoins(cdc, coins, []sdk.AccAddress{
+		sdk.AccAddress(suite.key1.PubKey().Address()),
+		sdk.AccAddress(suite.key2.PubKey().Address()),
+	})
 
 	// Genesis states
 	evmGs := evmtypes.NewGenesisState(
@@ -93,34 +100,19 @@ func (suite *ERC20TestSuite) SetupTest() {
 	feemarketGenesis.Params.EnableHeight = 1
 	feemarketGenesis.Params.NoBaseFee = false
 
-	cdc := suite.app.AppCodec()
-	genesisState := app.NewDefaultGenesisState()
-	genesisState[types.ModuleName] = cdc.MustMarshalJSON(&bridgeGs)
-	genesisState[evmtypes.ModuleName] = cdc.MustMarshalJSON(evmGs)
-	genesisState[feemarkettypes.ModuleName] = cdc.MustMarshalJSON(feemarketGenesis)
+	gs := app.GenesisState{
+		types.ModuleName:          cdc.MustMarshalJSON(&bridgeGs),
+		evmtypes.ModuleName:       cdc.MustMarshalJSON(evmGs),
+		feemarkettypes.ModuleName: cdc.MustMarshalJSON(feemarketGenesis),
+	}
 
 	// Initialize the chain
-	stateBytes, err := json.Marshal(genesisState)
-	suite.Require().NoError(err)
-	suite.app.InitChain(
-		abci.RequestInitChain{
-			Time:          time.Now().UTC(),
-			Validators:    []abci.ValidatorUpdate{},
-			AppStateBytes: stateBytes,
-			ChainId:       "kavatest_8888-1",
-			// Set consensus params, which is needed by x/feemarket
-			ConsensusParams: &abci.ConsensusParams{
-				Block: &abci.BlockParams{
-					MaxBytes: 200000,
-					MaxGas:   20000000,
-				},
-			},
-		},
-	)
+	suite.app.InitializeFromGenesisStates(authGS, gs)
 
+	// InitializeFromGenesisStates commits first block so we start at 2 here
 	suite.ctx = suite.app.NewContext(false, tmproto.Header{
-		Height:          1,
-		ChainID:         "kavatest_8888-1",
+		Height:          suite.app.LastBlockHeight() + 1,
+		ChainID:         "kavatest_1-1",
 		Time:            time.Now().UTC(),
 		ProposerAddress: suite.consAddress.Bytes(),
 		Version: tmversion.Consensus{
@@ -215,7 +207,15 @@ func (suite *ERC20TestSuite) TestERC20Query() {
 	suite.Require().NoError(err)
 
 	// Send from an non-authorized account, ie. any account that isn't the bridge module account
-	suite.sendTx(contractAddr, addr, suite.key1, data)
+	res := suite.sendTx(contractAddr, addr, suite.key1, data)
+	decimalsRes, err := contract.ERC20MintableBurnableContract.ABI.Unpack("decimals", res.Ret)
+	suite.Require().NoError(err)
+	suite.Require().Len(decimalsRes, 1)
+
+	// Type should match abi json output
+	decimals, ok := decimalsRes[0].(uint8)
+	suite.Require().True(ok, "decimals should respond with first uint8")
+	suite.Require().Equal(uint8(18), decimals)
 }
 
 func (suite *ERC20TestSuite) TestERC20Mint_Unauthorized() {
@@ -236,7 +236,7 @@ func (suite *ERC20TestSuite) sendTx(
 	from common.Address,
 	signerKey *ethsecp256k1.PrivKey,
 	transferData []byte,
-) *evmtypes.MsgEthereumTx {
+) *evmtypes.MsgEthereumTxResponse {
 	ctx := sdk.WrapSDKContext(suite.ctx)
 	chainID := suite.app.EvmKeeper.ChainID()
 
@@ -260,7 +260,7 @@ func (suite *ERC20TestSuite) sendTx(
 	// Mint the max gas to the FeeCollector to ensure balance in case of refund
 	suite.MintFeeCollector(sdk.NewCoins(
 		sdk.NewCoin(
-			evmtypes.DefaultEVMDenom,
+			"ukava",
 			sdk.NewInt(baseFee.Int64()*int64(res.Gas)),
 		)))
 
@@ -268,11 +268,11 @@ func (suite *ERC20TestSuite) sendTx(
 		chainID,
 		nonce,
 		&contractAddr,
-		nil,
-		res.Gas,
-		nil,
-		suite.app.FeeMarketKeeper.GetBaseFee(suite.ctx),
-		big.NewInt(1),
+		nil,          // amount
+		res.Gas+1000, // gasLimit, TODO: runs out of gas without adding 1000
+		nil,          // gasPrice
+		suite.app.FeeMarketKeeper.GetBaseFee(suite.ctx), // gasFeeCap
+		big.NewInt(1), // gasTipCap
 		transferData,
 		&ethtypes.AccessList{}, // accesses
 	)
@@ -285,7 +285,7 @@ func (suite *ERC20TestSuite) sendTx(
 	suite.Require().NoError(err)
 	suite.Require().Empty(rsp.VmError)
 
-	return ercTransferTx
+	return rsp
 }
 
 func (suite *ERC20TestSuite) MintFeeCollector(coins sdk.Coins) {
