@@ -261,7 +261,7 @@ func (suite *ERC20TestSuite) TestERC20Query() {
 func (suite *ERC20TestSuite) TestERC20Mint_Unauthorized() {
 	contractAddr := suite.deployERC20()
 
-	// ERC20.mint() to key1
+	// ERC20.mint() from key1 to key2
 	addr := common.BytesToAddress(suite.key1.PubKey().Address())
 	receiver := common.BytesToAddress(suite.key2.PubKey().Address())
 	amount := big.NewInt(10)
