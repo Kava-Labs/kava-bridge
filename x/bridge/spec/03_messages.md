@@ -7,15 +7,17 @@ type. Only addresses assigned as a permissioned relayer set in [params] may
 submit this message, otherwise the transaction will be rejected.
 
 ```go
-// MsgERC20FromEthereum defines a cross-chain transfer of ERC20 tokens from Ethereum
-type MsgERC20FromEthereum struct {
-    Relayer              sdk.AccAddress
-    EthereumERC20Address string
-    Amount               sdk.Int
-    // Hex Kava address
-    Receiver             string
-    // Unique sequence per bridge event
-    Sequence             sdk.Int
+// MsgBridgeERC20FromEthereum defines a ERC20 bridge transfer from Ethereum.
+type MsgBridgeERC20FromEthereum struct {
+	Relayer string `protobuf:"bytes,1,opt,name=relayer,proto3" json:"relayer,omitempty"`
+	// Originating Ethereum ERC20 contract address
+	EthereumERC20Address string `protobuf:"bytes,2,opt,name=ethereum_erc20_address,json=ethereumErc20Address,proto3" json:"ethereum_erc20_address,omitempty"`
+	// ERC20 token amount to transfer
+	Amount github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,3,opt,name=amount,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"amount"`
+	// Receiver hex address on Kava
+	Receiver string `protobuf:"bytes,4,opt,name=receiver,proto3" json:"receiver,omitempty"`
+	// Unique sequence per bridge event
+	Sequence github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,5,opt,name=sequence,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"sequence"`
 }
 ```
 

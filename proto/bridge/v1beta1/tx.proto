@@ -1,0 +1,40 @@
+syntax = "proto3";
+package bridge.v1beta1;
+
+import "gogoproto/gogo.proto";
+import "cosmos_proto/cosmos.proto";
+
+option go_package                    = "github.com/kava-labs/kava-bridge/x/bridge/types";
+option (gogoproto.equal_all)         = true;
+option (gogoproto.verbose_equal_all) = true;
+
+// Msg defines the bridge Msg service.
+service Msg {
+  // BridgeERC20FromEthereum defines a method for bridging ERC20 tokens from
+  // Ethereum.
+  rpc BridgeERC20FromEthereum(MsgBridgeERC20FromEthereum) returns (MsgBridgeERC20FromEthereumResponse);
+}
+
+// MsgBridgeERC20FromEthereum defines a ERC20 bridge transfer from Ethereum.
+message MsgBridgeERC20FromEthereum {
+  string relayer = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  // Originating Ethereum ERC20 contract address
+  string ethereum_erc20_address = 2 [(gogoproto.customname) = "EthereumERC20Address"];
+  // ERC20 token amount to transfer
+  string amount = 3 [
+    (cosmos_proto.scalar)  = "cosmos.Int",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable)   = false
+  ];
+  // Receiver hex address on Kava
+  string receiver = 4;
+  // Unique sequence per bridge event
+  string sequence = 5 [
+    (cosmos_proto.scalar)  = "cosmos.Int",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable)   = false
+  ];
+}
+
+// MsgBridgeERC20FromEthereumResponse defines the response value from
+message MsgBridgeERC20FromEthereumResponse {}
