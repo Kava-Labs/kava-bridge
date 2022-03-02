@@ -1,7 +1,18 @@
-PROJECT_NAME=kava-bridge
-DOCKER:=docker
-DOCKER_BUF := $(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace bufbuild/buf
+################################################################################
+###                             Project Settings                             ###
+################################################################################
+PROJECT_NAME := kava-bridge
+PROJECT_DIR := $(patsubst %/,%,$(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
 
+################################################################################
+###                                   Help                                   ###
+################################################################################
+help: ## Display this help message
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
+
+################################################################################
+###                                 Targets                                  ###
+################################################################################
 .PHONY: install
 install: ## Install kava-bridge
 	go install -mod=readonly ./cmd/kava-bridged
@@ -40,54 +51,7 @@ cover: ## Run tests with coverage and save to coverage.html
 watch: ## Run tests on file changes
 	while sleep 0.5; do find . -type f -name '*.go' | entr -d go test ./...; done
 
-help: ## Display this help message
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
-
-###############################################################################
-###                                Protobuf                                 ###
-###############################################################################
-
-protoVer=v0.2
-protoImageName=tendermintdev/sdk-proto-gen:$(protoVer)
-containerProtoGen=$(PROJECT_NAME)-proto-gen-$(protoVer)
-containerProtoGenAny=$(PROJECT_NAME)-proto-gen-any-$(protoVer)
-containerProtoGenSwagger=$(PROJECT_NAME)-proto-gen-swagger-$(protoVer)
-containerProtoFmt=$(PROJECT_NAME)-proto-fmt-$(protoVer)
-
-proto-all: proto-gen proto-format proto-lint proto-swagger-gen
-
-proto-gen:
-	@echo "Generating Protobuf files"
-	@if docker ps -a --format '{{.Names}}' | grep -Eq "^${containerProtoGen}$$"; then docker start -a $(containerProtoGen); else docker run --name $(containerProtoGen) -v $(CURDIR):/workspace --workdir /workspace $(protoImageName) \
-		sh ./scripts/protocgen.sh; fi
-
-proto-swagger-gen:
-	@echo "Generating Protobuf Swagger"
-	@if docker ps -a --format '{{.Names}}' | grep -Eq "^${containerProtoGenSwagger}$$"; then docker start -a $(containerProtoGenSwagger); else docker run --name $(containerProtoGenSwagger) -v $(CURDIR):/workspace --workdir /workspace $(protoImageName) \
-		sh ./scripts/protoc-swagger-gen.sh; fi
-
-proto-format:
-	@echo "Formatting Protobuf files"
-	@if docker ps -a --format '{{.Names}}' | grep -Eq "^${containerProtoFmt}$$"; then docker start -a $(containerProtoFmt); else docker run --name $(containerProtoFmt) -v $(CURDIR):/workspace --workdir /workspace tendermintdev/docker-build-proto \
-		find ./ -not -path "./third_party/*" -name *.proto -exec clang-format -style=file -i {} \; ; fi
-
-proto-lint:
-	@$(DOCKER_BUF) lint --error-format=json
-
-proto-check-breaking:
-	@$(DOCKER_BUF) breaking --against $(HTTPS_GIT)#branch=upgrade-v44
-
-COSMOS_PROTO_URL = https://raw.githubusercontent.com/cosmos/cosmos-proto/master
-
-COSMOS_PROTO_TYPES = third_party/proto/cosmos_proto
-
-GOGO_PATH := $(shell go list -m -f '{{.Dir}}' github.com/gogo/protobuf)
-COSMOS_PROTO_PATH := $(shell go list -m -f '{{.Dir}}' github.com/cosmos/cosmos-proto)
-
-proto-update-deps:
-	mkdir -p $(COSMOS_PROTO_TYPES)
-	cp $(COSMOS_PROTO_PATH)/cosmos.proto $(COSMOS_PROTO_TYPES)/cosmos.proto
-
-	rsync -r --chmod 644 --include "*.proto" --include='*/' --exclude='*' $(GOGO_PATH)/gogoproto third_party/proto
-
-.PHONY: proto-all proto-gen proto-gen-any proto-swagger-gen proto-format proto-lint proto-check-breaking proto-update-deps
+################################################################################
+###                                 Includes                                 ###
+################################################################################
+include protobuf.mk
