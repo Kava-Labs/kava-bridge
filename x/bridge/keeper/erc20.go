@@ -55,6 +55,8 @@ func (k Keeper) DeployMintableERC20Contract(
 	return contractAddr, nil
 }
 
+// MintERC20 mints the given amount of an ERC20 token to an address. This is
+// unchecked and should only be called after permission and enabled ERC20 checks.
 func (k Keeper) MintERC20(
 	ctx sdk.Context,
 	contractAddr common.Address,

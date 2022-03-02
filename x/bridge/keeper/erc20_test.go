@@ -218,6 +218,7 @@ func (suite *ERC20TestSuite) queryContract(
 	// Send TX
 	res := suite.sendTx(contract, from, fromKey, data)
 
+	// Check for VM errors and unpack returned data
 	switch res.VmError {
 	case vm.ErrExecutionReverted.Error():
 		response, err := abi.UnpackRevert(res.Ret)
@@ -281,7 +282,7 @@ func (suite *ERC20TestSuite) TestERC20Mint() {
 	contractAddr := suite.deployERC20()
 
 	// We can't test mint by module account like the Unauthorized test as we
-	// cannot sign as the module account, instead we test the keeper method for
+	// cannot sign as the module account. Instead, we test the keeper method for
 	// minting.
 
 	receiver := common.BytesToAddress(suite.key2.PubKey().Address())
