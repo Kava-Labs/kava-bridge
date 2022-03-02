@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
@@ -201,13 +202,13 @@ func (suite *ERC20TestSuite) TestDeployERC20() {
 func (suite *ERC20TestSuite) TestERC20Query() {
 	contractAddr := suite.deployERC20()
 
-	// Test a tx on the ERC20 token
+	// Query ERC20.decimals()
 	addr := common.BytesToAddress(suite.key1.PubKey().Address())
 	data, err := contract.ERC20MintableBurnableContract.ABI.Pack("decimals")
 	suite.Require().NoError(err)
 
-	// Send from an non-authorized account, ie. any account that isn't the bridge module account
 	res := suite.sendTx(contractAddr, addr, suite.key1, data)
+	suite.Require().Empty(res.VmError)
 	decimalsRes, err := contract.ERC20MintableBurnableContract.ABI.Unpack("decimals", res.Ret)
 	suite.Require().NoError(err)
 	suite.Require().Len(decimalsRes, 1)
@@ -221,14 +222,19 @@ func (suite *ERC20TestSuite) TestERC20Query() {
 func (suite *ERC20TestSuite) TestERC20Mint_Unauthorized() {
 	contractAddr := suite.deployERC20()
 
-	// Test a tx on the ERC20 token
+	// ERC20.mint() to key1
 	addr := common.BytesToAddress(suite.key1.PubKey().Address())
 	amount := big.NewInt(10)
 	transferData, err := contract.ERC20MintableBurnableContract.ABI.Pack("mint", addr, &amount)
 	suite.Require().NoError(err)
 
 	// Send from an non-authorized account, ie. any account that isn't the bridge module account
-	suite.sendTx(contractAddr, addr, suite.key1, transferData)
+	res := suite.sendTx(contractAddr, addr, suite.key1, transferData)
+	suite.Require().Equal("execution reverted", res.VmError)
+	// Use geth unpacker to get revert errors
+	revertReason, err := abi.UnpackRevert(res.Ret)
+	suite.Require().NoError(err)
+	suite.Require().Equal("Ownable: caller is not the owner", revertReason)
 }
 
 func (suite *ERC20TestSuite) sendTx(
@@ -268,9 +274,9 @@ func (suite *ERC20TestSuite) sendTx(
 		chainID,
 		nonce,
 		&contractAddr,
-		nil,          // amount
-		res.Gas+1000, // gasLimit, TODO: runs out of gas without adding 1000
-		nil,          // gasPrice
+		nil,       // amount
+		res.Gas*2, // gasLimit, TODO: runs out of gas with just res.Gas, ex: estimated was 21572 but used 24814
+		nil,       // gasPrice
 		suite.app.FeeMarketKeeper.GetBaseFee(suite.ctx), // gasFeeCap
 		big.NewInt(1), // gasTipCap
 		transferData,
@@ -283,7 +289,7 @@ func (suite *ERC20TestSuite) sendTx(
 
 	rsp, err := suite.app.EvmKeeper.EthereumTx(ctx, ercTransferTx)
 	suite.Require().NoError(err)
-	suite.Require().Empty(rsp.VmError)
+	// Do not check vm error here since we want to check for errors later
 
 	return rsp
 }
