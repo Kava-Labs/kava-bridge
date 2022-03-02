@@ -3,16 +3,20 @@ package keeper_test
 import (
 	"encoding/hex"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"math/big"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/suite"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/stretchr/testify/suite"
 
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto/tmhash"
@@ -199,22 +203,56 @@ func (suite *ERC20TestSuite) TestDeployERC20() {
 	suite.deployERC20()
 }
 
+func (suite *ERC20TestSuite) queryContract(
+	contractAbi abi.ABI,
+	from common.Address,
+	fromKey *ethsecp256k1.PrivKey,
+	contract common.Address,
+	method string,
+	args ...interface{},
+) ([]interface{}, error) {
+	// Pack query args
+	data, err := contractAbi.Pack(method, args...)
+	suite.Require().NoError(err)
+
+	// Send TX
+	res := suite.sendTx(contract, from, fromKey, data)
+
+	switch res.VmError {
+	case vm.ErrExecutionReverted.Error():
+		response, err := abi.UnpackRevert(res.Ret)
+		suite.Require().NoError(err)
+
+		return nil, errors.New(response)
+	case "": // No error, continue
+	default:
+		panic(fmt.Sprintf("unhandled vm error response: %v", res.VmError))
+	}
+
+	// Unpack response
+	unpackedRes, err := contractAbi.Unpack(method, res.Ret)
+	suite.Require().NoError(err)
+
+	return unpackedRes, nil
+}
+
 func (suite *ERC20TestSuite) TestERC20Query() {
 	contractAddr := suite.deployERC20()
 
 	// Query ERC20.decimals()
 	addr := common.BytesToAddress(suite.key1.PubKey().Address())
-	data, err := contract.ERC20MintableBurnableContract.ABI.Pack("decimals")
+	res, err := suite.queryContract(
+		contract.ERC20MintableBurnableContract.ABI,
+		addr,
+		suite.key1,
+		contractAddr,
+		"decimals",
+	)
 	suite.Require().NoError(err)
-
-	res := suite.sendTx(contractAddr, addr, suite.key1, data)
-	suite.Require().Empty(res.VmError)
-	decimalsRes, err := contract.ERC20MintableBurnableContract.ABI.Unpack("decimals", res.Ret)
-	suite.Require().NoError(err)
-	suite.Require().Len(decimalsRes, 1)
+	suite.Require().Len(res, 1)
 
 	// Type should match abi json output
-	decimals, ok := decimalsRes[0].(uint8)
+	decimals, ok := res[0].(uint8)
 	suite.Require().True(ok, "decimals should respond with first uint8")
 	suite.Require().Equal(uint8(18), decimals)
 }
@@ -224,17 +262,49 @@ func (suite *ERC20TestSuite) TestERC20Mint_Unauthorized() {
 
 	// ERC20.mint() to key1
 	addr := common.BytesToAddress(suite.key1.PubKey().Address())
+	receiver := common.BytesToAddress(suite.key2.PubKey().Address())
 	amount := big.NewInt(10)
-	transferData, err := contract.ERC20MintableBurnableContract.ABI.Pack("mint", addr, &amount)
+	_, err := suite.queryContract(
+		contract.ERC20MintableBurnableContract.ABI,
+		addr,
+		suite.key1,
+		contractAddr,
+		"mint",
+		receiver,
+		&amount,
+	)
+	suite.Require().Error(err)
+	suite.Require().Equal("Ownable: caller is not the owner", err.Error())
+}
+
+func (suite *ERC20TestSuite) TestERC20Mint() {
+	contractAddr := suite.deployERC20()
+
+	// We can't test mint by module account like the Unauthorized test as we
+	// cannot sign as the module account, instead we test the keeper method for
+	// minting.
+
+	receiver := common.BytesToAddress(suite.key2.PubKey().Address())
+	amount := big.NewInt(1234)
+	err := suite.app.BridgeKeeper.MintERC20(suite.ctx, contractAddr, receiver, amount)
 	suite.Require().NoError(err)
 
-	// Send from an non-authorized account, ie. any account that isn't the bridge module account
-	res := suite.sendTx(contractAddr, addr, suite.key1, transferData)
-	suite.Require().Equal("execution reverted", res.VmError)
-	// Use geth unpacker to get revert errors
-	revertReason, err := abi.UnpackRevert(res.Ret)
+	// Query ERC20.balanceOf()
+	addr := common.BytesToAddress(suite.key1.PubKey().Address())
+	res, err := suite.queryContract(
+		contract.ERC20MintableBurnableContract.ABI,
+		addr,
+		suite.key1,
+		contractAddr,
+		"balanceOf",
+		receiver,
+	)
 	suite.Require().NoError(err)
-	suite.Require().Equal("Ownable: caller is not the owner", revertReason)
+	suite.Require().Len(res, 1)
+
+	balance, ok := res[0].(*big.Int)
+	suite.Require().True(ok, "balanceOf should respond with *big.Int")
+	suite.Require().Equal(big.NewInt(1234), balance)
 }
 
 func (suite *ERC20TestSuite) sendTx(

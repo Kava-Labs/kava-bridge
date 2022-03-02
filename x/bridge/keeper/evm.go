@@ -6,14 +6,40 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/kava-labs/kava-bridge/x/bridge/types"
 
 	"github.com/tharsis/ethermint/server/config"
 	evmtypes "github.com/tharsis/ethermint/x/evm/types"
 
+	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 )
+
+// CallEVM performs a smart contract method call using given args
+func (k Keeper) CallEVM(
+	ctx sdk.Context,
+	abi abi.ABI,
+	from,
+	contract common.Address,
+	method string,
+	args ...interface{},
+) (*evmtypes.MsgEthereumTxResponse, error) {
+	data, err := abi.Pack(method, args...)
+	if err != nil {
+		return nil, sdkerrors.Wrap(
+			types.ErrABIPack,
+			sdkerrors.Wrap(err, "failed to create transaction data").Error(),
+		)
+	}
+
+	resp, err := k.CallEVMWithData(ctx, from, &contract, data)
+	if err != nil {
+		return nil, sdkerrors.Wrapf(err, "contract call failed: method '%s', contract '%s'", method, contract)
+	}
+	return resp, nil
+}
 
 // CallEVMWithData performs a smart contract method call using contract data
 // Derived from tharsis/evmos

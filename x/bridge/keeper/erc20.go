@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"fmt"
+	"math/big"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -21,7 +22,7 @@ func (k Keeper) DeployMintableERC20Contract(
 	token types.EnabledERC20Token,
 ) (common.Address, error) {
 	ctorArgs, err := contract.ERC20MintableBurnableContract.ABI.Pack(
-		"", // Empty string for constructor
+		"", // Empty string for contract constructor
 		token.Name,
 		token.Symbol,
 		uint8(token.Decimals),
@@ -52,4 +53,24 @@ func (k Keeper) DeployMintableERC20Contract(
 	}
 
 	return contractAddr, nil
+}
+
+func (k Keeper) MintERC20(
+	ctx sdk.Context,
+	contractAddr common.Address,
+	receiver common.Address,
+	amount *big.Int,
+) error {
+	_, err := k.CallEVM(
+		ctx,
+		contract.ERC20MintableBurnableContract.ABI,
+		types.ModuleEVMAddress,
+		contractAddr,
+		"mint",
+		// Mint ERC20 args
+		receiver,
+		amount,
+	)
+
+	return err
 }
