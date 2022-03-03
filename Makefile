@@ -60,6 +60,9 @@ compile-contracts: contract/ethermint_json/ERC20MintableBurnable.json ## Compile
 contract/artifacts/contracts/ERC20MintableBurnable.sol/ERC20MintableBurnable.json:
 	cd contract && $(NPM) run compile
 
+# Ethermint has their own json format for a compiled contract. The following
+# converts the abi field to a stringified array, renames bytecode field name to
+# bin with the leading `0x` trimmed.
 contract/ethermint_json/ERC20MintableBurnable.json: contract/artifacts/contracts/ERC20MintableBurnable.sol/ERC20MintableBurnable.json
 	mkdir -p contract/ethermint_json
 	$(JQ) '.abi = (.abi | tostring) | {abi, bin: .bytecode[2:] }' < $< > $@
