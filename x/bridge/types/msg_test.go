@@ -159,3 +159,19 @@ func TestMsgBridgeERC20FromEthereum(t *testing.T) {
 		})
 	}
 }
+
+func TestMsgBridgeERC20FromEthereumSigners(t *testing.T) {
+	relayer := sdk.AccAddress("hi")
+
+	msg := types.NewMsgBridgeERC20FromEthereum(
+		relayer.String(),
+		"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+		sdk.NewInt(1234),
+		"0x4A59E9DDB116A04C5D40082D67C738D5C56DF124",
+		sdk.NewInt(1),
+	)
+
+	signers := msg.GetSigners()
+	require.Len(t, signers, 1)
+	require.Equal(t, relayer, signers[0])
+}
