@@ -7,8 +7,12 @@ on:
     branches: [ main ]
 
 jobs:
-  contract:
+  contract-test:
+    name: Test Contracts
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./contract
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
@@ -16,9 +20,27 @@ jobs:
           node-version: '16'
           cache: 'npm'
           cache-dependency-path: contract/package-lock.json
-      - run: cd contract && npm install
-      - run: cd contract && npm test
+      - run: npm ci
+      - run: npm test
+  contract-lint:
+    name: Lint Contracts
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./contract
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '16'
+          cache: 'npm'
+          cache-dependency-path: contract/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run prettier
+      - run: npm run solhint
   relayer:
+    name: Test Relayer
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -37,6 +59,7 @@ jobs:
       - run: make vet
       - run: make test
   relayer-lint:
+    name: Lint Relayer
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2

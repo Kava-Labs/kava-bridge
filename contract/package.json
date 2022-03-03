@@ -2,7 +2,7 @@
   "name": "kava-bridge-contract",
   "version": "0.0.1",
   "engines": {
-    "node": ">=14.0.0"
+    "node": ">=16.0.0"
   },
   "description": "Kava Bridge Ethereum contract for cross-chain transfers.",
   "private": true,
@@ -11,10 +11,11 @@
     "lint-fix": "eslint '**/*.{js,ts}' --fix",
     "prettier": "prettier '**/*.{json,sol,md}' --check",
     "prettier-fix": "prettier '**/*.{json,sol,md}' --write",
-    "solhint": "solhint 'contracts/**/*.sol'",
+    "solhint": "solhint 'contracts/**/*.sol' --max-warnings 0",
     "solhint-fix": "solhint 'contracts/**/*.sol' --fix",
     "coverage": "hardhat coverage",
     "dev": "hardhat watch dev",
+    "clean": "hardhat clean",
     "compile": "hardhat compile",
     "gen-ts-types": "hardhat typechain",
     "test": "hardhat test",

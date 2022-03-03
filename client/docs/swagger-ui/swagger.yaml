@@ -1,0 +1,11 @@
+swagger: '2.0'
+info:
+  title: Kava Bridge - REST API
+  description: A REST interface for state queries
+  version: 0.0.0
+externalDocs:
+  description: GitHub
+  url: https://github.com/Kava-Labs/kava-bridge
+host: localhost:1317
+schemes:
+  - http
