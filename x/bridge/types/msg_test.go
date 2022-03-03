@@ -175,3 +175,17 @@ func TestMsgBridgeERC20FromEthereumSigners(t *testing.T) {
 	require.Len(t, signers, 1)
 	require.Equal(t, relayer, signers[0])
 }
+
+func TestMsgBridgeERC20FromEthereumSigners_Invalid(t *testing.T) {
+	msg := types.NewMsgBridgeERC20FromEthereum(
+		"not a valid address",
+		"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+		sdk.NewInt(1234),
+		"0x4A59E9DDB116A04C5D40082D67C738D5C56DF124",
+		sdk.NewInt(1),
+	)
+
+	require.Panics(t, func() {
+		msg.GetSigners()
+	})
+}
