@@ -40,4 +40,4 @@ bin with the leading `0x` trimmed.
 jq '.abi = (.abi | tostring) | {abi, bin: .bytecode[2:] }' < artifacts/contracts/ERC20MintableBurnable.sol/ERC20MintableBurnable.json > ethermint_json/ERC20MintableBurnable.json
 ```
 
-This is performed by the root Makefile in the `make compile-contracts command`.
+This is performed by the root Makefile in the `make compile-contracts` command.
