@@ -55,7 +55,7 @@ JQ ?= jq
 NPM ?= npm
 
 .PHONY: compile-contracts
-compile-contracts: contract/ethermint_json/ERC20MintableBurnable.json ## Compiles contracts and creates ethereum_json
+compile-contracts: contract/ethermint_json/ERC20MintableBurnable.json ## Compiles contracts and creates ethermint compatible json
 
 contract/artifacts/contracts/ERC20MintableBurnable.sol/ERC20MintableBurnable.json:
 	cd contract && $(NPM) run compile
