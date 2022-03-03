@@ -169,9 +169,7 @@ func (suite *genesisTestSuite) Test_InitGenesis_Validation() {
 					bridge.InitGenesis(suite.Ctx, suite.App.BridgeKeeper, suite.App.AccountKeeper, tc.genesisState)
 				}, "expected init genesis to panic with invalid state")
 			}
-
 		})
-
 	}
 }
 
@@ -238,7 +236,6 @@ func (suite *genesisTestSuite) Test_Marshall() {
 }
 
 func (suite *genesisTestSuite) Test_LegacyJSONConversion() {
-	// slices are sorted by key as stored in the data store, so init and export can be compared with equal
 	state := types.NewGenesisState(
 		types.Params{
 			EnabledERC20Tokens: types.EnabledERC20Tokens{
