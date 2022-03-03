@@ -1,4 +1,4 @@
-package main
+package relayer
 
 import (
 	"errors"
@@ -9,6 +9,10 @@ var ErrKavaNotInitialized = errors.New("kava blocks must be added before adding 
 var ErrEthBlockAhead = errors.New("eth block must have a timestamp less than the last kava block")
 var ErrInvalidBlockHeight = errors.New("block height must be 1 greater than last block")
 var ErrInvalidBlockTime = errors.New("timestamp must be greater than last timestamp")
+
+// success
+// failed_retriable
+// failed_permament
 
 // ethBlock represents an ethereum block with incoming transfers at specific height and time
 type ethBlock struct {
@@ -46,7 +50,7 @@ func NewKavaActions(actions ...kavaAction) kavaActions {
 	return actions
 }
 
-// Relayer provides an interface to add source and destination blocks for
+// Coordinator provides an interface to add source and destination blocks for
 // a chain.  Each addition, emits actions identified by the source sequence.
 // The nounce is unique to every transfer.
 //
@@ -69,25 +73,26 @@ func NewKavaActions(actions ...kavaAction) kavaActions {
 // We must sequence transactions from ethereum to kava --
 //
 // When we see a failure in a kava block, then we must pick moment in the ethereum block
-// history to sequence the transaction that all relayers can agree on.  In order to do this,
+// history to sequence the transaction that all coordinators can agree on.  In order to do this,
 // we emit these actions in the first ethereum block after the kava block at expereinced the failures.
 //
 // This results in a delay of about ~confirmation time~ until the transaction is retried again.
-type relayer struct {
+type coordinator struct {
 	lastKavaBlockHeight uint64
 	lastKavaBlockTime   time.Time
 	lastEthBlockHeight  uint64
 	lastEthBlockTime    time.Time
 }
 
-// NewRelayer returns a new relayer
-func NewRelayer() *relayer {
-	return &relayer{}
+// NewCoordinator returns a new coordinator
+// How do we initialize the coordinator state?
+func NewCoordinator() *coordinator {
+	return &coordinator{}
 }
 
-// AddEthBlock adds an ethereum block to the relayer, returning any actions required
+// AddEthBlock adds an ethereum block to the coordinator, returning any actions required
 // to be send to the kava chain
-func (r *relayer) AddEthBlock(blk ethBlock) (kavaActions, error) {
+func (r *coordinator) AddEthBlock(blk ethBlock) (kavaActions, error) {
 	if r.lastKavaBlockTime.IsZero() {
 		return nil, ErrKavaNotInitialized
 	}
@@ -110,9 +115,9 @@ func (r *relayer) AddEthBlock(blk ethBlock) (kavaActions, error) {
 	return nil, nil
 }
 
-// AddKavaBlock adds kava block state to the relayer, never returning any actions
+// AddKavaBlock adds kava block state to the coordinator, never returning any actions
 // we must ensure that kava blocks stay ahead of ethereum blocks
-func (r *relayer) AddKavaBlock(blk kavaBlock) error {
+func (r *coordinator) AddKavaBlock(blk kavaBlock) error {
 	if blk.height != r.lastKavaBlockHeight+1 {
 		return ErrInvalidBlockHeight
 	}
@@ -125,7 +130,4 @@ func (r *relayer) AddKavaBlock(blk kavaBlock) error {
 	r.lastKavaBlockTime = blk.blockTime
 
 	return nil
-}
-
-func main() {
 }
