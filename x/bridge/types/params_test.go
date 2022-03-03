@@ -56,6 +56,30 @@ func (suite *ParamsTestSuite) TestParamValidation() {
 			},
 		},
 		{
+			"invalid - duplicate token address",
+			args{
+				enabledERC20Tokens: types.EnabledERC20Tokens{
+					types.NewEnabledERC20Token(
+						"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+						"Wrapped Ether",
+						"WETH",
+						18,
+					),
+					types.NewEnabledERC20Token(
+						"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+						"Wrapped Ether",
+						"WETH",
+						18,
+					),
+				},
+				relayer: sdk.AccAddress("1234"),
+			},
+			errArgs{
+				expectPass: false,
+				contains:   "found duplicate enabled ERC20 token address",
+			},
+		},
+		{
 			"invalid - hex length mismatch",
 			args{
 				enabledERC20Tokens: types.EnabledERC20Tokens{
