@@ -11,10 +11,12 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-// Parameter keys
+// Parameter keys and default values
 var (
-	KeyEnabledERC20Tokens = []byte("EnabledERC20Tokens")
-	KeyRelayer            = []byte("Relayer")
+	KeyEnabledERC20Tokens     = []byte("EnabledERC20Tokens")
+	KeyRelayer                = []byte("Relayer")
+	DefaultEnabledERC20Tokens = EnabledERC20Tokens{}
+	DefaultRelayer            = sdk.AccAddress{}
 )
 
 // ParamKeyTable for bridge module.
@@ -41,8 +43,7 @@ func NewParams(enabledERC20Tokens EnabledERC20Tokens, relayer sdk.AccAddress) Pa
 
 // DefaultParams returns the default parameters for bridge.
 func DefaultParams() Params {
-	// TODO: Default relayer? nil relayer will fail validation
-	return NewParams(nil, nil)
+	return NewParams(DefaultEnabledERC20Tokens, DefaultRelayer)
 }
 
 func (p *Params) Validate() error {

@@ -171,6 +171,16 @@ func (suite *ParamsTestSuite) TestParamValidation() {
 	}
 }
 
+func (suite *ParamsTestSuite) TestDefault() {
+	defaultParams := types.DefaultParams()
+
+	suite.Require().NoError(defaultParams.Validate())
+
+	suite.Require().Empty(defaultParams.EnabledERC20Tokens)
+	suite.Require().Equal(types.DefaultEnabledERC20Tokens, defaultParams.EnabledERC20Tokens)
+	suite.Require().Equal(types.DefaultRelayer, defaultParams.Relayer)
+}
+
 func TestParamsTestSuite(t *testing.T) {
 	suite.Run(t, new(ParamsTestSuite))
 }
