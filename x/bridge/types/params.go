@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
@@ -72,10 +73,19 @@ type EnabledERC20Tokens []EnabledERC20Token
 // Validate returns an error if any token in a slice of EnabledERC20Tokens is
 // invalid.
 func (tokens EnabledERC20Tokens) Validate() error {
+	// Check for duplicates
+	addrs := map[string]bool{}
+
 	for _, token := range tokens {
+		if addrs[strings.ToLower(token.Address)] {
+			return fmt.Errorf("found duplicate enabled ERC20 token address %s", token.Address)
+		}
+
 		if err := token.Validate(); err != nil {
 			return err
 		}
+
+		addrs[strings.ToLower(token.Address)] = true
 	}
 
 	return nil
@@ -84,7 +94,8 @@ func (tokens EnabledERC20Tokens) Validate() error {
 // NewEnabledERC20Token returns a new EnabledERC20Token.
 func NewEnabledERC20Token(address string, name string, symbol string, decimals uint32) EnabledERC20Token {
 	return EnabledERC20Token{
-		Address:  address,
+		// Lowercased, address checksum is ignored
+		Address:  strings.ToLower(address),
 		Name:     name,
 		Symbol:   symbol,
 		Decimals: decimals,
