@@ -8,11 +8,11 @@ pragma solidity ^0.8.9;
 contract WKAVA {
     string public name = "Wrapped Kava";
     string public symbol = "WKAVA";
-    uint8 public decimals = 18;
+    uint8 public decimals = 6;
 
     event Approval(address indexed src, address indexed account, uint256 wad);
     event Transfer(address indexed src, address indexed dst, uint256 wad);
-    event Deposit(address indexed dst, uint256 wad);
+    event Deposit(address indexed src, uint256 wad);
     event Withdrawal(address indexed src, uint256 wad);
 
     mapping(address => uint256) public balanceOf;
