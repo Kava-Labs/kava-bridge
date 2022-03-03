@@ -13,6 +13,7 @@ export type { ERC20NoReturnMock } from "./ERC20NoReturnMock";
 export type { ERC20ReturnFalseMock } from "./ERC20ReturnFalseMock";
 export type { ERC20ReturnTrueMock } from "./ERC20ReturnTrueMock";
 export type { SequenceMock } from "./SequenceMock";
+export type { WKAVA } from "./WKAVA";
 
 export { Ownable__factory } from "./factories/Ownable__factory";
 export { ERC20__factory } from "./factories/ERC20__factory";
@@ -26,3 +27,4 @@ export { ERC20NoReturnMock__factory } from "./factories/ERC20NoReturnMock__facto
 export { ERC20ReturnFalseMock__factory } from "./factories/ERC20ReturnFalseMock__factory";
 export { ERC20ReturnTrueMock__factory } from "./factories/ERC20ReturnTrueMock__factory";
 export { SequenceMock__factory } from "./factories/SequenceMock__factory";
+export { WKAVA__factory } from "./factories/WKAVA__factory";

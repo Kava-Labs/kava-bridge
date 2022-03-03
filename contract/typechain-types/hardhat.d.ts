@@ -60,6 +60,10 @@ declare module "hardhat/types/runtime" {
       name: "SequenceMock",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.SequenceMock__factory>;
+    getContractFactory(
+      name: "WKAVA",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.WKAVA__factory>;
 
     getContractAt(
       name: "Ownable",
@@ -121,6 +125,11 @@ declare module "hardhat/types/runtime" {
       address: string,
       signer?: ethers.Signer
     ): Promise<Contracts.SequenceMock>;
+    getContractAt(
+      name: "WKAVA",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.WKAVA>;
 
     // default types
     getContractFactory(
