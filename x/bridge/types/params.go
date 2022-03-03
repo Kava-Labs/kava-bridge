@@ -71,6 +71,11 @@ func validateEnabledERC20Tokens(i interface{}) error {
 // EnabledERC20Tokens defines a slice of EnabledERC20Token
 type EnabledERC20Tokens []EnabledERC20Token
 
+// NewEnabledERC20Tokens returns EnabledERC20Tokens from the provided values
+func NewEnabledERC20Tokens(enabledERC20Tokens ...EnabledERC20Token) EnabledERC20Tokens {
+	return EnabledERC20Tokens(enabledERC20Tokens)
+}
+
 // Validate returns an error if any token in a slice of EnabledERC20Tokens is
 // invalid.
 func (tokens EnabledERC20Tokens) Validate() error {
