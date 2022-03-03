@@ -51,6 +51,19 @@ cover: ## Run tests with coverage and save to coverage.html
 watch: ## Run tests on file changes
 	while sleep 0.5; do find . -type f -name '*.go' | entr -d go test ./...; done
 
+JQ ?= jq
+NPM ?= npm
+
+.PHONY: compile-contracts
+compile-contracts: contract/ethermint_json/ERC20MintableBurnable.json ## Compiles contracts and creates ethereum_json
+
+contract/artifacts/contracts/ERC20MintableBurnable.sol/ERC20MintableBurnable.json:
+	cd contract && $(NPM) run compile
+
+contract/ethermint_json/ERC20MintableBurnable.json: contract/artifacts/contracts/ERC20MintableBurnable.sol/ERC20MintableBurnable.json
+	mkdir -p contract/ethermint_json
+	$(JQ) '.abi = (.abi | tostring) | {abi, bin: .bytecode[2:] }' < $< > $@
+
 ################################################################################
 ###                                 Includes                                 ###
 ################################################################################

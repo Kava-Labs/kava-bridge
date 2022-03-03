@@ -37,5 +37,7 @@ converts the abi field to a stringified array, renames bytecode field name to
 bin with the leading `0x` trimmed.
 
 ```bash
-cat artifacts/contracts/ERC20MintableBurnable.sol/ERC20MintableBurnable.json | jq '.abi = (.abi | tostring) | {abi, bin: .bytecode[2:] }' > ethermint_json/ERC20MintableBurnable.json
+jq '.abi = (.abi | tostring) | {abi, bin: .bytecode[2:] }' < artifacts/contracts/ERC20MintableBurnable.sol/ERC20MintableBurnable.json > ethermint_json/ERC20MintableBurnable.json
 ```
+
+This is performed by the root Makefile in the `make compile-contracts command`.
