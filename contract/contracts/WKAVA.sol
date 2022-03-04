@@ -32,7 +32,7 @@ contract WKAVA {
     /// @notice Convert wkava back to KAVA
     /// @param wad The amount of wkava to withdraw
     function withdraw(uint256 wad) public {
-        require(balanceOf[msg.sender] >= wad);
+        require(balanceOf[msg.sender] >= wad, "WKAVA: amount < balance");
         balanceOf[msg.sender] -= wad;
         payable(msg.sender).transfer(wad);
         emit Withdrawal(msg.sender, wad);
@@ -68,12 +68,12 @@ contract WKAVA {
         address dst,
         uint256 wad
     ) public returns (bool) {
-        require(balanceOf[src] >= wad);
+        require(balanceOf[src] >= wad, "WKAVA: amount < balance");
 
         if (
             src != msg.sender && allowance[src][msg.sender] != type(uint256).max
         ) {
-            require(allowance[src][msg.sender] >= wad);
+            require(allowance[src][msg.sender] >= wad, "WKAVA: amount < allowance");
             allowance[src][msg.sender] -= wad;
         }
 
