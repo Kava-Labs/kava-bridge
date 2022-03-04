@@ -21,8 +21,8 @@ import (
 func (k Keeper) CallEVM(
 	ctx sdk.Context,
 	abi abi.ABI,
-	from,
-	contract common.Address,
+	from common.Address,
+	contract types.InternalEVMAddress,
 	method string,
 	args ...interface{},
 ) (*evmtypes.MsgEthereumTxResponse, error) {
@@ -47,7 +47,7 @@ func (k Keeper) CallEVM(
 func (k Keeper) CallEVMWithData(
 	ctx sdk.Context,
 	from common.Address,
-	contract *common.Address,
+	contract *types.InternalEVMAddress,
 	data []byte,
 ) (*evmtypes.MsgEthereumTxResponse, error) {
 	nonce, err := k.accountKeeper.GetSequence(ctx, from.Bytes())
@@ -55,9 +55,14 @@ func (k Keeper) CallEVMWithData(
 		return nil, err
 	}
 
+	var to common.Address
+	if contract != nil {
+		to = contract.Address
+	}
+
 	args, err := json.Marshal(evmtypes.TransactionArgs{
 		From: &from,
-		To:   contract,
+		To:   &to,
 		Data: (*hexutil.Bytes)(&data),
 	})
 	if err != nil {
@@ -74,7 +79,7 @@ func (k Keeper) CallEVMWithData(
 
 	msg := ethtypes.NewMessage(
 		from,
-		contract,
+		&to,
 		nonce,
 		big.NewInt(0), // amount
 		gasRes.Gas,    // gasLimit
