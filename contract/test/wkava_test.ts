@@ -1,15 +1,12 @@
 import { expect } from "chai";
 import { Signer, ContractReceipt, ContractTransaction } from "ethers";
 import { ethers } from "hardhat";
-import {
-  WKAVA,
-  WKAVA__factory as WKAVAFactory,
-} from "../typechain-types";
+import { WKAVA, WKAVA__factory as WKAVAFactory } from "../typechain-types";
 
 describe("WKAVA", function () {
- let wkava: WKAVA;
- let wkavaFactory: WKAVAFactory;
- let addr1: Signer;
+  let wkava: WKAVA;
+  let wkavaFactory: WKAVAFactory;
+  let addr1: Signer;
 
   beforeEach(async function () {
     wkavaFactory = await ethers.getContractFactory("WKAVA");
@@ -59,8 +56,10 @@ describe("WKAVA", function () {
 
     it("should emit Deposit event", async function () {
       const depositAmt = 5000;
-      const tx: ContractTransaction = await wkava.connect(addr1).deposit({ value: depositAmt });
-      let receipt: ContractReceipt = await tx.wait();
+      const tx: ContractTransaction = await wkava
+        .connect(addr1)
+        .deposit({ value: depositAmt });
+      const receipt: ContractReceipt = await tx.wait();
 
       const event = receipt.events?.find((x: any) => {
         return x.event === "Deposit";
@@ -72,8 +71,7 @@ describe("WKAVA", function () {
   });
 
   describe("withdraw", function () {
-
-    let depositAmt = 5000;
+    const depositAmt = 5000;
 
     beforeEach(async function () {
       await wkava.connect(addr1).deposit({ value: depositAmt });
@@ -83,11 +81,11 @@ describe("WKAVA", function () {
       const userBalanceBefore = await wkava.balanceOf(await addr1.getAddress());
       expect(userBalanceBefore).to.equal(depositAmt);
 
-      const withdrawAmt = depositAmt/2;
+      const withdrawAmt = depositAmt / 2;
       await wkava.connect(addr1).withdraw(withdrawAmt);
 
       const userBalanceAfter = await wkava.balanceOf(await addr1.getAddress());
-      expect(userBalanceAfter).to.equal(depositAmt-withdrawAmt);
+      expect(userBalanceAfter).to.equal(depositAmt - withdrawAmt);
 
       await wkava.connect(addr1).withdraw(withdrawAmt);
       const userBalanceFinal = await wkava.balanceOf(await addr1.getAddress());
@@ -95,8 +93,10 @@ describe("WKAVA", function () {
     });
 
     it("should emit Withdrawal event", async function () {
-      const tx: ContractTransaction = await wkava.connect(addr1).withdraw(depositAmt);
-      let receipt: ContractReceipt = await tx.wait();
+      const tx: ContractTransaction = await wkava
+        .connect(addr1)
+        .withdraw(depositAmt);
+      const receipt: ContractReceipt = await tx.wait();
 
       const event = receipt.events?.find((x: any) => {
         return x.event === "Withdrawal";
