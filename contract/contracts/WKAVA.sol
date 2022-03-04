@@ -73,7 +73,10 @@ contract WKAVA {
         if (
             src != msg.sender && allowance[src][msg.sender] != type(uint256).max
         ) {
-            require(allowance[src][msg.sender] >= wad, "WKAVA: amount < allowance");
+            require(
+                allowance[src][msg.sender] >= wad,
+                "WKAVA: amount < allowance"
+            );
             allowance[src][msg.sender] -= wad;
         }
 
