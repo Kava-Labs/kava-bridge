@@ -55,16 +55,22 @@ func (k Keeper) CallEVMWithData(
 		return nil, err
 	}
 
-	var to common.Address
+	// To param needs to be nil to correctly apply txs to create contracts
+	// Default common.Address value is 0x0000000000000000000000000000000000000000, not nil
+	// which Ethermint handles differently -- erc20_test will fail
+	// https://github.com/tharsis/ethermint/blob/caa1c5a6c6b7ed8ba4aaf6e0b0848f6be5ba6668/x/evm/keeper/state_transition.go#L357
+	var to *common.Address
 	if contract != nil {
-		to = contract.Address
+		to = &contract.Address
 	}
 
-	args, err := json.Marshal(evmtypes.TransactionArgs{
+	transactionArgs := evmtypes.TransactionArgs{
 		From: &from,
-		To:   &to,
+		To:   to,
 		Data: (*hexutil.Bytes)(&data),
-	})
+	}
+
+	args, err := json.Marshal(transactionArgs)
 	if err != nil {
 		return nil, err
 	}
@@ -79,7 +85,7 @@ func (k Keeper) CallEVMWithData(
 
 	msg := ethtypes.NewMessage(
 		from,
-		&to,
+		to,
 		nonce,
 		big.NewInt(0), // amount
 		gasRes.Gas,    // gasLimit
