@@ -42,8 +42,8 @@ func (brd BridgeRelayerDecorator) AnteHandle(
 
 			if !relayer.Equals(signerAddrs[0]) {
 				return ctx, sdkerrors.Wrapf(
-					bridgetypes.ErrUnauthorizedSigner,
-					"unauthorized signer",
+					sdkerrors.ErrUnauthorized,
+					"signer not authorized for bridge message",
 				)
 			}
 		}
