@@ -196,7 +196,7 @@ func (suite *Suite) Commit() {
 func (suite *Suite) GetERC20BalanceOf(
 	contractAbi abi.ABI,
 	contractAddr types.InternalEVMAddress,
-	accountAddr common.Address,
+	accountAddr types.InternalEVMAddress,
 ) *big.Int {
 	// Query ERC20.balanceOf()
 	addr := common.BytesToAddress(suite.Key1.PubKey().Address())
@@ -206,7 +206,7 @@ func (suite *Suite) GetERC20BalanceOf(
 		suite.Key1,
 		contractAddr,
 		"balanceOf",
-		accountAddr,
+		accountAddr.Address,
 	)
 	suite.Require().NoError(err)
 	suite.Require().Len(res, 1)
