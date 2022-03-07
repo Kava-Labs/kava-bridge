@@ -45,11 +45,11 @@ func NewKeeper(
 	}
 }
 
-// GetOrCreateInternalERC20Address returns the internal EVM address
+// GetOrDeployInternalERC20 returns the internal EVM address
 // mapped to the provided ExternalEVMAddress. This will either return from the
 // store if it is already deployed, or will first deploy the internal ERC20
 // contract and return the new address.
-func (k Keeper) GetOrCreateInternalERC20Address(
+func (k Keeper) GetOrDeployInternalERC20(
 	ctx sdk.Context,
 	externalAddress types.ExternalEVMAddress,
 ) (types.InternalEVMAddress, error) {

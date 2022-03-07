@@ -46,7 +46,7 @@ func (s msgServer) BridgeERC20FromEthereum(
 		return nil, fmt.Errorf("invalid EthereumERC20Address: %w", err)
 	}
 
-	internalAddress, err := s.keeper.GetOrCreateInternalERC20Address(ctx, externalAddress)
+	internalAddress, err := s.keeper.GetOrDeployInternalERC20(ctx, externalAddress)
 	if err != nil {
 		return nil, err
 	}
