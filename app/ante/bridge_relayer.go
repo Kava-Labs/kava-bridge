@@ -8,18 +8,20 @@ import (
 	bridgetypes "github.com/kava-labs/kava-bridge/x/bridge/types"
 )
 
-// BridgeRelayerDecorator will validate bridge messages are from permissioned
-// signer.
+// BridgeRelayerDecorator will validate bridge messages are from the signer set
+// in params.
 type BridgeRelayerDecorator struct {
 	bk bridgekeeper.Keeper
 }
 
+// NewBridgeRelayerDecorator returns a new BridgeRelayerDecorator.
 func NewBridgeRelayerDecorator(bk bridgekeeper.Keeper) BridgeRelayerDecorator {
 	return BridgeRelayerDecorator{
 		bk: bk,
 	}
 }
 
+// AnteHandle runs the antehandler for the bridge relayer.
 func (brd BridgeRelayerDecorator) AnteHandle(
 	ctx sdk.Context,
 	tx sdk.Tx,
