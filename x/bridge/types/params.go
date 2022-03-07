@@ -4,16 +4,19 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"github.com/ethereum/go-ethereum/common"
 )
 
-// Parameter keys
+// Parameter keys and default values
 var (
-	KeyEnabledERC20Tokens = []byte("EnabledERC20Tokens")
-	KeyRelayer            = []byte("Relayer")
+	KeyEnabledERC20Tokens     = []byte("EnabledERC20Tokens")
+	KeyRelayer                = []byte("Relayer")
+	DefaultEnabledERC20Tokens = EnabledERC20Tokens{}
+	DefaultRelayer            = sdk.AccAddress{}
 )
 
 // ParamKeyTable for bridge module.
@@ -36,6 +39,11 @@ func NewParams(enabledERC20Tokens EnabledERC20Tokens, relayer sdk.AccAddress) Pa
 		EnabledERC20Tokens: enabledERC20Tokens,
 		Relayer:            relayer,
 	}
+}
+
+// DefaultParams returns the default parameters for bridge.
+func DefaultParams() Params {
+	return NewParams(DefaultEnabledERC20Tokens, DefaultRelayer)
 }
 
 func (p *Params) Validate() error {
@@ -63,13 +71,27 @@ func validateEnabledERC20Tokens(i interface{}) error {
 // EnabledERC20Tokens defines a slice of EnabledERC20Token
 type EnabledERC20Tokens []EnabledERC20Token
 
+// NewEnabledERC20Tokens returns EnabledERC20Tokens from the provided values
+func NewEnabledERC20Tokens(enabledERC20Tokens ...EnabledERC20Token) EnabledERC20Tokens {
+	return EnabledERC20Tokens(enabledERC20Tokens)
+}
+
 // Validate returns an error if any token in a slice of EnabledERC20Tokens is
 // invalid.
 func (tokens EnabledERC20Tokens) Validate() error {
+	// Check for duplicates
+	addrs := map[string]bool{}
+
 	for _, token := range tokens {
+		if addrs[strings.ToLower(token.Address)] {
+			return fmt.Errorf("found duplicate enabled ERC20 token address %s", token.Address)
+		}
+
 		if err := token.Validate(); err != nil {
 			return err
 		}
+
+		addrs[strings.ToLower(token.Address)] = true
 	}
 
 	return nil
@@ -78,7 +100,8 @@ func (tokens EnabledERC20Tokens) Validate() error {
 // NewEnabledERC20Token returns a new EnabledERC20Token.
 func NewEnabledERC20Token(address string, name string, symbol string, decimals uint32) EnabledERC20Token {
 	return EnabledERC20Token{
-		Address:  address,
+		// Lowercased, address checksum is ignored
+		Address:  strings.ToLower(address),
 		Name:     name,
 		Symbol:   symbol,
 		Decimals: decimals,

@@ -8,7 +8,7 @@ PROJECT_DIR := $(patsubst %/,%,$(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
 ###                                   Help                                   ###
 ################################################################################
 help: ## Display this help message
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
+	@grep -hE '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
 ################################################################################
 ###                                 Targets                                  ###
@@ -50,6 +50,22 @@ cover: ## Run tests with coverage and save to coverage.html
 .PHONY: watch
 watch: ## Run tests on file changes
 	while sleep 0.5; do find . -type f -name '*.go' | entr -d go test ./...; done
+
+JQ ?= jq
+NPM ?= npm
+
+.PHONY: compile-contracts
+compile-contracts: contract/ethermint_json/ERC20MintableBurnable.json ## Compiles contracts and creates ethermint compatible json
+
+contract/artifacts/contracts/ERC20MintableBurnable.sol/ERC20MintableBurnable.json: contract/contracts/ERC20MintableBurnable.sol
+	cd contract && $(NPM) run compile
+
+# Ethermint has their own json format for a compiled contract. The following
+# converts the abi field to a stringified array, renames bytecode field name to
+# bin with the leading `0x` trimmed.
+contract/ethermint_json/ERC20MintableBurnable.json: contract/artifacts/contracts/ERC20MintableBurnable.sol/ERC20MintableBurnable.json
+	mkdir -p contract/ethermint_json
+	$(JQ) '.abi = (.abi | tostring) | {abi, bin: .bytecode[2:] }' < $< > $@
 
 ################################################################################
 ###                                 Includes                                 ###
