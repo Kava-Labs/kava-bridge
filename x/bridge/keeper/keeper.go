@@ -82,9 +82,9 @@ func (k Keeper) GetOrDeployInternalERC20(
 	return internalAddress, nil
 }
 
-// SignerIsAuthorized returns an error if the provided message signer does not
+// IsSignerAuthorized returns an error if the provided message signer does not
 // match the relayer set in params.
-func (k Keeper) SignerIsAuthorized(ctx sdk.Context, msgSigners []sdk.AccAddress) error {
+func (k Keeper) IsSignerAuthorized(ctx sdk.Context, msgSigners []sdk.AccAddress) error {
 	relayer := k.GetRelayer(ctx)
 
 	if len(msgSigners) != 1 {

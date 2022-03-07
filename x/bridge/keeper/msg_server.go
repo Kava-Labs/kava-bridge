@@ -30,7 +30,7 @@ func (s msgServer) BridgeERC20FromEthereum(
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	// Check if signer is relayer
-	if err := s.keeper.SignerIsAuthorized(ctx, msg.GetSigners()); err != nil {
+	if err := s.keeper.IsSignerAuthorized(ctx, msg.GetSigners()); err != nil {
 		return nil, err
 	}
 

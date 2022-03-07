@@ -125,7 +125,7 @@ func (suite *KeeperTestSuite) TestPermission() {
 
 	for _, tc := range tests {
 		suite.Run(tc.name, func() {
-			err := suite.App.BridgeKeeper.SignerIsAuthorized(suite.Ctx, tc.signers)
+			err := suite.App.BridgeKeeper.IsSignerAuthorized(suite.Ctx, tc.signers)
 
 			if tc.errArgs.expectPass {
 				suite.Require().NoError(err)
