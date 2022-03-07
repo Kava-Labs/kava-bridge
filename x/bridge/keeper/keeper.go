@@ -1,11 +1,13 @@
 package keeper
 
 import (
+	"github.com/ethereum/go-ethereum/common"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
-	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/kava-labs/kava-bridge/x/bridge/types"
 )
@@ -43,8 +45,71 @@ func NewKeeper(
 	}
 }
 
+// GetOrCreateInternalERC20Address returns the internal EVM address
+// mapped to the provided ExternalEVMAddress. This will either return from the
+// store if it is already deployed, or will first deploy the internal ERC20
+// contract and return the new address.
+func (k Keeper) GetOrCreateInternalERC20Address(
+	ctx sdk.Context,
+	externalAddress types.ExternalEVMAddress,
+) (types.InternalEVMAddress, error) {
+	internalAddress, found := k.GetInternalERC20Address(ctx, externalAddress)
+	if found {
+		// If external ERC20 address is already mapped in store, there is
+		// already a ERC20 deployed on Kava EVM.
+		return internalAddress, nil
+	}
+
+	// The first time this external ERC20 is being bridged.
+	// Check params for enabled ERC20. This both ensures the ERC20 is
+	// whitelisted and fetches required ERC20 metadata: name, symbol,
+	// decimals.
+	enabledToken, err := k.GetEnabledERC20Token(ctx, externalAddress.String())
+	if err != nil {
+		return types.InternalEVMAddress{}, err
+	}
+
+	// Deploy the ERC20 contract on the Kava EVM
+	internalAddress, err = k.DeployMintableERC20Contract(ctx, enabledToken)
+	if err != nil {
+		return types.InternalEVMAddress{}, err
+	}
+
+	// Save the internal ERC20 address to state so that it is mapped to the
+	// external ERC20 address.
+	k.SetERC20AddressPair(ctx, externalAddress, internalAddress)
+
+	return internalAddress, nil
+}
+
+// SignerIsAuthorized returns an error if the provided message signer does not
+// match the relayer set in params.
+func (k Keeper) SignerIsAuthorized(ctx sdk.Context, msgSigners []sdk.AccAddress) error {
+	relayer := k.GetRelayer(ctx)
+
+	if len(msgSigners) != 1 {
+		return sdkerrors.Wrapf(
+			sdkerrors.ErrUnauthorized,
+			"invalid number of signer; expected: 1, got %d",
+			len(msgSigners),
+		)
+	}
+
+	if !relayer.Equals(msgSigners[0]) {
+		return sdkerrors.Wrapf(
+			sdkerrors.ErrUnauthorized,
+			"signer not authorized for bridge message",
+		)
+	}
+
+	return nil
+}
+
+// -----------------------------------------------------------------------------
+// Store methods
+
 // BridgedInternalEVMAddress puts the bridged address pair into the store.
-func (k Keeper) SetBridgedEVMAddress(
+func (k Keeper) SetERC20AddressPair(
 	ctx sdk.Context,
 	externalAddress types.ExternalEVMAddress,
 	internalAddress types.InternalEVMAddress,
@@ -53,9 +118,9 @@ func (k Keeper) SetBridgedEVMAddress(
 	store.Set(types.GetBridgedERC20Key(externalAddress), internalAddress.Bytes())
 }
 
-// GetBridgedInternalEVMAddress gets the internal EVM address mapped to the
+// GetInternalERC20Address gets the internal EVM address mapped to the
 // provided ExternalEVMAddress from the store.
-func (k Keeper) GetBridgedInternalEVMAddress(
+func (k Keeper) GetInternalERC20Address(
 	ctx sdk.Context,
 	externalAddress types.ExternalEVMAddress,
 ) (types.InternalEVMAddress, bool) {
@@ -70,8 +135,8 @@ func (k Keeper) GetBridgedInternalEVMAddress(
 	}, true
 }
 
-// DeleteBridgedEVMAddress removes an bridged address pair from the store.
-func (k Keeper) DeleteBridgedEVMAddress(ctx sdk.Context, externalAddress types.ExternalEVMAddress) {
+// DeleteInternalERC20Address removes an bridged address pair from the store.
+func (k Keeper) DeleteInternalERC20Address(ctx sdk.Context, externalAddress types.ExternalEVMAddress) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.BridgedERC20KeyPrefix)
 	store.Delete(types.GetBridgedERC20Key(externalAddress))
 }

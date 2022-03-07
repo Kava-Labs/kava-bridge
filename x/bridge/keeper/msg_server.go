@@ -22,16 +22,22 @@ func NewMsgServerImpl(keeper Keeper) types.MsgServer {
 
 var _ types.MsgServer = msgServer{}
 
+// BridgeERC20FromEthereum handles a bridge from Ethereum message.
 func (s msgServer) BridgeERC20FromEthereum(
 	goCtx context.Context,
 	msg *types.MsgBridgeERC20FromEthereum,
 ) (*types.MsgBridgeERC20FromEthereumResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
+	// Check if signer is relayer
+	if err := s.keeper.SignerIsAuthorized(ctx, msg.GetSigners()); err != nil {
+		return nil, err
+	}
+
 	receiver := common.Address{}
 	err := receiver.UnmarshalText([]byte(msg.Receiver))
 	if err != nil {
-		return nil, fmt.Errorf("invalid receiver: %w", err)
+		return nil, fmt.Errorf("invalid Receiver address: %w", err)
 	}
 
 	externalAddress := types.ExternalEVMAddress{}
@@ -40,18 +46,9 @@ func (s msgServer) BridgeERC20FromEthereum(
 		return nil, fmt.Errorf("invalid EthereumERC20Address: %w", err)
 	}
 
-	// TODO: Antehandler to check if this is made by a permissioned signer
-	internalAddress, found := s.keeper.GetBridgedInternalEVMAddress(ctx, externalAddress)
-	if !found {
-		enabledToken, err := s.keeper.GetEnabledERC20Token(ctx, externalAddress.String())
-		if err != nil {
-			return nil, err
-		}
-
-		internalAddress, err = s.keeper.DeployMintableERC20Contract(ctx, enabledToken)
-		if err != nil {
-			return nil, err
-		}
+	internalAddress, err := s.keeper.GetOrCreateInternalERC20Address(ctx, externalAddress)
+	if err != nil {
+		return nil, err
 	}
 
 	err = s.keeper.MintERC20(ctx, internalAddress, receiver, msg.Amount.BigInt())
