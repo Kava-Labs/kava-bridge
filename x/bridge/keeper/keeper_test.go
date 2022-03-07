@@ -4,10 +4,12 @@ import (
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/suite"
 	"github.com/tharsis/ethermint/crypto/ethsecp256k1"
 
 	"github.com/kava-labs/kava-bridge/x/bridge/testutil"
+	"github.com/kava-labs/kava-bridge/x/bridge/types"
 )
 
 type KeeperTestSuite struct {
@@ -16,6 +18,37 @@ type KeeperTestSuite struct {
 
 func TestKeeperTestSuite(t *testing.T) {
 	suite.Run(t, new(KeeperTestSuite))
+}
+
+func (suite *KeeperTestSuite) TestERC20_NotEnabled() {
+	extAddr := types.ExternalEVMAddress{
+		// WETH but last char changed
+		Address: common.HexToAddress("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc4"),
+	}
+
+	_, err := suite.App.BridgeKeeper.GetOrCreateInternalERC20Address(suite.Ctx, extAddr)
+	suite.Require().Error(err)
+	suite.Require().ErrorIs(err, types.ErrERC20NotEnabled)
+}
+
+func (suite *KeeperTestSuite) TestERC20SaveDeploy() {
+	extAddr := types.ExternalEVMAddress{
+		Address: common.HexToAddress("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
+	}
+
+	_, found := suite.App.BridgeKeeper.GetInternalERC20Address(suite.Ctx, extAddr)
+	suite.Require().False(found, "internal ERC20 address should not be set before first bridge")
+
+	firstInternal, err := suite.App.BridgeKeeper.GetOrCreateInternalERC20Address(suite.Ctx, extAddr)
+	suite.Require().NoError(err)
+
+	_, found = suite.App.BridgeKeeper.GetInternalERC20Address(suite.Ctx, extAddr)
+	suite.Require().True(found, "internal ERC20 address should be saved after first bridge")
+
+	secondInternal, err := suite.App.BridgeKeeper.GetOrCreateInternalERC20Address(suite.Ctx, extAddr)
+	suite.Require().NoError(err)
+
+	suite.Require().Equal(firstInternal, secondInternal, "second call should return the saved internal ERC20 address")
 }
 
 func (suite *KeeperTestSuite) TestPermission() {
