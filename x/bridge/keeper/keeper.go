@@ -10,7 +10,7 @@ import (
 
 // Keeper keeper for the bridge module
 type Keeper struct {
-	key           sdk.StoreKey
+	storeKey      sdk.StoreKey
 	cdc           codec.BinaryCodec
 	paramSubspace paramtypes.Subspace
 	bankKeeper    types.BankKeeper
@@ -21,7 +21,7 @@ type Keeper struct {
 // NewKeeper creates a new keeper
 func NewKeeper(
 	cdc codec.BinaryCodec,
-	key sdk.StoreKey,
+	storeKey sdk.StoreKey,
 	paramstore paramtypes.Subspace,
 	bk types.BankKeeper,
 	ak types.AccountKeeper,
@@ -32,7 +32,7 @@ func NewKeeper(
 	}
 
 	return Keeper{
-		key:           key,
+		storeKey:      storeKey,
 		cdc:           cdc,
 		paramSubspace: paramstore,
 		bankKeeper:    bk,

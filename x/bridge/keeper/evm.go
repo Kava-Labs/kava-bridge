@@ -21,8 +21,8 @@ import (
 func (k Keeper) CallEVM(
 	ctx sdk.Context,
 	abi abi.ABI,
-	from,
-	contract common.Address,
+	from common.Address,
+	contract types.InternalEVMAddress,
 	method string,
 	args ...interface{},
 ) (*evmtypes.MsgEthereumTxResponse, error) {
@@ -47,7 +47,7 @@ func (k Keeper) CallEVM(
 func (k Keeper) CallEVMWithData(
 	ctx sdk.Context,
 	from common.Address,
-	contract *common.Address,
+	contract *types.InternalEVMAddress,
 	data []byte,
 ) (*evmtypes.MsgEthereumTxResponse, error) {
 	nonce, err := k.accountKeeper.GetSequence(ctx, from.Bytes())
@@ -55,11 +55,22 @@ func (k Keeper) CallEVMWithData(
 		return nil, err
 	}
 
-	args, err := json.Marshal(evmtypes.TransactionArgs{
+	// To param needs to be nil to correctly apply txs to create contracts
+	// Default common.Address value is 0x0000000000000000000000000000000000000000, not nil
+	// which Ethermint handles differently -- erc20_test will fail
+	// https://github.com/tharsis/ethermint/blob/caa1c5a6c6b7ed8ba4aaf6e0b0848f6be5ba6668/x/evm/keeper/state_transition.go#L357
+	var to *common.Address
+	if contract != nil {
+		to = &contract.Address
+	}
+
+	transactionArgs := evmtypes.TransactionArgs{
 		From: &from,
-		To:   contract,
+		To:   to,
 		Data: (*hexutil.Bytes)(&data),
-	})
+	}
+
+	args, err := json.Marshal(transactionArgs)
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +85,7 @@ func (k Keeper) CallEVMWithData(
 
 	msg := ethtypes.NewMessage(
 		from,
-		contract,
+		to,
 		nonce,
 		big.NewInt(0), // amount
 		gasRes.Gas,    // gasLimit

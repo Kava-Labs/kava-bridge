@@ -38,7 +38,7 @@ func TestERC20TestSuite(t *testing.T) {
 	suite.Run(t, new(ERC20TestSuite))
 }
 
-func (suite *ERC20TestSuite) deployERC20() common.Address {
+func (suite *ERC20TestSuite) deployERC20() types.InternalEVMAddress {
 	// We can assume token is valid as it is from params and should be validated
 	token := types.NewEnabledERC20Token(
 		"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
@@ -49,7 +49,7 @@ func (suite *ERC20TestSuite) deployERC20() common.Address {
 
 	contractAddr, err := suite.App.BridgeKeeper.DeployMintableERC20Contract(suite.Ctx, token)
 	suite.Require().NoError(err)
-	suite.Require().Greater(len(contractAddr), 0)
+	suite.Require().Greater(len(contractAddr.Address), 0)
 
 	return contractAddr
 }
@@ -62,7 +62,7 @@ func (suite *ERC20TestSuite) queryContract(
 	contractAbi abi.ABI,
 	from common.Address,
 	fromKey *ethsecp256k1.PrivKey,
-	contract common.Address,
+	contract types.InternalEVMAddress,
 	method string,
 	args ...interface{},
 ) ([]interface{}, error) {
@@ -87,7 +87,7 @@ func (suite *ERC20TestSuite) queryContract(
 
 	// Unpack response
 	unpackedRes, err := contractAbi.Unpack(method, res.Ret)
-	suite.Require().NoError(err)
+	suite.Require().NoErrorf(err, "failed to unpack method %v response", method)
 
 	return unpackedRes, nil
 }
@@ -164,7 +164,7 @@ func (suite *ERC20TestSuite) TestERC20Mint() {
 }
 
 func (suite *ERC20TestSuite) sendTx(
-	contractAddr,
+	contractAddr types.InternalEVMAddress,
 	from common.Address,
 	signerKey *ethsecp256k1.PrivKey,
 	transferData []byte,
@@ -173,7 +173,7 @@ func (suite *ERC20TestSuite) sendTx(
 	chainID := suite.App.EvmKeeper.ChainID()
 
 	args, err := json.Marshal(&evmtypes.TransactionArgs{
-		To:   &contractAddr,
+		To:   &contractAddr.Address,
 		From: &from,
 		Data: (*hexutil.Bytes)(&transferData),
 	})
@@ -199,7 +199,7 @@ func (suite *ERC20TestSuite) sendTx(
 	ercTransferTx := evmtypes.NewTx(
 		chainID,
 		nonce,
-		&contractAddr,
+		&contractAddr.Address,
 		nil,       // amount
 		res.Gas*2, // gasLimit, TODO: runs out of gas with just res.Gas, ex: estimated was 21572 but used 24814
 		nil,       // gasPrice

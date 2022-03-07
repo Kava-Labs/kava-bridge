@@ -20,7 +20,7 @@ import (
 func (k Keeper) DeployMintableERC20Contract(
 	ctx sdk.Context,
 	token types.EnabledERC20Token,
-) (common.Address, error) {
+) (types.InternalEVMAddress, error) {
 	ctorArgs, err := contract.ERC20MintableBurnableContract.ABI.Pack(
 		"", // Empty string for contract constructor
 		token.Name,
@@ -28,7 +28,7 @@ func (k Keeper) DeployMintableERC20Contract(
 		uint8(token.Decimals),
 	)
 	if err != nil {
-		return common.Address{}, sdkerrors.Wrapf(err, "token %v is invalid", token.Name)
+		return types.InternalEVMAddress{}, sdkerrors.Wrapf(err, "token %v is invalid", token.Name)
 	}
 
 	data := make([]byte, len(contract.ERC20MintableBurnableContract.Bin)+len(ctorArgs))
@@ -43,23 +43,25 @@ func (k Keeper) DeployMintableERC20Contract(
 
 	nonce, err := k.accountKeeper.GetSequence(ctx, types.ModuleEVMAddress.Bytes())
 	if err != nil {
-		return common.Address{}, err
+		return types.InternalEVMAddress{}, err
 	}
 
 	contractAddr := crypto.CreateAddress(types.ModuleEVMAddress, nonce)
 	_, err = k.CallEVMWithData(ctx, types.ModuleEVMAddress, nil, data)
 	if err != nil {
-		return common.Address{}, fmt.Errorf("failed to deploy ERC20 for %s: %w", token.Name, err)
+		return types.InternalEVMAddress{}, fmt.Errorf("failed to deploy ERC20 for %s: %w", token.Name, err)
 	}
 
-	return contractAddr, nil
+	return types.InternalEVMAddress{
+		Address: contractAddr,
+	}, nil
 }
 
 // MintERC20 mints the given amount of an ERC20 token to an address. This is
 // unchecked and should only be called after permission and enabled ERC20 checks.
 func (k Keeper) MintERC20(
 	ctx sdk.Context,
-	contractAddr common.Address,
+	contractAddr types.InternalEVMAddress,
 	receiver common.Address,
 	amount *big.Int,
 ) error {
