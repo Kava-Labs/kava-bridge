@@ -90,7 +90,7 @@ func (k Keeper) SignerIsAuthorized(ctx sdk.Context, msgSigners []sdk.AccAddress)
 	if len(msgSigners) != 1 {
 		return sdkerrors.Wrapf(
 			sdkerrors.ErrUnauthorized,
-			"invalid number of signer; expected: 1, got %d",
+			"invalid number of signers, expected 1 but got %d",
 			len(msgSigners),
 		)
 	}

@@ -38,6 +38,7 @@ type Suite struct {
 	Key2           *ethsecp256k1.PrivKey
 	ConsAddress    sdk.ConsAddress
 	RelayerAddress sdk.AccAddress
+	RelayerKey     *ethsecp256k1.PrivKey
 
 	QueryClientEvm evmtypes.QueryClient
 }
@@ -55,6 +56,7 @@ func (suite *Suite) SetupTest() {
 	relayerPriv, err := ethsecp256k1.GenerateKey()
 	suite.Require().NoError(err)
 	suite.RelayerAddress = sdk.AccAddress(relayerPriv.PubKey().Address())
+	suite.RelayerKey = relayerPriv
 
 	// test user keys that have no minting permissions
 	suite.Key1, err = ethsecp256k1.GenerateKey()
