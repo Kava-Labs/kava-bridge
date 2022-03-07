@@ -154,14 +154,16 @@ func (suite *MsgServerSuite) TestMint() {
 		suite.Run(tc.name, func() {
 			total := big.NewInt(0)
 
-			for _, amount := range tc.mintAmounts {
+			for i, amount := range tc.mintAmounts {
 				total = total.Add(total, amount.BigInt())
 				msg := types.NewMsgBridgeERC20FromEthereum(
 					suite.RelayerAddress.String(),
 					extContractAddr,
 					amount,
 					tc.receiver,
-					sdk.NewInt(0), // sequence doesn't actually matter here
+					// sequence doesn't actually matter here, but we use index
+					// just as a way to check, later the same sequence is re-emitted
+					sdk.NewInt(int64(i)),
 				)
 
 				receiver := types.InternalEVMAddress{}
@@ -185,6 +187,16 @@ func (suite *MsgServerSuite) TestMint() {
 				)
 
 				suite.Require().Equal(total, bal, "balance should match amount minted so far")
+
+				suite.EventsContains(suite.GetEvents(), sdk.NewEvent(
+					sdk.EventTypeMessage,
+					sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+					sdk.NewAttribute(types.AttributeKeyRelayer, msg.Relayer),
+					sdk.NewAttribute(types.AttributeKeyEthereumERC20Address, msg.EthereumERC20Address),
+					sdk.NewAttribute(types.AttributeKeyReceiver, msg.Receiver),
+					sdk.NewAttribute(sdk.AttributeKeyAmount, msg.Amount.String()),
+					sdk.NewAttribute(types.AttributeKeySequence, msg.Sequence.String()),
+				))
 			}
 		})
 	}

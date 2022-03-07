@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"reflect"
 	"time"
 
 	"github.com/stretchr/testify/suite"
@@ -317,4 +318,33 @@ func (suite *Suite) MintFeeCollector(coins sdk.Coins) {
 		coins,
 	)
 	suite.Require().NoError(err)
+}
+
+// GetEvents returns emitted events on the sdk context
+func (suite *Suite) GetEvents() sdk.Events {
+	return suite.Ctx.EventManager().Events()
+}
+
+// EventsContains asserts that the expected event is in the provided events
+func (suite *Suite) EventsContains(events sdk.Events, expectedEvent sdk.Event) {
+	foundMatch := false
+	for _, event := range events {
+		if event.Type == expectedEvent.Type {
+			if reflect.DeepEqual(attrsToMap(expectedEvent.Attributes), attrsToMap(event.Attributes)) {
+				foundMatch = true
+			}
+		}
+	}
+
+	suite.True(foundMatch, fmt.Sprintf("event of type %s not found or did not match", expectedEvent.Type))
+}
+
+func attrsToMap(attrs []abci.EventAttribute) []sdk.Attribute {
+	out := []sdk.Attribute{}
+
+	for _, attr := range attrs {
+		out = append(out, sdk.NewAttribute(string(attr.Key), string(attr.Value)))
+	}
+
+	return out
 }
