@@ -8,6 +8,16 @@ import (
 // ERC20BridgePairs defines a slice of ERC20BridgePair
 type ERC20BridgePairs []ERC20BridgePair
 
+func (pairs ERC20BridgePairs) Validate() error {
+	for _, pair := range pairs {
+		if err := pair.Validate(); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 // NewERC20BridgePair returns a new ERC20BridgePair from an external and
 // internal address.
 func NewERC20BridgePair(
