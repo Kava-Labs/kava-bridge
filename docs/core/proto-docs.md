@@ -37,8 +37,8 @@ ERC20BridgePair defines an ERC20 token bridged between external and Kava EVM
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `external_erc20_address` | [string](#string) |  | external_erc20_address represents the external EVM ERC20 address |
-| `internal_erc20_address` | [string](#string) |  | internal_erc20_address represents the corresponding internal Kava EVM ERC20 address |
+| `external_erc20_address` | [bytes](#bytes) |  | external_erc20_address represents the external EVM ERC20 address |
+| `internal_erc20_address` | [bytes](#bytes) |  | internal_erc20_address represents the corresponding internal Kava EVM ERC20 address |
 
 
 

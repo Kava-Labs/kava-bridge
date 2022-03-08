@@ -11,7 +11,7 @@ option (gogoproto.verbose_equal_all) = true;
 // ERC20BridgePair defines an ERC20 token bridged between external and Kava EVM
 message ERC20BridgePair {
   // external_erc20_address represents the external EVM ERC20 address
-  string external_erc20_address = 1;
+  bytes external_erc20_address = 1;
   // internal_erc20_address represents the corresponding internal Kava EVM ERC20 address
-  string internal_erc20_address = 2;
+  bytes internal_erc20_address = 2;
 }

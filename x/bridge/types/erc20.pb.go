@@ -4,6 +4,7 @@
 package types
 
 import (
+	bytes "bytes"
 	fmt "fmt"
 	_ "github.com/cosmos/cosmos-proto"
 	_ "github.com/gogo/protobuf/gogoproto"
@@ -27,9 +28,9 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 // ERC20BridgePair defines an ERC20 token bridged between external and Kava EVM
 type ERC20BridgePair struct {
 	// external_erc20_address represents the external EVM ERC20 address
-	ExternalErc20Address string `protobuf:"bytes,1,opt,name=external_erc20_address,json=externalErc20Address,proto3" json:"external_erc20_address,omitempty"`
+	ExternalErc20Address []byte `protobuf:"bytes,1,opt,name=external_erc20_address,json=externalErc20Address,proto3" json:"external_erc20_address,omitempty"`
 	// internal_erc20_address represents the corresponding internal Kava EVM ERC20 address
-	InternalErc20Address string `protobuf:"bytes,2,opt,name=internal_erc20_address,json=internalErc20Address,proto3" json:"internal_erc20_address,omitempty"`
+	InternalErc20Address []byte `protobuf:"bytes,2,opt,name=internal_erc20_address,json=internalErc20Address,proto3" json:"internal_erc20_address,omitempty"`
 }
 
 func (m *ERC20BridgePair) Reset()         { *m = ERC20BridgePair{} }
@@ -65,18 +66,18 @@ func (m *ERC20BridgePair) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_ERC20BridgePair proto.InternalMessageInfo
 
-func (m *ERC20BridgePair) GetExternalErc20Address() string {
+func (m *ERC20BridgePair) GetExternalErc20Address() []byte {
 	if m != nil {
 		return m.ExternalErc20Address
 	}
-	return ""
+	return nil
 }
 
-func (m *ERC20BridgePair) GetInternalErc20Address() string {
+func (m *ERC20BridgePair) GetInternalErc20Address() []byte {
 	if m != nil {
 		return m.InternalErc20Address
 	}
-	return ""
+	return nil
 }
 
 func init() {
@@ -94,14 +95,14 @@ var fileDescriptor_404f73620686b5c2 = []byte{
 	0x7e, 0x71, 0x3c, 0x44, 0x02, 0xc2, 0x81, 0x48, 0x29, 0xd5, 0x72, 0xf1, 0xbb, 0x06, 0x39, 0x1b,
 	0x19, 0x38, 0x81, 0xcd, 0x09, 0x48, 0xcc, 0x2c, 0x12, 0x32, 0xe1, 0x12, 0x4b, 0xad, 0x28, 0x49,
 	0x2d, 0xca, 0x4b, 0xcc, 0x89, 0x07, 0xdb, 0x15, 0x9f, 0x98, 0x92, 0x52, 0x94, 0x5a, 0x5c, 0x2c,
-	0xc1, 0xa8, 0xc0, 0xa8, 0xc1, 0x19, 0x24, 0x02, 0x93, 0x75, 0x05, 0x49, 0x3a, 0x42, 0xe4, 0x40,
+	0xc1, 0xa8, 0xc0, 0xa8, 0xc1, 0x13, 0x24, 0x02, 0x93, 0x75, 0x05, 0x49, 0x3a, 0x42, 0xe4, 0x40,
 	0xba, 0x32, 0xf3, 0xb0, 0xea, 0x62, 0x82, 0xe8, 0x82, 0xc9, 0x22, 0xeb, 0x72, 0x0a, 0x7c, 0xf0,
 	0x50, 0x8e, 0x71, 0xc5, 0x23, 0x39, 0xc6, 0x13, 0x8f, 0xe4, 0x18, 0x2f, 0x3c, 0x92, 0x63, 0x7c,
 	0xf0, 0x48, 0x8e, 0x71, 0xc2, 0x63, 0x39, 0x86, 0x0b, 0x8f, 0xe5, 0x18, 0x6e, 0x3c, 0x96, 0x63,
 	0x88, 0xd2, 0x4f, 0xcf, 0x2c, 0xc9, 0x28, 0x4d, 0xd2, 0x4b, 0xce, 0xcf, 0xd5, 0xcf, 0x4e, 0x2c,
 	0x4b, 0xd4, 0xcd, 0x49, 0x4c, 0x2a, 0x86, 0xb0, 0xa0, 0xe1, 0x52, 0xa1, 0x0f, 0x65, 0x94, 0x54,
-	0x16, 0xa4, 0x16, 0x27, 0xb1, 0x81, 0x3d, 0x66, 0x0c, 0x08, 0x00, 0x00, 0xff, 0xff, 0x7a, 0x0a,
-	0x05, 0xe8, 0x37, 0x01, 0x00, 0x00,
+	0x16, 0xa4, 0x16, 0x27, 0xb1, 0x81, 0x3d, 0x66, 0x0c, 0x08, 0x00, 0x00, 0xff, 0xff, 0xca, 0x29,
+	0x2e, 0x95, 0x37, 0x01, 0x00, 0x00,
 }
 
 func (this *ERC20BridgePair) VerboseEqual(that interface{}) error {
@@ -129,10 +130,10 @@ func (this *ERC20BridgePair) VerboseEqual(that interface{}) error {
 	} else if this == nil {
 		return fmt.Errorf("that is type *ERC20BridgePair but is not nil && this == nil")
 	}
-	if this.ExternalErc20Address != that1.ExternalErc20Address {
+	if !bytes.Equal(this.ExternalErc20Address, that1.ExternalErc20Address) {
 		return fmt.Errorf("ExternalErc20Address this(%v) Not Equal that(%v)", this.ExternalErc20Address, that1.ExternalErc20Address)
 	}
-	if this.InternalErc20Address != that1.InternalErc20Address {
+	if !bytes.Equal(this.InternalErc20Address, that1.InternalErc20Address) {
 		return fmt.Errorf("InternalErc20Address this(%v) Not Equal that(%v)", this.InternalErc20Address, that1.InternalErc20Address)
 	}
 	return nil
@@ -156,10 +157,10 @@ func (this *ERC20BridgePair) Equal(that interface{}) bool {
 	} else if this == nil {
 		return false
 	}
-	if this.ExternalErc20Address != that1.ExternalErc20Address {
+	if !bytes.Equal(this.ExternalErc20Address, that1.ExternalErc20Address) {
 		return false
 	}
-	if this.InternalErc20Address != that1.InternalErc20Address {
+	if !bytes.Equal(this.InternalErc20Address, that1.InternalErc20Address) {
 		return false
 	}
 	return true
@@ -268,7 +269,7 @@ func (m *ERC20BridgePair) Unmarshal(dAtA []byte) error {
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field ExternalErc20Address", wireType)
 			}
-			var stringLen uint64
+			var byteLen int
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowErc20
@@ -278,29 +279,31 @@ func (m *ERC20BridgePair) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
+				byteLen |= int(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
+			if byteLen < 0 {
 				return ErrInvalidLengthErc20
 			}
-			postIndex := iNdEx + intStringLen
+			postIndex := iNdEx + byteLen
 			if postIndex < 0 {
 				return ErrInvalidLengthErc20
 			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.ExternalErc20Address = string(dAtA[iNdEx:postIndex])
+			m.ExternalErc20Address = append(m.ExternalErc20Address[:0], dAtA[iNdEx:postIndex]...)
+			if m.ExternalErc20Address == nil {
+				m.ExternalErc20Address = []byte{}
+			}
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field InternalErc20Address", wireType)
 			}
-			var stringLen uint64
+			var byteLen int
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowErc20
@@ -310,23 +313,25 @@ func (m *ERC20BridgePair) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
+				byteLen |= int(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
+			if byteLen < 0 {
 				return ErrInvalidLengthErc20
 			}
-			postIndex := iNdEx + intStringLen
+			postIndex := iNdEx + byteLen
 			if postIndex < 0 {
 				return ErrInvalidLengthErc20
 			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.InternalErc20Address = string(dAtA[iNdEx:postIndex])
+			m.InternalErc20Address = append(m.InternalErc20Address[:0], dAtA[iNdEx:postIndex]...)
+			if m.InternalErc20Address == nil {
+				m.InternalErc20Address = []byte{}
+			}
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
