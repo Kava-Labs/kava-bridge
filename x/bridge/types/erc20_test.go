@@ -50,8 +50,8 @@ func TestNewERC20BridgePair(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			pair := types.NewERC20BridgePair(tc.externalAddress, tc.internalAddress)
 
-			require.Equal(t, pair.ExternalErc20Address, tc.externalAddress.Bytes())
-			require.Equal(t, pair.InternalErc20Address, tc.internalAddress.Bytes())
+			require.Equal(t, pair.ExternalERC20Address, tc.externalAddress.Bytes())
+			require.Equal(t, pair.InternalERC20Address, tc.internalAddress.Bytes())
 
 			err := pair.Validate()
 			if tc.errArgs.expectPass {

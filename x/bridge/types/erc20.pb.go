@@ -28,9 +28,9 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 // ERC20BridgePair defines an ERC20 token bridged between external and Kava EVM
 type ERC20BridgePair struct {
 	// external_erc20_address represents the external EVM ERC20 address
-	ExternalErc20Address []byte `protobuf:"bytes,1,opt,name=external_erc20_address,json=externalErc20Address,proto3" json:"external_erc20_address,omitempty"`
+	ExternalERC20Address []byte `protobuf:"bytes,1,opt,name=external_erc20_address,json=externalErc20Address,proto3" json:"external_erc20_address,omitempty"`
 	// internal_erc20_address represents the corresponding internal Kava EVM ERC20 address
-	InternalErc20Address []byte `protobuf:"bytes,2,opt,name=internal_erc20_address,json=internalErc20Address,proto3" json:"internal_erc20_address,omitempty"`
+	InternalERC20Address []byte `protobuf:"bytes,2,opt,name=internal_erc20_address,json=internalErc20Address,proto3" json:"internal_erc20_address,omitempty"`
 }
 
 func (m *ERC20BridgePair) Reset()         { *m = ERC20BridgePair{} }
@@ -66,16 +66,16 @@ func (m *ERC20BridgePair) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_ERC20BridgePair proto.InternalMessageInfo
 
-func (m *ERC20BridgePair) GetExternalErc20Address() []byte {
+func (m *ERC20BridgePair) GetExternalERC20Address() []byte {
 	if m != nil {
-		return m.ExternalErc20Address
+		return m.ExternalERC20Address
 	}
 	return nil
 }
 
-func (m *ERC20BridgePair) GetInternalErc20Address() []byte {
+func (m *ERC20BridgePair) GetInternalERC20Address() []byte {
 	if m != nil {
-		return m.InternalErc20Address
+		return m.InternalERC20Address
 	}
 	return nil
 }
@@ -87,22 +87,23 @@ func init() {
 func init() { proto.RegisterFile("bridge/v1beta1/erc20.proto", fileDescriptor_404f73620686b5c2) }
 
 var fileDescriptor_404f73620686b5c2 = []byte{
-	// 230 bytes of a gzipped FileDescriptorProto
+	// 250 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x92, 0x4a, 0x2a, 0xca, 0x4c,
 	0x49, 0x4f, 0xd5, 0x2f, 0x33, 0x4c, 0x4a, 0x2d, 0x49, 0x34, 0xd4, 0x4f, 0x2d, 0x4a, 0x36, 0x32,
 	0xd0, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0xe2, 0x83, 0xc8, 0xe9, 0x41, 0xe5, 0xa4, 0x44, 0xd2,
 	0xf3, 0xd3, 0xf3, 0xc1, 0x52, 0xfa, 0x20, 0x16, 0x44, 0x95, 0x94, 0x64, 0x72, 0x7e, 0x71, 0x6e,
-	0x7e, 0x71, 0x3c, 0x44, 0x02, 0xc2, 0x81, 0x48, 0x29, 0xd5, 0x72, 0xf1, 0xbb, 0x06, 0x39, 0x1b,
-	0x19, 0x38, 0x81, 0xcd, 0x09, 0x48, 0xcc, 0x2c, 0x12, 0x32, 0xe1, 0x12, 0x4b, 0xad, 0x28, 0x49,
-	0x2d, 0xca, 0x4b, 0xcc, 0x89, 0x07, 0xdb, 0x15, 0x9f, 0x98, 0x92, 0x52, 0x94, 0x5a, 0x5c, 0x2c,
-	0xc1, 0xa8, 0xc0, 0xa8, 0xc1, 0x13, 0x24, 0x02, 0x93, 0x75, 0x05, 0x49, 0x3a, 0x42, 0xe4, 0x40,
-	0xba, 0x32, 0xf3, 0xb0, 0xea, 0x62, 0x82, 0xe8, 0x82, 0xc9, 0x22, 0xeb, 0x72, 0x0a, 0x7c, 0xf0,
-	0x50, 0x8e, 0x71, 0xc5, 0x23, 0x39, 0xc6, 0x13, 0x8f, 0xe4, 0x18, 0x2f, 0x3c, 0x92, 0x63, 0x7c,
-	0xf0, 0x48, 0x8e, 0x71, 0xc2, 0x63, 0x39, 0x86, 0x0b, 0x8f, 0xe5, 0x18, 0x6e, 0x3c, 0x96, 0x63,
-	0x88, 0xd2, 0x4f, 0xcf, 0x2c, 0xc9, 0x28, 0x4d, 0xd2, 0x4b, 0xce, 0xcf, 0xd5, 0xcf, 0x4e, 0x2c,
-	0x4b, 0xd4, 0xcd, 0x49, 0x4c, 0x2a, 0x86, 0xb0, 0xa0, 0xe1, 0x52, 0xa1, 0x0f, 0x65, 0x94, 0x54,
-	0x16, 0xa4, 0x16, 0x27, 0xb1, 0x81, 0x3d, 0x66, 0x0c, 0x08, 0x00, 0x00, 0xff, 0xff, 0xca, 0x29,
-	0x2e, 0x95, 0x37, 0x01, 0x00, 0x00,
+	0x7e, 0x71, 0x3c, 0x44, 0x02, 0xc2, 0x81, 0x48, 0x29, 0x6d, 0x64, 0xe4, 0xe2, 0x77, 0x0d, 0x72,
+	0x36, 0x32, 0x70, 0x02, 0x1b, 0x14, 0x90, 0x98, 0x59, 0x24, 0xe4, 0xc7, 0x25, 0x96, 0x5a, 0x51,
+	0x92, 0x5a, 0x94, 0x97, 0x98, 0x13, 0x0f, 0xb6, 0x2c, 0x3e, 0x31, 0x25, 0xa5, 0x28, 0xb5, 0xb8,
+	0x58, 0x82, 0x51, 0x81, 0x51, 0x83, 0xc7, 0x49, 0xe2, 0xd1, 0x3d, 0x79, 0x11, 0x57, 0xa8, 0x0a,
+	0xb0, 0x66, 0x47, 0x88, 0x7c, 0x90, 0x08, 0x4c, 0x9f, 0x2b, 0x48, 0x1b, 0x54, 0x14, 0x64, 0x5e,
+	0x66, 0x1e, 0x56, 0xf3, 0x98, 0x10, 0xe6, 0x79, 0xe6, 0x61, 0x33, 0x0f, 0xa6, 0x0f, 0xd9, 0x3c,
+	0xa7, 0xc0, 0x07, 0x0f, 0xe5, 0x18, 0x57, 0x3c, 0x92, 0x63, 0x3c, 0xf1, 0x48, 0x8e, 0xf1, 0xc2,
+	0x23, 0x39, 0xc6, 0x07, 0x8f, 0xe4, 0x18, 0x27, 0x3c, 0x96, 0x63, 0xb8, 0xf0, 0x58, 0x8e, 0xe1,
+	0xc6, 0x63, 0x39, 0x86, 0x28, 0xfd, 0xf4, 0xcc, 0x92, 0x8c, 0xd2, 0x24, 0xbd, 0xe4, 0xfc, 0x5c,
+	0xfd, 0xec, 0xc4, 0xb2, 0x44, 0xdd, 0x9c, 0xc4, 0xa4, 0x62, 0x08, 0x0b, 0x1a, 0x98, 0x15, 0xfa,
+	0x50, 0x46, 0x49, 0x65, 0x41, 0x6a, 0x71, 0x12, 0x1b, 0x38, 0x34, 0x8c, 0x01, 0x01, 0x00, 0x00,
+	0xff, 0xff, 0x27, 0x1a, 0x63, 0x4d, 0x6c, 0x01, 0x00, 0x00,
 }
 
 func (this *ERC20BridgePair) VerboseEqual(that interface{}) error {
@@ -130,11 +131,11 @@ func (this *ERC20BridgePair) VerboseEqual(that interface{}) error {
 	} else if this == nil {
 		return fmt.Errorf("that is type *ERC20BridgePair but is not nil && this == nil")
 	}
-	if !bytes.Equal(this.ExternalErc20Address, that1.ExternalErc20Address) {
-		return fmt.Errorf("ExternalErc20Address this(%v) Not Equal that(%v)", this.ExternalErc20Address, that1.ExternalErc20Address)
+	if !bytes.Equal(this.ExternalERC20Address, that1.ExternalERC20Address) {
+		return fmt.Errorf("ExternalERC20Address this(%v) Not Equal that(%v)", this.ExternalERC20Address, that1.ExternalERC20Address)
 	}
-	if !bytes.Equal(this.InternalErc20Address, that1.InternalErc20Address) {
-		return fmt.Errorf("InternalErc20Address this(%v) Not Equal that(%v)", this.InternalErc20Address, that1.InternalErc20Address)
+	if !bytes.Equal(this.InternalERC20Address, that1.InternalERC20Address) {
+		return fmt.Errorf("InternalERC20Address this(%v) Not Equal that(%v)", this.InternalERC20Address, that1.InternalERC20Address)
 	}
 	return nil
 }
@@ -157,10 +158,10 @@ func (this *ERC20BridgePair) Equal(that interface{}) bool {
 	} else if this == nil {
 		return false
 	}
-	if !bytes.Equal(this.ExternalErc20Address, that1.ExternalErc20Address) {
+	if !bytes.Equal(this.ExternalERC20Address, that1.ExternalERC20Address) {
 		return false
 	}
-	if !bytes.Equal(this.InternalErc20Address, that1.InternalErc20Address) {
+	if !bytes.Equal(this.InternalERC20Address, that1.InternalERC20Address) {
 		return false
 	}
 	return true
@@ -185,17 +186,17 @@ func (m *ERC20BridgePair) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if len(m.InternalErc20Address) > 0 {
-		i -= len(m.InternalErc20Address)
-		copy(dAtA[i:], m.InternalErc20Address)
-		i = encodeVarintErc20(dAtA, i, uint64(len(m.InternalErc20Address)))
+	if len(m.InternalERC20Address) > 0 {
+		i -= len(m.InternalERC20Address)
+		copy(dAtA[i:], m.InternalERC20Address)
+		i = encodeVarintErc20(dAtA, i, uint64(len(m.InternalERC20Address)))
 		i--
 		dAtA[i] = 0x12
 	}
-	if len(m.ExternalErc20Address) > 0 {
-		i -= len(m.ExternalErc20Address)
-		copy(dAtA[i:], m.ExternalErc20Address)
-		i = encodeVarintErc20(dAtA, i, uint64(len(m.ExternalErc20Address)))
+	if len(m.ExternalERC20Address) > 0 {
+		i -= len(m.ExternalERC20Address)
+		copy(dAtA[i:], m.ExternalERC20Address)
+		i = encodeVarintErc20(dAtA, i, uint64(len(m.ExternalERC20Address)))
 		i--
 		dAtA[i] = 0xa
 	}
@@ -219,11 +220,11 @@ func (m *ERC20BridgePair) Size() (n int) {
 	}
 	var l int
 	_ = l
-	l = len(m.ExternalErc20Address)
+	l = len(m.ExternalERC20Address)
 	if l > 0 {
 		n += 1 + l + sovErc20(uint64(l))
 	}
-	l = len(m.InternalErc20Address)
+	l = len(m.InternalERC20Address)
 	if l > 0 {
 		n += 1 + l + sovErc20(uint64(l))
 	}
@@ -267,7 +268,7 @@ func (m *ERC20BridgePair) Unmarshal(dAtA []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ExternalErc20Address", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field ExternalERC20Address", wireType)
 			}
 			var byteLen int
 			for shift := uint(0); ; shift += 7 {
@@ -294,14 +295,14 @@ func (m *ERC20BridgePair) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.ExternalErc20Address = append(m.ExternalErc20Address[:0], dAtA[iNdEx:postIndex]...)
-			if m.ExternalErc20Address == nil {
-				m.ExternalErc20Address = []byte{}
+			m.ExternalERC20Address = append(m.ExternalERC20Address[:0], dAtA[iNdEx:postIndex]...)
+			if m.ExternalERC20Address == nil {
+				m.ExternalERC20Address = []byte{}
 			}
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field InternalErc20Address", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field InternalERC20Address", wireType)
 			}
 			var byteLen int
 			for shift := uint(0); ; shift += 7 {
@@ -328,9 +329,9 @@ func (m *ERC20BridgePair) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.InternalErc20Address = append(m.InternalErc20Address[:0], dAtA[iNdEx:postIndex]...)
-			if m.InternalErc20Address == nil {
-				m.InternalErc20Address = []byte{}
+			m.InternalERC20Address = append(m.InternalERC20Address[:0], dAtA[iNdEx:postIndex]...)
+			if m.InternalERC20Address == nil {
+				m.InternalERC20Address = []byte{}
 			}
 			iNdEx = postIndex
 		default:

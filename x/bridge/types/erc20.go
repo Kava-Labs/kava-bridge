@@ -15,15 +15,15 @@ func NewERC20BridgePair(
 	internalAddress InternalEVMAddress,
 ) ERC20BridgePair {
 	return ERC20BridgePair{
-		ExternalErc20Address: externalAddress.Address.Bytes(),
-		InternalErc20Address: internalAddress.Address.Bytes(),
+		ExternalERC20Address: externalAddress.Address.Bytes(),
+		InternalERC20Address: internalAddress.Address.Bytes(),
 	}
 }
 
 // Validate returns an error if a ERC20BridgePair contains the same address.
 func (pair *ERC20BridgePair) Validate() error {
-	if bytes.Equal(pair.ExternalErc20Address, pair.InternalErc20Address) {
-		return fmt.Errorf("external and internal bytes are same: %x", pair.ExternalErc20Address)
+	if bytes.Equal(pair.ExternalERC20Address, pair.InternalERC20Address) {
+		return fmt.Errorf("external and internal bytes are same: %x", pair.ExternalERC20Address)
 	}
 
 	return nil
