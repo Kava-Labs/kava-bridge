@@ -34,6 +34,6 @@ var (
 // GetBridgedERC20Key returns the bytes of an BridgedERC20 key. This only
 // accepts an ExternalEVMAddress and should not be used with
 // InternalEVMAddresses.
-func GetBridgedERC20Key(address ExternalEVMAddress) []byte {
-	return append(BridgedERC20KeyPrefix, address.Bytes()...)
+func GetBridgedERC20Key(externalAddress []byte) []byte {
+	return append(BridgedERC20KeyPrefix, externalAddress...)
 }

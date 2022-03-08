@@ -1,13 +1,12 @@
 package keeper
 
 import (
-	"github.com/ethereum/go-ethereum/common"
-
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
+	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/kava-labs/kava-bridge/x/bridge/types"
 )
@@ -75,9 +74,14 @@ func (k Keeper) GetOrDeployInternalERC20(
 		return types.InternalEVMAddress{}, err
 	}
 
+	addrPair := types.NewERC20BridgePair(externalAddress, internalAddress)
+	if err := addrPair.Validate(); err != nil {
+		return types.InternalEVMAddress{}, err
+	}
+
 	// Save the internal ERC20 address to state so that it is mapped to the
 	// external ERC20 address.
-	k.SetERC20AddressPair(ctx, externalAddress, internalAddress)
+	k.SetERC20AddressPair(ctx, addrPair)
 
 	return internalAddress, nil
 }
@@ -111,11 +115,11 @@ func (k Keeper) IsSignerAuthorized(ctx sdk.Context, msgSigners []sdk.AccAddress)
 // BridgedInternalEVMAddress puts the bridged address pair into the store.
 func (k Keeper) SetERC20AddressPair(
 	ctx sdk.Context,
-	externalAddress types.ExternalEVMAddress,
-	internalAddress types.InternalEVMAddress,
+	pair types.ERC20BridgePair,
 ) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.BridgedERC20KeyPrefix)
-	store.Set(types.GetBridgedERC20Key(externalAddress), internalAddress.Bytes())
+	bz := k.cdc.MustMarshal(&pair)
+	store.Set(types.GetBridgedERC20Key(pair.ExternalERC20Address), bz)
 }
 
 // GetInternalERC20Address gets the internal EVM address mapped to the
@@ -124,19 +128,50 @@ func (k Keeper) GetInternalERC20Address(
 	ctx sdk.Context,
 	externalAddress types.ExternalEVMAddress,
 ) (types.InternalEVMAddress, bool) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.BridgedERC20KeyPrefix)
-	bz := store.Get(types.GetBridgedERC20Key(externalAddress))
-	if bz == nil {
+	pair, found := k.GetERC20BridgePair(ctx, externalAddress)
+	if !found {
 		return types.InternalEVMAddress{}, false
 	}
 
 	return types.InternalEVMAddress{
-		Address: common.BytesToAddress(bz),
+		Address: common.BytesToAddress(pair.InternalERC20Address),
 	}, true
 }
 
-// DeleteInternalERC20Address removes an bridged address pair from the store.
-func (k Keeper) DeleteInternalERC20Address(ctx sdk.Context, externalAddress types.ExternalEVMAddress) {
+// GetERC20BridgePair returns the ERC20 bridge pair with the provided
+// ExternalEVMAddress from the store.
+func (k Keeper) GetERC20BridgePair(
+	ctx sdk.Context,
+	externalAddress types.ExternalEVMAddress,
+) (types.ERC20BridgePair, bool) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.BridgedERC20KeyPrefix)
-	store.Delete(types.GetBridgedERC20Key(externalAddress))
+	bz := store.Get(types.GetBridgedERC20Key(externalAddress.Bytes()))
+	if bz == nil {
+		return types.ERC20BridgePair{}, false
+	}
+
+	var pair types.ERC20BridgePair
+	k.cdc.MustUnmarshal(bz, &pair)
+
+	return pair, true
+}
+
+// IterateERC20BridgePairs provides an iterator over all stored ERC20 bridge
+// pairs. For each pair, cb will be called. If cb returns true, the iterator
+// will close and stop.
+func (k Keeper) IterateERC20BridgePairs(
+	ctx sdk.Context,
+	cb func(pair types.ERC20BridgePair) (stop bool),
+) {
+	iterator := sdk.KVStorePrefixIterator(ctx.KVStore(k.storeKey), types.BridgedERC20KeyPrefix)
+
+	defer iterator.Close()
+	for ; iterator.Valid(); iterator.Next() {
+		var pair types.ERC20BridgePair
+		k.cdc.MustUnmarshal(iterator.Value(), &pair)
+
+		if cb(pair) {
+			break
+		}
+	}
 }
