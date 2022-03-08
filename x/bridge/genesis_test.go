@@ -3,6 +3,7 @@ package bridge_test
 import (
 	"testing"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/kava-labs/kava-bridge/app"
 	"github.com/kava-labs/kava-bridge/x/bridge"
 	"github.com/kava-labs/kava-bridge/x/bridge/testutil"
@@ -53,6 +54,12 @@ func (suite *genesisTestSuite) Test_InitGenesis_Validation() {
 					},
 					Relayer: sdk.AccAddress("hi"),
 				},
+				types.NewERC20BridgePairs(
+					types.NewERC20BridgePair(
+						types.NewExternalEVMAddress(common.HexToAddress("0x01")),
+						types.NewInternalEVMAddress(common.HexToAddress("0x02")),
+					),
+				),
 			),
 			errArgs{
 				expectPass: true,
@@ -78,6 +85,12 @@ func (suite *genesisTestSuite) Test_InitGenesis_Validation() {
 					},
 					Relayer: nil,
 				},
+				types.NewERC20BridgePairs(
+					types.NewERC20BridgePair(
+						types.NewExternalEVMAddress(common.HexToAddress("0x01")),
+						types.NewInternalEVMAddress(common.HexToAddress("0x02")),
+					),
+				),
 			),
 			errArgs{
 				expectPass: false,
@@ -104,6 +117,12 @@ func (suite *genesisTestSuite) Test_InitGenesis_Validation() {
 					},
 					Relayer: sdk.AccAddress("hi"),
 				},
+				types.NewERC20BridgePairs(
+					types.NewERC20BridgePair(
+						types.NewExternalEVMAddress(common.HexToAddress("0x01")),
+						types.NewInternalEVMAddress(common.HexToAddress("0x02")),
+					),
+				),
 			),
 			errArgs{
 				expectPass: false,
@@ -130,6 +149,7 @@ func (suite *genesisTestSuite) Test_InitGenesis_Validation() {
 					},
 					Relayer: sdk.AccAddress("hi"),
 				},
+				types.NewERC20BridgePairs(),
 			),
 			errArgs{
 				expectPass: false,
@@ -150,6 +170,7 @@ func (suite *genesisTestSuite) Test_InitGenesis_Validation() {
 					},
 					Relayer: sdk.AccAddress("hi"),
 				},
+				types.NewERC20BridgePairs(),
 			),
 			errArgs{
 				expectPass: false,
@@ -192,6 +213,16 @@ func (suite *genesisTestSuite) Test_InitAndExportGenesis() {
 			},
 			Relayer: sdk.AccAddress("hello"),
 		},
+		types.NewERC20BridgePairs(
+			types.NewERC20BridgePair(
+				types.NewExternalEVMAddress(common.HexToAddress("0x01")),
+				types.NewInternalEVMAddress(common.HexToAddress("0x0A")),
+			),
+			types.NewERC20BridgePair(
+				types.NewExternalEVMAddress(common.HexToAddress("0x02")),
+				types.NewInternalEVMAddress(common.HexToAddress("0x0B")),
+			),
+		),
 	)
 
 	bridge.InitGenesis(suite.Ctx, suite.App.BridgeKeeper, suite.App.AccountKeeper, state)
@@ -220,6 +251,16 @@ func (suite *genesisTestSuite) Test_Marshall() {
 			},
 			Relayer: sdk.AccAddress("hello"),
 		},
+		types.NewERC20BridgePairs(
+			types.NewERC20BridgePair(
+				types.NewExternalEVMAddress(common.HexToAddress("0x01")),
+				types.NewInternalEVMAddress(common.HexToAddress("0x0A")),
+			),
+			types.NewERC20BridgePair(
+				types.NewExternalEVMAddress(common.HexToAddress("0x02")),
+				types.NewInternalEVMAddress(common.HexToAddress("0x0B")),
+			),
+		),
 	)
 
 	encodingCfg := app.MakeEncodingConfig()
@@ -254,6 +295,16 @@ func (suite *genesisTestSuite) Test_LegacyJSONConversion() {
 			},
 			Relayer: sdk.AccAddress("hello"),
 		},
+		types.NewERC20BridgePairs(
+			types.NewERC20BridgePair(
+				types.NewExternalEVMAddress(common.HexToAddress("0x01")),
+				types.NewInternalEVMAddress(common.HexToAddress("0x0A")),
+			),
+			types.NewERC20BridgePair(
+				types.NewExternalEVMAddress(common.HexToAddress("0x02")),
+				types.NewInternalEVMAddress(common.HexToAddress("0x0B")),
+			),
+		),
 	)
 
 	encodingCfg := app.MakeEncodingConfig()

@@ -133,9 +133,9 @@ func (k Keeper) GetInternalERC20Address(
 		return types.InternalEVMAddress{}, false
 	}
 
-	return types.InternalEVMAddress{
-		Address: common.BytesToAddress(pair.InternalERC20Address),
-	}, true
+	return types.NewInternalEVMAddress(
+		common.BytesToAddress(pair.InternalERC20Address),
+	), true
 }
 
 // GetERC20BridgePair returns the ERC20 bridge pair with the provided
