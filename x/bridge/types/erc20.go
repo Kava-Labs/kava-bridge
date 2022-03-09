@@ -3,6 +3,8 @@ package types
 import (
 	bytes "bytes"
 	"fmt"
+
+	"github.com/ethereum/go-ethereum/common"
 )
 
 // ERC20BridgePairs defines a slice of ERC20BridgePair
@@ -36,6 +38,30 @@ func NewERC20BridgePair(
 
 // Validate returns an error if a ERC20BridgePair contains the same address.
 func (pair *ERC20BridgePair) Validate() error {
+	if len(pair.ExternalERC20Address) != common.AddressLength {
+		return fmt.Errorf(
+			"external address length is %v but expected %v",
+			len(pair.ExternalERC20Address),
+			common.AddressLength,
+		)
+	}
+
+	if len(pair.InternalERC20Address) != common.AddressLength {
+		return fmt.Errorf(
+			"internal address length is %v but expected %v",
+			len(pair.InternalERC20Address),
+			common.AddressLength,
+		)
+	}
+
+	if bytes.Equal(pair.ExternalERC20Address, common.Address{}.Bytes()) {
+		return fmt.Errorf("external address cannot be zero value %v", pair.ExternalERC20Address)
+	}
+
+	if bytes.Equal(pair.InternalERC20Address, common.Address{}.Bytes()) {
+		return fmt.Errorf("internal address cannot be zero value %v", pair.InternalERC20Address)
+	}
+
 	if bytes.Equal(pair.ExternalERC20Address, pair.InternalERC20Address) {
 		return fmt.Errorf("external and internal bytes are same: %x", pair.ExternalERC20Address)
 	}

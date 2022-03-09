@@ -21,27 +21,37 @@ func TestNewERC20BridgePair(t *testing.T) {
 	}{
 		{
 			"valid",
-			types.ExternalEVMAddress{
-				Address: common.HexToAddress("0x01"),
-			},
-			types.InternalEVMAddress{
-				Address: common.HexToAddress("0x02"),
-			},
+			types.NewExternalEVMAddress(common.HexToAddress("0x01")),
+			types.NewInternalEVMAddress(common.HexToAddress("0x02")),
 			errArgs{
 				expectPass: true,
 			},
 		},
 		{
 			"invalid - same address",
-			types.ExternalEVMAddress{
-				Address: common.HexToAddress("0x01"),
-			},
-			types.InternalEVMAddress{
-				Address: common.HexToAddress("0x01"),
-			},
+			types.NewExternalEVMAddress(common.HexToAddress("0x01")),
+			types.NewInternalEVMAddress(common.HexToAddress("0x01")),
 			errArgs{
 				expectPass: false,
 				contains:   "external and internal bytes are same",
+			},
+		},
+		{
+			"invalid - zero external",
+			types.NewExternalEVMAddress(common.HexToAddress("0x00")),
+			types.NewInternalEVMAddress(common.HexToAddress("0x01")),
+			errArgs{
+				expectPass: false,
+				contains:   "external address cannot be zero value",
+			},
+		},
+		{
+			"invalid - zero internal",
+			types.NewExternalEVMAddress(common.HexToAddress("0x01")),
+			types.NewInternalEVMAddress(common.HexToAddress("0x00")),
+			errArgs{
+				expectPass: false,
+				contains:   "internal address cannot be zero value",
 			},
 		},
 	}
