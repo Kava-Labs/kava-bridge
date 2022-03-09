@@ -119,7 +119,6 @@ func (am AppModule) RegisterServices(cfg module.Configurator) {
 
 // Route returns the message routing key for the bridge module.
 func (am AppModule) Route() sdk.Route {
-	// TODO:
 	return sdk.Route{}
 }
 
