@@ -12,6 +12,14 @@
     - [GenesisState](#bridge.v1beta1.GenesisState)
     - [Params](#bridge.v1beta1.Params)
   
+- [bridge/v1beta1/query.proto](#bridge/v1beta1/query.proto)
+    - [QueryBridgedERC20PairsRequest](#bridge.v1beta1.QueryBridgedERC20PairsRequest)
+    - [QueryBridgedERC20PairsResponse](#bridge.v1beta1.QueryBridgedERC20PairsResponse)
+    - [QueryParamsRequest](#bridge.v1beta1.QueryParamsRequest)
+    - [QueryParamsResponse](#bridge.v1beta1.QueryParamsResponse)
+  
+    - [Query](#bridge.v1beta1.Query)
+  
 - [bridge/v1beta1/tx.proto](#bridge/v1beta1/tx.proto)
     - [MsgBridgeERC20FromEthereum](#bridge.v1beta1.MsgBridgeERC20FromEthereum)
     - [MsgBridgeERC20FromEthereumResponse](#bridge.v1beta1.MsgBridgeERC20FromEthereumResponse)
@@ -115,6 +123,83 @@ Params defines the bridge module params
  <!-- end enums -->
 
  <!-- end HasExtensions -->
+
+ <!-- end services -->
+
+
+
+<a name="bridge/v1beta1/query.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## bridge/v1beta1/query.proto
+
+
+
+<a name="bridge.v1beta1.QueryBridgedERC20PairsRequest"></a>
+
+### QueryBridgedERC20PairsRequest
+QueryBridgedERC20PairsRequest defines the request type for querying x/bridge ERC20 pairs.
+
+
+
+
+
+
+<a name="bridge.v1beta1.QueryBridgedERC20PairsResponse"></a>
+
+### QueryBridgedERC20PairsResponse
+QueryBridgedERC20PairsRequest defines the response type for querying x/bridge ERC20 pairs.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `erc20_bridge_pairs` | [ERC20BridgePair](#bridge.v1beta1.ERC20BridgePair) | repeated | erc20_bridge_pairs defines all of the currently bridged erc20 tokens. |
+
+
+
+
+
+
+<a name="bridge.v1beta1.QueryParamsRequest"></a>
+
+### QueryParamsRequest
+QueryParamsRequest defines the request type for querying x/auction parameters.
+
+
+
+
+
+
+<a name="bridge.v1beta1.QueryParamsResponse"></a>
+
+### QueryParamsResponse
+QueryParamsResponse defines the response type for querying x/auction parameters.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `params` | [Params](#bridge.v1beta1.Params) |  |  |
+
+
+
+
+
+ <!-- end messages -->
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
+
+
+<a name="bridge.v1beta1.Query"></a>
+
+### Query
+Query defines the gRPC querier service for auction module
+
+| Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
+| ----------- | ------------ | ------------- | ------------| ------- | -------- |
+| `Params` | [QueryParamsRequest](#bridge.v1beta1.QueryParamsRequest) | [QueryParamsResponse](#bridge.v1beta1.QueryParamsResponse) | Params queries all parameters of the auction module. | GET|/kava/bridge/v1beta1/params|
+| `BridgedERC20Pairs` | [QueryBridgedERC20PairsRequest](#bridge.v1beta1.QueryBridgedERC20PairsRequest) | [QueryBridgedERC20PairsResponse](#bridge.v1beta1.QueryBridgedERC20PairsResponse) | BridgedERC20Pairs queries the bridge address pairs | GET|/kava/bridge/v1beta1/bridge-erc20-pairs|
 
  <!-- end services -->
 
