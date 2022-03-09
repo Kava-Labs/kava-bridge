@@ -23,6 +23,7 @@ func GetQueryCmd() *cobra.Command {
 
 	cmds := []*cobra.Command{
 		QueryParamsCmd(),
+		QueryERC20BridgePairsCmd(),
 	}
 
 	for _, cmd := range cmds {
@@ -34,12 +35,12 @@ func GetQueryCmd() *cobra.Command {
 	return bridgeQueryCmd
 }
 
-// QueryParamsCmd queries the bep3 module parameters
+// QueryParamsCmd queries the bridge module parameters
 func QueryParamsCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:     "params",
-		Short:   "get the bep3 module parameters",
-		Example: "bep3 params",
+		Short:   "get the bridge module parameters",
+		Example: "bridge params",
 		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
@@ -54,6 +55,30 @@ func QueryParamsCmd() *cobra.Command {
 			}
 
 			return clientCtx.PrintProto(&res.Params)
+		},
+	}
+}
+
+// QueryERC20BridgePairsCmd queries the bridge module bridged ERC20 pairs
+func QueryERC20BridgePairsCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:     "erc20-pairs",
+		Short:   "get the bridge module bridged ERC20 pairs",
+		Example: "bridge erc20-pairs",
+		Args:    cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+			queryClient := types.NewQueryClient(clientCtx)
+
+			res, err := queryClient.BridgedERC20Pairs(context.Background(), &types.QueryBridgedERC20PairsRequest{})
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
 		},
 	}
 }
