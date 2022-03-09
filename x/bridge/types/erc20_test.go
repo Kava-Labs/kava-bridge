@@ -51,7 +51,7 @@ func TestNewERC20BridgePair(t *testing.T) {
 			types.NewInternalEVMAddress(common.HexToAddress("0x00")),
 			errArgs{
 				expectPass: false,
-				contains:   "external address cannot be zero value",
+				contains:   "internal address cannot be zero value",
 			},
 		},
 	}
@@ -129,4 +129,36 @@ func TestNewERC20BridgePair_Direct(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestNewERC20BridgePairs_Valid(t *testing.T) {
+	pairs := types.NewERC20BridgePairs(
+		types.NewERC20BridgePair(
+			types.NewExternalEVMAddress(common.HexToAddress("0x01")),
+			types.NewInternalEVMAddress(common.HexToAddress("0x0A")),
+		),
+		types.NewERC20BridgePair(
+			types.NewExternalEVMAddress(common.HexToAddress("0x01")),
+			types.NewInternalEVMAddress(common.HexToAddress("0x0B")),
+		),
+	)
+
+	err := pairs.Validate()
+	require.NoError(t, err)
+}
+
+func TestNewERC20BridgePairs_BasicInvalid(t *testing.T) {
+	pairs := types.NewERC20BridgePairs(
+		types.NewERC20BridgePair(
+			types.NewExternalEVMAddress(common.HexToAddress("0x01")),
+			types.NewInternalEVMAddress(common.HexToAddress("0x0A")),
+		),
+		types.NewERC20BridgePair(
+			types.NewExternalEVMAddress(common.HexToAddress("0x01")),
+			types.NewInternalEVMAddress(common.HexToAddress("0x00")),
+		),
+	)
+
+	err := pairs.Validate()
+	require.Error(t, err)
 }
