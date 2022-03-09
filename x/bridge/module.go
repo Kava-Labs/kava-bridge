@@ -133,13 +133,11 @@ func (am AppModule) LegacyQuerierHandler(legacyQuerierCdc *codec.LegacyAmino) sd
 
 // BeginBlock returns the begin block for the bridge module.
 func (am AppModule) BeginBlock(ctx sdk.Context, req abci.RequestBeginBlock) {
-	// am.keeper.BeginBlock(ctx, req)
 }
 
 // EndBlock returns the end blocker for the bridge module. It returns no validator
 // updates.
 func (am AppModule) EndBlock(ctx sdk.Context, req abci.RequestEndBlock) []abci.ValidatorUpdate {
-	// return am.keeper.EndBlock(ctx, req)
 	return nil
 }
 
