@@ -39,6 +39,7 @@ import (
 
 	"github.com/kava-labs/kava-bridge/app"
 	"github.com/kava-labs/kava-bridge/contract"
+	"github.com/kava-labs/kava-bridge/x/bridge/keeper"
 	"github.com/kava-labs/kava-bridge/x/bridge/types"
 )
 
@@ -54,7 +55,8 @@ type Suite struct {
 	RelayerAddress sdk.AccAddress
 	RelayerKey     *ethsecp256k1.PrivKey
 
-	QueryClientEvm evmtypes.QueryClient
+	QueryClientEvm    evmtypes.QueryClient
+	QueryClientBridge types.QueryClient
 }
 
 func (suite *Suite) SetupTest() {
@@ -185,9 +187,12 @@ func (suite *Suite) SetupTest() {
 
 	suite.App.StakingKeeper.SetValidator(suite.Ctx, validator)
 
-	queryHelperEvm := baseapp.NewQueryServerTestHelper(suite.Ctx, suite.App.InterfaceRegistry())
-	evmtypes.RegisterQueryServer(queryHelperEvm, suite.App.EvmKeeper)
-	suite.QueryClientEvm = evmtypes.NewQueryClient(queryHelperEvm)
+	queryHelper := baseapp.NewQueryServerTestHelper(suite.Ctx, suite.App.InterfaceRegistry())
+	evmtypes.RegisterQueryServer(queryHelper, suite.App.EvmKeeper)
+	suite.QueryClientEvm = evmtypes.NewQueryClient(queryHelper)
+
+	types.RegisterQueryServer(queryHelper, keeper.NewQueryServerImpl(suite.App.BridgeKeeper))
+	suite.QueryClientBridge = types.NewQueryClient(queryHelper)
 
 	// We need to commit so that the ethermint feemarket beginblock runs to set the minfee
 	// feeMarketKeeper.GetBaseFee() will return nil otherwise
