@@ -1,6 +1,7 @@
 package types
 
 import (
+	bytes "bytes"
 	"errors"
 	"fmt"
 	"math"
@@ -112,6 +113,10 @@ func NewEnabledERC20Token(address string, name string, symbol string, decimals u
 func (e EnabledERC20Token) Validate() error {
 	if !common.IsHexAddress(e.Address) {
 		return errors.New("address is not a valid hex address")
+	}
+
+	if addr := common.HexToAddress(e.Address); bytes.Equal(addr.Bytes(), common.Address{}.Bytes()) {
+		return fmt.Errorf("address cannot be zero value %v", addr)
 	}
 
 	if e.Address != strings.ToLower(e.Address) {

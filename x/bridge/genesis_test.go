@@ -39,7 +39,7 @@ func (suite *genesisTestSuite) Test_InitGenesis_Validation() {
 							18,
 						),
 						types.NewEnabledERC20Token(
-							"0x0000000000000000000000000000000000000000",
+							"0x000000000000000000000000000000000000000A",
 							"Wrapped Kava",
 							"WKAVA",
 							6,
@@ -77,7 +77,7 @@ func (suite *genesisTestSuite) Test_InitGenesis_Validation() {
 							18,
 						),
 						types.NewEnabledERC20Token(
-							"0x0000000000000000000000000000000000000000",
+							"0x000000000000000000000000000000000000000A",
 							"Wrapped Kava",
 							"WKAVA",
 							6,
@@ -141,7 +141,7 @@ func (suite *genesisTestSuite) Test_InitGenesis_Validation() {
 							18,
 						),
 						types.NewEnabledERC20Token(
-							"0x0000000000000000000000000000000000000000",
+							"0x000000000000000000000000000000000000000A",
 							"Wrapped Kava",
 							"WKAVA",
 							6,
@@ -205,7 +205,7 @@ func (suite *genesisTestSuite) Test_InitAndExportGenesis() {
 					18,
 				),
 				types.NewEnabledERC20Token(
-					"0x0000000000000000000000000000000000000000",
+					"0x000000000000000000000000000000000000000A",
 					"Wrapped Kava",
 					"WKAVA",
 					6,
@@ -243,7 +243,7 @@ func (suite *genesisTestSuite) Test_Marshall() {
 					18,
 				),
 				types.NewEnabledERC20Token(
-					"0x0000000000000000000000000000000000000000",
+					"0x000000000000000000000000000000000000000A",
 					"Wrapped Kava",
 					"WKAVA",
 					6,
@@ -287,7 +287,7 @@ func (suite *genesisTestSuite) Test_LegacyJSONConversion() {
 					18,
 				),
 				types.NewEnabledERC20Token(
-					"0x0000000000000000000000000000000000000000",
+					"0x000000000000000000000000000000000000000A",
 					"Wrapped Kava",
 					"WKAVA",
 					6,

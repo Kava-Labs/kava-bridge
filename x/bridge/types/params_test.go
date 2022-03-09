@@ -80,6 +80,24 @@ func (suite *ParamsTestSuite) TestParamValidation() {
 			},
 		},
 		{
+			"invalid - zero address",
+			args{
+				enabledERC20Tokens: types.EnabledERC20Tokens{
+					types.NewEnabledERC20Token(
+						"0x0000000000000000000000000000000000000000",
+						"Wrapped Ether",
+						"WETH",
+						18,
+					),
+				},
+				relayer: sdk.AccAddress("1234"),
+			},
+			errArgs{
+				expectPass: false,
+				contains:   "address cannot be zero value",
+			},
+		},
+		{
 			"invalid - hex length mismatch",
 			args{
 				enabledERC20Tokens: types.EnabledERC20Tokens{
@@ -241,7 +259,7 @@ func (suite *ParamsTestSuite) TestUnmarshalJSON() {
 			18,
 		),
 		types.NewEnabledERC20Token(
-			"0x0000000000000000000000000000000000000000",
+			"0x000000000000000000000000000000000000000A",
 			"Wrapped Kava",
 			"WKAVA",
 			6,
@@ -283,7 +301,7 @@ func (suite *ParamsTestSuite) TestMarshalYAML() {
 			18,
 		),
 		types.NewEnabledERC20Token(
-			"0x0000000000000000000000000000000000000000",
+			"0x000000000000000000000000000000000000000A",
 			"Wrapped Kava",
 			"WKAVA",
 			6,
