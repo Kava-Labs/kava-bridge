@@ -18,8 +18,8 @@ service Query {
     option (google.api.http).get = "/kava/bridge/v1beta1/params";
   }
 
-  // BridgedERC20Pairs queries the bridge address pairs
-  rpc BridgedERC20Pairs(QueryBridgedERC20PairsRequest) returns (QueryBridgedERC20PairsResponse) {
+  // ERC20BridgePairs queries the bridge address pairs
+  rpc ERC20BridgePairs(QueryERC20BridgePairsRequest) returns (QueryERC20BridgePairsResponse) {
     option (google.api.http).get = "/kava/bridge/v1beta1/bridge-erc20-pairs";
   }
 }
@@ -32,11 +32,11 @@ message QueryParamsResponse {
   Params params = 1 [(gogoproto.nullable) = false];
 }
 
-// QueryBridgedERC20PairsRequest defines the request type for querying x/bridge ERC20 pairs.
-message QueryBridgedERC20PairsRequest {}
+// QueryERC20BridgePairsRequest defines the request type for querying x/bridge ERC20 pairs.
+message QueryERC20BridgePairsRequest {}
 
-// QueryBridgedERC20PairsRequest defines the response type for querying x/bridge ERC20 pairs.
-message QueryBridgedERC20PairsResponse {
+// QueryERC20BridgePairsRequest defines the response type for querying x/bridge ERC20 pairs.
+message QueryERC20BridgePairsResponse {
   // erc20_bridge_pairs defines all of the currently bridged erc20 tokens.
   repeated ERC20BridgePair erc20_bridge_pairs = 2 [
     (gogoproto.nullable)     = false,

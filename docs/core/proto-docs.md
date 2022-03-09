@@ -13,8 +13,8 @@
     - [Params](#bridge.v1beta1.Params)
   
 - [bridge/v1beta1/query.proto](#bridge/v1beta1/query.proto)
-    - [QueryBridgedERC20PairsRequest](#bridge.v1beta1.QueryBridgedERC20PairsRequest)
-    - [QueryBridgedERC20PairsResponse](#bridge.v1beta1.QueryBridgedERC20PairsResponse)
+    - [QueryERC20BridgePairsRequest](#bridge.v1beta1.QueryERC20BridgePairsRequest)
+    - [QueryERC20BridgePairsResponse](#bridge.v1beta1.QueryERC20BridgePairsResponse)
     - [QueryParamsRequest](#bridge.v1beta1.QueryParamsRequest)
     - [QueryParamsResponse](#bridge.v1beta1.QueryParamsResponse)
   
@@ -135,20 +135,20 @@ Params defines the bridge module params
 
 
 
-<a name="bridge.v1beta1.QueryBridgedERC20PairsRequest"></a>
+<a name="bridge.v1beta1.QueryERC20BridgePairsRequest"></a>
 
-### QueryBridgedERC20PairsRequest
-QueryBridgedERC20PairsRequest defines the request type for querying x/bridge ERC20 pairs.
-
-
+### QueryERC20BridgePairsRequest
+QueryERC20BridgePairsRequest defines the request type for querying x/bridge ERC20 pairs.
 
 
 
 
-<a name="bridge.v1beta1.QueryBridgedERC20PairsResponse"></a>
 
-### QueryBridgedERC20PairsResponse
-QueryBridgedERC20PairsRequest defines the response type for querying x/bridge ERC20 pairs.
+
+<a name="bridge.v1beta1.QueryERC20BridgePairsResponse"></a>
+
+### QueryERC20BridgePairsResponse
+QueryERC20BridgePairsRequest defines the response type for querying x/bridge ERC20 pairs.
 
 
 | Field | Type | Label | Description |
@@ -199,7 +199,7 @@ Query defines the gRPC querier service for auction module
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
 | `Params` | [QueryParamsRequest](#bridge.v1beta1.QueryParamsRequest) | [QueryParamsResponse](#bridge.v1beta1.QueryParamsResponse) | Params queries all parameters of the auction module. | GET|/kava/bridge/v1beta1/params|
-| `BridgedERC20Pairs` | [QueryBridgedERC20PairsRequest](#bridge.v1beta1.QueryBridgedERC20PairsRequest) | [QueryBridgedERC20PairsResponse](#bridge.v1beta1.QueryBridgedERC20PairsResponse) | BridgedERC20Pairs queries the bridge address pairs | GET|/kava/bridge/v1beta1/bridge-erc20-pairs|
+| `ERC20BridgePairs` | [QueryERC20BridgePairsRequest](#bridge.v1beta1.QueryERC20BridgePairsRequest) | [QueryERC20BridgePairsResponse](#bridge.v1beta1.QueryERC20BridgePairsResponse) | ERC20BridgePairs queries the bridge address pairs | GET|/kava/bridge/v1beta1/bridge-erc20-pairs|
 
  <!-- end services -->
 

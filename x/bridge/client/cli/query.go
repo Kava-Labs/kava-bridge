@@ -73,7 +73,10 @@ func QueryERC20BridgePairsCmd() *cobra.Command {
 			}
 			queryClient := types.NewQueryClient(clientCtx)
 
-			res, err := queryClient.BridgedERC20Pairs(context.Background(), &types.QueryBridgedERC20PairsRequest{})
+			res, err := queryClient.ERC20BridgePairs(
+				context.Background(),
+				&types.QueryERC20BridgePairsRequest{},
+			)
 			if err != nil {
 				return err
 			}

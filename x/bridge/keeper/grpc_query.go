@@ -34,10 +34,11 @@ func (s queryServer) Params(stdCtx context.Context, req *types.QueryParamsReques
 	return &types.QueryParamsResponse{Params: params}, nil
 }
 
-func (s queryServer) BridgedERC20Pairs(
+// ERC20BridgePairs queries ERC20 bridge pair addresses.
+func (s queryServer) ERC20BridgePairs(
 	stdCtx context.Context,
-	req *types.QueryBridgedERC20PairsRequest,
-) (*types.QueryBridgedERC20PairsResponse, error) {
+	req *types.QueryERC20BridgePairsRequest,
+) (*types.QueryERC20BridgePairsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(stdCtx)
 
 	var bridgePairs types.ERC20BridgePairs
@@ -46,7 +47,7 @@ func (s queryServer) BridgedERC20Pairs(
 		return false
 	})
 
-	return &types.QueryBridgedERC20PairsResponse{
+	return &types.QueryERC20BridgePairsResponse{
 		ERC20BridgePairs: bridgePairs,
 	}, nil
 }
