@@ -11,7 +11,7 @@ import (
 )
 
 // GetQueryCmd returns the cli query commands for this module
-func GetQueryCmd(queryRoute string) *cobra.Command {
+func GetQueryCmd() *cobra.Command {
 	// Group bep3 queries under a subcommand
 	bridgeQueryCmd := &cobra.Command{
 		Use:                        "bridge",
@@ -22,7 +22,7 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 	}
 
 	cmds := []*cobra.Command{
-		QueryParamsCmd(queryRoute),
+		QueryParamsCmd(),
 	}
 
 	for _, cmd := range cmds {
@@ -35,7 +35,7 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 }
 
 // QueryParamsCmd queries the bep3 module parameters
-func QueryParamsCmd(queryRoute string) *cobra.Command {
+func QueryParamsCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:     "params",
 		Short:   "get the bep3 module parameters",
