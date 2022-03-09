@@ -75,7 +75,7 @@ contract WKAVA {
         ) {
             require(
                 allowance[src][msg.sender] >= wad,
-                "WKAVA: amount < allowance"
+                "WKAVA: allowance < amount"
             );
             allowance[src][msg.sender] -= wad;
         }
