@@ -119,12 +119,12 @@ func (suite *Suite) SetupTest() {
 		),
 		types.NewERC20BridgePairs(
 			types.NewERC20BridgePair(
-				types.NewExternalEVMAddress(common.HexToAddress("0x01")),
-				types.NewInternalEVMAddress(common.HexToAddress("0x0A")),
+				MustNewExternalEVMAddressFromString("0x0000000000000000000000000000000000000001"),
+				MustNewInternalEVMAddressFromString("0x000000000000000000000000000000000000000A"),
 			),
 			types.NewERC20BridgePair(
-				types.NewExternalEVMAddress(common.HexToAddress("0x02")),
-				types.NewInternalEVMAddress(common.HexToAddress("0x0B")),
+				MustNewExternalEVMAddressFromString("0x0000000000000000000000000000000000000002"),
+				MustNewInternalEVMAddressFromString("0x000000000000000000000000000000000000000B"),
 			),
 		),
 	)
