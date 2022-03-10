@@ -91,14 +91,14 @@ func (suite *GrpcQueryTestSuite) TestQueryERC20BridgePairs() {
 
 	for _, pair := range queriedBridgedERC20Pairs.ERC20BridgePairs {
 		queriedExtAddrs = append(queriedExtAddrs, "0x"+hex.EncodeToString(pair.ExternalERC20Address))
-		queriedIntAddrs = append(queriedIntAddrs, "0x"+hex.EncodeToString(pair.ExternalERC20Address))
+		queriedIntAddrs = append(queriedIntAddrs, "0x"+hex.EncodeToString(pair.InternalERC20Address))
 	}
 
 	for _, addr := range extContracts {
 		suite.Require().Containsf(queriedExtAddrs, addr, "queried pairs should contain new external addr %v", addr)
 	}
 
-	for _, addr := range extContracts {
+	for _, addr := range internalContracts {
 		suite.Require().Containsf(queriedIntAddrs, addr, "queried pairs should contain new internal addr %v", addr)
 	}
 }
