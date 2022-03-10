@@ -30,7 +30,7 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-// QueryParamsRequest defines the request type for querying x/auction parameters.
+// QueryParamsRequest defines the request type for querying x/bridge parameters.
 type QueryParamsRequest struct {
 }
 
@@ -67,7 +67,7 @@ func (m *QueryParamsRequest) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_QueryParamsRequest proto.InternalMessageInfo
 
-// QueryParamsResponse defines the response type for querying x/auction parameters.
+// QueryParamsResponse defines the response type for querying x/bridge parameters.
 type QueryParamsResponse struct {
 	Params Params `protobuf:"bytes,1,opt,name=params,proto3" json:"params"`
 }
@@ -462,7 +462,7 @@ const _ = grpc.SupportPackageIsVersion4
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type QueryClient interface {
-	// Params queries all parameters of the auction module.
+	// Params queries all parameters of the bridge module.
 	Params(ctx context.Context, in *QueryParamsRequest, opts ...grpc.CallOption) (*QueryParamsResponse, error)
 	// ERC20BridgePairs queries the bridge address pairs
 	ERC20BridgePairs(ctx context.Context, in *QueryERC20BridgePairsRequest, opts ...grpc.CallOption) (*QueryERC20BridgePairsResponse, error)
@@ -496,7 +496,7 @@ func (c *queryClient) ERC20BridgePairs(ctx context.Context, in *QueryERC20Bridge
 
 // QueryServer is the server API for Query service.
 type QueryServer interface {
-	// Params queries all parameters of the auction module.
+	// Params queries all parameters of the bridge module.
 	Params(context.Context, *QueryParamsRequest) (*QueryParamsResponse, error)
 	// ERC20BridgePairs queries the bridge address pairs
 	ERC20BridgePairs(context.Context, *QueryERC20BridgePairsRequest) (*QueryERC20BridgePairsResponse, error)

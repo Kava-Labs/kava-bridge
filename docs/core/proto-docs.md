@@ -163,7 +163,7 @@ QueryERC20BridgePairsRequest defines the response type for querying x/bridge ERC
 <a name="bridge.v1beta1.QueryParamsRequest"></a>
 
 ### QueryParamsRequest
-QueryParamsRequest defines the request type for querying x/auction parameters.
+QueryParamsRequest defines the request type for querying x/bridge parameters.
 
 
 
@@ -173,7 +173,7 @@ QueryParamsRequest defines the request type for querying x/auction parameters.
 <a name="bridge.v1beta1.QueryParamsResponse"></a>
 
 ### QueryParamsResponse
-QueryParamsResponse defines the response type for querying x/auction parameters.
+QueryParamsResponse defines the response type for querying x/bridge parameters.
 
 
 | Field | Type | Label | Description |
@@ -194,11 +194,11 @@ QueryParamsResponse defines the response type for querying x/auction parameters.
 <a name="bridge.v1beta1.Query"></a>
 
 ### Query
-Query defines the gRPC querier service for auction module
+Query defines the gRPC querier service for bridge module
 
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
-| `Params` | [QueryParamsRequest](#bridge.v1beta1.QueryParamsRequest) | [QueryParamsResponse](#bridge.v1beta1.QueryParamsResponse) | Params queries all parameters of the auction module. | GET|/kava/bridge/v1beta1/params|
+| `Params` | [QueryParamsRequest](#bridge.v1beta1.QueryParamsRequest) | [QueryParamsResponse](#bridge.v1beta1.QueryParamsResponse) | Params queries all parameters of the bridge module. | GET|/kava/bridge/v1beta1/params|
 | `ERC20BridgePairs` | [QueryERC20BridgePairsRequest](#bridge.v1beta1.QueryERC20BridgePairsRequest) | [QueryERC20BridgePairsResponse](#bridge.v1beta1.QueryERC20BridgePairsResponse) | ERC20BridgePairs queries the bridge address pairs | GET|/kava/bridge/v1beta1/bridge-erc20-pairs|
 
  <!-- end services -->
