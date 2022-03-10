@@ -21,10 +21,8 @@ func TestKeeperTestSuite(t *testing.T) {
 }
 
 func (suite *KeeperTestSuite) TestERC20_NotEnabled() {
-	extAddr := types.ExternalEVMAddress{
-		// WETH but last char changed
-		Address: common.HexToAddress("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc4"),
-	}
+	// WETH but last char changed
+	extAddr := types.NewExternalEVMAddress(common.HexToAddress("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc4"))
 
 	_, err := suite.App.BridgeKeeper.GetOrDeployInternalERC20(suite.Ctx, extAddr)
 	suite.Require().Error(err)
@@ -32,9 +30,7 @@ func (suite *KeeperTestSuite) TestERC20_NotEnabled() {
 }
 
 func (suite *KeeperTestSuite) TestERC20SaveDeploy() {
-	extAddr := types.ExternalEVMAddress{
-		Address: common.HexToAddress("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
-	}
+	extAddr := types.NewExternalEVMAddress(common.HexToAddress("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"))
 
 	_, found := suite.App.BridgeKeeper.GetInternalERC20Address(suite.Ctx, extAddr)
 	suite.Require().False(found, "internal ERC20 address should not be set before first bridge")
@@ -135,4 +131,29 @@ func (suite *KeeperTestSuite) TestPermission() {
 			}
 		})
 	}
+}
+
+func (suite *KeeperTestSuite) TestERC20PairIter() {
+	pairs := types.NewERC20BridgePairs(
+		types.NewERC20BridgePair(
+			types.NewExternalEVMAddress(common.HexToAddress("0x01")),
+			types.NewInternalEVMAddress(common.HexToAddress("0x0A")),
+		),
+		types.NewERC20BridgePair(
+			types.NewExternalEVMAddress(common.HexToAddress("0x02")),
+			types.NewInternalEVMAddress(common.HexToAddress("0x0B")),
+		),
+	)
+
+	for _, pair := range pairs {
+		suite.App.BridgeKeeper.SetERC20AddressPair(suite.Ctx, pair)
+	}
+
+	var iterPairs types.ERC20BridgePairs
+	suite.App.BridgeKeeper.IterateERC20BridgePairs(suite.Ctx, func(pair types.ERC20BridgePair) bool {
+		iterPairs = append(iterPairs, pair)
+		return false
+	})
+
+	suite.Require().Equal(pairs, iterPairs, "pairs from iterator should match pairs set in store")
 }

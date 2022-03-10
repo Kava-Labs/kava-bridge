@@ -10,8 +10,22 @@ type ExternalEVMAddress struct {
 	common.Address
 }
 
+// NewExternalEVMAddress returns a new ExternalEVMAddress from a common.Address.
+func NewExternalEVMAddress(addr common.Address) ExternalEVMAddress {
+	return ExternalEVMAddress{
+		Address: addr,
+	}
+}
+
 // InternalEVMAddress is a type alias of common.Address to represent an address
 // on the Kava EVM.
 type InternalEVMAddress struct {
 	common.Address
+}
+
+// NewInternalEVMAddress returns a new InternalEVMAddress from a common.Address.
+func NewInternalEVMAddress(addr common.Address) InternalEVMAddress {
+	return InternalEVMAddress{
+		Address: addr,
+	}
 }

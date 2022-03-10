@@ -4,6 +4,9 @@
 
 ## Table of Contents
 
+- [bridge/v1beta1/erc20.proto](#bridge/v1beta1/erc20.proto)
+    - [ERC20BridgePair](#bridge.v1beta1.ERC20BridgePair)
+  
 - [bridge/v1beta1/genesis.proto](#bridge/v1beta1/genesis.proto)
     - [EnabledERC20Token](#bridge.v1beta1.EnabledERC20Token)
     - [GenesisState](#bridge.v1beta1.GenesisState)
@@ -16,6 +19,38 @@
     - [Msg](#bridge.v1beta1.Msg)
   
 - [Scalar Value Types](#scalar-value-types)
+
+
+
+<a name="bridge/v1beta1/erc20.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## bridge/v1beta1/erc20.proto
+
+
+
+<a name="bridge.v1beta1.ERC20BridgePair"></a>
+
+### ERC20BridgePair
+ERC20BridgePair defines an ERC20 token bridged between external and Kava EVM
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `external_erc20_address` | [bytes](#bytes) |  | external_erc20_address represents the external EVM ERC20 address |
+| `internal_erc20_address` | [bytes](#bytes) |  | internal_erc20_address represents the corresponding internal Kava EVM ERC20 address |
+
+
+
+
+
+ <!-- end messages -->
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
+
+ <!-- end services -->
 
 
 
@@ -53,6 +88,7 @@ GenesisState defines the bridge module's genesis state.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | `params` | [Params](#bridge.v1beta1.Params) |  | params defines all the paramaters of the module. |
+| `erc20_bridge_pairs` | [ERC20BridgePair](#bridge.v1beta1.ERC20BridgePair) | repeated | erc20_bridge_pairs defines all of the bridged erc20 tokens. |
 
 
 

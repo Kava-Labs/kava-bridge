@@ -187,6 +187,24 @@ func (suite *ParamsTestSuite) TestParamValidation() {
 				contains:   "relayer cannot be nil",
 			},
 		},
+		{
+			"invalid - non-lowercase",
+			args{
+				enabledERC20Tokens: types.EnabledERC20Tokens{
+					types.EnabledERC20Token{
+						Address:  "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+						Name:     "Wrapped Ether",
+						Symbol:   "WETH",
+						Decimals: 18,
+					},
+				},
+				relayer: nil,
+			},
+			errArgs{
+				expectPass: false,
+				contains:   "address must be lowercase",
+			},
+		},
 	}
 
 	for _, tc := range testCases {
