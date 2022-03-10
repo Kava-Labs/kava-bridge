@@ -3,7 +3,6 @@ package types_test
 import (
 	"testing"
 
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/kava-labs/kava-bridge/x/bridge/testutil"
 	"github.com/kava-labs/kava-bridge/x/bridge/types"
 	"github.com/stretchr/testify/require"
@@ -88,8 +87,8 @@ func TestNewERC20BridgePair_Direct(t *testing.T) {
 		{
 			"valid",
 			types.ERC20BridgePair{
-				ExternalERC20Address: common.HexToAddress("0x0000000000000000000000000000000000000001").Bytes(),
-				InternalERC20Address: common.HexToAddress("0x0000000000000000000000000000000000000002").Bytes(),
+				ExternalERC20Address: testutil.MustNewExternalEVMAddressFromString("0x0000000000000000000000000000000000000001").Bytes(),
+				InternalERC20Address: testutil.MustNewInternalEVMAddressFromString("0x0000000000000000000000000000000000000002").Bytes(),
 			},
 			errArgs{
 				expectPass: true,
@@ -109,7 +108,7 @@ func TestNewERC20BridgePair_Direct(t *testing.T) {
 		{
 			"invalid - invalid internal length",
 			types.ERC20BridgePair{
-				ExternalERC20Address: common.HexToAddress("0x0000000000000000000000000000000000000001").Bytes(),
+				ExternalERC20Address: testutil.MustNewExternalEVMAddressFromString("0x0000000000000000000000000000000000000001").Bytes(),
 				InternalERC20Address: []byte{2},
 			},
 			errArgs{
