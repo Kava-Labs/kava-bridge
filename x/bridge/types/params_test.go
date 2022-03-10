@@ -99,24 +99,6 @@ func (suite *ParamsTestSuite) TestParamValidation() {
 			},
 		},
 		{
-			"invalid - hex length mismatch",
-			args{
-				enabledERC20Tokens: types.EnabledERC20Tokens{
-					types.NewEnabledERC20Token(
-						testutil.MustNewExternalEVMAddressFromString("C02aaA39b223FE8D0A0e5C4F27eAD9083C756C"),
-						"Wrapped Ether",
-						"WETH",
-						18,
-					),
-				},
-				relayer: sdk.AccAddress("1234"),
-			},
-			errArgs{
-				expectPass: false,
-				contains:   "address is not a valid hex address",
-			},
-		},
-		{
 			"invalid - empty name",
 			args{
 				enabledERC20Tokens: types.EnabledERC20Tokens{

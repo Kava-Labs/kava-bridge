@@ -151,12 +151,12 @@ func TestNewERC20BridgePairs_Valid(t *testing.T) {
 func TestNewERC20BridgePairs_BasicInvalid(t *testing.T) {
 	pairs := types.NewERC20BridgePairs(
 		types.NewERC20BridgePair(
-			testutil.MustNewExternalEVMAddressFromString("0x01"),
-			testutil.MustNewInternalEVMAddressFromString("0x0A"),
+			testutil.MustNewExternalEVMAddressFromString("0x0000000000000000000000000000000000000001"),
+			testutil.MustNewInternalEVMAddressFromString("0x000000000000000000000000000000000000000A"),
 		),
 		types.NewERC20BridgePair(
-			testutil.MustNewExternalEVMAddressFromString("0x01"),
-			testutil.MustNewInternalEVMAddressFromString("0x00"),
+			testutil.MustNewExternalEVMAddressFromString("0x0000000000000000000000000000000000000001"),
+			testutil.MustNewInternalEVMAddressFromString("0x0000000000000000000000000000000000000000"),
 		),
 	)
 
