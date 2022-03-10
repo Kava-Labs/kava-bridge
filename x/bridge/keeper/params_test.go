@@ -38,7 +38,7 @@ func (suite *ParamsTestSuite) TestGetEnabledERC20Token() {
 	suite.Require().NoError(err)
 
 	expectedToken := types.NewEnabledERC20Token(
-		testutil.MustDecodeHexString("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
+		testutil.MustNewExternalEVMAddressFromString("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
 		"Wrapped Ether",
 		"WETH",
 		18,

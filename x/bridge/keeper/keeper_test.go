@@ -22,7 +22,7 @@ func TestKeeperTestSuite(t *testing.T) {
 
 func (suite *KeeperTestSuite) TestERC20_NotEnabled() {
 	// WETH but last char changed
-	extAddr := types.NewExternalEVMAddress(common.HexToAddress("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc4"))
+	extAddr := testutil.MustNewExternalEVMAddressFromString("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc4")
 
 	_, err := suite.App.BridgeKeeper.GetOrDeployInternalERC20(suite.Ctx, extAddr)
 	suite.Require().Error(err)
@@ -30,7 +30,7 @@ func (suite *KeeperTestSuite) TestERC20_NotEnabled() {
 }
 
 func (suite *KeeperTestSuite) TestERC20SaveDeploy() {
-	extAddr := types.NewExternalEVMAddress(common.HexToAddress("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"))
+	extAddr := testutil.MustNewExternalEVMAddressFromString("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2")
 
 	_, found := suite.App.BridgeKeeper.GetInternalERC20Address(suite.Ctx, extAddr)
 	suite.Require().False(found, "internal ERC20 address should not be set before first bridge")
