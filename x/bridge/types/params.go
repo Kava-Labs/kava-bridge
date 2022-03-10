@@ -2,10 +2,10 @@ package types
 
 import (
 	bytes "bytes"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"math"
-	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
@@ -84,7 +84,7 @@ func (tokens EnabledERC20Tokens) Validate() error {
 	addrs := map[string]bool{}
 
 	for _, token := range tokens {
-		if addrs[strings.ToLower(token.Address)] {
+		if addrs[hex.EncodeToString(token.Address)] {
 			return fmt.Errorf("found duplicate enabled ERC20 token address %s", token.Address)
 		}
 
@@ -92,17 +92,16 @@ func (tokens EnabledERC20Tokens) Validate() error {
 			return err
 		}
 
-		addrs[strings.ToLower(token.Address)] = true
+		addrs[hex.EncodeToString(token.Address)] = true
 	}
 
 	return nil
 }
 
 // NewEnabledERC20Token returns a new EnabledERC20Token.
-func NewEnabledERC20Token(address string, name string, symbol string, decimals uint32) EnabledERC20Token {
+func NewEnabledERC20Token(address ExternalEVMAddress, name string, symbol string, decimals uint32) EnabledERC20Token {
 	return EnabledERC20Token{
-		// Lowercased, address checksum is ignored
-		Address:  strings.ToLower(address),
+		Address:  address.Bytes(),
 		Name:     name,
 		Symbol:   symbol,
 		Decimals: decimals,
@@ -111,16 +110,12 @@ func NewEnabledERC20Token(address string, name string, symbol string, decimals u
 
 // Validate returns an error if the EnabledERC20Token is invalid.
 func (e EnabledERC20Token) Validate() error {
-	if !common.IsHexAddress(e.Address) {
-		return errors.New("address is not a valid hex address")
+	if len(e.Address) != common.AddressLength {
+		return fmt.Errorf("address length is %v but expected %v", len(e.Address), common.AddressLength)
 	}
 
-	if addr := common.HexToAddress(e.Address); bytes.Equal(addr.Bytes(), common.Address{}.Bytes()) {
-		return fmt.Errorf("address cannot be zero value %v", addr)
-	}
-
-	if e.Address != strings.ToLower(e.Address) {
-		return fmt.Errorf("address must be lowercase")
+	if bytes.Equal(e.Address, common.Address{}.Bytes()) {
+		return fmt.Errorf("address cannot be zero value %v", e.Address)
 	}
 
 	if e.Name == "" {

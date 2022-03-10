@@ -13,6 +13,7 @@ import (
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 
 	"github.com/kava-labs/kava-bridge/app"
+	"github.com/kava-labs/kava-bridge/x/bridge/testutil"
 	"github.com/kava-labs/kava-bridge/x/bridge/types"
 )
 
@@ -43,7 +44,7 @@ func (suite *ParamsTestSuite) TestParamValidation() {
 			args{
 				enabledERC20Tokens: types.EnabledERC20Tokens{
 					types.NewEnabledERC20Token(
-						"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+						testutil.MustNewExternalEVMAddressFromString("C02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
 						"Wrapped Ether",
 						"WETH",
 						18,
@@ -60,13 +61,13 @@ func (suite *ParamsTestSuite) TestParamValidation() {
 			args{
 				enabledERC20Tokens: types.EnabledERC20Tokens{
 					types.NewEnabledERC20Token(
-						"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+						testutil.MustNewExternalEVMAddressFromString("C02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
 						"Wrapped Ether",
 						"WETH",
 						18,
 					),
 					types.NewEnabledERC20Token(
-						"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+						testutil.MustNewExternalEVMAddressFromString("C02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
 						"Wrapped Ether",
 						"WETH",
 						18,
@@ -84,7 +85,7 @@ func (suite *ParamsTestSuite) TestParamValidation() {
 			args{
 				enabledERC20Tokens: types.EnabledERC20Tokens{
 					types.NewEnabledERC20Token(
-						"0x0000000000000000000000000000000000000000",
+						testutil.MustNewExternalEVMAddressFromString("0000000000000000000000000000000000000000"),
 						"Wrapped Ether",
 						"WETH",
 						18,
@@ -102,7 +103,7 @@ func (suite *ParamsTestSuite) TestParamValidation() {
 			args{
 				enabledERC20Tokens: types.EnabledERC20Tokens{
 					types.NewEnabledERC20Token(
-						"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756C",
+						testutil.MustNewExternalEVMAddressFromString("C02aaA39b223FE8D0A0e5C4F27eAD9083C756C"),
 						"Wrapped Ether",
 						"WETH",
 						18,
@@ -120,7 +121,7 @@ func (suite *ParamsTestSuite) TestParamValidation() {
 			args{
 				enabledERC20Tokens: types.EnabledERC20Tokens{
 					types.NewEnabledERC20Token(
-						"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+						testutil.MustNewExternalEVMAddressFromString("C02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
 						"",
 						"WETH",
 						18,
@@ -138,7 +139,7 @@ func (suite *ParamsTestSuite) TestParamValidation() {
 			args{
 				enabledERC20Tokens: types.EnabledERC20Tokens{
 					types.NewEnabledERC20Token(
-						"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+						testutil.MustNewExternalEVMAddressFromString("C02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
 						"Wrapped Ether",
 						"",
 						18,
@@ -156,7 +157,7 @@ func (suite *ParamsTestSuite) TestParamValidation() {
 			args{
 				enabledERC20Tokens: types.EnabledERC20Tokens{
 					types.NewEnabledERC20Token(
-						"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+						testutil.MustNewExternalEVMAddressFromString("C02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
 						"Wrapped Ether",
 						"WETH",
 						0,
@@ -174,7 +175,7 @@ func (suite *ParamsTestSuite) TestParamValidation() {
 			args{
 				enabledERC20Tokens: types.EnabledERC20Tokens{
 					types.NewEnabledERC20Token(
-						"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+						testutil.MustNewExternalEVMAddressFromString("C02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
 						"Wrapped Ether",
 						"WETH",
 						256,
@@ -192,7 +193,7 @@ func (suite *ParamsTestSuite) TestParamValidation() {
 			args{
 				enabledERC20Tokens: types.EnabledERC20Tokens{
 					types.NewEnabledERC20Token(
-						"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+						testutil.MustNewExternalEVMAddressFromString("C02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
 						"Wrapped Ether",
 						"WETH",
 						18,
@@ -203,24 +204,6 @@ func (suite *ParamsTestSuite) TestParamValidation() {
 			errArgs{
 				expectPass: false,
 				contains:   "relayer cannot be nil",
-			},
-		},
-		{
-			"invalid - non-lowercase",
-			args{
-				enabledERC20Tokens: types.EnabledERC20Tokens{
-					types.EnabledERC20Token{
-						Address:  "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
-						Name:     "Wrapped Ether",
-						Symbol:   "WETH",
-						Decimals: 18,
-					},
-				},
-				relayer: nil,
-			},
-			errArgs{
-				expectPass: false,
-				contains:   "address must be lowercase",
 			},
 		},
 	}
@@ -253,19 +236,19 @@ func (suite *ParamsTestSuite) TestDefault() {
 func (suite *ParamsTestSuite) TestUnmarshalJSON() {
 	enabledTokens := types.NewEnabledERC20Tokens(
 		types.NewEnabledERC20Token(
-			"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+			testutil.MustNewExternalEVMAddressFromString("C02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
 			"Wrapped Ether",
 			"WETH",
 			18,
 		),
 		types.NewEnabledERC20Token(
-			"0x000000000000000000000000000000000000000A",
+			testutil.MustNewExternalEVMAddressFromString("000000000000000000000000000000000000000A"),
 			"Wrapped Kava",
 			"WKAVA",
 			6,
 		),
 		types.NewEnabledERC20Token(
-			"A0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+			testutil.MustNewExternalEVMAddressFromString("A0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"),
 			"USD Coin",
 			"USDC",
 			6,
@@ -295,19 +278,19 @@ func (suite *ParamsTestSuite) TestUnmarshalJSON() {
 func (suite *ParamsTestSuite) TestMarshalYAML() {
 	enabledTokens := types.NewEnabledERC20Tokens(
 		types.NewEnabledERC20Token(
-			"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+			testutil.MustNewExternalEVMAddressFromString("C02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
 			"Wrapped Ether",
 			"WETH",
 			18,
 		),
 		types.NewEnabledERC20Token(
-			"0x000000000000000000000000000000000000000A",
+			testutil.MustNewExternalEVMAddressFromString("000000000000000000000000000000000000000A"),
 			"Wrapped Kava",
 			"WKAVA",
 			6,
 		),
 		types.NewEnabledERC20Token(
-			"A0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+			testutil.MustNewExternalEVMAddressFromString("A0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"),
 			"USD Coin",
 			"USDC",
 			6,

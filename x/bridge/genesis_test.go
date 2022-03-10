@@ -1,6 +1,7 @@
 package bridge_test
 
 import (
+	"encoding/hex"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -33,20 +34,19 @@ func (suite *genesisTestSuite) Test_InitGenesis_Validation() {
 				types.Params{
 					EnabledERC20Tokens: types.EnabledERC20Tokens{
 						types.NewEnabledERC20Token(
-							"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+							MustDecodeHexString("C02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
 							"Wrapped Ether",
 							"WETH",
 							18,
 						),
 						types.NewEnabledERC20Token(
-							"0x000000000000000000000000000000000000000A",
+							MustDecodeHexString("000000000000000000000000000000000000000A"),
 							"Wrapped Kava",
 							"WKAVA",
 							6,
 						),
 						types.NewEnabledERC20Token(
-							// Missing 0x prefix allowed
-							"A0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+							MustDecodeHexString("A0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"),
 							"USD Coin",
 							"USDC",
 							6,
@@ -71,13 +71,13 @@ func (suite *genesisTestSuite) Test_InitGenesis_Validation() {
 				types.Params{
 					EnabledERC20Tokens: types.EnabledERC20Tokens{
 						types.NewEnabledERC20Token(
-							"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+							MustDecodeHexString("C02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
 							"Wrapped Ether",
 							"WETH",
 							18,
 						),
 						types.NewEnabledERC20Token(
-							"0x000000000000000000000000000000000000000A",
+							MustDecodeHexString("000000000000000000000000000000000000000A"),
 							"Wrapped Kava",
 							"WKAVA",
 							6,
@@ -103,13 +103,13 @@ func (suite *genesisTestSuite) Test_InitGenesis_Validation() {
 				types.Params{
 					EnabledERC20Tokens: types.EnabledERC20Tokens{
 						types.NewEnabledERC20Token(
-							"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+							MustDecodeHexString("C02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
 							"Wrapped Ether",
 							"WETH",
 							18,
 						),
 						types.NewEnabledERC20Token(
-							"0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
+							MustDecodeHexString("c02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"),
 							"Wrapped Kava but actually WETH",
 							"WKAVA",
 							6,
@@ -135,13 +135,13 @@ func (suite *genesisTestSuite) Test_InitGenesis_Validation() {
 				types.Params{
 					EnabledERC20Tokens: types.EnabledERC20Tokens{
 						types.NewEnabledERC20Token(
-							"0xC02aaA3",
+							MustDecodeHexString("C02aaA3"),
 							"Wrapped Ether",
 							"WETH",
 							18,
 						),
 						types.NewEnabledERC20Token(
-							"0x000000000000000000000000000000000000000A",
+							MustDecodeHexString("000000000000000000000000000000000000000A"),
 							"Wrapped Kava",
 							"WKAVA",
 							6,
@@ -162,7 +162,7 @@ func (suite *genesisTestSuite) Test_InitGenesis_Validation() {
 				types.Params{
 					EnabledERC20Tokens: types.EnabledERC20Tokens{
 						types.NewEnabledERC20Token(
-							"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+							MustDecodeHexString("C02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
 							"",
 							"WETH",
 							18,
@@ -199,13 +199,13 @@ func (suite *genesisTestSuite) Test_InitAndExportGenesis() {
 		types.Params{
 			EnabledERC20Tokens: types.EnabledERC20Tokens{
 				types.NewEnabledERC20Token(
-					"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+					MustDecodeHexString("C02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
 					"Wrapped Ether",
 					"WETH",
 					18,
 				),
 				types.NewEnabledERC20Token(
-					"0x000000000000000000000000000000000000000A",
+					MustDecodeHexString("000000000000000000000000000000000000000A"),
 					"Wrapped Kava",
 					"WKAVA",
 					6,
@@ -237,13 +237,13 @@ func (suite *genesisTestSuite) Test_Marshall() {
 		types.Params{
 			EnabledERC20Tokens: types.EnabledERC20Tokens{
 				types.NewEnabledERC20Token(
-					"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+					MustDecodeHexString("C02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
 					"Wrapped Ether",
 					"WETH",
 					18,
 				),
 				types.NewEnabledERC20Token(
-					"0x000000000000000000000000000000000000000A",
+					MustDecodeHexString("000000000000000000000000000000000000000A"),
 					"Wrapped Kava",
 					"WKAVA",
 					6,
@@ -281,13 +281,13 @@ func (suite *genesisTestSuite) Test_LegacyJSONConversion() {
 		types.Params{
 			EnabledERC20Tokens: types.EnabledERC20Tokens{
 				types.NewEnabledERC20Token(
-					"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+					MustDecodeHexString("C02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
 					"Wrapped Ether",
 					"WETH",
 					18,
 				),
 				types.NewEnabledERC20Token(
-					"0x000000000000000000000000000000000000000A",
+					MustDecodeHexString("000000000000000000000000000000000000000A"),
 					"Wrapped Kava",
 					"WKAVA",
 					6,
@@ -328,4 +328,13 @@ func (suite *genesisTestSuite) Test_LegacyJSONConversion() {
 
 func TestGenesisTestSuite(t *testing.T) {
 	suite.Run(t, new(genesisTestSuite))
+}
+
+func MustDecodeHexString(s string) []byte {
+	bz, err := hex.DecodeString(s)
+	if err != nil {
+		panic(err)
+	}
+
+	return bz
 }

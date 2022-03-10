@@ -1,7 +1,7 @@
 package keeper
 
 import (
-	"strings"
+	"bytes"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -41,15 +41,15 @@ func (k Keeper) SetRelayer(ctx sdk.Context, relayer sdk.AccAddress) {
 // ------------------------------------------
 
 // GetEnabledERC20Token returns an EnabledERC20Token from the contract address
-func (k Keeper) GetEnabledERC20Token(ctx sdk.Context, address string) (types.EnabledERC20Token, error) {
+func (k Keeper) GetEnabledERC20Token(ctx sdk.Context, address types.ExternalEVMAddress) (types.EnabledERC20Token, error) {
 	params := k.GetParams(ctx)
 	for _, token := range params.EnabledERC20Tokens {
-		if token.Address == strings.ToLower(address) {
+		if bytes.Equal(token.Address, address.Bytes()) {
 			return token, nil
 		}
 	}
 
-	return types.EnabledERC20Token{}, sdkerrors.Wrap(types.ErrERC20NotEnabled, address)
+	return types.EnabledERC20Token{}, sdkerrors.Wrap(types.ErrERC20NotEnabled, address.String())
 }
 
 // GetEnabledERC20Tokens returns the all EnabledERC20Tokens
