@@ -85,7 +85,10 @@ func (tokens EnabledERC20Tokens) Validate() error {
 
 	for _, token := range tokens {
 		if addrs[hex.EncodeToString(token.Address)] {
-			return fmt.Errorf("found duplicate enabled ERC20 token address %s", token.Address)
+			return fmt.Errorf(
+				"found duplicate enabled ERC20 token address %s",
+				hex.EncodeToString(token.Address),
+			)
 		}
 
 		if err := token.Validate(); err != nil {
@@ -115,7 +118,7 @@ func (e EnabledERC20Token) Validate() error {
 	}
 
 	if bytes.Equal(e.Address, common.Address{}.Bytes()) {
-		return fmt.Errorf("address cannot be zero value %v", e.Address)
+		return fmt.Errorf("address cannot be zero value %v", hex.EncodeToString(e.Address))
 	}
 
 	if e.Name == "" {
