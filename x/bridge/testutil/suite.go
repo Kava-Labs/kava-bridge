@@ -1,11 +1,21 @@
 package testutil
 
 import (
+	"encoding/hex"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"math/big"
+	"reflect"
 	"time"
 
 	"github.com/stretchr/testify/suite"
 
+	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
+	ethtypes "github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/crypto"
 
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -17,14 +27,18 @@ import (
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/tharsis/ethermint/crypto/ethsecp256k1"
+	"github.com/tharsis/ethermint/server/config"
+	etherminttests "github.com/tharsis/ethermint/tests"
 	etherminttypes "github.com/tharsis/ethermint/types"
 	evmtypes "github.com/tharsis/ethermint/x/evm/types"
 	feemarkettypes "github.com/tharsis/ethermint/x/feemarket/types"
 
 	"github.com/kava-labs/kava-bridge/app"
+	"github.com/kava-labs/kava-bridge/contract"
 	"github.com/kava-labs/kava-bridge/x/bridge/types"
 )
 
@@ -38,6 +52,7 @@ type Suite struct {
 	Key2           *ethsecp256k1.PrivKey
 	ConsAddress    sdk.ConsAddress
 	RelayerAddress sdk.AccAddress
+	RelayerKey     *ethsecp256k1.PrivKey
 
 	QueryClientEvm evmtypes.QueryClient
 }
@@ -55,6 +70,7 @@ func (suite *Suite) SetupTest() {
 	relayerPriv, err := ethsecp256k1.GenerateKey()
 	suite.Require().NoError(err)
 	suite.RelayerAddress = sdk.AccAddress(relayerPriv.PubKey().Address())
+	suite.RelayerKey = relayerPriv
 
 	// test user keys that have no minting permissions
 	suite.Key1, err = ethsecp256k1.GenerateKey()
@@ -176,4 +192,159 @@ func (suite *Suite) Commit() {
 
 	// update ctx
 	suite.Ctx = suite.App.NewContext(false, header)
+}
+
+func (suite *Suite) GetERC20BalanceOf(
+	contractAbi abi.ABI,
+	contractAddr types.InternalEVMAddress,
+	accountAddr types.InternalEVMAddress,
+) *big.Int {
+	// Query ERC20.balanceOf()
+	addr := common.BytesToAddress(suite.Key1.PubKey().Address())
+	res, err := suite.QueryContract(
+		contract.ERC20MintableBurnableContract.ABI,
+		addr,
+		suite.Key1,
+		contractAddr,
+		"balanceOf",
+		accountAddr.Address,
+	)
+	suite.Require().NoError(err)
+	suite.Require().Len(res, 1)
+
+	balance, ok := res[0].(*big.Int)
+	suite.Require().True(ok, "balanceOf should respond with *big.Int")
+	return balance
+}
+
+func (suite *Suite) QueryContract(
+	contractAbi abi.ABI,
+	from common.Address,
+	fromKey *ethsecp256k1.PrivKey,
+	contract types.InternalEVMAddress,
+	method string,
+	args ...interface{},
+) ([]interface{}, error) {
+	// Pack query args
+	data, err := contractAbi.Pack(method, args...)
+	suite.Require().NoError(err)
+
+	// Send TX
+	res := suite.sendTx(contract, from, fromKey, data)
+
+	// Check for VM errors and unpack returned data
+	switch res.VmError {
+	case vm.ErrExecutionReverted.Error():
+		response, err := abi.UnpackRevert(res.Ret)
+		suite.Require().NoError(err)
+
+		return nil, errors.New(response)
+	case "": // No error, continue
+	default:
+		panic(fmt.Sprintf("unhandled vm error response: %v", res.VmError))
+	}
+
+	// Unpack response
+	unpackedRes, err := contractAbi.Unpack(method, res.Ret)
+	suite.Require().NoErrorf(err, "failed to unpack method %v response", method)
+
+	return unpackedRes, nil
+}
+
+func (suite *Suite) sendTx(
+	contractAddr types.InternalEVMAddress,
+	from common.Address,
+	signerKey *ethsecp256k1.PrivKey,
+	transferData []byte,
+) *evmtypes.MsgEthereumTxResponse {
+	ctx := sdk.WrapSDKContext(suite.Ctx)
+	chainID := suite.App.EvmKeeper.ChainID()
+
+	args, err := json.Marshal(&evmtypes.TransactionArgs{
+		To:   &contractAddr.Address,
+		From: &from,
+		Data: (*hexutil.Bytes)(&transferData),
+	})
+	suite.Require().NoError(err)
+	res, err := suite.QueryClientEvm.EstimateGas(ctx, &evmtypes.EthCallRequest{
+		Args:   args,
+		GasCap: uint64(config.DefaultGasCap),
+	})
+	suite.Require().NoError(err)
+
+	nonce := suite.App.EvmKeeper.GetNonce(suite.Ctx, suite.Address)
+
+	baseFee := suite.App.FeeMarketKeeper.GetBaseFee(suite.Ctx)
+	suite.Require().NotNil(baseFee, "base fee is nil")
+
+	// Mint the max gas to the FeeCollector to ensure balance in case of refund
+	suite.MintFeeCollector(sdk.NewCoins(
+		sdk.NewCoin(
+			"ukava",
+			sdk.NewInt(baseFee.Int64()*int64(res.Gas)),
+		)))
+
+	ercTransferTx := evmtypes.NewTx(
+		chainID,
+		nonce,
+		&contractAddr.Address,
+		nil,       // amount
+		res.Gas*2, // gasLimit, TODO: runs out of gas with just res.Gas, ex: estimated was 21572 but used 24814
+		nil,       // gasPrice
+		suite.App.FeeMarketKeeper.GetBaseFee(suite.Ctx), // gasFeeCap
+		big.NewInt(1), // gasTipCap
+		transferData,
+		&ethtypes.AccessList{}, // accesses
+	)
+
+	ercTransferTx.From = hex.EncodeToString(signerKey.PubKey().Address())
+	err = ercTransferTx.Sign(ethtypes.LatestSignerForChainID(chainID), etherminttests.NewSigner(signerKey))
+	suite.Require().NoError(err)
+
+	rsp, err := suite.App.EvmKeeper.EthereumTx(ctx, ercTransferTx)
+	suite.Require().NoError(err)
+	// Do not check vm error here since we want to check for errors later
+
+	return rsp
+}
+
+func (suite *Suite) MintFeeCollector(coins sdk.Coins) {
+	err := suite.App.BankKeeper.MintCoins(suite.Ctx, minttypes.ModuleName, coins)
+	suite.Require().NoError(err)
+	err = suite.App.BankKeeper.SendCoinsFromModuleToModule(
+		suite.Ctx,
+		minttypes.ModuleName,
+		authtypes.FeeCollectorName,
+		coins,
+	)
+	suite.Require().NoError(err)
+}
+
+// GetEvents returns emitted events on the sdk context
+func (suite *Suite) GetEvents() sdk.Events {
+	return suite.Ctx.EventManager().Events()
+}
+
+// EventsContains asserts that the expected event is in the provided events
+func (suite *Suite) EventsContains(events sdk.Events, expectedEvent sdk.Event) {
+	foundMatch := false
+	for _, event := range events {
+		if event.Type == expectedEvent.Type {
+			if reflect.DeepEqual(attrsToMap(expectedEvent.Attributes), attrsToMap(event.Attributes)) {
+				foundMatch = true
+			}
+		}
+	}
+
+	suite.True(foundMatch, fmt.Sprintf("event of type %s not found or did not match", expectedEvent.Type))
+}
+
+func attrsToMap(attrs []abci.EventAttribute) []sdk.Attribute {
+	out := []sdk.Attribute{}
+
+	for _, attr := range attrs {
+		out = append(out, sdk.NewAttribute(string(attr.Key), string(attr.Value)))
+	}
+
+	return out
 }

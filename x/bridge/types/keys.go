@@ -25,3 +25,15 @@ var ModuleEVMAddress common.Address
 func init() {
 	ModuleEVMAddress = common.BytesToAddress(authtypes.NewModuleAddress(ModuleName).Bytes())
 }
+
+// Key prefixes
+var (
+	BridgedERC20KeyPrefix = []byte{0x01} // prefix for keys that store local ERC 20 address of bridged assets
+)
+
+// GetBridgedERC20Key returns the bytes of an BridgedERC20 key. This only
+// accepts an ExternalEVMAddress and should not be used with
+// InternalEVMAddresses.
+func GetBridgedERC20Key(address ExternalEVMAddress) []byte {
+	return append(BridgedERC20KeyPrefix, address.Bytes()...)
+}

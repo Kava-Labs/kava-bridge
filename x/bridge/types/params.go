@@ -114,6 +114,10 @@ func (e EnabledERC20Token) Validate() error {
 		return errors.New("address is not a valid hex address")
 	}
 
+	if e.Address != strings.ToLower(e.Address) {
+		return fmt.Errorf("address must be lowercase")
+	}
+
 	if e.Name == "" {
 		return fmt.Errorf("name cannot be empty")
 	}
