@@ -2,6 +2,8 @@ package keeper_test
 
 import (
 	"context"
+	"encoding/hex"
+	"strings"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -28,10 +30,17 @@ func TestGrpcQueryTestSuite(t *testing.T) {
 }
 
 func (suite *GrpcQueryTestSuite) TestQueryERC20BridgePairs() {
+	// Fetch initial pairs since there's some already set in genesis
+	initialBridgedERC20Pairs, err := suite.QueryClientBridge.ERC20BridgePairs(
+		context.Background(),
+		&types.QueryERC20BridgePairsRequest{},
+	)
+
+	suite.Require().NoError(err)
 	extContracts := []string{
-		"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
-		"0x000000000000000000000000000000000000000A",
-		"A0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+		"0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
+		"0x000000000000000000000000000000000000000a",
+		"0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
 	}
 
 	var internalContracts []string
@@ -59,8 +68,10 @@ func (suite *GrpcQueryTestSuite) TestQueryERC20BridgePairs() {
 		contractAddr, found := suite.App.BridgeKeeper.GetInternalERC20Address(suite.Ctx, externalAddress)
 		suite.Require().True(found)
 
-		internalContracts = append(internalContracts, contractAddr.String())
+		internalContracts = append(internalContracts, strings.ToLower(contractAddr.String()))
 	}
+
+	suite.Commit()
 
 	queriedBridgedERC20Pairs, err := suite.QueryClientBridge.ERC20BridgePairs(
 		context.Background(),
@@ -68,7 +79,26 @@ func (suite *GrpcQueryTestSuite) TestQueryERC20BridgePairs() {
 	)
 	suite.Require().NoError(err)
 
-	suite.Require().Len(queriedBridgedERC20Pairs, len(extContracts), "queried erc20 pairs should match len of bridged contracts")
+	suite.Require().Lenf(
+		queriedBridgedERC20Pairs.ERC20BridgePairs,
+		len(extContracts)+len(initialBridgedERC20Pairs.ERC20BridgePairs),
+		"queried erc20 pairs should match len of bridged contracts: %v",
+		queriedBridgedERC20Pairs.ERC20BridgePairs,
+	)
 
-	suite.Require().Equal(extContracts, queriedBridgedERC20Pairs)
+	var queriedExtAddrs []string
+	var queriedIntAddrs []string
+
+	for _, pair := range queriedBridgedERC20Pairs.ERC20BridgePairs {
+		queriedExtAddrs = append(queriedExtAddrs, "0x"+hex.EncodeToString(pair.ExternalERC20Address))
+		queriedIntAddrs = append(queriedIntAddrs, "0x"+hex.EncodeToString(pair.ExternalERC20Address))
+	}
+
+	for _, addr := range extContracts {
+		suite.Require().Containsf(queriedExtAddrs, addr, "queried pairs should contain new external addr %v", addr)
+	}
+
+	for _, addr := range extContracts {
+		suite.Require().Containsf(queriedIntAddrs, addr, "queried pairs should contain new internal addr %v", addr)
+	}
 }
