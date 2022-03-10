@@ -365,6 +365,8 @@ func attrsToMap(attrs []abci.EventAttribute) []sdk.Attribute {
 	return out
 }
 
+// MustNewExternalEVMAddressFromString returns a new ExternalEVMAddress from a
+// hex string. This will panic if the input hex string is invalid.
 func MustNewExternalEVMAddressFromString(addrStr string) types.ExternalEVMAddress {
 	addr, err := types.NewExternalEVMAddressFromString(addrStr)
 	if err != nil {
@@ -374,6 +376,8 @@ func MustNewExternalEVMAddressFromString(addrStr string) types.ExternalEVMAddres
 	return addr
 }
 
+// MustNewInternalEVMAddressFromString returns a new InternalEVMAddress from a
+// hex string. This will panic if the input hex string is invalid.
 func MustNewInternalEVMAddressFromString(addrStr string) types.InternalEVMAddress {
 	addr, err := types.NewInternalEVMAddressFromString(addrStr)
 	if err != nil {
