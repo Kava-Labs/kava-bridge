@@ -69,7 +69,7 @@ func (suite *MsgServerSuite) TestMsg() {
 			"invalid - token not enabled",
 			types.NewMsgBridgeERC20FromEthereum(
 				suite.RelayerAddress.String(),
-				"0x000000000000000000000000000000000000000A",
+				"0x000000000000000000000000000000000000000B",
 				sdk.NewInt(10),
 				"0x0000000000000000000000000000000000000001",
 				sdk.NewInt(0),

@@ -103,14 +103,13 @@ func (suite *Suite) SetupTest() {
 					18,
 				),
 				types.NewEnabledERC20Token(
-					"0x0000000000000000000000000000000000000000",
+					"0x000000000000000000000000000000000000000A",
 					"Wrapped Kava",
 					"WKAVA",
 					6,
 				),
 				types.NewEnabledERC20Token(
-					// Missing 0x prefix allowed
-					"A0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+					"0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
 					"USD Coin",
 					"USDC",
 					6,
