@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/kava-labs/kava-bridge/x/bridge/testutil"
 	"github.com/kava-labs/kava-bridge/x/bridge/types"
 	"github.com/stretchr/testify/require"
 )
@@ -21,16 +22,16 @@ func TestNewERC20BridgePair(t *testing.T) {
 	}{
 		{
 			"valid",
-			types.NewExternalEVMAddress(common.HexToAddress("0x01")),
-			types.NewInternalEVMAddress(common.HexToAddress("0x02")),
+			testutil.MustNewExternalEVMAddressFromString("0x0000000000000000000000000000000000000001"),
+			testutil.MustNewInternalEVMAddressFromString("0x0000000000000000000000000000000000000002"),
 			errArgs{
 				expectPass: true,
 			},
 		},
 		{
 			"invalid - same address",
-			types.NewExternalEVMAddress(common.HexToAddress("0x01")),
-			types.NewInternalEVMAddress(common.HexToAddress("0x01")),
+			testutil.MustNewExternalEVMAddressFromString("0x0000000000000000000000000000000000000001"),
+			testutil.MustNewInternalEVMAddressFromString("0x0000000000000000000000000000000000000001"),
 			errArgs{
 				expectPass: false,
 				contains:   "external and internal bytes are same",
@@ -38,8 +39,8 @@ func TestNewERC20BridgePair(t *testing.T) {
 		},
 		{
 			"invalid - zero external",
-			types.NewExternalEVMAddress(common.HexToAddress("0x00")),
-			types.NewInternalEVMAddress(common.HexToAddress("0x01")),
+			testutil.MustNewExternalEVMAddressFromString("0x0000000000000000000000000000000000000000"),
+			testutil.MustNewInternalEVMAddressFromString("0x0000000000000000000000000000000000000001"),
 			errArgs{
 				expectPass: false,
 				contains:   "external address cannot be zero value",
@@ -47,8 +48,8 @@ func TestNewERC20BridgePair(t *testing.T) {
 		},
 		{
 			"invalid - zero internal",
-			types.NewExternalEVMAddress(common.HexToAddress("0x01")),
-			types.NewInternalEVMAddress(common.HexToAddress("0x00")),
+			testutil.MustNewExternalEVMAddressFromString("0x0000000000000000000000000000000000000001"),
+			testutil.MustNewInternalEVMAddressFromString("0x0000000000000000000000000000000000000000"),
 			errArgs{
 				expectPass: false,
 				contains:   "internal address cannot be zero value",
@@ -87,8 +88,8 @@ func TestNewERC20BridgePair_Direct(t *testing.T) {
 		{
 			"valid",
 			types.ERC20BridgePair{
-				ExternalERC20Address: common.HexToAddress("0x01").Bytes(),
-				InternalERC20Address: common.HexToAddress("0x02").Bytes(),
+				ExternalERC20Address: common.HexToAddress("0x0000000000000000000000000000000000000001").Bytes(),
+				InternalERC20Address: common.HexToAddress("0x0000000000000000000000000000000000000002").Bytes(),
 			},
 			errArgs{
 				expectPass: true,
@@ -108,7 +109,7 @@ func TestNewERC20BridgePair_Direct(t *testing.T) {
 		{
 			"invalid - invalid internal length",
 			types.ERC20BridgePair{
-				ExternalERC20Address: common.HexToAddress("0x01").Bytes(),
+				ExternalERC20Address: common.HexToAddress("0x0000000000000000000000000000000000000001").Bytes(),
 				InternalERC20Address: []byte{2},
 			},
 			errArgs{
@@ -134,12 +135,12 @@ func TestNewERC20BridgePair_Direct(t *testing.T) {
 func TestNewERC20BridgePairs_Valid(t *testing.T) {
 	pairs := types.NewERC20BridgePairs(
 		types.NewERC20BridgePair(
-			types.NewExternalEVMAddress(common.HexToAddress("0x01")),
-			types.NewInternalEVMAddress(common.HexToAddress("0x0A")),
+			testutil.MustNewExternalEVMAddressFromString("0x0000000000000000000000000000000000000001"),
+			testutil.MustNewInternalEVMAddressFromString("0x000000000000000000000000000000000000000A"),
 		),
 		types.NewERC20BridgePair(
-			types.NewExternalEVMAddress(common.HexToAddress("0x01")),
-			types.NewInternalEVMAddress(common.HexToAddress("0x0B")),
+			testutil.MustNewExternalEVMAddressFromString("0x0000000000000000000000000000000000000001"),
+			testutil.MustNewInternalEVMAddressFromString("0x000000000000000000000000000000000000000B"),
 		),
 	)
 
@@ -150,12 +151,12 @@ func TestNewERC20BridgePairs_Valid(t *testing.T) {
 func TestNewERC20BridgePairs_BasicInvalid(t *testing.T) {
 	pairs := types.NewERC20BridgePairs(
 		types.NewERC20BridgePair(
-			types.NewExternalEVMAddress(common.HexToAddress("0x01")),
-			types.NewInternalEVMAddress(common.HexToAddress("0x0A")),
+			testutil.MustNewExternalEVMAddressFromString("0x01"),
+			testutil.MustNewInternalEVMAddressFromString("0x0A"),
 		),
 		types.NewERC20BridgePair(
-			types.NewExternalEVMAddress(common.HexToAddress("0x01")),
-			types.NewInternalEVMAddress(common.HexToAddress("0x00")),
+			testutil.MustNewExternalEVMAddressFromString("0x01"),
+			testutil.MustNewInternalEVMAddressFromString("0x00"),
 		),
 	)
 
