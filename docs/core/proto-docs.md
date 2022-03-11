@@ -95,7 +95,7 @@ GenesisState defines the bridge module's genesis state.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `params` | [Params](#bridge.v1beta1.Params) |  | params defines all the paramaters of the module. |
+| `params` | [Params](#bridge.v1beta1.Params) |  | params defines all the parameters of the module. |
 | `erc20_bridge_pairs` | [ERC20BridgePair](#bridge.v1beta1.ERC20BridgePair) | repeated | erc20_bridge_pairs defines all of the bridged erc20 tokens. |
 
 
