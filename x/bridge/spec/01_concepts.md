@@ -71,7 +71,6 @@ stateDiagram-v2
         if_erc20_deployed --> MintERC20: Kava ERC20 exists
         DeployERC20 --> MintERC20
     }
-
 ```
 
 ## Kava ERC20 to Ethereum Transfers
@@ -104,14 +103,16 @@ sequenceDiagram
     acc->>KRC20: Burn(withdraw Ethereum address, amount)
     KRC20->>K: Emit BurnEvent(withdraw Ethereum address, amount)
 
-    loop Bridge Monitor
-        R->>+K: Get EVM latest blocks
-        K->>-R: EVM events
+    loop Monitor Bridge Events
+        R->>+K: Get latest EVM blocks
+        K-->>-R: EVM events
     end
 
-    R->>+K: Query ERC20BridgePair
-    K->>-R: ERC20BridgePair
-    alt Kava ERC20 address is in ERC20BridgePair
+    R->>+K: Query ERC20BridgePairs
+    K-->>-R: ERC20BridgePairs
+    alt If Kava ERC20 address is an ERC20BridgePair
         R->>B: Unlock(Ethereum ERC20 address, toAddr, amount)
+    else
+        Note right of R: Ignore events from unknown contract addresses
     end
 ```
