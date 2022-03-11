@@ -1,0 +1,46 @@
+syntax = "proto3";
+package bridge.v1beta1;
+
+import "bridge/v1beta1/erc20.proto";
+import "bridge/v1beta1/genesis.proto";
+import "cosmos_proto/cosmos.proto";
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+
+option go_package                    = "github.com/kava-labs/kava-bridge/x/bridge/types";
+option (gogoproto.equal_all)         = true;
+option (gogoproto.verbose_equal_all) = true;
+
+// Query defines the gRPC querier service for bridge module
+service Query {
+  // Params queries all parameters of the bridge module.
+  rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
+    option (google.api.http).get = "/kava/bridge/v1beta1/params";
+  }
+
+  // ERC20BridgePairs queries the bridge address pairs
+  rpc ERC20BridgePairs(QueryERC20BridgePairsRequest) returns (QueryERC20BridgePairsResponse) {
+    option (google.api.http).get = "/kava/bridge/v1beta1/bridge-erc20-pairs";
+  }
+}
+
+// QueryParamsRequest defines the request type for querying x/bridge parameters.
+message QueryParamsRequest {}
+
+// QueryParamsResponse defines the response type for querying x/bridge parameters.
+message QueryParamsResponse {
+  Params params = 1 [(gogoproto.nullable) = false];
+}
+
+// QueryERC20BridgePairsRequest defines the request type for querying x/bridge ERC20 pairs.
+message QueryERC20BridgePairsRequest {}
+
+// QueryERC20BridgePairsRequest defines the response type for querying x/bridge ERC20 pairs.
+message QueryERC20BridgePairsResponse {
+  // erc20_bridge_pairs defines all of the currently bridged erc20 tokens.
+  repeated ERC20BridgePair erc20_bridge_pairs = 2 [
+    (gogoproto.nullable)     = false,
+    (gogoproto.castrepeated) = "ERC20BridgePairs",
+    (gogoproto.customname)   = "ERC20BridgePairs"
+  ];
+}

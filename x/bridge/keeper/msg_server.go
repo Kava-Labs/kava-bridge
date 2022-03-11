@@ -14,7 +14,7 @@ type msgServer struct {
 	keeper Keeper
 }
 
-// NewMsgServerImpl returns an implementation of the auction MsgServer interface
+// NewMsgServerImpl returns an implementation of the bridge MsgServer interface
 // for the provided Keeper.
 func NewMsgServerImpl(keeper Keeper) types.MsgServer {
 	return &msgServer{keeper: keeper}

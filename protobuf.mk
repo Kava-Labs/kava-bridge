@@ -52,10 +52,19 @@ PROTO_CHECK_REF ?= .git\#branch=main
 proto-check-breaking: ## Check for breaking changes against master
 	@$(DOCKER_BUF) breaking --against $(PROTO_CHECK_REF)
 
+GOOGLE_PROTO_URL = https://raw.githubusercontent.com/googleapis/googleapis/master/google/api
+GOOGLE_PROTO_TYPES = third_party/proto/google/api
+
 COSMOS_PROTO_PATH := $(shell go list -m -f '{{.Dir}}' github.com/cosmos/cosmos-proto)
 GOGO_PROTO_PATH := $(shell go list -m -f '{{.Dir}}' github.com/gogo/protobuf)
 .PHONY: proto-update-deps
 proto-update-deps: ## Update proto
 	mkdir -p third_party/proto
+
 	$(call sync_proto_deps,$(COSMOS_PROTO_PATH)/proto third_party)
 	$(call sync_proto_deps,$(GOGO_PROTO_PATH)/gogoproto third_party/proto)
+
+	mkdir -p $(GOOGLE_PROTO_TYPES)
+	curl -sSL $(GOOGLE_PROTO_URL)/annotations.proto > $(GOOGLE_PROTO_TYPES)/annotations.proto
+	curl -sSL $(GOOGLE_PROTO_URL)/http.proto > $(GOOGLE_PROTO_TYPES)/http.proto
+	curl -sSL $(GOOGLE_PROTO_URL)/httpbody.proto > $(GOOGLE_PROTO_TYPES)/httpbody.proto
