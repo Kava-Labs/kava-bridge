@@ -28,9 +28,9 @@ enabled ERC20 tokens in params.
 In order to bridge an approved Ethereum ERC20 tokens to Kava, the following
 steps are taken:
 
-1. User locks ERC20 tokens in the bridge contract on Ethereum. This emits an
-   event with the Ethereum ERC20 address, Ethereum sender address, receiver
-   Kava address, amount, and sequence.
+1. Account locks ERC20 tokens in the bridge contract on Ethereum. This emits an
+   event with the Ethereum ERC20 address, Ethereum sender address, receiver Kava
+   address, amount, and sequence.
 2. After a reasonable number of confirmations, the relayer will sign and submit
    a `MsgERC20FromEthereum` message to the Kava chain.
 3. The bridge module will verify the message for the following conditions. If
@@ -74,3 +74,44 @@ stateDiagram-v2
 
 ```
 
+## Kava ERC20 to Ethereum Transfers
+
+Transferring from Kava to Ethereum follows a similar pattern. Of the following
+steps, only step 1 is implemented in the bridge module and the steps following
+are done in the relayer.
+
+1. Account calls `Burn(withdrawal Ethereum Address, amount)` on a Kava ERC20
+   contract. This burns the account tokens and emits a Burn event containing the
+   receiver Ethereum address and corresponding amount.
+2. When the relayer finds a Burn event, query `x/bridge` `ERC20BridgePair`s to
+   get the corresponding Ethereum ERC20 address to send funds to. This is fine
+   to cache as it should never change if it exists.
+
+   **Note:** If the Burn event comes from a contract that isn't in bridge state,
+   then it is ignored. These events may come from a contract that isn't deployed
+   by the bridge module. Arbitrary contracts cannot maliciously try to get funds
+   withdrawn this way as the relayer only gets the Ethereum ERC20 address from
+   module state, not from events.
+3. Relayer calls bridge contract `Unlock(Ethereum ERC20 address, toAddr, amount)`
+
+```mermaid
+sequenceDiagram
+    participant acc as Kava Account
+    participant KRC20 as Kava ERC20
+    participant K as Kava
+    participant R as Relayer
+    participant B as Ethereum Bridge Contract
+    acc->>KRC20: Burn(withdraw Ethereum address, amount)
+    KRC20->>K: Emit BurnEvent(withdraw Ethereum address, amount)
+
+    loop Bridge Monitor
+        R->>+K: Get EVM latest blocks
+        K->>-R: EVM events
+    end
+
+    R->>+K: Query ERC20BridgePair
+    K->>-R: ERC20BridgePair
+    alt Kava ERC20 address is in ERC20BridgePair
+        R->>B: Unlock(Ethereum ERC20 address, toAddr, amount)
+    end
+```
