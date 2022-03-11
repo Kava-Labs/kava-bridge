@@ -97,19 +97,19 @@ func (suite *Suite) SetupTest() {
 		types.NewParams(
 			types.EnabledERC20Tokens{
 				types.NewEnabledERC20Token(
-					"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+					MustNewExternalEVMAddressFromString("C02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
 					"Wrapped Ether",
 					"WETH",
 					18,
 				),
 				types.NewEnabledERC20Token(
-					"0x000000000000000000000000000000000000000A",
+					MustNewExternalEVMAddressFromString("000000000000000000000000000000000000000A"),
 					"Wrapped Kava",
 					"WKAVA",
 					6,
 				),
 				types.NewEnabledERC20Token(
-					"0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+					MustNewExternalEVMAddressFromString("A0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"),
 					"USD Coin",
 					"USDC",
 					6,
@@ -119,12 +119,12 @@ func (suite *Suite) SetupTest() {
 		),
 		types.NewERC20BridgePairs(
 			types.NewERC20BridgePair(
-				types.NewExternalEVMAddress(common.HexToAddress("0x01")),
-				types.NewInternalEVMAddress(common.HexToAddress("0x0A")),
+				MustNewExternalEVMAddressFromString("0x0000000000000000000000000000000000000001"),
+				MustNewInternalEVMAddressFromString("0x000000000000000000000000000000000000000A"),
 			),
 			types.NewERC20BridgePair(
-				types.NewExternalEVMAddress(common.HexToAddress("0x02")),
-				types.NewInternalEVMAddress(common.HexToAddress("0x0B")),
+				MustNewExternalEVMAddressFromString("0x0000000000000000000000000000000000000002"),
+				MustNewInternalEVMAddressFromString("0x000000000000000000000000000000000000000B"),
 			),
 		),
 	)
@@ -363,4 +363,26 @@ func attrsToMap(attrs []abci.EventAttribute) []sdk.Attribute {
 	}
 
 	return out
+}
+
+// MustNewExternalEVMAddressFromString returns a new ExternalEVMAddress from a
+// hex string. This will panic if the input hex string is invalid.
+func MustNewExternalEVMAddressFromString(addrStr string) types.ExternalEVMAddress {
+	addr, err := types.NewExternalEVMAddressFromString(addrStr)
+	if err != nil {
+		panic(err)
+	}
+
+	return addr
+}
+
+// MustNewInternalEVMAddressFromString returns a new InternalEVMAddress from a
+// hex string. This will panic if the input hex string is invalid.
+func MustNewInternalEVMAddressFromString(addrStr string) types.InternalEVMAddress {
+	addr, err := types.NewInternalEVMAddressFromString(addrStr)
+	if err != nil {
+		panic(err)
+	}
+
+	return addr
 }

@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/suite"
 	"github.com/tharsis/ethermint/crypto/ethsecp256k1"
 
@@ -22,7 +21,7 @@ func TestKeeperTestSuite(t *testing.T) {
 
 func (suite *KeeperTestSuite) TestERC20_NotEnabled() {
 	// WETH but last char changed
-	extAddr := types.NewExternalEVMAddress(common.HexToAddress("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc4"))
+	extAddr := testutil.MustNewExternalEVMAddressFromString("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc4")
 
 	_, err := suite.App.BridgeKeeper.GetOrDeployInternalERC20(suite.Ctx, extAddr)
 	suite.Require().Error(err)
@@ -30,7 +29,7 @@ func (suite *KeeperTestSuite) TestERC20_NotEnabled() {
 }
 
 func (suite *KeeperTestSuite) TestERC20SaveDeploy() {
-	extAddr := types.NewExternalEVMAddress(common.HexToAddress("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"))
+	extAddr := testutil.MustNewExternalEVMAddressFromString("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2")
 
 	_, found := suite.App.BridgeKeeper.GetInternalERC20Address(suite.Ctx, extAddr)
 	suite.Require().False(found, "internal ERC20 address should not be set before first bridge")
@@ -136,12 +135,12 @@ func (suite *KeeperTestSuite) TestPermission() {
 func (suite *KeeperTestSuite) TestERC20PairIter() {
 	pairs := types.NewERC20BridgePairs(
 		types.NewERC20BridgePair(
-			types.NewExternalEVMAddress(common.HexToAddress("0x01")),
-			types.NewInternalEVMAddress(common.HexToAddress("0x0A")),
+			testutil.MustNewExternalEVMAddressFromString("0x0000000000000000000000000000000000000001"),
+			testutil.MustNewInternalEVMAddressFromString("0x0000000000000000000000000000000000000001"),
 		),
 		types.NewERC20BridgePair(
-			types.NewExternalEVMAddress(common.HexToAddress("0x02")),
-			types.NewInternalEVMAddress(common.HexToAddress("0x0B")),
+			testutil.MustNewExternalEVMAddressFromString("0x0000000000000000000000000000000000000002"),
+			testutil.MustNewInternalEVMAddressFromString("0x000000000000000000000000000000000000000B"),
 		),
 	)
 

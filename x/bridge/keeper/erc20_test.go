@@ -24,7 +24,7 @@ func TestERC20TestSuite(t *testing.T) {
 func (suite *ERC20TestSuite) deployERC20() types.InternalEVMAddress {
 	// We can assume token is valid as it is from params and should be validated
 	token := types.NewEnabledERC20Token(
-		"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+		testutil.MustNewExternalEVMAddressFromString("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
 		"Wrapped ETH",
 		"WETH",
 		18,

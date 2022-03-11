@@ -3,7 +3,6 @@ package bridge_test
 import (
 	"testing"
 
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/kava-labs/kava-bridge/app"
 	"github.com/kava-labs/kava-bridge/x/bridge"
 	"github.com/kava-labs/kava-bridge/x/bridge/testutil"
@@ -33,20 +32,19 @@ func (suite *genesisTestSuite) Test_InitGenesis_Validation() {
 				types.Params{
 					EnabledERC20Tokens: types.EnabledERC20Tokens{
 						types.NewEnabledERC20Token(
-							"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+							testutil.MustNewExternalEVMAddressFromString("C02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
 							"Wrapped Ether",
 							"WETH",
 							18,
 						),
 						types.NewEnabledERC20Token(
-							"0x0000000000000000000000000000000000000000",
+							testutil.MustNewExternalEVMAddressFromString("000000000000000000000000000000000000000A"),
 							"Wrapped Kava",
 							"WKAVA",
 							6,
 						),
 						types.NewEnabledERC20Token(
-							// Missing 0x prefix allowed
-							"A0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+							testutil.MustNewExternalEVMAddressFromString("A0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"),
 							"USD Coin",
 							"USDC",
 							6,
@@ -56,8 +54,8 @@ func (suite *genesisTestSuite) Test_InitGenesis_Validation() {
 				},
 				types.NewERC20BridgePairs(
 					types.NewERC20BridgePair(
-						types.NewExternalEVMAddress(common.HexToAddress("0x01")),
-						types.NewInternalEVMAddress(common.HexToAddress("0x02")),
+						testutil.MustNewExternalEVMAddressFromString("0x0000000000000000000000000000000000000001"),
+						testutil.MustNewInternalEVMAddressFromString("0x000000000000000000000000000000000000000A"),
 					),
 				),
 			),
@@ -71,13 +69,13 @@ func (suite *genesisTestSuite) Test_InitGenesis_Validation() {
 				types.Params{
 					EnabledERC20Tokens: types.EnabledERC20Tokens{
 						types.NewEnabledERC20Token(
-							"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+							testutil.MustNewExternalEVMAddressFromString("C02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
 							"Wrapped Ether",
 							"WETH",
 							18,
 						),
 						types.NewEnabledERC20Token(
-							"0x0000000000000000000000000000000000000000",
+							testutil.MustNewExternalEVMAddressFromString("0x000000000000000000000000000000000000000A"),
 							"Wrapped Kava",
 							"WKAVA",
 							6,
@@ -87,8 +85,8 @@ func (suite *genesisTestSuite) Test_InitGenesis_Validation() {
 				},
 				types.NewERC20BridgePairs(
 					types.NewERC20BridgePair(
-						types.NewExternalEVMAddress(common.HexToAddress("0x01")),
-						types.NewInternalEVMAddress(common.HexToAddress("0x02")),
+						testutil.MustNewExternalEVMAddressFromString("0x0000000000000000000000000000000000000001"),
+						testutil.MustNewInternalEVMAddressFromString("0x000000000000000000000000000000000000000A"),
 					),
 				),
 			),
@@ -103,13 +101,13 @@ func (suite *genesisTestSuite) Test_InitGenesis_Validation() {
 				types.Params{
 					EnabledERC20Tokens: types.EnabledERC20Tokens{
 						types.NewEnabledERC20Token(
-							"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+							testutil.MustNewExternalEVMAddressFromString("C02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
 							"Wrapped Ether",
 							"WETH",
 							18,
 						),
 						types.NewEnabledERC20Token(
-							"0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
+							testutil.MustNewExternalEVMAddressFromString("c02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"),
 							"Wrapped Kava but actually WETH",
 							"WKAVA",
 							6,
@@ -119,29 +117,29 @@ func (suite *genesisTestSuite) Test_InitGenesis_Validation() {
 				},
 				types.NewERC20BridgePairs(
 					types.NewERC20BridgePair(
-						types.NewExternalEVMAddress(common.HexToAddress("0x01")),
-						types.NewInternalEVMAddress(common.HexToAddress("0x02")),
+						testutil.MustNewExternalEVMAddressFromString("0x0000000000000000000000000000000000000001"),
+						testutil.MustNewInternalEVMAddressFromString("0x000000000000000000000000000000000000000A"),
 					),
 				),
 			),
 			errArgs{
 				expectPass: false,
-				panicErr:   "value from ParamSetPair is invalid: found duplicate enabled ERC20 token address 0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
+				panicErr:   "value from ParamSetPair is invalid: found duplicate enabled ERC20 token address c02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
 			},
 		},
 		{
-			"invalid - token address",
+			"invalid - zero token address",
 			types.NewGenesisState(
 				types.Params{
 					EnabledERC20Tokens: types.EnabledERC20Tokens{
 						types.NewEnabledERC20Token(
-							"0xC02aaA3",
+							testutil.MustNewExternalEVMAddressFromString("0000000000000000000000000000000000000000"),
 							"Wrapped Ether",
 							"WETH",
 							18,
 						),
 						types.NewEnabledERC20Token(
-							"0x0000000000000000000000000000000000000000",
+							testutil.MustNewExternalEVMAddressFromString("000000000000000000000000000000000000000A"),
 							"Wrapped Kava",
 							"WKAVA",
 							6,
@@ -153,7 +151,7 @@ func (suite *genesisTestSuite) Test_InitGenesis_Validation() {
 			),
 			errArgs{
 				expectPass: false,
-				panicErr:   "value from ParamSetPair is invalid: address is not a valid hex address",
+				panicErr:   "value from ParamSetPair is invalid: address cannot be zero value 0000000000000000000000000000000000000000",
 			},
 		},
 		{
@@ -162,7 +160,7 @@ func (suite *genesisTestSuite) Test_InitGenesis_Validation() {
 				types.Params{
 					EnabledERC20Tokens: types.EnabledERC20Tokens{
 						types.NewEnabledERC20Token(
-							"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+							testutil.MustNewExternalEVMAddressFromString("C02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
 							"",
 							"WETH",
 							18,
@@ -199,13 +197,13 @@ func (suite *genesisTestSuite) Test_InitAndExportGenesis() {
 		types.Params{
 			EnabledERC20Tokens: types.EnabledERC20Tokens{
 				types.NewEnabledERC20Token(
-					"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+					testutil.MustNewExternalEVMAddressFromString("C02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
 					"Wrapped Ether",
 					"WETH",
 					18,
 				),
 				types.NewEnabledERC20Token(
-					"0x0000000000000000000000000000000000000000",
+					testutil.MustNewExternalEVMAddressFromString("000000000000000000000000000000000000000A"),
 					"Wrapped Kava",
 					"WKAVA",
 					6,
@@ -215,12 +213,12 @@ func (suite *genesisTestSuite) Test_InitAndExportGenesis() {
 		},
 		types.NewERC20BridgePairs(
 			types.NewERC20BridgePair(
-				types.NewExternalEVMAddress(common.HexToAddress("0x01")),
-				types.NewInternalEVMAddress(common.HexToAddress("0x0A")),
+				testutil.MustNewExternalEVMAddressFromString("0x0000000000000000000000000000000000000001"),
+				testutil.MustNewInternalEVMAddressFromString("0x000000000000000000000000000000000000000A"),
 			),
 			types.NewERC20BridgePair(
-				types.NewExternalEVMAddress(common.HexToAddress("0x02")),
-				types.NewInternalEVMAddress(common.HexToAddress("0x0B")),
+				testutil.MustNewExternalEVMAddressFromString("0x0000000000000000000000000000000000000002"),
+				testutil.MustNewInternalEVMAddressFromString("0x000000000000000000000000000000000000000B"),
 			),
 		),
 	)
@@ -237,13 +235,13 @@ func (suite *genesisTestSuite) Test_Marshall() {
 		types.Params{
 			EnabledERC20Tokens: types.EnabledERC20Tokens{
 				types.NewEnabledERC20Token(
-					"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+					testutil.MustNewExternalEVMAddressFromString("C02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
 					"Wrapped Ether",
 					"WETH",
 					18,
 				),
 				types.NewEnabledERC20Token(
-					"0x0000000000000000000000000000000000000000",
+					testutil.MustNewExternalEVMAddressFromString("000000000000000000000000000000000000000A"),
 					"Wrapped Kava",
 					"WKAVA",
 					6,
@@ -253,12 +251,12 @@ func (suite *genesisTestSuite) Test_Marshall() {
 		},
 		types.NewERC20BridgePairs(
 			types.NewERC20BridgePair(
-				types.NewExternalEVMAddress(common.HexToAddress("0x01")),
-				types.NewInternalEVMAddress(common.HexToAddress("0x0A")),
+				testutil.MustNewExternalEVMAddressFromString("0x0000000000000000000000000000000000000001"),
+				testutil.MustNewInternalEVMAddressFromString("0x000000000000000000000000000000000000000A"),
 			),
 			types.NewERC20BridgePair(
-				types.NewExternalEVMAddress(common.HexToAddress("0x02")),
-				types.NewInternalEVMAddress(common.HexToAddress("0x0B")),
+				testutil.MustNewExternalEVMAddressFromString("0x0000000000000000000000000000000000000002"),
+				testutil.MustNewInternalEVMAddressFromString("0x000000000000000000000000000000000000000B"),
 			),
 		),
 	)
@@ -281,13 +279,13 @@ func (suite *genesisTestSuite) Test_LegacyJSONConversion() {
 		types.Params{
 			EnabledERC20Tokens: types.EnabledERC20Tokens{
 				types.NewEnabledERC20Token(
-					"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+					testutil.MustNewExternalEVMAddressFromString("C02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
 					"Wrapped Ether",
 					"WETH",
 					18,
 				),
 				types.NewEnabledERC20Token(
-					"0x0000000000000000000000000000000000000000",
+					testutil.MustNewExternalEVMAddressFromString("000000000000000000000000000000000000000A"),
 					"Wrapped Kava",
 					"WKAVA",
 					6,
@@ -297,12 +295,12 @@ func (suite *genesisTestSuite) Test_LegacyJSONConversion() {
 		},
 		types.NewERC20BridgePairs(
 			types.NewERC20BridgePair(
-				types.NewExternalEVMAddress(common.HexToAddress("0x01")),
-				types.NewInternalEVMAddress(common.HexToAddress("0x0A")),
+				testutil.MustNewExternalEVMAddressFromString("0x0000000000000000000000000000000000000001"),
+				testutil.MustNewInternalEVMAddressFromString("0x000000000000000000000000000000000000000A"),
 			),
 			types.NewERC20BridgePair(
-				types.NewExternalEVMAddress(common.HexToAddress("0x02")),
-				types.NewInternalEVMAddress(common.HexToAddress("0x0B")),
+				testutil.MustNewExternalEVMAddressFromString("0x0000000000000000000000000000000000000002"),
+				testutil.MustNewInternalEVMAddressFromString("0x000000000000000000000000000000000000000B"),
 			),
 		),
 	)

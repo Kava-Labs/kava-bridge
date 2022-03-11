@@ -77,7 +77,7 @@ EnabledERC20Token defines an external ERC20 that is allowed to be bridged to Kav
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `address` | [string](#string) |  | Address of the contract on Ethereum |
+| `address` | [bytes](#bytes) |  | Address of the contract on Ethereum |
 | `name` | [string](#string) |  | Name of the token. |
 | `symbol` | [string](#string) |  | Symbol of the ERC20 token, usually a shorter version of the name. |
 | `decimals` | [uint32](#uint32) |  | Number of decimals the ERC20 uses to get its user representation. The max value is an unsigned 8 bit integer, but is an uint32 as the smallest protobuf integer type. |
