@@ -76,8 +76,8 @@ stateDiagram-v2
 ## Kava ERC20 to Ethereum Transfers
 
 Transferring from Kava to Ethereum follows a similar pattern. Of the following
-steps, only step 1 is implemented in the bridge module and the steps following
-are done in the relayer.
+steps, only step 1 is implemented in the bridge module and the subsequent steps
+are done by the relayer.
 
 1. Account calls `Burn(withdrawal Ethereum Address, amount)` on a Kava ERC20
    contract. This burns the account tokens and emits a Burn event containing the
