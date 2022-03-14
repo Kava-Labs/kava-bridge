@@ -69,6 +69,24 @@ describe("ERC20MintableBurnable", function () {
         );
     });
 
+    it("should emit a Withdraw event with incrementing sequence", async function () {
+      let sequence = 1n;
+      for (let i = 0; i < 10; i++) {
+        const withdrawTx = erc20.withdraw(await ethAddr.getAddress(), 1n);
+
+        await expect(withdrawTx)
+          .to.emit(erc20, "Withdraw")
+          .withArgs(
+            await sender.getAddress(),
+            await ethAddr.getAddress(),
+            1n,
+            sequence
+          );
+
+        sequence = sequence + 1n;
+      }
+    });
+
     it("should index sender, toAddr in the Withdraw event", async function () {
       const event =
         erc20.interface.events["Withdraw(address,address,uint256,uint256)"];
