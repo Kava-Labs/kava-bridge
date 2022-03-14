@@ -75,6 +75,13 @@ func (k Keeper) CallEVMWithData(
 		return nil, err
 	}
 
+	// EstimateGas applies the transaction against current block state to get
+	// optimal gas value. Since this is done right before the ApplyMessage
+	// below, it should essentially do the same thing but without affecting
+	// state. While this is an *estimate* in regular use, this should be an
+	// accurate exact amount in this case, as both the chain state and tx used
+	// to estimate and apply are the exact same (ie. no txs between estimate and
+	// apply, tx order is the same, etc.)
 	gasRes, err := k.evmKeeper.EstimateGas(sdk.WrapSDKContext(ctx), &evmtypes.EthCallRequest{
 		Args:   args,
 		GasCap: config.DefaultGasCap,

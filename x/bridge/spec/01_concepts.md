@@ -3,12 +3,6 @@
 The bridge module deploys ERC20 contracts and mints ERC20 tokens on the Kava EVM
 for cross-chain ERC-20 token transfers.
 
-## ERC20
-
-In the following documents, Ethereum ERC20 will refer to an ERC20 token deployed
-on the Ethereum network. Kava ERC20 will refer to an ERC20 token deployed on the
-Kava EVM.
-
 ## Requirements
 
 Bridge Contract
@@ -19,6 +13,20 @@ Signer
 
 * There must be trusted a signer that watches the bridge smart contract on
   Ethereum for locked asset events. This is a single signer for now.
+
+## ERC20
+
+In the following documents, Ethereum ERC20 will refer to an ERC20 token deployed
+on the Ethereum network. Kava ERC20 will refer to an ERC20 token deployed on the
+Kava EVM.
+
+## Sequence
+
+There are two different incrementing sequences, one on the Bridge contract and
+`x/bridge` module. These are unique for each deposit (Ethereum to Kava) and
+each withdraw (Kava to Ethereum), but are not unique in that a deposit sequence
+value can be the same as a withdraw sequence. This is used by the relayer to
+properly order transactions.
 
 ## Ethereum ERC20 to Kava Transfers
 
@@ -79,40 +87,43 @@ Transferring from Kava to Ethereum follows a similar pattern. Of the following
 steps, only step 1 is implemented in the bridge module and the subsequent steps
 are done by the relayer.
 
-1. Account calls `Burn(withdrawal Ethereum Address, amount)` on a Kava ERC20
-   contract. This burns the account tokens and emits a Burn event containing the
-   receiver Ethereum address and corresponding amount.
-2. When the relayer finds a Burn event, query `x/bridge` `ERC20BridgePair`s to
-   get the corresponding Ethereum ERC20 address to send funds to. This is fine
-   to cache as it should never change if it exists.
+1. Account calls `Withdraw(withdrawal Ethereum Address, amount)` on a Kava ERC20
+   contract. This burns the account tokens and emits a `Withdraw` event
+   containing the receiver Ethereum address and corresponding amount.
+2. Module `PostTxProcessing` EVM hook scans for `Withdraw` events from enabled
+   `ERC20BridgePair`s and emits a [Cosmos SDK Event][cosmos-event] with the
+   withdrawal Ethereum address, corresponding ERC20 address to send funds to,
+   amount, and unique withdraw sequence.
 
-   **Note:** If the Burn event comes from a contract that isn't in bridge state,
-   then it is ignored. These events may come from a contract that isn't deployed
-   by the bridge module. Arbitrary contracts cannot maliciously try to get funds
-   withdrawn this way as the relayer only gets the Ethereum ERC20 address from
-   module state, not from events.
-3. Relayer calls bridge contract `Unlock(Ethereum ERC20 address, toAddr, amount)`
+   **Note:** If the Withdraw event comes from a contract that isn't in bridge
+   state (`EnabledERC20Tokens`), then it is ignored. These events may come from
+   a contract that isn't deployed by the bridge module. Arbitrary contracts
+   cannot maliciously try to get funds withdrawn this way as the withdrawal
+   Ethereum ERC20 address is queried from from module params, not from contract
+   events.
+4. When Relayer queries a new Withdraw bridge module event, call bridge contract
+   `Unlock(Ethereum ERC20 address, toAddr, amount)`
 
 ```mermaid
 sequenceDiagram
     participant acc as Kava Account
     participant KRC20 as Kava ERC20
-    participant K as Kava
+    participant M as x/bridge Module
     participant R as Relayer
     participant B as Ethereum Bridge Contract
-    acc->>KRC20: Burn(withdraw Ethereum address, amount)
-    KRC20->>K: Emit BurnEvent(withdraw Ethereum address, amount)
+
+    acc->>KRC20: Withdraw(Ethereum toAddr, amount)
+    KRC20->>KRC20: Burn ERC20 amount
+    KRC20->>M: Emit Withdraw(Ethereum toAddr, amount)
+
+    M->>M: Emit Cosmos WithdrawEvent(Ethereum ERC20 address, toAddr, amount, sequence)
 
     loop Monitor Bridge Events
-        R->>+K: Get latest EVM blocks
-        K-->>-R: EVM events
+        R->>+M: Get Cosmos WithdrawEvents
+        M-->>-R: Cosmos WithdrawEvents
     end
 
-    R->>+K: Query ERC20BridgePairs
-    K-->>-R: ERC20BridgePairs
-    alt If Kava ERC20 address is an ERC20BridgePair
-        R->>B: Unlock(Ethereum ERC20 address, toAddr, amount)
-    else
-        Note right of R: Ignore events from unknown contract addresses
-    end
+    R->>B: Unlock(Ethereum ERC20 address, toAddr, amount)
 ```
+
+[cosmos-event]: https://docs.cosmos.network/master/core/events.html
