@@ -218,12 +218,12 @@ func (suite *genesisTestSuite) Test_InitAndExportGenesis() {
 		},
 		types.NewERC20BridgePairs(
 			types.NewERC20BridgePair(
-				testutil.MustNewExternalEVMAddressFromString("0x0000000000000000000000000000000000000001"),
-				testutil.MustNewInternalEVMAddressFromString("0x000000000000000000000000000000000000000A"),
-			),
-			types.NewERC20BridgePair(
 				testutil.MustNewExternalEVMAddressFromString("0x0000000000000000000000000000000000000002"),
 				testutil.MustNewInternalEVMAddressFromString("0x000000000000000000000000000000000000000B"),
+			),
+			types.NewERC20BridgePair(
+				testutil.MustNewExternalEVMAddressFromString("0x0000000000000000000000000000000000000001"),
+				testutil.MustNewInternalEVMAddressFromString("0x000000000000000000000000000000000000000A"),
 			),
 		),
 		types.DefaultNextWithdrawSequence,

@@ -74,3 +74,17 @@ func (pair *ERC20BridgePair) Validate() error {
 func (pair *ERC20BridgePair) GetID() []byte {
 	return tmhash.Sum(append(pair.ExternalERC20Address, pair.InternalERC20Address...))
 }
+
+// GetExternal returns the typed ExternalAddress.
+func (pair *ERC20BridgePair) GetExternalAddress() ExternalEVMAddress {
+	return NewExternalEVMAddress(
+		common.BytesToAddress(pair.ExternalERC20Address),
+	)
+}
+
+// GetInternalAddress returns the typed InternalAddress.
+func (pair *ERC20BridgePair) GetInternalAddress() InternalEVMAddress {
+	return NewInternalEVMAddress(
+		common.BytesToAddress(pair.InternalERC20Address),
+	)
+}

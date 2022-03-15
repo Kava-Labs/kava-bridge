@@ -61,8 +61,8 @@ func TestNewERC20BridgePair(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			pair := types.NewERC20BridgePair(tc.externalAddress, tc.internalAddress)
 
-			require.Equal(t, pair.ExternalERC20Address, tc.externalAddress.Bytes())
-			require.Equal(t, pair.InternalERC20Address, tc.internalAddress.Bytes())
+			require.Equal(t, pair.GetExternalAddress(), tc.externalAddress)
+			require.Equal(t, pair.GetInternalAddress(), tc.internalAddress)
 
 			err := pair.Validate()
 			if tc.errArgs.expectPass {
@@ -170,10 +170,13 @@ func TestGetID(t *testing.T) {
 		testutil.MustNewInternalEVMAddressFromString("0x000000000000000000000000000000000000000A"),
 	)
 
+	extAddr := pair.GetExternalAddress().Bytes()
+	intAddr := pair.GetInternalAddress().Bytes()
+
 	// Make a copy instead of append
-	s := make([]byte, len(pair.ExternalERC20Address)+len(pair.InternalERC20Address))
-	copy(s, pair.ExternalERC20Address)
-	copy(s[len(pair.ExternalERC20Address):], pair.InternalERC20Address)
+	s := make([]byte, len(extAddr)+len(intAddr))
+	copy(s, extAddr)
+	copy(s[len(extAddr):], intAddr)
 
 	expID := tmhash.Sum(s)
 

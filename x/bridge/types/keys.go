@@ -28,13 +28,8 @@ func init() {
 
 // Key prefixes
 var (
-	BridgedERC20KeyPrefix         = []byte{0x01} // prefix for keys that store local ERC 20 address of bridged assets
-	NextWithdrawSequenceKeyPrefix = []byte{0x02} // prefix for key of next withdraw sequence
+	BridgedERC20PairKeyPrefix           = []byte{0x01} // prefix for keys that store a ERC20 bridge pair
+	BridgedERC20PairByExternalKeyPrefix = []byte{0x02} // prefix for keys that store the ID of a ERC20 bridge pair by external address
+	BridgedERC20PairByInternalKeyPrefix = []byte{0x03} // prefix for keys that store the ID of a ERC20 bridge pair by internal address
+	NextWithdrawSequenceKeyPrefix       = []byte{0x04} // prefix for key of next withdraw sequence
 )
-
-// GetBridgedERC20Key returns the bytes of an BridgedERC20 key. This only
-// accepts an ExternalEVMAddress and should not be used with
-// InternalEVMAddresses.
-func GetBridgedERC20Key(externalAddress []byte) []byte {
-	return append(BridgedERC20KeyPrefix, externalAddress...)
-}

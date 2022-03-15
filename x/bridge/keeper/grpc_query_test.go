@@ -2,7 +2,6 @@ package keeper_test
 
 import (
 	"context"
-	"encoding/hex"
 	"strings"
 	"testing"
 
@@ -65,10 +64,10 @@ func (suite *GrpcQueryTestSuite) TestQueryERC20BridgePairs() {
 		_, err = suite.msgServer.BridgeERC20FromEthereum(sdk.WrapSDKContext(suite.Ctx), &msg)
 		suite.Require().NoError(err)
 
-		contractAddr, found := suite.App.BridgeKeeper.GetInternalERC20Address(suite.Ctx, externalAddress)
+		pair, found := suite.App.BridgeKeeper.GetERC20BridgePairFromExternal(suite.Ctx, externalAddress)
 		suite.Require().True(found)
 
-		internalContracts = append(internalContracts, strings.ToLower(contractAddr.String()))
+		internalContracts = append(internalContracts, strings.ToLower(pair.GetInternalAddress().String()))
 	}
 
 	suite.Commit()
@@ -90,8 +89,9 @@ func (suite *GrpcQueryTestSuite) TestQueryERC20BridgePairs() {
 	var queriedIntAddrs []string
 
 	for _, pair := range queriedBridgedERC20Pairs.ERC20BridgePairs {
-		queriedExtAddrs = append(queriedExtAddrs, "0x"+hex.EncodeToString(pair.ExternalERC20Address))
-		queriedIntAddrs = append(queriedIntAddrs, "0x"+hex.EncodeToString(pair.InternalERC20Address))
+		// ToLower since String() returns a checksum address which we don't care about
+		queriedExtAddrs = append(queriedExtAddrs, strings.ToLower(pair.GetExternalAddress().String()))
+		queriedIntAddrs = append(queriedIntAddrs, strings.ToLower(pair.GetInternalAddress().String()))
 	}
 
 	for _, addr := range extContracts {
