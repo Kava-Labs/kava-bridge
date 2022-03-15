@@ -219,7 +219,7 @@ func (k Keeper) SetNextWithdrawSequence(ctx sdk.Context, sequence sdk.Int) {
 	store.Set(types.NextWithdrawSequenceKeyPrefix, bz)
 }
 
-// WrappingAddInt adds two sdk.Int values with intentionally wrapping.
+// WrappingAddInt adds two sdk.Int values with intentional wrapping.
 func WrappingAddInt(i1 sdk.Int, i2 sdk.Int) sdk.Int {
 	sum := new(big.Int).Add(i1.BigInt(), i2.BigInt())
 
