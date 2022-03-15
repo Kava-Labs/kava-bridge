@@ -127,6 +127,7 @@ func (suite *Suite) SetupTest() {
 				MustNewInternalEVMAddressFromString("0x000000000000000000000000000000000000000B"),
 			),
 		),
+		types.DefaultNextWithdrawSequence,
 	)
 
 	feemarketGenesis := feemarkettypes.DefaultGenesisState()

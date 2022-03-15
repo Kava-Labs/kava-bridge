@@ -7,6 +7,7 @@ The `x/bridge` module keeps the following in state:
 | State Object      | Description                             | Key                                          | Value                     |
 | ----------------- | --------------------------------------- | -------------------------------------------- | ------------------------- |
 | ERC20 Bridge Pair | Mapping of Ethereum ERC20 to Kava ERC20 | `[]byte{1} + []byte(Ethereum ERC20 address)` | `[]byte{ERC20BridgePair}` |
+| Withdraw Sequence | Unique incrementing withdraw sequence   | `[]byte{2}`                                  | `sdk.Int`                 |
 
 ## ERC20 Bridge Pair
 
@@ -24,6 +25,12 @@ type ERC20BridgePair struct {
 }
 ```
 
+## Withdraw Sequence
+
+The withdraw sequence is a unique value associated with a unique withdraw. This
+is emitted in the `Withdraw` event for the relayer to determine the transaction
+order.
+
 ## Genesis State
 
 The `GenesisState` defines the state that must be persisted when the blockchain
@@ -36,5 +43,7 @@ type GenesisState struct {
 	Params Params `protobuf:"bytes,1,opt,name=params,proto3" json:"params"`
 	// erc20_bridge_pairs defines all of the bridged erc20 tokens.
 	ERC20BridgePairs ERC20BridgePairs `protobuf:"bytes,2,rep,name=erc20_bridge_pairs,json=erc20BridgePairs,proto3,castrepeated=ERC20BridgePairs" json:"erc20_bridge_pairs"`
+	// next_withdraw_sequence defines the unique incrementing sequence per withdraw tx.
+	NextWithdrawSequence github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,3,opt,name=next_withdraw_sequence,json=nextWithdrawSequence,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"next_withdraw_sequence"`
 }
 ```

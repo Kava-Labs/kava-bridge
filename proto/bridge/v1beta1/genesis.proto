@@ -20,6 +20,13 @@ message GenesisState {
     (gogoproto.castrepeated) = "ERC20BridgePairs",
     (gogoproto.customname)   = "ERC20BridgePairs"
   ];
+
+  // next_withdraw_sequence defines the unique incrementing sequence per withdraw tx.
+  string next_withdraw_sequence = 3 [
+    (cosmos_proto.scalar)  = "cosmos.Int",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable)   = false
+  ];
 }
 
 // Params defines the bridge module params

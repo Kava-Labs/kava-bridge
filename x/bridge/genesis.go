@@ -24,6 +24,8 @@ func InitGenesis(
 	for _, pair := range data.ERC20BridgePairs {
 		k.SetERC20AddressPair(ctx, pair)
 	}
+
+	k.SetNextWithdrawSequence(ctx, data.NextWithdrawSequence)
 }
 
 // ExportGenesis exports genesis state of the bridge module
@@ -34,8 +36,14 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper, ak types.AccountKeeper) *ty
 		return false
 	})
 
+	nextSeq, err := k.GetNextWithdrawSequence(ctx)
+	if err != nil {
+		panic(err)
+	}
+
 	return &types.GenesisState{
-		Params:           k.GetParams(ctx),
-		ERC20BridgePairs: bridgePairs,
+		Params:               k.GetParams(ctx),
+		ERC20BridgePairs:     bridgePairs,
+		NextWithdrawSequence: nextSeq,
 	}
 }

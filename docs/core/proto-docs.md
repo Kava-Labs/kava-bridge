@@ -97,6 +97,7 @@ GenesisState defines the bridge module's genesis state.
 | ----- | ---- | ----- | ----------- |
 | `params` | [Params](#bridge.v1beta1.Params) |  | params defines all the parameters of the module. |
 | `erc20_bridge_pairs` | [ERC20BridgePair](#bridge.v1beta1.ERC20BridgePair) | repeated | erc20_bridge_pairs defines all of the bridged erc20 tokens. |
+| `next_withdraw_sequence` | [string](#string) |  | next_withdraw_sequence defines the unique incrementing sequence per withdraw tx. |
 
 
 
