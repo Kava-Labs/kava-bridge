@@ -4,12 +4,11 @@ pragma solidity ^0.8.9;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "./Sequence.sol";
 
 /// @title A contract for an mintable and burnable ERC20 that is handled by the bridge Cosmos SDK module account
 /// @author Kava Labs, LLC
 /// @custom:security-contact security@kava.io
-contract ERC20MintableBurnable is ERC20, Ownable, Sequence(0) {
+contract ERC20MintableBurnable is ERC20, Ownable {
     /// @notice The decimals places of the token.
     uint8 private immutable _decimals;
 
@@ -17,12 +16,10 @@ contract ERC20MintableBurnable is ERC20, Ownable, Sequence(0) {
     /// @param sender The Kava address of the sender that locked the funds
     /// @param toAddr The Ethereum address to send the funds to
     /// @param amount The amount that was locked
-    /// @param sequence The unique withdraw sequence
     event Withdraw(
         address indexed sender,
         address indexed toAddr,
-        uint256 amount,
-        uint256 sequence
+        uint256 amount
     );
 
     /// @notice Registers the ERC20 token with mint and burn permissions for the
@@ -55,9 +52,8 @@ contract ERC20MintableBurnable is ERC20, Ownable, Sequence(0) {
     /// @param toAddr The account on Ethereum to withdraw the funds to.
     /// @param amount The amount of the token to withdraw.
     function withdraw(address toAddr, uint256 amount) public virtual {
-        incrementSequence();
         _burn(msg.sender, amount);
-        emit Withdraw(msg.sender, toAddr, amount, getSequence());
+        emit Withdraw(msg.sender, toAddr, amount);
     }
 
     /// @notice Withdraws `amount` of tokens to Ethereum from `account`.
@@ -79,6 +75,6 @@ contract ERC20MintableBurnable is ERC20, Ownable, Sequence(0) {
     ) public virtual {
         _spendAllowance(account, msg.sender, amount);
         _burn(account, amount);
-        emit Withdraw(msg.sender, toAddr, amount, getSequence());
+        emit Withdraw(msg.sender, toAddr, amount);
     }
 }

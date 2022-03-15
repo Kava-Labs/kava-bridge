@@ -136,7 +136,7 @@ export interface ERC20MintableBurnableInterface extends utils.Interface {
     "Approval(address,address,uint256)": EventFragment;
     "OwnershipTransferred(address,address)": EventFragment;
     "Transfer(address,address,uint256)": EventFragment;
-    "Withdraw(address,address,uint256,uint256)": EventFragment;
+    "Withdraw(address,address,uint256)": EventFragment;
   };
 
   getEvent(nameOrSignatureOrTopic: "Approval"): EventFragment;
@@ -168,8 +168,8 @@ export type TransferEvent = TypedEvent<
 export type TransferEventFilter = TypedEventFilter<TransferEvent>;
 
 export type WithdrawEvent = TypedEvent<
-  [string, string, BigNumber, BigNumber],
-  { sender: string; toAddr: string; amount: BigNumber; sequence: BigNumber }
+  [string, string, BigNumber],
+  { sender: string; toAddr: string; amount: BigNumber }
 >;
 
 export type WithdrawEventFilter = TypedEventFilter<WithdrawEvent>;
@@ -466,17 +466,15 @@ export interface ERC20MintableBurnable extends BaseContract {
       value?: null
     ): TransferEventFilter;
 
-    "Withdraw(address,address,uint256,uint256)"(
+    "Withdraw(address,address,uint256)"(
       sender?: string | null,
       toAddr?: string | null,
-      amount?: null,
-      sequence?: null
+      amount?: null
     ): WithdrawEventFilter;
     Withdraw(
       sender?: string | null,
       toAddr?: string | null,
-      amount?: null,
-      sequence?: null
+      amount?: null
     ): WithdrawEventFilter;
   };
 

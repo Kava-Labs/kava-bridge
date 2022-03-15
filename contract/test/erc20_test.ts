@@ -56,7 +56,7 @@ describe("ERC20MintableBurnable", function () {
       amount = 10n;
     });
 
-    it("should emit a Withdraw event with (sender, toAddr, amount, sequence)", async function () {
+    it("should emit a Withdraw event with (sender, toAddr, amount)", async function () {
       const withdrawTx = erc20.withdraw(await ethAddr.getAddress(), amount);
 
       await expect(withdrawTx)
@@ -64,35 +64,14 @@ describe("ERC20MintableBurnable", function () {
         .withArgs(
           await sender.getAddress(),
           await ethAddr.getAddress(),
-          amount,
-          1n
+          amount
         );
     });
 
-    it("should emit a Withdraw event with incrementing sequence", async function () {
-      let sequence = 1n;
-      for (let i = 0; i < 10; i++) {
-        const withdrawTx = erc20.withdraw(await ethAddr.getAddress(), 1n);
-
-        await expect(withdrawTx)
-          .to.emit(erc20, "Withdraw")
-          .withArgs(
-            await sender.getAddress(),
-            await ethAddr.getAddress(),
-            1n,
-            sequence
-          );
-
-        sequence = sequence + 1n;
-      }
-    });
-
     it("should index sender, toAddr in the Withdraw event", async function () {
-      const event =
-        erc20.interface.events["Withdraw(address,address,uint256,uint256)"];
+      const event = erc20.interface.events["Withdraw(address,address,uint256)"];
 
-      const [tokenParam, toAddrParam, amountParam, sequenceParam] =
-        event.inputs;
+      const [tokenParam, toAddrParam, amountParam] = event.inputs;
 
       expect(tokenParam.name).to.equal("sender");
       expect(tokenParam.indexed).to.equal(true);
@@ -102,9 +81,6 @@ describe("ERC20MintableBurnable", function () {
 
       expect(amountParam.name).to.equal("amount");
       expect(amountParam.indexed).to.equal(false);
-
-      expect(sequenceParam.name).to.equal("sequence");
-      expect(sequenceParam.indexed).to.equal(false);
     });
 
     it("should burn the account token amount from contract", async function () {
