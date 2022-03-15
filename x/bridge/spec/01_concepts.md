@@ -101,8 +101,8 @@ are done by the relayer.
    cannot maliciously try to get funds withdrawn this way as the withdrawal
    Ethereum ERC20 address is queried from from module params, not from contract
    events.
-4. When Relayer queries a new Withdraw bridge module event, call bridge contract
-   `Unlock(Ethereum ERC20 address, toAddr, amount)`
+3. When Relayer queries a new Withdraw bridge module event, unlock funds on the
+   Ethereum bridge contract.
 
 ```mermaid
 sequenceDiagram
