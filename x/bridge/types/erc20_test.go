@@ -6,6 +6,7 @@ import (
 	"github.com/kava-labs/kava-bridge/x/bridge/testutil"
 	"github.com/kava-labs/kava-bridge/x/bridge/types"
 	"github.com/stretchr/testify/require"
+	"github.com/tendermint/tendermint/crypto/tmhash"
 )
 
 func TestNewERC20BridgePair(t *testing.T) {
@@ -161,4 +162,21 @@ func TestNewERC20BridgePairs_BasicInvalid(t *testing.T) {
 
 	err := pairs.Validate()
 	require.Error(t, err)
+}
+
+func TestGetID(t *testing.T) {
+	pair := types.NewERC20BridgePair(
+		testutil.MustNewExternalEVMAddressFromString("0x0000000000000000000000000000000000000001"),
+		testutil.MustNewInternalEVMAddressFromString("0x000000000000000000000000000000000000000A"),
+	)
+
+	// Make a copy instead of append
+	s := make([]byte, len(pair.ExternalERC20Address)+len(pair.InternalERC20Address))
+	copy(s, pair.ExternalERC20Address)
+	copy(s[len(pair.ExternalERC20Address):], pair.InternalERC20Address)
+
+	expID := tmhash.Sum(s)
+
+	id := pair.GetID()
+	require.Equal(t, expID, id)
 }

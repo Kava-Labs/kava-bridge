@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/tendermint/tendermint/crypto/tmhash"
 )
 
 // ERC20BridgePairs defines a slice of ERC20BridgePair
@@ -67,4 +68,9 @@ func (pair *ERC20BridgePair) Validate() error {
 	}
 
 	return nil
+}
+
+// GetID returns the SHA256 hash of the external and internal address
+func (pair *ERC20BridgePair) GetID() []byte {
+	return tmhash.Sum(append(pair.ExternalERC20Address, pair.InternalERC20Address...))
 }
