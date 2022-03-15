@@ -22,7 +22,7 @@ func InitGenesis(
 	}
 
 	for _, pair := range data.ERC20BridgePairs {
-		k.SetERC20AddressPair(ctx, pair)
+		k.SetERC20BridgePair(ctx, pair)
 	}
 
 	k.SetNextWithdrawSequence(ctx, data.NextWithdrawSequence)

@@ -111,3 +111,33 @@ func (suite *ERC20TestSuite) TestERC20Mint() {
 	suite.Require().True(ok, "balanceOf should respond with *big.Int")
 	suite.Require().Equal(big.NewInt(1234), balance)
 }
+
+func (suite *ERC20TestSuite) TestERC20_NotEnabled() {
+	// WETH but last char changed
+	extAddr := testutil.MustNewExternalEVMAddressFromString("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc4")
+
+	_, err := suite.App.BridgeKeeper.GetOrDeployInternalERC20(suite.Ctx, extAddr)
+	suite.Require().Error(err)
+	suite.Require().ErrorIs(err, types.ErrERC20NotEnabled)
+}
+
+func (suite *ERC20TestSuite) TestERC20SaveDeploy() {
+	extAddr := testutil.MustNewExternalEVMAddressFromString("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2")
+
+	_, found := suite.App.BridgeKeeper.GetInternalERC20Address(suite.Ctx, extAddr)
+	suite.Require().False(found, "internal ERC20 address should not be set before first bridge")
+
+	firstInternal, err := suite.App.BridgeKeeper.GetOrDeployInternalERC20(suite.Ctx, extAddr)
+	suite.Require().NoError(err)
+
+	// Fetch from store
+	savedInternal, found := suite.App.BridgeKeeper.GetInternalERC20Address(suite.Ctx, extAddr)
+	suite.Require().True(found, "internal ERC20 address should be saved after first bridge")
+	suite.Require().Equal(firstInternal, savedInternal, "deployed address should match saved internal ERC20 address")
+
+	// Fetch addr again to make sure we get the same one and another ERC20 isn't deployed
+	secondInternal, err := suite.App.BridgeKeeper.GetOrDeployInternalERC20(suite.Ctx, extAddr)
+	suite.Require().NoError(err)
+
+	suite.Require().Equal(firstInternal, secondInternal, "second call should return the saved internal ERC20 address")
+}
