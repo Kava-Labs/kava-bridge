@@ -188,7 +188,9 @@ func (k Keeper) GetNextWithdrawSequence(ctx sdk.Context) (sdk.Int, error) {
 	}
 
 	var seq sdk.Int
-	seq.Unmarshal(bz)
+	if err := seq.Unmarshal(bz); err != nil {
+		panic(err)
+	}
 
 	return seq, nil
 }
