@@ -12,6 +12,48 @@ import (
 	"github.com/kava-labs/kava-bridge/x/bridge/types"
 )
 
+// GetOrDeployInternalERC20 returns the internal EVM address
+// mapped to the provided ExternalEVMAddress. This will either return from the
+// store if it is already deployed, or will first deploy the internal ERC20
+// contract and return the new address.
+func (k Keeper) GetOrDeployInternalERC20(
+	ctx sdk.Context,
+	externalAddress types.ExternalEVMAddress,
+) (types.InternalEVMAddress, error) {
+	internalAddress, found := k.GetInternalERC20Address(ctx, externalAddress)
+	if found {
+		// If external ERC20 address is already mapped in store, there is
+		// already a ERC20 deployed on Kava EVM.
+		return internalAddress, nil
+	}
+
+	// The first time this external ERC20 is being bridged.
+	// Check params for enabled ERC20. This both ensures the ERC20 is
+	// whitelisted and fetches required ERC20 metadata: name, symbol,
+	// decimals.
+	enabledToken, err := k.GetEnabledERC20Token(ctx, externalAddress)
+	if err != nil {
+		return types.InternalEVMAddress{}, err
+	}
+
+	// Deploy the ERC20 contract on the Kava EVM
+	internalAddress, err = k.DeployMintableERC20Contract(ctx, enabledToken)
+	if err != nil {
+		return types.InternalEVMAddress{}, err
+	}
+
+	addrPair := types.NewERC20BridgePair(externalAddress, internalAddress)
+	if err := addrPair.Validate(); err != nil {
+		return types.InternalEVMAddress{}, err
+	}
+
+	// Save the internal ERC20 address to state so that it is mapped to the
+	// external ERC20 address.
+	k.SetERC20BridgePair(ctx, addrPair)
+
+	return internalAddress, nil
+}
+
 // DeployMintableERC20Contract deploys an ERC20 contract on the EVM as the
 // module account and returns the address of the contract. This contract has
 // minting permissions for the module account.
