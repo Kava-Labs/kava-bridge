@@ -6,7 +6,8 @@ import (
 
 // errors
 var (
-	ErrERC20NotEnabled = sdkerrors.Register(ModuleName, 2, "ERC20 token not enabled")
-	ErrABIPack         = sdkerrors.Register(ModuleName, 3, "contract ABI pack failed")
-	ErrABIUnpack       = sdkerrors.Register(ModuleName, 4, "contract ABI unpack failed")
+	ErrERC20NotEnabled                = sdkerrors.Register(ModuleName, 2, "ERC20 token not enabled")
+	ErrABIPack                        = sdkerrors.Register(ModuleName, 3, "contract ABI pack failed")
+	ErrABIUnpack                      = sdkerrors.Register(ModuleName, 4, "contract ABI unpack failed")
+	ErrInvalidInitialWithdrawSequence = sdkerrors.Register(ModuleName, 5, "initial withdraw sequence hasn't been set")
 )

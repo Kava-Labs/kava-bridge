@@ -58,6 +58,7 @@ func (suite *genesisTestSuite) Test_InitGenesis_Validation() {
 						testutil.MustNewInternalEVMAddressFromString("0x000000000000000000000000000000000000000A"),
 					),
 				),
+				types.DefaultNextWithdrawSequence,
 			),
 			errArgs{
 				expectPass: true,
@@ -89,6 +90,7 @@ func (suite *genesisTestSuite) Test_InitGenesis_Validation() {
 						testutil.MustNewInternalEVMAddressFromString("0x000000000000000000000000000000000000000A"),
 					),
 				),
+				types.DefaultNextWithdrawSequence,
 			),
 			errArgs{
 				expectPass: false,
@@ -121,6 +123,7 @@ func (suite *genesisTestSuite) Test_InitGenesis_Validation() {
 						testutil.MustNewInternalEVMAddressFromString("0x000000000000000000000000000000000000000A"),
 					),
 				),
+				types.DefaultNextWithdrawSequence,
 			),
 			errArgs{
 				expectPass: false,
@@ -148,6 +151,7 @@ func (suite *genesisTestSuite) Test_InitGenesis_Validation() {
 					Relayer: sdk.AccAddress("hi"),
 				},
 				types.NewERC20BridgePairs(),
+				types.DefaultNextWithdrawSequence,
 			),
 			errArgs{
 				expectPass: false,
@@ -169,6 +173,7 @@ func (suite *genesisTestSuite) Test_InitGenesis_Validation() {
 					Relayer: sdk.AccAddress("hi"),
 				},
 				types.NewERC20BridgePairs(),
+				types.DefaultNextWithdrawSequence,
 			),
 			errArgs{
 				expectPass: false,
@@ -221,6 +226,7 @@ func (suite *genesisTestSuite) Test_InitAndExportGenesis() {
 				testutil.MustNewInternalEVMAddressFromString("0x000000000000000000000000000000000000000B"),
 			),
 		),
+		types.DefaultNextWithdrawSequence,
 	)
 
 	bridge.InitGenesis(suite.Ctx, suite.App.BridgeKeeper, suite.App.AccountKeeper, state)
@@ -259,6 +265,7 @@ func (suite *genesisTestSuite) Test_Marshall() {
 				testutil.MustNewInternalEVMAddressFromString("0x000000000000000000000000000000000000000B"),
 			),
 		),
+		types.DefaultNextWithdrawSequence,
 	)
 
 	encodingCfg := app.MakeEncodingConfig()
@@ -303,6 +310,7 @@ func (suite *genesisTestSuite) Test_LegacyJSONConversion() {
 				testutil.MustNewInternalEVMAddressFromString("0x000000000000000000000000000000000000000B"),
 			),
 		),
+		types.DefaultNextWithdrawSequence,
 	)
 
 	encodingCfg := app.MakeEncodingConfig()
