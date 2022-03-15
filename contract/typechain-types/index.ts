@@ -13,6 +13,7 @@ export type { ERC20NoReturnMock } from "./ERC20NoReturnMock";
 export type { ERC20ReturnFalseMock } from "./ERC20ReturnFalseMock";
 export type { ERC20ReturnTrueMock } from "./ERC20ReturnTrueMock";
 export type { SequenceMock } from "./SequenceMock";
+export type { Withdrawer } from "./Withdrawer";
 
 export { Ownable__factory } from "./factories/Ownable__factory";
 export { ERC20__factory } from "./factories/ERC20__factory";
@@ -26,3 +27,4 @@ export { ERC20NoReturnMock__factory } from "./factories/ERC20NoReturnMock__facto
 export { ERC20ReturnFalseMock__factory } from "./factories/ERC20ReturnFalseMock__factory";
 export { ERC20ReturnTrueMock__factory } from "./factories/ERC20ReturnTrueMock__factory";
 export { SequenceMock__factory } from "./factories/SequenceMock__factory";
+export { Withdrawer__factory } from "./factories/Withdrawer__factory";
