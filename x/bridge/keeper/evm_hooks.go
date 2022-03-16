@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"bytes"
 	"math/big"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -35,16 +34,15 @@ func (h Hooks) PostTxProcessing(
 	to *common.Address,
 	receipt *ethtypes.Receipt,
 ) error {
-	params := h.k.GetParams(ctx)
-
 	erc20Abi := contract.ERC20MintableBurnableContract.ABI
 
-	for i, log := range receipt.Logs {
+	for _, log := range receipt.Logs {
 		if len(log.Topics) < 3 {
 			continue
 		}
 
-		eventID := log.Topics[0] // event ID
+		// event ID, e.g. Keccak-256 hash of Withdraw(address,address,uint256)
+		eventID := log.Topics[0]
 
 		event, err := erc20Abi.EventByID(eventID)
 		if err != nil {
@@ -52,95 +50,59 @@ func (h Hooks) PostTxProcessing(
 			continue
 		}
 
-		if event.Name != types.ERC20EventTransfer {
-			h.k.Logger(ctx).Info("emitted event", "name", event.Name, "signature", event.Sig)
+		if event.Name != types.ContractEventTypeWithdraw {
 			continue
 		}
 
-		transferEvent, err := erc20.Unpack(event.Name, log.Data)
+		withdrawEvent, err := erc20Abi.Unpack(event.Name, log.Data)
 		if err != nil {
-			h.k.Logger(ctx).Error("failed to unpack transfer event", "error", err.Error())
+			h.k.Logger(ctx).Error("failed to unpack withdraw event", "error", err.Error())
 			continue
 		}
 
-		if len(transferEvent) == 0 {
+		if len(withdrawEvent) == 0 {
+			h.k.Logger(ctx).Error("withdraw event data is empty", "error", err.Error())
 			continue
 		}
 
-		tokens, ok := transferEvent[0].(*big.Int)
+		// Data only contains non-indexed parameters, which is only the amount
+		amount, ok := withdrawEvent[0].(*big.Int)
 		// safety check and ignore if amount not positive
-		if !ok || tokens == nil || tokens.Sign() != 1 {
+		if !ok || amount == nil || amount.Sign() != 1 {
 			continue
 		}
 
-		// check that the contract is an enabled token pair
-		contractAddr := log.Address
+		// Check that the contract is an enabled token pair
+		contractAddr := types.NewInternalEVMAddress(log.Address)
 
-		id := h.k.GetERC20BridgePair(ctx, contractAddr)
-
-		if len(id) == 0 {
-			// no token is registered for the caller contract
-			continue
-		}
-
-		pair, found := h.k.GetTokenPair(ctx, id)
+		pair, found := h.k.GetBridgePairFromInternal(ctx, contractAddr)
 		if !found {
+			// Contract not a bridge pair
 			continue
 		}
 
-		// check that conversion for the pair is enabled
-		if !pair.Enabled {
-			// continue to allow transfers for the ERC20 in case the token pair is disabled
-			h.k.Logger(ctx).Debug(
-				"ERC20 token -> Cosmos coin conversion is disabled for pair",
-				"coin", pair.Denom, "contract", pair.Erc20Address, "error", err.Error(),
-			)
-			continue
-		}
+		externalERC20Addr := pair.GetExternalAddress()
+		toAddr := common.BytesToAddress(log.Topics[2].Bytes())
 
-		// ignore as the burning always transfers to the zero address
-		to := common.BytesToAddress(log.Topics[2].Bytes())
-		if !bytes.Equal(to.Bytes(), types.ModuleAddress.Bytes()) {
-			continue
-		}
-
-		// check that the event is Burn from the ERC20Burnable interface
-		// NOTE: assume that if they are burning the token that has been registered as a pair, they want to mint a Cosmos coin
-
-		// create the corresponding sdk.Coin that is paired with ERC20
-		coins := sdk.Coins{{Denom: pair.Denom, Amount: sdk.NewIntFromBigInt(tokens)}}
-
-		// Mint the coin only if ERC20 is external
-		switch pair.ContractOwner {
-		case types.OWNER_MODULE:
-			_, err = h.k.CallEVM(ctx, erc20, types.ModuleAddress, contractAddr, "burn", tokens)
-		case types.OWNER_EXTERNAL:
-			err = h.k.bankKeeper.MintCoins(ctx, types.ModuleName, coins)
-		default:
-			err = types.ErrUndefinedOwner
-		}
-
+		sequence, err := h.k.GetNextWithdrawSequence(ctx)
 		if err != nil {
-			h.k.Logger(ctx).Debug(
-				"failed to process EVM hook for ER20 -> coin conversion",
-				"coin", pair.Denom, "contract", pair.Erc20Address, "error", err.Error(),
-			)
-			continue
+			// Panic since we actually want to revert the entire TX if this
+			// fails otherwise funds would be burned without event emitted for
+			// relayer to unlock.
+			panic(err)
 		}
 
-		// Only need last 20 bytes from log.topics
-		from := common.BytesToAddress(log.Topics[1].Bytes())
-		recipient := sdk.AccAddress(from.Bytes())
-
-		// transfer the tokens from ModuleAccount to sender address
-		if err := h.k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, recipient, coins); err != nil {
-			h.k.Logger(ctx).Debug(
-				"failed to process EVM hook for ER20 -> coin conversion",
-				"tx-hash", receipt.TxHash.Hex(), "log-idx", i,
-				"coin", pair.Denom, "contract", pair.Erc20Address, "error", err.Error(),
-			)
-			continue
+		if err := h.k.IncrementNextWithdrawSequence(ctx); err != nil {
+			panic(err)
 		}
+
+		// TODO: Replace with EmitTypedEvent + EventWithdraw proto type
+		ctx.EventManager().EmitEvent(sdk.NewEvent(
+			types.EventTypeWithdraw,
+			sdk.NewAttribute(types.AttributeKeySequence, sequence.String()),
+			sdk.NewAttribute(types.AttributeKeyEthereumERC20Address, externalERC20Addr.String()),
+			sdk.NewAttribute(types.AttributeKeyReceiver, toAddr.String()),
+		))
 	}
 
 	return nil
