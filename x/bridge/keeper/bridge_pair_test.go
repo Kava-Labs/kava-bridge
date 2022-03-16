@@ -30,11 +30,11 @@ func (suite *BridgePairTestSuite) TestERC20PairIter() {
 	)
 
 	for _, pair := range pairs {
-		suite.App.BridgeKeeper.RegisterERC20BridgePair(suite.Ctx, pair)
+		suite.App.BridgeKeeper.RegisterBridgePair(suite.Ctx, pair)
 	}
 
 	var iterPairs types.ERC20BridgePairs
-	suite.App.BridgeKeeper.IterateERC20BridgePairs(suite.Ctx, func(pair types.ERC20BridgePair) bool {
+	suite.App.BridgeKeeper.IterateBridgePairs(suite.Ctx, func(pair types.ERC20BridgePair) bool {
 		iterPairs = append(iterPairs, pair)
 		return false
 	})

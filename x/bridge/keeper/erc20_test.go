@@ -124,14 +124,14 @@ func (suite *ERC20TestSuite) TestERC20_NotEnabled() {
 func (suite *ERC20TestSuite) TestERC20SaveDeploy() {
 	extAddr := testutil.MustNewExternalEVMAddressFromString("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2")
 
-	_, found := suite.App.BridgeKeeper.GetERC20BridgePairFromExternal(suite.Ctx, extAddr)
+	_, found := suite.App.BridgeKeeper.GetBridgePairFromExternal(suite.Ctx, extAddr)
 	suite.Require().False(found, "internal ERC20 address should not be set before first bridge")
 
 	firstInternalAddr, err := suite.App.BridgeKeeper.GetOrDeployInternalERC20(suite.Ctx, extAddr)
 	suite.Require().NoError(err)
 
 	// Fetch from store
-	savedPair, found := suite.App.BridgeKeeper.GetERC20BridgePairFromExternal(suite.Ctx, extAddr)
+	savedPair, found := suite.App.BridgeKeeper.GetBridgePairFromExternal(suite.Ctx, extAddr)
 	suite.Require().True(found, "internal ERC20 address should be saved after first bridge")
 	suite.Require().Equal(firstInternalAddr, savedPair.GetInternalAddress(), "deployed address should match saved internal ERC20 address")
 

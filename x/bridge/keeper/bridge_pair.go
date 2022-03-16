@@ -6,21 +6,21 @@ import (
 	"github.com/kava-labs/kava-bridge/x/bridge/types"
 )
 
-// RegisterERC20BridgePair puts the erc20 bridge pair in the store with all of
+// RegisterBridgePair puts the erc20 bridge pair in the store with all of
 // its corresponding external/internal to ID mappings.
-func (k Keeper) RegisterERC20BridgePair(
+func (k Keeper) RegisterBridgePair(
 	ctx sdk.Context,
 	pair types.ERC20BridgePair,
 ) {
 	id := pair.GetID()
 
-	k.setERC20BridgePair(ctx, pair)
+	k.setBridgePair(ctx, pair)
 	k.setPairIDFromExternal(ctx, pair.GetExternalAddress(), id)
 	k.setPairIDFromInternal(ctx, pair.GetInternalAddress(), id)
 }
 
-// setERC20BridgePair puts the bridged address pair into the store.
-func (k Keeper) setERC20BridgePair(
+// setBridgePair puts the bridged address pair into the store.
+func (k Keeper) setBridgePair(
 	ctx sdk.Context,
 	pair types.ERC20BridgePair,
 ) {
@@ -32,9 +32,9 @@ func (k Keeper) setERC20BridgePair(
 	store.Set(key, bz)
 }
 
-// GetERC20BridgePair returns the ERC20 bridge pair with the provided pair ID
+// GetBridgePair returns the ERC20 bridge pair with the provided pair ID
 // from the store.
-func (k Keeper) GetERC20BridgePair(
+func (k Keeper) GetBridgePair(
 	ctx sdk.Context,
 	id []byte,
 ) (types.ERC20BridgePair, bool) {
@@ -51,10 +51,10 @@ func (k Keeper) GetERC20BridgePair(
 	return pair, true
 }
 
-// IterateERC20BridgePairs provides an iterator over all stored ERC20 bridge
+// IterateBridgePairs provides an iterator over all stored ERC20 bridge
 // pairs. For each pair, cb will be called. If cb returns true, the iterator
 // will close and stop.
-func (k Keeper) IterateERC20BridgePairs(
+func (k Keeper) IterateBridgePairs(
 	ctx sdk.Context,
 	cb func(pair types.ERC20BridgePair) (stop bool),
 ) {
@@ -72,9 +72,9 @@ func (k Keeper) IterateERC20BridgePairs(
 	}
 }
 
-// GetERC20BridgePairFromExternal gets ERC20 bridge pair with the provided
+// GetBridgePairFromExternal gets ERC20 bridge pair with the provided
 // ExternalEVMAddress from the store.
-func (k Keeper) GetERC20BridgePairFromExternal(
+func (k Keeper) GetBridgePairFromExternal(
 	ctx sdk.Context,
 	externalAddress types.ExternalEVMAddress,
 ) (types.ERC20BridgePair, bool) {
@@ -83,12 +83,12 @@ func (k Keeper) GetERC20BridgePairFromExternal(
 		return types.ERC20BridgePair{}, false
 	}
 
-	return k.GetERC20BridgePair(ctx, id)
+	return k.GetBridgePair(ctx, id)
 }
 
-// GetERC20BridgePairFromInternal gets ERC20 bridge pair with the provided
+// GetBridgePairFromInternal gets ERC20 bridge pair with the provided
 // InternalEVMAddress from the store.
-func (k Keeper) GetERC20BridgePairFromInternal(
+func (k Keeper) GetBridgePairFromInternal(
 	ctx sdk.Context,
 	internalAddress types.InternalEVMAddress,
 ) (types.ERC20BridgePair, bool) {
@@ -97,7 +97,7 @@ func (k Keeper) GetERC20BridgePairFromInternal(
 		return types.ERC20BridgePair{}, false
 	}
 
-	return k.GetERC20BridgePair(ctx, id)
+	return k.GetBridgePair(ctx, id)
 }
 
 // -----------------------------------------------------------------------------

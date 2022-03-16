@@ -177,7 +177,7 @@ func (suite *MsgServerSuite) TestMint() {
 				_, err = suite.msgServer.BridgeERC20FromEthereum(sdk.WrapSDKContext(suite.Ctx), &msg)
 				suite.Require().NoError(err)
 
-				pair, found := suite.App.BridgeKeeper.GetERC20BridgePairFromExternal(suite.Ctx, externalAddress)
+				pair, found := suite.App.BridgeKeeper.GetBridgePairFromExternal(suite.Ctx, externalAddress)
 				suite.Require().True(found)
 
 				bal := suite.GetERC20BalanceOf(
