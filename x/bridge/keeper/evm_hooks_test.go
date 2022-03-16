@@ -204,4 +204,15 @@ func (suite *EVMHooksTestSuite) TestERC20Withdraw_EmitsEvent() {
 		sdk.NewAttribute(types.AttributeKeyEthereumERC20Address, suite.pair.GetExternalAddress().String()),
 		sdk.NewAttribute(types.AttributeKeyReceiver, withdrawToAddr.String()),
 	))
+
+	// Second withdraw tx
+	_ = suite.Withdraw(withdrawToAddr, withdrawAmount)
+
+	// Second one has incremented sequence
+	suite.EventsContains(suite.GetEvents(), sdk.NewEvent(
+		types.EventTypeWithdraw,
+		sdk.NewAttribute(types.AttributeKeySequence, "2"),
+		sdk.NewAttribute(types.AttributeKeyEthereumERC20Address, suite.pair.GetExternalAddress().String()),
+		sdk.NewAttribute(types.AttributeKeyReceiver, withdrawToAddr.String()),
+	))
 }
