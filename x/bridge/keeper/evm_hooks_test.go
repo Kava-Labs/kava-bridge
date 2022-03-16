@@ -4,71 +4,104 @@ import (
 	"math/big"
 	"testing"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/kava-labs/kava-bridge/contract"
+	"github.com/kava-labs/kava-bridge/x/bridge/keeper"
 	"github.com/kava-labs/kava-bridge/x/bridge/testutil"
 	"github.com/kava-labs/kava-bridge/x/bridge/types"
 	"github.com/stretchr/testify/suite"
 	"github.com/tharsis/ethermint/crypto/ethsecp256k1"
+	evmtypes "github.com/tharsis/ethermint/x/evm/types"
 )
 
 type EVMHooksTestSuite struct {
 	testutil.Suite
+
+	msgServer types.MsgServer
+	key1Addr  common.Address
+	erc20Abi  abi.ABI
+	pair      types.ERC20BridgePair
 }
 
 func TestEVMHooksTestSuite(t *testing.T) {
 	suite.Run(t, new(EVMHooksTestSuite))
 }
 
-func (suite *EVMHooksTestSuite) deployERC20() types.InternalEVMAddress {
-	// We can assume token is valid as it is from params and should be validated
-	token := types.NewEnabledERC20Token(
-		testutil.MustNewExternalEVMAddressFromString("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
-		"Wrapped ETH",
-		"WETH",
-		18,
+func (suite *EVMHooksTestSuite) SetupTest() {
+	suite.Suite.SetupTest()
+
+	suite.msgServer = keeper.NewMsgServerImpl(suite.App.BridgeKeeper)
+
+	suite.erc20Abi = contract.ERC20MintableBurnableContract.ABI
+	externalWethAddr := testutil.MustNewExternalEVMAddressFromString("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2")
+
+	// Bridge an asset to deploy the ERC20 asset and update store with pair
+	suite.key1Addr = common.BytesToAddress(suite.Key1.PubKey().Address())
+	suite.submitBridgeERC20Msg(externalWethAddr, sdk.NewInt(100), suite.key1Addr)
+
+	var found bool
+	suite.pair, found = suite.App.BridgeKeeper.GetBridgePairFromExternal(suite.Ctx, externalWethAddr)
+	suite.Require().True(found, "bridge pair must exist after bridge")
+}
+
+func (suite *EVMHooksTestSuite) TestHooksSet() {
+	suite.Require().PanicsWithValue("cannot set evm hooks twice", func() {
+		suite.App.EvmKeeper.SetHooks(suite.App.BridgeKeeper.Hooks())
+	})
+}
+
+func (suite *EVMHooksTestSuite) submitBridgeERC20Msg(
+	contractAddr types.ExternalEVMAddress,
+	amount sdk.Int,
+	receiver common.Address,
+) {
+	msg := types.NewMsgBridgeERC20FromEthereum(
+		suite.RelayerAddress.String(),
+		contractAddr.String(),
+		amount,
+		receiver.String(),
+		sdk.NewInt(1),
 	)
 
-	contractAddr, err := suite.App.BridgeKeeper.DeployMintableERC20Contract(suite.Ctx, token)
+	_, err := suite.msgServer.BridgeERC20FromEthereum(sdk.WrapSDKContext(suite.Ctx), &msg)
 	suite.Require().NoError(err)
-	suite.Require().Greater(len(contractAddr.Address), 0)
+}
 
-	return contractAddr
+func (suite *EVMHooksTestSuite) Withdraw(
+	toAddr common.Address,
+	amount *big.Int,
+) *evmtypes.MsgEthereumTxResponse {
+	// method is lowercase but event is upper
+	data, err := suite.erc20Abi.Pack(
+		"withdraw",
+		toAddr,
+		amount,
+	)
+	suite.Require().NoError(err)
+
+	res := suite.SendTx(suite.pair.GetInternalAddress(), suite.key1Addr, suite.Key1, data)
+	suite.Require().False(res.Failed(), "evm tx should not fail")
+
+	return res
 }
 
 func (suite *EVMHooksTestSuite) TestERC20WithdrawUnpack() {
-	erc20Abi := contract.ERC20MintableBurnableContract.ABI
-
-	contractAddr := suite.deployERC20()
-
-	key1Addr := common.BytesToAddress(suite.Key1.PubKey().Address())
-	amount := big.NewInt(1234)
-	err := suite.App.BridgeKeeper.MintERC20(suite.Ctx, contractAddr, key1Addr, amount)
-	suite.Require().NoError(err)
-
 	withdrawAmount := big.NewInt(10)
 	toKey, err := ethsecp256k1.GenerateKey()
 	suite.Require().NoError(err)
 	withdrawToAddr := common.BytesToAddress(toKey.PubKey().Address())
 
-	// method is lowercase but event is upper
-	data, err := erc20Abi.Pack(
-		"withdraw",
-		withdrawToAddr,
-		withdrawAmount,
-	)
-	suite.Require().NoError(err)
-
 	// Send TX
-	res := suite.SendTx(contractAddr, key1Addr, suite.Key1, data)
-	suite.Require().False(res.Failed(), "evm tx should not fail")
+	res := suite.Withdraw(withdrawToAddr, withdrawAmount)
 
 	containsWithdrawEvent := false
 
 	for _, log := range res.Logs {
 		eventID := log.Topics[0]
 
-		event, err := erc20Abi.EventByID(common.HexToHash(eventID))
+		event, err := suite.erc20Abi.EventByID(common.HexToHash(eventID))
 		if err != nil {
 			// invalid event for ERC20
 			continue
@@ -80,7 +113,7 @@ func (suite *EVMHooksTestSuite) TestERC20WithdrawUnpack() {
 
 		containsWithdrawEvent = true
 
-		withdrawEvent, err := erc20Abi.Unpack(types.ContractEventTypeWithdraw, log.Data)
+		withdrawEvent, err := suite.erc20Abi.Unpack(types.ContractEventTypeWithdraw, log.Data)
 		suite.Require().NoError(err)
 
 		suite.Require().Len(withdrawEvent, 1, "withdraw event data should only have 1 item for amount")
@@ -90,19 +123,85 @@ func (suite *EVMHooksTestSuite) TestERC20WithdrawUnpack() {
 		suite.Require().Equal(withdrawAmount, loggedAmount)
 
 		// 3 topics:
-		// - Keccak-256 hash of Withdraw(address,address,uint256)
-		// - address indexed sender
-		// - address indexed toAddr
+		// 0: Keccak-256 hash of Withdraw(address,address,uint256)
+		// 1: address indexed sender
+		// 2: address indexed toAddr
 		suite.Require().Len(log.Topics, 3, "withdraw event should have 3 topics")
 
 		// log.Topics is padded to 32 bytes, addresses are 20 bytes.
 		// common.HexToAddress handles this, crops from left.
 		senderAddr := common.HexToAddress(log.Topics[1])
-		suite.Require().Equal(key1Addr, senderAddr)
+		suite.Require().Equal(suite.key1Addr, senderAddr)
 
 		logToAddr := common.HexToAddress(log.Topics[2])
 		suite.Require().Equal(withdrawToAddr, logToAddr)
 	}
 
 	suite.Require().True(containsWithdrawEvent, "tx should contain Withdraw event")
+}
+
+func (suite *EVMHooksTestSuite) TestERC20Withdraw_BalanceChange() {
+	toKey, err := ethsecp256k1.GenerateKey()
+	suite.Require().NoError(err)
+	withdrawToAddr := common.BytesToAddress(toKey.PubKey().Address())
+	withdrawAmount := big.NewInt(10)
+
+	balBefore := suite.GetERC20BalanceOf(
+		contract.ERC20MintableBurnableContract.ABI,
+		suite.pair.GetInternalAddress(),
+		types.NewInternalEVMAddress(suite.key1Addr),
+	)
+
+	// Send Withdraw TX
+	_ = suite.Withdraw(withdrawToAddr, withdrawAmount)
+
+	balAfter := suite.GetERC20BalanceOf(
+		contract.ERC20MintableBurnableContract.ABI,
+		suite.pair.GetInternalAddress(),
+		types.NewInternalEVMAddress(suite.key1Addr),
+	)
+
+	suite.Require().Equal(
+		new(big.Int).Sub(balBefore, withdrawAmount),
+		balAfter,
+		"balance after withdraw should burn withdraw amount",
+	)
+}
+
+func (suite *EVMHooksTestSuite) TestERC20Withdraw_SequenceIncrement() {
+	toKey, err := ethsecp256k1.GenerateKey()
+	suite.Require().NoError(err)
+	withdrawToAddr := common.BytesToAddress(toKey.PubKey().Address())
+	withdrawAmount := big.NewInt(10)
+
+	beforeWithdrawSeq, err := suite.App.BridgeKeeper.GetNextWithdrawSequence(suite.Ctx)
+	suite.Require().NoError(err)
+
+	// Send Withdraw TX
+	_ = suite.Withdraw(withdrawToAddr, withdrawAmount)
+
+	afterWithdrawSeq, err := suite.App.BridgeKeeper.GetNextWithdrawSequence(suite.Ctx)
+	suite.Require().NoError(err)
+	suite.Require().Equal(
+		beforeWithdrawSeq.Add(sdk.OneInt()),
+		afterWithdrawSeq,
+		"next withdraw sequence should be incremented by 1",
+	)
+}
+
+func (suite *EVMHooksTestSuite) TestERC20Withdraw_EmitsEvent() {
+	toKey, err := ethsecp256k1.GenerateKey()
+	suite.Require().NoError(err)
+	withdrawToAddr := common.BytesToAddress(toKey.PubKey().Address())
+	withdrawAmount := big.NewInt(10)
+
+	// Send Withdraw TX
+	_ = suite.Withdraw(withdrawToAddr, withdrawAmount)
+
+	suite.EventsContains(suite.GetEvents(), sdk.NewEvent(
+		types.EventTypeWithdraw,
+		sdk.NewAttribute(types.AttributeKeySequence, "1"),
+		sdk.NewAttribute(types.AttributeKeyEthereumERC20Address, suite.pair.GetExternalAddress().String()),
+		sdk.NewAttribute(types.AttributeKeyReceiver, withdrawToAddr.String()),
+	))
 }

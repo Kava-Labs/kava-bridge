@@ -12,7 +12,7 @@ import (
 	"github.com/kava-labs/kava-bridge/x/bridge/types"
 )
 
-// Hooks wrapper struct for erc20 keeper
+// Hooks wrapper struct for bridge keeper
 type Hooks struct {
 	k Keeper
 }
@@ -23,9 +23,6 @@ var _ evmtypes.EvmHooks = Hooks{}
 func (k Keeper) Hooks() Hooks {
 	return Hooks{k}
 }
-
-// TODO: Make sure that if ConvertERC20 is called, that the Hook doesn't trigger
-// if it does, delete minting from ConvertErc20
 
 // PostTxProcessing implements EvmHooks.PostTxProcessing
 func (h Hooks) PostTxProcessing(
@@ -74,10 +71,9 @@ func (h Hooks) PostTxProcessing(
 
 		// Check that the contract is an enabled token pair
 		contractAddr := types.NewInternalEVMAddress(log.Address)
-
 		pair, found := h.k.GetBridgePairFromInternal(ctx, contractAddr)
 		if !found {
-			// Contract not a bridge pair
+			// Contract not a bridge pair in state
 			continue
 		}
 
