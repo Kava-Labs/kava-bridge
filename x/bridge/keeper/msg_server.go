@@ -56,16 +56,24 @@ func (s msgServer) BridgeERC20FromEthereum(
 		return nil, err
 	}
 
-	ctx.EventManager().EmitEvent(
-		sdk.NewEvent(
-			sdk.EventTypeMessage,
-			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-			sdk.NewAttribute(types.AttributeKeyRelayer, msg.Relayer),
-			sdk.NewAttribute(types.AttributeKeyEthereumERC20Address, msg.EthereumERC20Address),
-			sdk.NewAttribute(types.AttributeKeyReceiver, msg.Receiver),
-			sdk.NewAttribute(sdk.AttributeKeyAmount, msg.Amount.String()),
-			sdk.NewAttribute(types.AttributeKeySequence, msg.Sequence.String()),
-		),
+	ctx.EventManager().EmitEvents(
+		sdk.Events{
+			sdk.NewEvent(
+				sdk.EventTypeMessage,
+				sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+				sdk.NewAttribute(sdk.AttributeKeySender, msg.Relayer),
+			),
+			sdk.NewEvent(
+				types.EventTypeDeposit,
+				sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+				sdk.NewAttribute(types.AttributeKeyRelayer, msg.Relayer),
+				sdk.NewAttribute(types.AttributeKeyEthereumERC20Address, msg.EthereumERC20Address),
+				sdk.NewAttribute(types.AttributeKeyReceiver, msg.Receiver),
+				sdk.NewAttribute(sdk.AttributeKeyAmount, msg.Amount.String()),
+				sdk.NewAttribute(types.AttributeKeySequence, msg.Sequence.String()),
+			),
+		},
 	)
+
 	return &types.MsgBridgeERC20FromEthereumResponse{}, nil
 }

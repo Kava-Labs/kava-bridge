@@ -2,8 +2,8 @@ package types
 
 // Events for the module
 const (
-	EventTypeDeposit  = "deposit"
-	EventTypeWithdraw = "withdraw"
+	EventTypeDeposit  = "bridge_deposit"
+	EventTypeWithdraw = "bridge_withdraw"
 
 	// ERC20MintableBurnable event names
 	ContractEventTypeWithdraw = "Withdraw"
