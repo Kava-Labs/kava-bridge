@@ -34,7 +34,11 @@ func (h Hooks) PostTxProcessing(
 	erc20Abi := contract.ERC20MintableBurnableContract.ABI
 
 	for _, log := range receipt.Logs {
-		if len(log.Topics) < 3 {
+		// ERC20MintableBurnableContract should contain 3 topics:
+		// 0: Keccak-256 hash of Withdraw(address,address,uint256)
+		// 1: address indexed sender
+		// 2: address indexed toAddr
+		if len(log.Topics) != 3 {
 			continue
 		}
 
