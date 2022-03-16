@@ -353,7 +353,7 @@ func (suite *Suite) EventsContains(events sdk.Events, expectedEvent sdk.Event) {
 		}
 	}
 
-	suite.True(foundMatch, fmt.Sprintf("event of type %s not found or did not match", expectedEvent.Type))
+	suite.Truef(foundMatch, "event of type %s not found or did not match", expectedEvent.Type)
 }
 
 func attrsToMap(attrs []abci.EventAttribute) []sdk.Attribute {

@@ -70,6 +70,7 @@ func (suite *EVMHooksTestSuite) submitBridgeERC20Msg(
 }
 
 func (suite *EVMHooksTestSuite) Withdraw(
+	contractAddr types.InternalEVMAddress,
 	toAddr common.Address,
 	amount *big.Int,
 ) *evmtypes.MsgEthereumTxResponse {
@@ -81,8 +82,8 @@ func (suite *EVMHooksTestSuite) Withdraw(
 	)
 	suite.Require().NoError(err)
 
-	res := suite.SendTx(suite.pair.GetInternalAddress(), suite.key1Addr, suite.Key1, data)
-	suite.Require().False(res.Failed(), "evm tx should not fail")
+	res := suite.SendTx(contractAddr, suite.key1Addr, suite.Key1, data)
+	suite.Require().False(res.Failed(), "evm tx should not fail %v", res)
 
 	return res
 }
@@ -94,7 +95,7 @@ func (suite *EVMHooksTestSuite) TestERC20WithdrawUnpack() {
 	withdrawToAddr := common.BytesToAddress(toKey.PubKey().Address())
 
 	// Send TX
-	res := suite.Withdraw(withdrawToAddr, withdrawAmount)
+	res := suite.Withdraw(suite.pair.GetInternalAddress(), withdrawToAddr, withdrawAmount)
 
 	containsWithdrawEvent := false
 
@@ -153,7 +154,7 @@ func (suite *EVMHooksTestSuite) TestERC20Withdraw_BalanceChange() {
 	)
 
 	// Send Withdraw TX
-	_ = suite.Withdraw(withdrawToAddr, withdrawAmount)
+	_ = suite.Withdraw(suite.pair.GetInternalAddress(), withdrawToAddr, withdrawAmount)
 
 	balAfter := suite.GetERC20BalanceOf(
 		contract.ERC20MintableBurnableContract.ABI,
@@ -178,7 +179,7 @@ func (suite *EVMHooksTestSuite) TestERC20Withdraw_SequenceIncrement() {
 	suite.Require().NoError(err)
 
 	// Send Withdraw TX
-	_ = suite.Withdraw(withdrawToAddr, withdrawAmount)
+	_ = suite.Withdraw(suite.pair.GetInternalAddress(), withdrawToAddr, withdrawAmount)
 
 	afterWithdrawSeq, err := suite.App.BridgeKeeper.GetNextWithdrawSequence(suite.Ctx)
 	suite.Require().NoError(err)
@@ -196,7 +197,7 @@ func (suite *EVMHooksTestSuite) TestERC20Withdraw_EmitsEvent() {
 	withdrawAmount := big.NewInt(10)
 
 	// Send Withdraw TX
-	_ = suite.Withdraw(withdrawToAddr, withdrawAmount)
+	_ = suite.Withdraw(suite.pair.GetInternalAddress(), withdrawToAddr, withdrawAmount)
 
 	suite.EventsContains(suite.GetEvents(), sdk.NewEvent(
 		types.EventTypeWithdraw,
@@ -206,7 +207,7 @@ func (suite *EVMHooksTestSuite) TestERC20Withdraw_EmitsEvent() {
 	))
 
 	// Second withdraw tx
-	_ = suite.Withdraw(withdrawToAddr, withdrawAmount)
+	_ = suite.Withdraw(suite.pair.GetInternalAddress(), withdrawToAddr, withdrawAmount)
 
 	// Second one has incremented sequence
 	suite.EventsContains(suite.GetEvents(), sdk.NewEvent(
@@ -215,4 +216,41 @@ func (suite *EVMHooksTestSuite) TestERC20Withdraw_EmitsEvent() {
 		sdk.NewAttribute(types.AttributeKeyEthereumERC20Address, suite.pair.GetExternalAddress().String()),
 		sdk.NewAttribute(types.AttributeKeyReceiver, withdrawToAddr.String()),
 	))
+}
+
+func (suite *EVMHooksTestSuite) TestERC20Withdraw_IgnoreUnregisteredERC20() {
+	token := types.NewEnabledERC20Token(
+		testutil.MustNewExternalEVMAddressFromString("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
+		"Token Anyone Can Deploy",
+		"TACD",
+		18,
+	)
+
+	// We are using keeper methods to deploy / mint ERC20 balance, but this can
+	// be done by just regular EVM calls, ie. deploying the same
+	// mintable/burnable ERC20 from some unknown account. We are only testing
+	// emitted events are ignored by the hook if the contracts are not
+	// registered in the state.
+	unregisteredContractAddr, err := suite.App.BridgeKeeper.DeployMintableERC20Contract(suite.Ctx, token)
+	suite.Require().NoError(err)
+	suite.Require().Greater(len(unregisteredContractAddr.Address), 0)
+
+	mintAmount := big.NewInt(10)
+	err = suite.App.BridgeKeeper.MintERC20(suite.Ctx, unregisteredContractAddr, suite.key1Addr, mintAmount)
+	suite.Require().NoError(err)
+
+	// Withdraw / burn funds
+	toKey, err := ethsecp256k1.GenerateKey()
+	suite.Require().NoError(err)
+	withdrawToAddr := common.BytesToAddress(toKey.PubKey().Address())
+	withdrawAmount := big.NewInt(10)
+
+	// Send Withdraw TX to the erc20 contract that is not a registered pair
+	_ = suite.Withdraw(unregisteredContractAddr, withdrawToAddr, withdrawAmount)
+
+	for _, event := range suite.GetEvents() {
+		if event.Type == types.EventTypeWithdraw {
+			suite.Require().Fail("event should not contain Withdraw event")
+		}
+	}
 }

@@ -93,9 +93,7 @@ func (k Keeper) DeployMintableERC20Contract(
 		return types.InternalEVMAddress{}, fmt.Errorf("failed to deploy ERC20 for %s: %w", token.Name, err)
 	}
 
-	return types.InternalEVMAddress{
-		Address: contractAddr,
-	}, nil
+	return types.NewInternalEVMAddress(contractAddr), nil
 }
 
 // MintERC20 mints the given amount of an ERC20 token to an address. This is
