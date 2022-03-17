@@ -57,7 +57,7 @@ func (suite *EVMHooksTestSuite) submitBridgeERC20Msg(
 	amount sdk.Int,
 	receiver common.Address,
 ) {
-	msg := types.NewMsgBridgeERC20FromEthereum(
+	msg := types.NewMsgBridgeEthereumToKava(
 		suite.RelayerAddress.String(),
 		contractAddr.String(),
 		amount,
@@ -65,7 +65,7 @@ func (suite *EVMHooksTestSuite) submitBridgeERC20Msg(
 		sdk.NewInt(1),
 	)
 
-	_, err := suite.msgServer.BridgeERC20FromEthereum(sdk.WrapSDKContext(suite.Ctx), &msg)
+	_, err := suite.msgServer.BridgeEthereumToKava(sdk.WrapSDKContext(suite.Ctx), &msg)
 	suite.Require().NoError(err)
 }
 

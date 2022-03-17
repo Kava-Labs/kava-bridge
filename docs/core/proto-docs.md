@@ -24,8 +24,8 @@
     - [Query](#bridge.v1beta1.Query)
   
 - [bridge/v1beta1/tx.proto](#bridge/v1beta1/tx.proto)
-    - [MsgBridgeERC20FromEthereum](#bridge.v1beta1.MsgBridgeERC20FromEthereum)
-    - [MsgBridgeERC20FromEthereumResponse](#bridge.v1beta1.MsgBridgeERC20FromEthereumResponse)
+    - [MsgBridgeEthereumToKava](#bridge.v1beta1.MsgBridgeEthereumToKava)
+    - [MsgBridgeEthereumToKavaResponse](#bridge.v1beta1.MsgBridgeEthereumToKavaResponse)
   
     - [Msg](#bridge.v1beta1.Msg)
   
@@ -75,7 +75,7 @@ ERC20BridgePair defines an ERC20 token bridged between external and Kava EVM
 <a name="bridge.v1beta1.EventBridgeEthereumToKava"></a>
 
 ### EventBridgeEthereumToKava
-EventBridgeEthereumToKava is emitted on Msg/BridgeERC20FromEthereum
+EventBridgeEthereumToKava is emitted on Msg/BridgeEthereumToKava
 
 
 | Field | Type | Label | Description |
@@ -251,10 +251,10 @@ Query defines the gRPC querier service for bridge module
 
 
 
-<a name="bridge.v1beta1.MsgBridgeERC20FromEthereum"></a>
+<a name="bridge.v1beta1.MsgBridgeEthereumToKava"></a>
 
-### MsgBridgeERC20FromEthereum
-MsgBridgeERC20FromEthereum defines a ERC20 bridge transfer from Ethereum.
+### MsgBridgeEthereumToKava
+MsgBridgeEthereumToKava defines a ERC20 bridge transfer from Ethereum to Kava.
 
 
 | Field | Type | Label | Description |
@@ -270,10 +270,10 @@ MsgBridgeERC20FromEthereum defines a ERC20 bridge transfer from Ethereum.
 
 
 
-<a name="bridge.v1beta1.MsgBridgeERC20FromEthereumResponse"></a>
+<a name="bridge.v1beta1.MsgBridgeEthereumToKavaResponse"></a>
 
-### MsgBridgeERC20FromEthereumResponse
-MsgBridgeERC20FromEthereumResponse defines the response value from
+### MsgBridgeEthereumToKavaResponse
+MsgBridgeEthereumToKavaResponse defines the response value from
 
 
 
@@ -293,7 +293,7 @@ Msg defines the bridge Msg service.
 
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
-| `BridgeERC20FromEthereum` | [MsgBridgeERC20FromEthereum](#bridge.v1beta1.MsgBridgeERC20FromEthereum) | [MsgBridgeERC20FromEthereumResponse](#bridge.v1beta1.MsgBridgeERC20FromEthereumResponse) | BridgeERC20FromEthereum defines a method for bridging ERC20 tokens from Ethereum. | |
+| `BridgeEthereumToKava` | [MsgBridgeEthereumToKava](#bridge.v1beta1.MsgBridgeEthereumToKava) | [MsgBridgeEthereumToKavaResponse](#bridge.v1beta1.MsgBridgeEthereumToKavaResponse) | BridgeEthereumToKava defines a method for bridging ERC20 tokens from Ethereum to Kava. | |
 
  <!-- end services -->
 

@@ -9,7 +9,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-func TestMsgBridgeERC20FromEthereum(t *testing.T) {
+func TestMsgBridgeEthereumToKava(t *testing.T) {
 	type args struct {
 		relayer              string
 		ethereumERC20Address string
@@ -141,7 +141,7 @@ func TestMsgBridgeERC20FromEthereum(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			msg := types.NewMsgBridgeERC20FromEthereum(
+			msg := types.NewMsgBridgeEthereumToKava(
 				tc.args.relayer,
 				tc.args.ethereumERC20Address,
 				tc.args.amount,
@@ -160,10 +160,10 @@ func TestMsgBridgeERC20FromEthereum(t *testing.T) {
 	}
 }
 
-func TestMsgBridgeERC20FromEthereumSigners(t *testing.T) {
+func TestMsgBridgeEthereumToKavaSigners(t *testing.T) {
 	relayer := sdk.AccAddress("hi")
 
-	msg := types.NewMsgBridgeERC20FromEthereum(
+	msg := types.NewMsgBridgeEthereumToKava(
 		relayer.String(),
 		"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
 		sdk.NewInt(1234),
@@ -176,8 +176,8 @@ func TestMsgBridgeERC20FromEthereumSigners(t *testing.T) {
 	require.Equal(t, relayer, signers[0])
 }
 
-func TestMsgBridgeERC20FromEthereumSigners_Invalid(t *testing.T) {
-	msg := types.NewMsgBridgeERC20FromEthereum(
+func TestMsgBridgeEthereumToKavaSigners_Invalid(t *testing.T) {
+	msg := types.NewMsgBridgeEthereumToKava(
 		"not a valid address",
 		"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
 		sdk.NewInt(1234),

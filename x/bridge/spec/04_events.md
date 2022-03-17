@@ -4,7 +4,7 @@ The `x/bridge` module emits the following events:
 
 ## Handlers
 
-### MsgERC20FromEthereum
+### MsgBridgeEthereumToKava
 
 Note that the receiver address is in hex format, not bech32.
 

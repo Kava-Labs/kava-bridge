@@ -8,18 +8,18 @@ import (
 
 // ensure Msg interface compliance at compile time
 var (
-	_ sdk.Msg = &MsgBridgeERC20FromEthereum{}
+	_ sdk.Msg = &MsgBridgeEthereumToKava{}
 )
 
-// NewMsgBridgeERC20FromEthereum returns a new MsgBridgeERC20FromEthereum
-func NewMsgBridgeERC20FromEthereum(
+// NewMsgBridgeEthereumToKava returns a newMsgBridgeEthereumToKava
+func NewMsgBridgeEthereumToKava(
 	relayer string,
 	ethereumERC20Address string,
 	amount sdk.Int,
 	receiver string,
 	sequence sdk.Int,
-) MsgBridgeERC20FromEthereum {
-	return MsgBridgeERC20FromEthereum{
+) MsgBridgeEthereumToKava {
+	return MsgBridgeEthereumToKava{
 		Relayer:              relayer,
 		EthereumERC20Address: ethereumERC20Address,
 		Amount:               amount,
@@ -29,7 +29,7 @@ func NewMsgBridgeERC20FromEthereum(
 }
 
 // GetSigners returns the addresses of signers that must sign.
-func (msg MsgBridgeERC20FromEthereum) GetSigners() []sdk.AccAddress {
+func (msg MsgBridgeEthereumToKava) GetSigners() []sdk.AccAddress {
 	sender, err := sdk.AccAddressFromBech32(msg.Relayer)
 	if err != nil {
 		panic(err)
@@ -38,7 +38,7 @@ func (msg MsgBridgeERC20FromEthereum) GetSigners() []sdk.AccAddress {
 }
 
 // ValidateBasic does a simple validation check that doesn't require access to any other information.
-func (msg MsgBridgeERC20FromEthereum) ValidateBasic() error {
+func (msg MsgBridgeEthereumToKava) ValidateBasic() error {
 	_, err := sdk.AccAddressFromBech32(msg.Relayer)
 	if err != nil {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, err.Error())

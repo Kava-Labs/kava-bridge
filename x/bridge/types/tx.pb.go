@@ -30,8 +30,8 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-// MsgBridgeERC20FromEthereum defines a ERC20 bridge transfer from Ethereum.
-type MsgBridgeERC20FromEthereum struct {
+// MsgBridgeEthereumToKava defines a ERC20 bridge transfer from Ethereum to Kava.
+type MsgBridgeEthereumToKava struct {
 	Relayer string `protobuf:"bytes,1,opt,name=relayer,proto3" json:"relayer,omitempty"`
 	// Originating Ethereum ERC20 contract address
 	EthereumERC20Address string `protobuf:"bytes,2,opt,name=ethereum_erc20_address,json=ethereumErc20Address,proto3" json:"ethereum_erc20_address,omitempty"`
@@ -43,18 +43,18 @@ type MsgBridgeERC20FromEthereum struct {
 	Sequence github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,5,opt,name=sequence,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"sequence"`
 }
 
-func (m *MsgBridgeERC20FromEthereum) Reset()         { *m = MsgBridgeERC20FromEthereum{} }
-func (m *MsgBridgeERC20FromEthereum) String() string { return proto.CompactTextString(m) }
-func (*MsgBridgeERC20FromEthereum) ProtoMessage()    {}
-func (*MsgBridgeERC20FromEthereum) Descriptor() ([]byte, []int) {
+func (m *MsgBridgeEthereumToKava) Reset()         { *m = MsgBridgeEthereumToKava{} }
+func (m *MsgBridgeEthereumToKava) String() string { return proto.CompactTextString(m) }
+func (*MsgBridgeEthereumToKava) ProtoMessage()    {}
+func (*MsgBridgeEthereumToKava) Descriptor() ([]byte, []int) {
 	return fileDescriptor_e83acf120314329f, []int{0}
 }
-func (m *MsgBridgeERC20FromEthereum) XXX_Unmarshal(b []byte) error {
+func (m *MsgBridgeEthereumToKava) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *MsgBridgeERC20FromEthereum) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *MsgBridgeEthereumToKava) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_MsgBridgeERC20FromEthereum.Marshal(b, m, deterministic)
+		return xxx_messageInfo_MsgBridgeEthereumToKava.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -64,55 +64,55 @@ func (m *MsgBridgeERC20FromEthereum) XXX_Marshal(b []byte, deterministic bool) (
 		return b[:n], nil
 	}
 }
-func (m *MsgBridgeERC20FromEthereum) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MsgBridgeERC20FromEthereum.Merge(m, src)
+func (m *MsgBridgeEthereumToKava) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgBridgeEthereumToKava.Merge(m, src)
 }
-func (m *MsgBridgeERC20FromEthereum) XXX_Size() int {
+func (m *MsgBridgeEthereumToKava) XXX_Size() int {
 	return m.Size()
 }
-func (m *MsgBridgeERC20FromEthereum) XXX_DiscardUnknown() {
-	xxx_messageInfo_MsgBridgeERC20FromEthereum.DiscardUnknown(m)
+func (m *MsgBridgeEthereumToKava) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgBridgeEthereumToKava.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_MsgBridgeERC20FromEthereum proto.InternalMessageInfo
+var xxx_messageInfo_MsgBridgeEthereumToKava proto.InternalMessageInfo
 
-func (m *MsgBridgeERC20FromEthereum) GetRelayer() string {
+func (m *MsgBridgeEthereumToKava) GetRelayer() string {
 	if m != nil {
 		return m.Relayer
 	}
 	return ""
 }
 
-func (m *MsgBridgeERC20FromEthereum) GetEthereumERC20Address() string {
+func (m *MsgBridgeEthereumToKava) GetEthereumERC20Address() string {
 	if m != nil {
 		return m.EthereumERC20Address
 	}
 	return ""
 }
 
-func (m *MsgBridgeERC20FromEthereum) GetReceiver() string {
+func (m *MsgBridgeEthereumToKava) GetReceiver() string {
 	if m != nil {
 		return m.Receiver
 	}
 	return ""
 }
 
-// MsgBridgeERC20FromEthereumResponse defines the response value from
-type MsgBridgeERC20FromEthereumResponse struct {
+// MsgBridgeEthereumToKavaResponse defines the response value from
+type MsgBridgeEthereumToKavaResponse struct {
 }
 
-func (m *MsgBridgeERC20FromEthereumResponse) Reset()         { *m = MsgBridgeERC20FromEthereumResponse{} }
-func (m *MsgBridgeERC20FromEthereumResponse) String() string { return proto.CompactTextString(m) }
-func (*MsgBridgeERC20FromEthereumResponse) ProtoMessage()    {}
-func (*MsgBridgeERC20FromEthereumResponse) Descriptor() ([]byte, []int) {
+func (m *MsgBridgeEthereumToKavaResponse) Reset()         { *m = MsgBridgeEthereumToKavaResponse{} }
+func (m *MsgBridgeEthereumToKavaResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgBridgeEthereumToKavaResponse) ProtoMessage()    {}
+func (*MsgBridgeEthereumToKavaResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_e83acf120314329f, []int{1}
 }
-func (m *MsgBridgeERC20FromEthereumResponse) XXX_Unmarshal(b []byte) error {
+func (m *MsgBridgeEthereumToKavaResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *MsgBridgeERC20FromEthereumResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *MsgBridgeEthereumToKavaResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_MsgBridgeERC20FromEthereumResponse.Marshal(b, m, deterministic)
+		return xxx_messageInfo_MsgBridgeEthereumToKavaResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -122,55 +122,55 @@ func (m *MsgBridgeERC20FromEthereumResponse) XXX_Marshal(b []byte, deterministic
 		return b[:n], nil
 	}
 }
-func (m *MsgBridgeERC20FromEthereumResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MsgBridgeERC20FromEthereumResponse.Merge(m, src)
+func (m *MsgBridgeEthereumToKavaResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgBridgeEthereumToKavaResponse.Merge(m, src)
 }
-func (m *MsgBridgeERC20FromEthereumResponse) XXX_Size() int {
+func (m *MsgBridgeEthereumToKavaResponse) XXX_Size() int {
 	return m.Size()
 }
-func (m *MsgBridgeERC20FromEthereumResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_MsgBridgeERC20FromEthereumResponse.DiscardUnknown(m)
+func (m *MsgBridgeEthereumToKavaResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgBridgeEthereumToKavaResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_MsgBridgeERC20FromEthereumResponse proto.InternalMessageInfo
+var xxx_messageInfo_MsgBridgeEthereumToKavaResponse proto.InternalMessageInfo
 
 func init() {
-	proto.RegisterType((*MsgBridgeERC20FromEthereum)(nil), "bridge.v1beta1.MsgBridgeERC20FromEthereum")
-	proto.RegisterType((*MsgBridgeERC20FromEthereumResponse)(nil), "bridge.v1beta1.MsgBridgeERC20FromEthereumResponse")
+	proto.RegisterType((*MsgBridgeEthereumToKava)(nil), "bridge.v1beta1.MsgBridgeEthereumToKava")
+	proto.RegisterType((*MsgBridgeEthereumToKavaResponse)(nil), "bridge.v1beta1.MsgBridgeEthereumToKavaResponse")
 }
 
 func init() { proto.RegisterFile("bridge/v1beta1/tx.proto", fileDescriptor_e83acf120314329f) }
 
 var fileDescriptor_e83acf120314329f = []byte{
-	// 399 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xac, 0x92, 0x3f, 0x0f, 0xd2, 0x40,
-	0x18, 0xc6, 0x7b, 0xa0, 0x88, 0x37, 0x38, 0x34, 0x8d, 0xd4, 0x0e, 0x87, 0x21, 0xc6, 0x18, 0x93,
-	0xb6, 0x50, 0x57, 0x17, 0x31, 0x98, 0x30, 0x60, 0x62, 0x75, 0x30, 0x2e, 0xa4, 0x7f, 0xde, 0x94,
-	0x06, 0xda, 0xc3, 0xbb, 0x2b, 0x81, 0xcd, 0x8f, 0xe0, 0xc7, 0xf0, 0x03, 0xf0, 0x21, 0x18, 0x09,
-	0x93, 0x71, 0x20, 0x58, 0x56, 0x3f, 0x84, 0xa1, 0x77, 0x25, 0x3a, 0x90, 0x38, 0x38, 0xf5, 0xbd,
-	0x3e, 0xcf, 0xf3, 0x7b, 0xef, 0xde, 0x3b, 0xdc, 0x09, 0x59, 0x1a, 0x27, 0xe0, 0xae, 0x06, 0x21,
-	0x88, 0x60, 0xe0, 0x8a, 0xb5, 0xb3, 0x64, 0x54, 0x50, 0xfd, 0x81, 0x14, 0x1c, 0x25, 0x58, 0x46,
-	0x42, 0x13, 0x5a, 0x49, 0xee, 0xa5, 0x92, 0x2e, 0xeb, 0x51, 0x44, 0x79, 0x46, 0xf9, 0x54, 0x0a,
-	0x72, 0x21, 0xa5, 0xde, 0xaf, 0x06, 0xb6, 0x26, 0x3c, 0x19, 0x56, 0x98, 0x91, 0xff, 0xda, 0xeb,
-	0xbf, 0x61, 0x34, 0x1b, 0x89, 0x19, 0x30, 0x28, 0x32, 0xdd, 0xc3, 0xf7, 0x18, 0x2c, 0x82, 0x0d,
-	0x30, 0x13, 0x3d, 0x46, 0xcf, 0xee, 0x0f, 0xcd, 0xc3, 0xd6, 0x36, 0x14, 0xe1, 0x55, 0x1c, 0x33,
-	0xe0, 0xfc, 0xbd, 0x60, 0x69, 0x9e, 0xf8, 0xb5, 0x51, 0x7f, 0x8b, 0x1f, 0x82, 0xca, 0x4f, 0x81,
-	0x45, 0x5e, 0x7f, 0x1a, 0x48, 0xa3, 0xd9, 0x90, 0x88, 0xf2, 0xd8, 0x35, 0xea, 0x0e, 0x55, 0x4b,
-	0x05, 0xf2, 0x8d, 0x3a, 0x37, 0xba, 0xc4, 0xd4, 0x5f, 0xfd, 0x03, 0x6e, 0x05, 0x19, 0x2d, 0x72,
-	0x61, 0x36, 0xab, 0xfc, 0xcb, 0xdd, 0xb1, 0xab, 0xfd, 0x38, 0x76, 0x9f, 0x26, 0xa9, 0x98, 0x15,
-	0xa1, 0x13, 0xd1, 0x4c, 0x9d, 0x49, 0x7d, 0x6c, 0x1e, 0xcf, 0x5d, 0xb1, 0x59, 0x02, 0x77, 0xc6,
-	0xb9, 0x38, 0x6c, 0x6d, 0xac, 0x36, 0x3c, 0xce, 0x85, 0xaf, 0x58, 0xba, 0x85, 0xdb, 0x0c, 0x22,
-	0x48, 0x57, 0xc0, 0xcc, 0x3b, 0x17, 0xae, 0x7f, 0x5d, 0xeb, 0x1f, 0x71, 0x9b, 0xc3, 0xe7, 0x02,
-	0xf2, 0x08, 0xcc, 0xbb, 0xff, 0xa1, 0xe7, 0x95, 0xd6, 0x7b, 0x82, 0x7b, 0xb7, 0xa7, 0xed, 0x03,
-	0x5f, 0xd2, 0x9c, 0x83, 0xf7, 0x05, 0xe1, 0xe6, 0x84, 0x27, 0xfa, 0x06, 0x77, 0x6e, 0x5d, 0xcc,
-	0x73, 0xe7, 0xef, 0x9b, 0x77, 0x6e, 0x63, 0x2d, 0xef, 0xdf, 0xbd, 0xf5, 0x16, 0x86, 0xef, 0x4e,
-	0x3f, 0x09, 0xfa, 0x56, 0x12, 0xb4, 0x2b, 0x09, 0xda, 0x97, 0x04, 0x9d, 0x4a, 0x82, 0xbe, 0x9e,
-	0x89, 0xb6, 0x3f, 0x13, 0xed, 0xfb, 0x99, 0x68, 0x9f, 0xdc, 0x3f, 0x46, 0x31, 0x0f, 0x56, 0x81,
-	0xbd, 0x08, 0x42, 0x2e, 0x2b, 0xf5, 0x5a, 0xd7, 0xae, 0x2a, 0xaa, 0xb9, 0x84, 0xad, 0xea, 0xc5,
-	0xbd, 0xf8, 0x1d, 0x00, 0x00, 0xff, 0xff, 0xb3, 0xe1, 0xaa, 0xb7, 0xcd, 0x02, 0x00, 0x00,
+	// 400 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xac, 0x92, 0x3f, 0x8e, 0xd3, 0x40,
+	0x14, 0xc6, 0xed, 0x5d, 0x58, 0x96, 0x29, 0x28, 0x2c, 0x8b, 0x35, 0x2e, 0xc6, 0xb0, 0x05, 0xd0,
+	0xd8, 0xde, 0x35, 0x2d, 0x0d, 0x41, 0x29, 0x22, 0x14, 0x24, 0x4c, 0x0a, 0x44, 0x13, 0x8d, 0xed,
+	0x27, 0xc7, 0x4a, 0xec, 0x31, 0x33, 0x63, 0x93, 0xdc, 0x82, 0x63, 0x70, 0x80, 0x1c, 0x22, 0x65,
+	0x94, 0x0a, 0x51, 0x44, 0xc1, 0xa9, 0xb8, 0x05, 0x8a, 0x67, 0x1c, 0x81, 0x44, 0x24, 0x0a, 0x2a,
+	0xbf, 0xf1, 0xf7, 0x7d, 0xbf, 0x37, 0x7f, 0x1e, 0xba, 0x8a, 0x58, 0x96, 0xa4, 0xe0, 0xd7, 0xb7,
+	0x11, 0x08, 0x72, 0xeb, 0x8b, 0xb9, 0x57, 0x32, 0x2a, 0xa8, 0xf1, 0x40, 0x0a, 0x9e, 0x12, 0x6c,
+	0x33, 0xa5, 0x29, 0x6d, 0x25, 0xff, 0x50, 0x49, 0x97, 0xfd, 0x28, 0xa6, 0x3c, 0xa7, 0x7c, 0x2c,
+	0x05, 0xb9, 0x90, 0xd2, 0xf5, 0xcf, 0x33, 0x74, 0x35, 0xe4, 0x69, 0xaf, 0xc5, 0xf4, 0xc5, 0x04,
+	0x18, 0x54, 0xf9, 0x88, 0xbe, 0x21, 0x35, 0x31, 0x02, 0x74, 0x8f, 0xc1, 0x8c, 0x2c, 0x80, 0x59,
+	0xfa, 0x63, 0xfd, 0xf9, 0xfd, 0x9e, 0xb5, 0x59, 0xba, 0xa6, 0x8a, 0xbf, 0x4a, 0x12, 0x06, 0x9c,
+	0xbf, 0x17, 0x2c, 0x2b, 0xd2, 0xb0, 0x33, 0x1a, 0x6f, 0xd1, 0x43, 0x50, 0x94, 0x31, 0xb0, 0x38,
+	0xb8, 0x19, 0x13, 0x69, 0xb4, 0xce, 0x24, 0xa2, 0xd9, 0x3a, 0x66, 0xd7, 0xa7, 0x1f, 0xbe, 0x0e,
+	0x6e, 0x14, 0x28, 0x34, 0xbb, 0x5c, 0xff, 0x10, 0x53, 0x7f, 0x8d, 0x11, 0xba, 0x20, 0x39, 0xad,
+	0x0a, 0x61, 0x9d, 0xb7, 0xf9, 0x97, 0xab, 0xad, 0xa3, 0x7d, 0xdf, 0x3a, 0x4f, 0xd3, 0x4c, 0x4c,
+	0xaa, 0xc8, 0x8b, 0x69, 0xae, 0x0e, 0xa4, 0x3e, 0x2e, 0x4f, 0xa6, 0xbe, 0x58, 0x94, 0xc0, 0xbd,
+	0x41, 0x21, 0x36, 0x4b, 0x17, 0xa9, 0x0d, 0x0f, 0x0a, 0x11, 0x2a, 0x96, 0x61, 0xa3, 0x4b, 0x06,
+	0x31, 0x64, 0x35, 0x30, 0xeb, 0xce, 0x81, 0x1b, 0x1e, 0xd7, 0xc6, 0x07, 0x74, 0xc9, 0xe1, 0x53,
+	0x05, 0x45, 0x0c, 0xd6, 0xdd, 0xff, 0xd0, 0xf3, 0x48, 0xbb, 0x7e, 0x82, 0x9c, 0x13, 0x57, 0x1d,
+	0x02, 0x2f, 0x69, 0xc1, 0x21, 0xf8, 0x8c, 0xce, 0x87, 0x3c, 0x35, 0x4a, 0x64, 0xfe, 0xf5, 0x45,
+	0x9e, 0x79, 0x7f, 0xbe, 0xb7, 0x77, 0x82, 0x67, 0xfb, 0xff, 0x68, 0xec, 0x1a, 0xf7, 0xde, 0xed,
+	0x7e, 0x60, 0xfd, 0x6b, 0x83, 0xf5, 0x55, 0x83, 0xf5, 0x75, 0x83, 0xf5, 0x5d, 0x83, 0xf5, 0x2f,
+	0x7b, 0xac, 0xad, 0xf7, 0x58, 0xfb, 0xb6, 0xc7, 0xda, 0x47, 0xff, 0xb7, 0xd3, 0x4f, 0x49, 0x4d,
+	0xdc, 0x19, 0x89, 0xb8, 0xac, 0xd4, 0x74, 0xce, 0x7d, 0x55, 0xb4, 0x57, 0x11, 0x5d, 0xb4, 0x13,
+	0xf6, 0xe2, 0x57, 0x00, 0x00, 0x00, 0xff, 0xff, 0x4c, 0x1d, 0xe2, 0x5f, 0xbd, 0x02, 0x00, 0x00,
 }
 
-func (this *MsgBridgeERC20FromEthereum) VerboseEqual(that interface{}) error {
+func (this *MsgBridgeEthereumToKava) VerboseEqual(that interface{}) error {
 	if that == nil {
 		if this == nil {
 			return nil
@@ -178,22 +178,22 @@ func (this *MsgBridgeERC20FromEthereum) VerboseEqual(that interface{}) error {
 		return fmt.Errorf("that == nil && this != nil")
 	}
 
-	that1, ok := that.(*MsgBridgeERC20FromEthereum)
+	that1, ok := that.(*MsgBridgeEthereumToKava)
 	if !ok {
-		that2, ok := that.(MsgBridgeERC20FromEthereum)
+		that2, ok := that.(MsgBridgeEthereumToKava)
 		if ok {
 			that1 = &that2
 		} else {
-			return fmt.Errorf("that is not of type *MsgBridgeERC20FromEthereum")
+			return fmt.Errorf("that is not of type *MsgBridgeEthereumToKava")
 		}
 	}
 	if that1 == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt.Errorf("that is type *MsgBridgeERC20FromEthereum but is nil && this != nil")
+		return fmt.Errorf("that is type *MsgBridgeEthereumToKava but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *MsgBridgeERC20FromEthereum but is not nil && this == nil")
+		return fmt.Errorf("that is type *MsgBridgeEthereumToKava but is not nil && this == nil")
 	}
 	if this.Relayer != that1.Relayer {
 		return fmt.Errorf("Relayer this(%v) Not Equal that(%v)", this.Relayer, that1.Relayer)
@@ -212,14 +212,14 @@ func (this *MsgBridgeERC20FromEthereum) VerboseEqual(that interface{}) error {
 	}
 	return nil
 }
-func (this *MsgBridgeERC20FromEthereum) Equal(that interface{}) bool {
+func (this *MsgBridgeEthereumToKava) Equal(that interface{}) bool {
 	if that == nil {
 		return this == nil
 	}
 
-	that1, ok := that.(*MsgBridgeERC20FromEthereum)
+	that1, ok := that.(*MsgBridgeEthereumToKava)
 	if !ok {
-		that2, ok := that.(MsgBridgeERC20FromEthereum)
+		that2, ok := that.(MsgBridgeEthereumToKava)
 		if ok {
 			that1 = &that2
 		} else {
@@ -248,7 +248,7 @@ func (this *MsgBridgeERC20FromEthereum) Equal(that interface{}) bool {
 	}
 	return true
 }
-func (this *MsgBridgeERC20FromEthereumResponse) VerboseEqual(that interface{}) error {
+func (this *MsgBridgeEthereumToKavaResponse) VerboseEqual(that interface{}) error {
 	if that == nil {
 		if this == nil {
 			return nil
@@ -256,33 +256,33 @@ func (this *MsgBridgeERC20FromEthereumResponse) VerboseEqual(that interface{}) e
 		return fmt.Errorf("that == nil && this != nil")
 	}
 
-	that1, ok := that.(*MsgBridgeERC20FromEthereumResponse)
+	that1, ok := that.(*MsgBridgeEthereumToKavaResponse)
 	if !ok {
-		that2, ok := that.(MsgBridgeERC20FromEthereumResponse)
+		that2, ok := that.(MsgBridgeEthereumToKavaResponse)
 		if ok {
 			that1 = &that2
 		} else {
-			return fmt.Errorf("that is not of type *MsgBridgeERC20FromEthereumResponse")
+			return fmt.Errorf("that is not of type *MsgBridgeEthereumToKavaResponse")
 		}
 	}
 	if that1 == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt.Errorf("that is type *MsgBridgeERC20FromEthereumResponse but is nil && this != nil")
+		return fmt.Errorf("that is type *MsgBridgeEthereumToKavaResponse but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *MsgBridgeERC20FromEthereumResponse but is not nil && this == nil")
+		return fmt.Errorf("that is type *MsgBridgeEthereumToKavaResponse but is not nil && this == nil")
 	}
 	return nil
 }
-func (this *MsgBridgeERC20FromEthereumResponse) Equal(that interface{}) bool {
+func (this *MsgBridgeEthereumToKavaResponse) Equal(that interface{}) bool {
 	if that == nil {
 		return this == nil
 	}
 
-	that1, ok := that.(*MsgBridgeERC20FromEthereumResponse)
+	that1, ok := that.(*MsgBridgeEthereumToKavaResponse)
 	if !ok {
-		that2, ok := that.(MsgBridgeERC20FromEthereumResponse)
+		that2, ok := that.(MsgBridgeEthereumToKavaResponse)
 		if ok {
 			that1 = &that2
 		} else {
@@ -309,9 +309,9 @@ const _ = grpc.SupportPackageIsVersion4
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type MsgClient interface {
-	// BridgeERC20FromEthereum defines a method for bridging ERC20 tokens from
-	// Ethereum.
-	BridgeERC20FromEthereum(ctx context.Context, in *MsgBridgeERC20FromEthereum, opts ...grpc.CallOption) (*MsgBridgeERC20FromEthereumResponse, error)
+	// BridgeEthereumToKava defines a method for bridging ERC20 tokens from
+	// Ethereum to Kava.
+	BridgeEthereumToKava(ctx context.Context, in *MsgBridgeEthereumToKava, opts ...grpc.CallOption) (*MsgBridgeEthereumToKavaResponse, error)
 }
 
 type msgClient struct {
@@ -322,9 +322,9 @@ func NewMsgClient(cc grpc1.ClientConn) MsgClient {
 	return &msgClient{cc}
 }
 
-func (c *msgClient) BridgeERC20FromEthereum(ctx context.Context, in *MsgBridgeERC20FromEthereum, opts ...grpc.CallOption) (*MsgBridgeERC20FromEthereumResponse, error) {
-	out := new(MsgBridgeERC20FromEthereumResponse)
-	err := c.cc.Invoke(ctx, "/bridge.v1beta1.Msg/BridgeERC20FromEthereum", in, out, opts...)
+func (c *msgClient) BridgeEthereumToKava(ctx context.Context, in *MsgBridgeEthereumToKava, opts ...grpc.CallOption) (*MsgBridgeEthereumToKavaResponse, error) {
+	out := new(MsgBridgeEthereumToKavaResponse)
+	err := c.cc.Invoke(ctx, "/bridge.v1beta1.Msg/BridgeEthereumToKava", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -333,37 +333,37 @@ func (c *msgClient) BridgeERC20FromEthereum(ctx context.Context, in *MsgBridgeER
 
 // MsgServer is the server API for Msg service.
 type MsgServer interface {
-	// BridgeERC20FromEthereum defines a method for bridging ERC20 tokens from
-	// Ethereum.
-	BridgeERC20FromEthereum(context.Context, *MsgBridgeERC20FromEthereum) (*MsgBridgeERC20FromEthereumResponse, error)
+	// BridgeEthereumToKava defines a method for bridging ERC20 tokens from
+	// Ethereum to Kava.
+	BridgeEthereumToKava(context.Context, *MsgBridgeEthereumToKava) (*MsgBridgeEthereumToKavaResponse, error)
 }
 
 // UnimplementedMsgServer can be embedded to have forward compatible implementations.
 type UnimplementedMsgServer struct {
 }
 
-func (*UnimplementedMsgServer) BridgeERC20FromEthereum(ctx context.Context, req *MsgBridgeERC20FromEthereum) (*MsgBridgeERC20FromEthereumResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method BridgeERC20FromEthereum not implemented")
+func (*UnimplementedMsgServer) BridgeEthereumToKava(ctx context.Context, req *MsgBridgeEthereumToKava) (*MsgBridgeEthereumToKavaResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method BridgeEthereumToKava not implemented")
 }
 
 func RegisterMsgServer(s grpc1.Server, srv MsgServer) {
 	s.RegisterService(&_Msg_serviceDesc, srv)
 }
 
-func _Msg_BridgeERC20FromEthereum_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(MsgBridgeERC20FromEthereum)
+func _Msg_BridgeEthereumToKava_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgBridgeEthereumToKava)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(MsgServer).BridgeERC20FromEthereum(ctx, in)
+		return srv.(MsgServer).BridgeEthereumToKava(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/bridge.v1beta1.Msg/BridgeERC20FromEthereum",
+		FullMethod: "/bridge.v1beta1.Msg/BridgeEthereumToKava",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MsgServer).BridgeERC20FromEthereum(ctx, req.(*MsgBridgeERC20FromEthereum))
+		return srv.(MsgServer).BridgeEthereumToKava(ctx, req.(*MsgBridgeEthereumToKava))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -373,15 +373,15 @@ var _Msg_serviceDesc = grpc.ServiceDesc{
 	HandlerType: (*MsgServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "BridgeERC20FromEthereum",
-			Handler:    _Msg_BridgeERC20FromEthereum_Handler,
+			MethodName: "BridgeEthereumToKava",
+			Handler:    _Msg_BridgeEthereumToKava_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "bridge/v1beta1/tx.proto",
 }
 
-func (m *MsgBridgeERC20FromEthereum) Marshal() (dAtA []byte, err error) {
+func (m *MsgBridgeEthereumToKava) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -391,12 +391,12 @@ func (m *MsgBridgeERC20FromEthereum) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *MsgBridgeERC20FromEthereum) MarshalTo(dAtA []byte) (int, error) {
+func (m *MsgBridgeEthereumToKava) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *MsgBridgeERC20FromEthereum) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *MsgBridgeEthereumToKava) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -445,7 +445,7 @@ func (m *MsgBridgeERC20FromEthereum) MarshalToSizedBuffer(dAtA []byte) (int, err
 	return len(dAtA) - i, nil
 }
 
-func (m *MsgBridgeERC20FromEthereumResponse) Marshal() (dAtA []byte, err error) {
+func (m *MsgBridgeEthereumToKavaResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -455,12 +455,12 @@ func (m *MsgBridgeERC20FromEthereumResponse) Marshal() (dAtA []byte, err error) 
 	return dAtA[:n], nil
 }
 
-func (m *MsgBridgeERC20FromEthereumResponse) MarshalTo(dAtA []byte) (int, error) {
+func (m *MsgBridgeEthereumToKavaResponse) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *MsgBridgeERC20FromEthereumResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *MsgBridgeEthereumToKavaResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -479,7 +479,7 @@ func encodeVarintTx(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
-func (m *MsgBridgeERC20FromEthereum) Size() (n int) {
+func (m *MsgBridgeEthereumToKava) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -504,7 +504,7 @@ func (m *MsgBridgeERC20FromEthereum) Size() (n int) {
 	return n
 }
 
-func (m *MsgBridgeERC20FromEthereumResponse) Size() (n int) {
+func (m *MsgBridgeEthereumToKavaResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -519,7 +519,7 @@ func sovTx(x uint64) (n int) {
 func sozTx(x uint64) (n int) {
 	return sovTx(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
-func (m *MsgBridgeERC20FromEthereum) Unmarshal(dAtA []byte) error {
+func (m *MsgBridgeEthereumToKava) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -542,10 +542,10 @@ func (m *MsgBridgeERC20FromEthereum) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: MsgBridgeERC20FromEthereum: wiretype end group for non-group")
+			return fmt.Errorf("proto: MsgBridgeEthereumToKava: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: MsgBridgeERC20FromEthereum: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: MsgBridgeEthereumToKava: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -733,7 +733,7 @@ func (m *MsgBridgeERC20FromEthereum) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *MsgBridgeERC20FromEthereumResponse) Unmarshal(dAtA []byte) error {
+func (m *MsgBridgeEthereumToKavaResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -756,10 +756,10 @@ func (m *MsgBridgeERC20FromEthereumResponse) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: MsgBridgeERC20FromEthereumResponse: wiretype end group for non-group")
+			return fmt.Errorf("proto: MsgBridgeEthereumToKavaResponse: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: MsgBridgeERC20FromEthereumResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: MsgBridgeEthereumToKavaResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		default:

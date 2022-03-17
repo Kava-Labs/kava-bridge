@@ -21,11 +21,11 @@ func NewMsgServerImpl(keeper Keeper) types.MsgServer {
 
 var _ types.MsgServer = msgServer{}
 
-// BridgeERC20FromEthereum handles a bridge from Ethereum message.
-func (s msgServer) BridgeERC20FromEthereum(
+// BridgeEthereumToKava handles a bridge from Ethereum message.
+func (s msgServer) BridgeEthereumToKava(
 	goCtx context.Context,
-	msg *types.MsgBridgeERC20FromEthereum,
-) (*types.MsgBridgeERC20FromEthereumResponse, error) {
+	msg *types.MsgBridgeEthereumToKava,
+) (*types.MsgBridgeEthereumToKavaResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	relayer, err := sdk.AccAddressFromBech32(msg.Relayer)
@@ -43,7 +43,7 @@ func (s msgServer) BridgeERC20FromEthereum(
 		return nil, fmt.Errorf("invalid EthereumERC20Address: %w", err)
 	}
 
-	if err := s.keeper.BridgeERC20FromEthereum(
+	if err := s.keeper.BridgeEthereumToKava(
 		ctx,
 		relayer,
 		externalAddress,
@@ -62,5 +62,5 @@ func (s msgServer) BridgeERC20FromEthereum(
 		),
 	)
 
-	return &types.MsgBridgeERC20FromEthereumResponse{}, nil
+	return &types.MsgBridgeEthereumToKavaResponse{}, nil
 }

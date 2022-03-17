@@ -35,12 +35,12 @@ func (suite *MsgServerSuite) TestMsg() {
 
 	tests := []struct {
 		name    string
-		msg     types.MsgBridgeERC20FromEthereum
+		msg     types.MsgBridgeEthereumToKava
 		errArgs errArgs
 	}{
 		{
 			"valid - signer matches relayer in params",
-			types.NewMsgBridgeERC20FromEthereum(
+			types.NewMsgBridgeEthereumToKava(
 				suite.RelayerAddress.String(),
 				"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
 				sdk.NewInt(1234),
@@ -53,7 +53,7 @@ func (suite *MsgServerSuite) TestMsg() {
 		},
 		{
 			"invalid - signer mismatch",
-			types.NewMsgBridgeERC20FromEthereum(
+			types.NewMsgBridgeEthereumToKava(
 				sdk.AccAddress(suite.Key1.PubKey().Address()).String(),
 				"0x000000000000000000000000000000000000000A",
 				sdk.NewInt(10),
@@ -67,7 +67,7 @@ func (suite *MsgServerSuite) TestMsg() {
 		},
 		{
 			"invalid - token not enabled",
-			types.NewMsgBridgeERC20FromEthereum(
+			types.NewMsgBridgeEthereumToKava(
 				suite.RelayerAddress.String(),
 				"0x000000000000000000000000000000000000000B",
 				sdk.NewInt(10),
@@ -81,7 +81,7 @@ func (suite *MsgServerSuite) TestMsg() {
 		},
 		{
 			"invalid - malformed external address",
-			types.NewMsgBridgeERC20FromEthereum(
+			types.NewMsgBridgeEthereumToKava(
 				suite.RelayerAddress.String(),
 				"hi",
 				sdk.NewInt(10),
@@ -95,7 +95,7 @@ func (suite *MsgServerSuite) TestMsg() {
 		},
 		{
 			"invalid - malformed internal receiver address",
-			types.NewMsgBridgeERC20FromEthereum(
+			types.NewMsgBridgeEthereumToKava(
 				suite.RelayerAddress.String(),
 				"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
 				sdk.NewInt(10),
@@ -111,7 +111,7 @@ func (suite *MsgServerSuite) TestMsg() {
 
 	for _, tc := range tests {
 		suite.Run(tc.name, func() {
-			_, err := suite.msgServer.BridgeERC20FromEthereum(sdk.WrapSDKContext(suite.Ctx), &tc.msg)
+			_, err := suite.msgServer.BridgeEthereumToKava(sdk.WrapSDKContext(suite.Ctx), &tc.msg)
 
 			if tc.errArgs.expectPass {
 				suite.Require().NoError(err)
@@ -156,7 +156,7 @@ func (suite *MsgServerSuite) TestMint() {
 
 			for i, amount := range tc.mintAmounts {
 				total = total.Add(total, amount.BigInt())
-				msg := types.NewMsgBridgeERC20FromEthereum(
+				msg := types.NewMsgBridgeEthereumToKava(
 					suite.RelayerAddress.String(),
 					extContractAddr,
 					amount,
@@ -174,7 +174,7 @@ func (suite *MsgServerSuite) TestMint() {
 				err = externalAddress.UnmarshalText([]byte(msg.EthereumERC20Address))
 				suite.Require().NoError(err)
 
-				_, err = suite.msgServer.BridgeERC20FromEthereum(sdk.WrapSDKContext(suite.Ctx), &msg)
+				_, err = suite.msgServer.BridgeEthereumToKava(sdk.WrapSDKContext(suite.Ctx), &msg)
 				suite.Require().NoError(err)
 
 				pair, found := suite.App.BridgeKeeper.GetBridgePairFromExternal(suite.Ctx, externalAddress)

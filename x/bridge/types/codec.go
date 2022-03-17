@@ -11,12 +11,12 @@ import (
 // RegisterLegacyAminoCodec registers the necessary bridge interfaces and concrete types
 // on the provided LegacyAmino codec. These types are used for Amino JSON serialization.
 func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
-	cdc.RegisterConcrete(&MsgBridgeERC20FromEthereum{}, "bridge/MsgBridgeERC20FromEthereum", nil)
+	cdc.RegisterConcrete(&MsgBridgeEthereumToKava{}, "bridge/MsgBridgeEthereumToKava", nil)
 }
 
 func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 	registry.RegisterImplementations((*sdk.Msg)(nil),
-		&MsgBridgeERC20FromEthereum{},
+		&MsgBridgeEthereumToKava{},
 	)
 
 	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)

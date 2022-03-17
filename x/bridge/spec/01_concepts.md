@@ -32,7 +32,7 @@ steps are taken:
    event with the Ethereum ERC20 address, Ethereum sender address, receiver
    Kava address, amount, and sequence.
 2. After a reasonable number of confirmations, the relayer will sign and submit
-   a `MsgERC20FromEthereum` message to the Kava chain.
+   a `MsgBridgeEthereumToKava` message to the Kava chain.
 3. The bridge module will verify the message for the following conditions. If
    any of these are false, the transaction will be rejected.
    * The signer address of the message matches the one set in params.
@@ -48,7 +48,7 @@ stateDiagram-v2
     }
     
     Contract --> Relayer
-    Relayer --> BridgeModule: MsgERC20FromEthereum
+    Relayer --> BridgeModule: MsgBridgeEthereumToKava
 
     state Kava {
         Reject: Reject TX

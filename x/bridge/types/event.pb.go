@@ -22,7 +22,7 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-// EventBridgeEthereumToKava is emitted on Msg/BridgeERC20FromEthereum
+// EventBridgeEthereumToKava is emitted on Msg/BridgeEthereumToKava
 type EventBridgeEthereumToKava struct {
 	Relayer              string `protobuf:"bytes,1,opt,name=relayer,proto3" json:"relayer,omitempty"`
 	EthereumErc20Address string `protobuf:"bytes,2,opt,name=ethereum_erc20_address,json=ethereumErc20Address,proto3" json:"ethereum_erc20_address,omitempty"`
