@@ -42,7 +42,7 @@ func (s queryServer) ERC20BridgePairs(
 	ctx := sdk.UnwrapSDKContext(stdCtx)
 
 	var bridgePairs types.ERC20BridgePairs
-	s.keeper.IterateERC20BridgePairs(ctx, func(pair types.ERC20BridgePair) bool {
+	s.keeper.IterateBridgePairs(ctx, func(pair types.ERC20BridgePair) bool {
 		bridgePairs = append(bridgePairs, pair)
 		return false
 	})

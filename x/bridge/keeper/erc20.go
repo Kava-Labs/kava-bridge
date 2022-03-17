@@ -20,11 +20,11 @@ func (k Keeper) GetOrDeployInternalERC20(
 	ctx sdk.Context,
 	externalAddress types.ExternalEVMAddress,
 ) (types.InternalEVMAddress, error) {
-	internalAddress, found := k.GetInternalERC20Address(ctx, externalAddress)
+	pair, found := k.GetBridgePairFromExternal(ctx, externalAddress)
 	if found {
 		// If external ERC20 address is already mapped in store, there is
 		// already a ERC20 deployed on Kava EVM.
-		return internalAddress, nil
+		return pair.GetInternalAddress(), nil
 	}
 
 	// The first time this external ERC20 is being bridged.
@@ -37,7 +37,7 @@ func (k Keeper) GetOrDeployInternalERC20(
 	}
 
 	// Deploy the ERC20 contract on the Kava EVM
-	internalAddress, err = k.DeployMintableERC20Contract(ctx, enabledToken)
+	internalAddress, err := k.DeployMintableERC20Contract(ctx, enabledToken)
 	if err != nil {
 		return types.InternalEVMAddress{}, err
 	}
@@ -47,9 +47,8 @@ func (k Keeper) GetOrDeployInternalERC20(
 		return types.InternalEVMAddress{}, err
 	}
 
-	// Save the internal ERC20 address to state so that it is mapped to the
-	// external ERC20 address.
-	k.SetERC20BridgePair(ctx, addrPair)
+	// Save the internal ERC20 address to state in all indices.
+	k.RegisterBridgePair(ctx, addrPair)
 
 	return internalAddress, nil
 }

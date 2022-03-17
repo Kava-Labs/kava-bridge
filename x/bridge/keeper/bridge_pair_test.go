@@ -19,21 +19,22 @@ func TestBridgePairTestSuite(t *testing.T) {
 func (suite *BridgePairTestSuite) TestERC20PairIter() {
 	pairs := types.NewERC20BridgePairs(
 		types.NewERC20BridgePair(
-			testutil.MustNewExternalEVMAddressFromString("0x0000000000000000000000000000000000000001"),
-			testutil.MustNewInternalEVMAddressFromString("0x0000000000000000000000000000000000000001"),
-		),
-		types.NewERC20BridgePair(
 			testutil.MustNewExternalEVMAddressFromString("0x0000000000000000000000000000000000000002"),
 			testutil.MustNewInternalEVMAddressFromString("0x000000000000000000000000000000000000000B"),
+		),
+		// Already registered in genesis state
+		types.NewERC20BridgePair(
+			testutil.MustNewExternalEVMAddressFromString("0x0000000000000000000000000000000000000001"),
+			testutil.MustNewInternalEVMAddressFromString("0x000000000000000000000000000000000000000A"),
 		),
 	)
 
 	for _, pair := range pairs {
-		suite.App.BridgeKeeper.SetERC20BridgePair(suite.Ctx, pair)
+		suite.App.BridgeKeeper.RegisterBridgePair(suite.Ctx, pair)
 	}
 
 	var iterPairs types.ERC20BridgePairs
-	suite.App.BridgeKeeper.IterateERC20BridgePairs(suite.Ctx, func(pair types.ERC20BridgePair) bool {
+	suite.App.BridgeKeeper.IterateBridgePairs(suite.Ctx, func(pair types.ERC20BridgePair) bool {
 		iterPairs = append(iterPairs, pair)
 		return false
 	})
