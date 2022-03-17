@@ -189,7 +189,7 @@ func (suite *MsgServerSuite) TestMint() {
 				suite.Require().Equal(total, bal, "balance should match amount minted so far")
 
 				suite.EventsContains(suite.GetEvents(), sdk.NewEvent(
-					sdk.EventTypeMessage,
+					types.EventTypeDeposit,
 					sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
 					sdk.NewAttribute(types.AttributeKeyRelayer, msg.Relayer),
 					sdk.NewAttribute(types.AttributeKeyEthereumERC20Address, msg.EthereumERC20Address),

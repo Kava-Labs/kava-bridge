@@ -247,7 +247,7 @@ func (suite *Suite) QueryContract(
 	suite.Require().NoError(err)
 
 	// Send TX
-	res := suite.sendTx(contract, from, fromKey, data)
+	res := suite.SendTx(contract, from, fromKey, data)
 
 	// Check for VM errors and unpack returned data
 	switch res.VmError {
@@ -268,7 +268,7 @@ func (suite *Suite) QueryContract(
 	return unpackedRes, nil
 }
 
-func (suite *Suite) sendTx(
+func (suite *Suite) SendTx(
 	contractAddr types.InternalEVMAddress,
 	from common.Address,
 	signerKey *ethsecp256k1.PrivKey,
@@ -353,7 +353,7 @@ func (suite *Suite) EventsContains(events sdk.Events, expectedEvent sdk.Event) {
 		}
 	}
 
-	suite.True(foundMatch, fmt.Sprintf("event of type %s not found or did not match", expectedEvent.Type))
+	suite.Truef(foundMatch, "event of type %s not found or did not match", expectedEvent.Type)
 }
 
 func attrsToMap(attrs []abci.EventAttribute) []sdk.Attribute {
