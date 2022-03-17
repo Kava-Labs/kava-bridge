@@ -9,6 +9,7 @@
   
 - [bridge/v1beta1/event.proto](#bridge/v1beta1/event.proto)
     - [EventBridgeEthereumToKava](#bridge.v1beta1.EventBridgeEthereumToKava)
+    - [EventBridgeKavaToEthereum](#bridge.v1beta1.EventBridgeKavaToEthereum)
   
 - [bridge/v1beta1/genesis.proto](#bridge/v1beta1/genesis.proto)
     - [EnabledERC20Token](#bridge.v1beta1.EnabledERC20Token)
@@ -81,6 +82,24 @@ EventBridgeEthereumToKava is emitted on Msg/BridgeEthereumToKava
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | `relayer` | [string](#string) |  |  |
+| `ethereum_erc20_address` | [string](#string) |  |  |
+| `receiver` | [string](#string) |  |  |
+| `amount` | [string](#string) |  |  |
+| `sequence` | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="bridge.v1beta1.EventBridgeKavaToEthereum"></a>
+
+### EventBridgeKavaToEthereum
+EventBridgeKavaToEthereum is emitted on Kava ERC20 Withdraw
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
 | `ethereum_erc20_address` | [string](#string) |  |  |
 | `receiver` | [string](#string) |  |  |
 | `amount` | [string](#string) |  |  |

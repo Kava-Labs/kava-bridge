@@ -11,3 +11,11 @@ message EventBridgeEthereumToKava {
   string amount                 = 4;
   string sequence               = 5;
 }
+
+// EventBridgeKavaToEthereum is emitted on Kava ERC20 Withdraw
+message EventBridgeKavaToEthereum {
+  string ethereum_erc20_address = 1;
+  string receiver               = 2;
+  string amount                 = 3;
+  string sequence               = 4;
+}

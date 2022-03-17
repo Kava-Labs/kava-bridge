@@ -96,13 +96,14 @@ func (h Hooks) PostTxProcessing(
 			panic(err)
 		}
 
-		// TODO: Replace with EmitTypedEvent + EventWithdraw proto type
-		ctx.EventManager().EmitEvent(sdk.NewEvent(
-			types.EventTypeWithdraw,
-			sdk.NewAttribute(types.AttributeKeySequence, sequence.String()),
-			sdk.NewAttribute(types.AttributeKeyEthereumERC20Address, externalERC20Addr.String()),
-			sdk.NewAttribute(types.AttributeKeyReceiver, toAddr.String()),
-		))
+		if err := ctx.EventManager().EmitTypedEvent(&types.EventBridgeKavaToEthereum{
+			EthereumErc20Address: externalERC20Addr.String(),
+			Receiver:             toAddr.String(),
+			Amount:               amount.String(),
+			Sequence:             sequence.String(),
+		}); err != nil {
+			panic(err)
+		}
 	}
 
 	return nil

@@ -199,23 +199,23 @@ func (suite *EVMHooksTestSuite) TestERC20Withdraw_EmitsEvent() {
 	// Send Withdraw TX
 	_ = suite.Withdraw(suite.pair.GetInternalAddress(), withdrawToAddr, withdrawAmount)
 
-	suite.EventsContains(suite.GetEvents(), sdk.NewEvent(
-		types.EventTypeWithdraw,
-		sdk.NewAttribute(types.AttributeKeySequence, "1"),
-		sdk.NewAttribute(types.AttributeKeyEthereumERC20Address, suite.pair.GetExternalAddress().String()),
-		sdk.NewAttribute(types.AttributeKeyReceiver, withdrawToAddr.String()),
-	))
+	suite.TypedEventsContains(suite.GetEvents(), &types.EventBridgeKavaToEthereum{
+		EthereumErc20Address: suite.pair.GetExternalAddress().String(),
+		Receiver:             withdrawToAddr.String(),
+		Amount:               withdrawAmount.String(),
+		Sequence:             "1",
+	})
 
 	// Second withdraw tx
 	_ = suite.Withdraw(suite.pair.GetInternalAddress(), withdrawToAddr, withdrawAmount)
 
 	// Second one has incremented sequence
-	suite.EventsContains(suite.GetEvents(), sdk.NewEvent(
-		types.EventTypeWithdraw,
-		sdk.NewAttribute(types.AttributeKeySequence, "2"),
-		sdk.NewAttribute(types.AttributeKeyEthereumERC20Address, suite.pair.GetExternalAddress().String()),
-		sdk.NewAttribute(types.AttributeKeyReceiver, withdrawToAddr.String()),
-	))
+	suite.TypedEventsContains(suite.GetEvents(), &types.EventBridgeKavaToEthereum{
+		EthereumErc20Address: suite.pair.GetExternalAddress().String(),
+		Receiver:             withdrawToAddr.String(),
+		Amount:               withdrawAmount.String(),
+		Sequence:             "2",
+	})
 }
 
 func (suite *EVMHooksTestSuite) TestERC20Withdraw_IgnoreUnregisteredERC20() {
