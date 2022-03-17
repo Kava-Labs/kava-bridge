@@ -1,7 +1,11 @@
 syntax = "proto3";
 package bridge.v1beta1;
 
-option go_package = "github.com/kava-labs/kava-bridge/x/bridge/types";
+import "gogoproto/gogo.proto";
+
+option go_package                    = "github.com/kava-labs/kava-bridge/x/bridge/types";
+option (gogoproto.equal_all)         = true;
+option (gogoproto.verbose_equal_all) = true;
 
 // EventBridgeEthereumToKava is emitted on Msg/BridgeEthereumToKava
 message EventBridgeEthereumToKava {
