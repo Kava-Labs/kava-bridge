@@ -81,11 +81,11 @@ EventBridgeEthereumToKava is emitted on Msg/BridgeEthereumToKava
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `relayer` | [string](#string) |  |  |
-| `ethereum_erc20_address` | [string](#string) |  |  |
-| `receiver` | [string](#string) |  |  |
-| `amount` | [string](#string) |  |  |
-| `sequence` | [string](#string) |  |  |
+| `relayer` | [string](#string) |  | Relayer is the address of the bridge relayer |
+| `ethereum_erc20_address` | [string](#string) |  | EthereumErc20Address is the originating ERC20 address on Ethereum |
+| `receiver` | [string](#string) |  | Receiver is the Kava address to bridge funds to |
+| `amount` | [string](#string) |  | Amount is the amount to be bridged |
+| `sequence` | [string](#string) |  | Sequence is the unique Ethereum lock sequence re-emitted |
 
 
 
@@ -100,10 +100,10 @@ EventBridgeKavaToEthereum is emitted on Kava ERC20 Withdraw
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `ethereum_erc20_address` | [string](#string) |  |  |
-| `receiver` | [string](#string) |  |  |
-| `amount` | [string](#string) |  |  |
-| `sequence` | [string](#string) |  |  |
+| `ethereum_erc20_address` | [string](#string) |  | EthereumErc20Address is the ERC20 address on Ethereum to unlock funds to |
+| `receiver` | [string](#string) |  | Receiver is the Ethereum address to unlock funds to |
+| `amount` | [string](#string) |  | Amount is the amount to be unlocked on Ethereum |
+| `sequence` | [string](#string) |  | Sequence is the unique Kava bridge withdraw sequence |
 
 
 
@@ -278,7 +278,7 @@ MsgBridgeEthereumToKava defines a ERC20 bridge transfer from Ethereum to Kava.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `relayer` | [string](#string) |  |  |
+| `relayer` | [string](#string) |  | Address of the bridge relayer |
 | `ethereum_erc20_address` | [string](#string) |  | Originating Ethereum ERC20 contract address |
 | `amount` | [string](#string) |  | ERC20 token amount to transfer |
 | `receiver` | [string](#string) |  | Receiver hex address on Kava |

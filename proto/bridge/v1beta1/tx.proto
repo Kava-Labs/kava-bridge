@@ -17,6 +17,7 @@ service Msg {
 
 // MsgBridgeEthereumToKava defines a ERC20 bridge transfer from Ethereum to Kava.
 message MsgBridgeEthereumToKava {
+  // Address of the bridge relayer
   string relayer = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
   // Originating Ethereum ERC20 contract address
   string ethereum_erc20_address = 2 [(gogoproto.customname) = "EthereumERC20Address"];
