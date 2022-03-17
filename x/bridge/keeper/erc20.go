@@ -22,7 +22,7 @@ func (k Keeper) BridgeERC20FromEthereum(
 	amount *big.Int,
 	sequence sdk.Int,
 ) error {
-	// Check if signer is relayer
+	// Check if message signer/relayer matches the relayer set in params
 	if err := k.IsSignerAuthorized(ctx, relayer); err != nil {
 		return err
 	}
