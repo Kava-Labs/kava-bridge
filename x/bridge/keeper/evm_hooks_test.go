@@ -236,7 +236,7 @@ func (suite *EVMHooksTestSuite) TestERC20Withdraw_IgnoreUnregisteredERC20() {
 	suite.Require().Greater(len(unregisteredContractAddr.Address), 0)
 
 	mintAmount := big.NewInt(10)
-	err = suite.App.BridgeKeeper.MintERC20(suite.Ctx, unregisteredContractAddr, suite.key1Addr, mintAmount)
+	err = suite.App.BridgeKeeper.MintERC20(suite.Ctx, unregisteredContractAddr, types.NewInternalEVMAddress(suite.key1Addr), mintAmount)
 	suite.Require().NoError(err)
 
 	// Withdraw / burn funds

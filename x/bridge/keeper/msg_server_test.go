@@ -90,7 +90,7 @@ func (suite *MsgServerSuite) TestMsg() {
 			),
 			errArgs{
 				expectPass: false,
-				contains:   "invalid EthereumERC20Address: hex string without 0x prefix",
+				contains:   "invalid EthereumERC20Address: string is not a hex address",
 			},
 		},
 		{
@@ -104,7 +104,7 @@ func (suite *MsgServerSuite) TestMsg() {
 			),
 			errArgs{
 				expectPass: false,
-				contains:   "invalid Receiver address: hex string without 0x prefix",
+				contains:   "invalid Receiver address: string is not a hex address",
 			},
 		},
 	}
@@ -188,15 +188,13 @@ func (suite *MsgServerSuite) TestMint() {
 
 				suite.Require().Equal(total, bal, "balance should match amount minted so far")
 
-				suite.EventsContains(suite.GetEvents(), sdk.NewEvent(
-					types.EventTypeDeposit,
-					sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-					sdk.NewAttribute(types.AttributeKeyRelayer, msg.Relayer),
-					sdk.NewAttribute(types.AttributeKeyEthereumERC20Address, msg.EthereumERC20Address),
-					sdk.NewAttribute(types.AttributeKeyReceiver, msg.Receiver),
-					sdk.NewAttribute(sdk.AttributeKeyAmount, msg.Amount.String()),
-					sdk.NewAttribute(types.AttributeKeySequence, msg.Sequence.String()),
-				))
+				suite.TypedEventsContains(suite.GetEvents(), &types.EventBridgeEthereumToKava{
+					Relayer:              msg.Relayer,
+					EthereumErc20Address: msg.EthereumERC20Address,
+					Receiver:             receiver.String(),
+					Amount:               amount.String(),
+					Sequence:             msg.Sequence.String(),
+				})
 			}
 		})
 	}

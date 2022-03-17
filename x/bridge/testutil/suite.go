@@ -9,6 +9,7 @@ import (
 	"reflect"
 	"time"
 
+	proto "github.com/gogo/protobuf/proto"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -354,6 +355,20 @@ func (suite *Suite) EventsContains(events sdk.Events, expectedEvent sdk.Event) {
 	}
 
 	suite.Truef(foundMatch, "event of type %s not found or did not match", expectedEvent.Type)
+}
+
+// TypedEventsContains asserts that the expected typed event is in the provided events
+func (suite *Suite) TypedEventsContains(events sdk.Events, tev proto.Message) {
+	foundMatch := false
+	for _, event := range events.ToABCIEvents() {
+		// Ignore non-typed events
+		msg, _ := sdk.ParseTypedEvent(event)
+		if reflect.DeepEqual(msg, tev) {
+			foundMatch = true
+		}
+	}
+
+	suite.Truef(foundMatch, "event of type %s not found or did not match", reflect.TypeOf(tev))
 }
 
 func attrsToMap(attrs []abci.EventAttribute) []sdk.Attribute {

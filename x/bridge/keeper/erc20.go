@@ -6,11 +6,48 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/kava-labs/kava-bridge/contract"
 	"github.com/kava-labs/kava-bridge/x/bridge/types"
 )
+
+// BridgeERC20FromEthereum mints the bridged amount at the corresponding
+// bridged ERC20 contract on Kava EVM, deploying the ERC20 contract first if it
+// doesn't already exist.
+func (k Keeper) BridgeERC20FromEthereum(
+	ctx sdk.Context,
+	relayer sdk.AccAddress,
+	externalERC20Address types.ExternalEVMAddress,
+	receiver types.InternalEVMAddress,
+	amount *big.Int,
+	sequence sdk.Int,
+) error {
+	// Check if message signer/relayer matches the relayer set in params
+	if err := k.IsSignerAuthorized(ctx, relayer); err != nil {
+		return err
+	}
+
+	internalAddress, err := k.GetOrDeployInternalERC20(ctx, externalERC20Address)
+	if err != nil {
+		return err
+	}
+
+	if err := k.MintERC20(ctx, internalAddress, receiver, amount); err != nil {
+		return err
+	}
+
+	if err := ctx.EventManager().EmitTypedEvent(&types.EventBridgeEthereumToKava{
+		Relayer:              relayer.String(),
+		EthereumErc20Address: externalERC20Address.String(),
+		Receiver:             receiver.String(),
+		Amount:               amount.String(),
+		Sequence:             sequence.String(),
+	}); err != nil {
+		return err
+	}
+
+	return nil
+}
 
 // GetOrDeployInternalERC20 returns the internal EVM address
 // mapped to the provided ExternalEVMAddress. This will either return from the
@@ -101,7 +138,7 @@ func (k Keeper) DeployMintableERC20Contract(
 func (k Keeper) MintERC20(
 	ctx sdk.Context,
 	contractAddr types.InternalEVMAddress,
-	receiver common.Address,
+	receiver types.InternalEVMAddress,
 	amount *big.Int,
 ) error {
 	_, err := k.CallEVM(
@@ -111,7 +148,7 @@ func (k Keeper) MintERC20(
 		contractAddr,
 		"mint",
 		// Mint ERC20 args
-		receiver,
+		receiver.Address,
 		amount,
 	)
 
