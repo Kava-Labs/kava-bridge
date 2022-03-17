@@ -91,7 +91,7 @@ func (suite *ERC20TestSuite) TestERC20Mint() {
 
 	receiver := common.BytesToAddress(suite.Key2.PubKey().Address())
 	amount := big.NewInt(1234)
-	err := suite.App.BridgeKeeper.MintERC20(suite.Ctx, contractAddr, receiver, amount)
+	err := suite.App.BridgeKeeper.MintERC20(suite.Ctx, contractAddr, types.NewInternalEVMAddress(receiver), amount)
 	suite.Require().NoError(err)
 
 	// Query ERC20.balanceOf()

@@ -7,6 +7,9 @@
 - [bridge/v1beta1/erc20.proto](#bridge/v1beta1/erc20.proto)
     - [ERC20BridgePair](#bridge.v1beta1.ERC20BridgePair)
   
+- [bridge/v1beta1/event.proto](#bridge/v1beta1/event.proto)
+    - [EventBridgeEthereumToKava](#bridge.v1beta1.EventBridgeEthereumToKava)
+  
 - [bridge/v1beta1/genesis.proto](#bridge/v1beta1/genesis.proto)
     - [EnabledERC20Token](#bridge.v1beta1.EnabledERC20Token)
     - [GenesisState](#bridge.v1beta1.GenesisState)
@@ -47,6 +50,41 @@ ERC20BridgePair defines an ERC20 token bridged between external and Kava EVM
 | ----- | ---- | ----- | ----------- |
 | `external_erc20_address` | [bytes](#bytes) |  | external_erc20_address represents the external EVM ERC20 address |
 | `internal_erc20_address` | [bytes](#bytes) |  | internal_erc20_address represents the corresponding internal Kava EVM ERC20 address |
+
+
+
+
+
+ <!-- end messages -->
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
+
+ <!-- end services -->
+
+
+
+<a name="bridge/v1beta1/event.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## bridge/v1beta1/event.proto
+
+
+
+<a name="bridge.v1beta1.EventBridgeEthereumToKava"></a>
+
+### EventBridgeEthereumToKava
+EventBridgeEthereumToKava is emitted on Msg/BridgeERC20FromEthereum
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `relayer` | [string](#string) |  |  |
+| `ethereum_erc20_address` | [string](#string) |  |  |
+| `receiver` | [string](#string) |  |  |
+| `amount` | [string](#string) |  |  |
+| `sequence` | [string](#string) |  |  |
 
 
 

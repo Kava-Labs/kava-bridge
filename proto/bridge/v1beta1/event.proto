@@ -1,0 +1,13 @@
+syntax = "proto3";
+package bridge.v1beta1;
+
+option go_package = "github.com/kava-labs/kava-bridge/x/bridge/types";
+
+// EventBridgeEthereumToKava is emitted on Msg/BridgeERC20FromEthereum
+message EventBridgeEthereumToKava {
+  string relayer                = 1;
+  string ethereum_erc20_address = 2;
+  string receiver               = 3;
+  string amount                 = 4;
+  string sequence               = 5;
+}

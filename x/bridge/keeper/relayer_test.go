@@ -31,33 +31,21 @@ func (suite *RelayerTestSuite) TestPermission() {
 
 	tests := []struct {
 		name    string
-		signers []sdk.AccAddress
+		signer  sdk.AccAddress
 		key     *ethsecp256k1.PrivKey
 		errArgs errArgs
 	}{
 		{
 			"valid - signer matches relayer in params",
-			[]sdk.AccAddress{relayerAddr},
+			relayerAddr,
 			suite.RelayerKey,
 			errArgs{
 				expectPass: true,
 			},
 		},
 		{
-			"invalid - multiple signers even if permissioned",
-			[]sdk.AccAddress{
-				relayerAddr,
-				sdk.AccAddress(suite.Key1.PubKey().Address()),
-			},
-			suite.RelayerKey,
-			errArgs{
-				expectPass: false,
-				contains:   "invalid number of signers",
-			},
-		},
-		{
-			"invalid - single unknown address",
-			[]sdk.AccAddress{sdk.AccAddress(suite.Key1.PubKey().Address())},
+			"invalid - unknown address",
+			sdk.AccAddress(suite.Key1.PubKey().Address()),
 			suite.Key1,
 			errArgs{
 				expectPass: false,
@@ -65,20 +53,8 @@ func (suite *RelayerTestSuite) TestPermission() {
 			},
 		},
 		{
-			"invalid - multiple unknown addresses",
-			[]sdk.AccAddress{
-				sdk.AccAddress(suite.Key1.PubKey().Address()),
-				sdk.AccAddress(suite.Key2.PubKey().Address()),
-			},
-			suite.Key1,
-			errArgs{
-				expectPass: false,
-				contains:   "invalid number of signers",
-			},
-		},
-		{
-			"invalid - empty signers",
-			[]sdk.AccAddress{},
+			"invalid - empty signer",
+			sdk.AccAddress{},
 			suite.Key1,
 			errArgs{
 				expectPass: false,
@@ -89,7 +65,7 @@ func (suite *RelayerTestSuite) TestPermission() {
 
 	for _, tc := range tests {
 		suite.Run(tc.name, func() {
-			err := suite.App.BridgeKeeper.IsSignerAuthorized(suite.Ctx, tc.signers)
+			err := suite.App.BridgeKeeper.IsSignerAuthorized(suite.Ctx, tc.signer)
 
 			if tc.errArgs.expectPass {
 				suite.Require().NoError(err)
