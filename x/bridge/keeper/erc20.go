@@ -11,10 +11,10 @@ import (
 	"github.com/kava-labs/kava-bridge/x/bridge/types"
 )
 
-// BridgeERC20FromEthereum mints the bridged amount at the corresponding
+// BridgeEthereumToKava mints the bridged amount at the corresponding
 // bridged ERC20 contract on Kava EVM, deploying the ERC20 contract first if it
 // doesn't already exist.
-func (k Keeper) BridgeERC20FromEthereum(
+func (k Keeper) BridgeEthereumToKava(
 	ctx sdk.Context,
 	relayer sdk.AccAddress,
 	externalERC20Address types.ExternalEVMAddress,

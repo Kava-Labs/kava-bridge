@@ -45,7 +45,7 @@ func (suite *GrpcQueryTestSuite) TestQueryERC20BridgePairs() {
 	var internalContracts []string
 
 	for _, contractAddr := range extContracts {
-		msg := types.NewMsgBridgeERC20FromEthereum(
+		msg := types.NewMsgBridgeEthereumToKava(
 			suite.RelayerAddress.String(),
 			contractAddr,
 			sdk.NewInt(10),
@@ -61,7 +61,7 @@ func (suite *GrpcQueryTestSuite) TestQueryERC20BridgePairs() {
 		err = externalAddress.UnmarshalText([]byte(msg.EthereumERC20Address))
 		suite.Require().NoError(err)
 
-		_, err = suite.msgServer.BridgeERC20FromEthereum(sdk.WrapSDKContext(suite.Ctx), &msg)
+		_, err = suite.msgServer.BridgeEthereumToKava(sdk.WrapSDKContext(suite.Ctx), &msg)
 		suite.Require().NoError(err)
 
 		pair, found := suite.App.BridgeKeeper.GetBridgePairFromExternal(suite.Ctx, externalAddress)

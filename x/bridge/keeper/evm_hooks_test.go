@@ -57,7 +57,7 @@ func (suite *EVMHooksTestSuite) submitBridgeERC20Msg(
 	amount sdk.Int,
 	receiver common.Address,
 ) {
-	msg := types.NewMsgBridgeERC20FromEthereum(
+	msg := types.NewMsgBridgeEthereumToKava(
 		suite.RelayerAddress.String(),
 		contractAddr.String(),
 		amount,
@@ -65,7 +65,7 @@ func (suite *EVMHooksTestSuite) submitBridgeERC20Msg(
 		sdk.NewInt(1),
 	)
 
-	_, err := suite.msgServer.BridgeERC20FromEthereum(sdk.WrapSDKContext(suite.Ctx), &msg)
+	_, err := suite.msgServer.BridgeEthereumToKava(sdk.WrapSDKContext(suite.Ctx), &msg)
 	suite.Require().NoError(err)
 }
 
@@ -199,23 +199,30 @@ func (suite *EVMHooksTestSuite) TestERC20Withdraw_EmitsEvent() {
 	// Send Withdraw TX
 	_ = suite.Withdraw(suite.pair.GetInternalAddress(), withdrawToAddr, withdrawAmount)
 
-	suite.EventsContains(suite.GetEvents(), sdk.NewEvent(
-		types.EventTypeWithdraw,
-		sdk.NewAttribute(types.AttributeKeySequence, "1"),
-		sdk.NewAttribute(types.AttributeKeyEthereumERC20Address, suite.pair.GetExternalAddress().String()),
-		sdk.NewAttribute(types.AttributeKeyReceiver, withdrawToAddr.String()),
-	))
+	suite.TypedEventsContains(suite.GetEvents(), &types.EventBridgeKavaToEthereum{
+		EthereumErc20Address: suite.pair.GetExternalAddress().String(),
+		Receiver:             withdrawToAddr.String(),
+		Amount:               withdrawAmount.String(),
+		Sequence:             "1",
+	})
 
 	// Second withdraw tx
 	_ = suite.Withdraw(suite.pair.GetInternalAddress(), withdrawToAddr, withdrawAmount)
 
+	expectedEvent := &types.EventBridgeKavaToEthereum{
+		EthereumErc20Address: suite.pair.GetExternalAddress().String(),
+		Receiver:             withdrawToAddr.String(),
+		Amount:               withdrawAmount.String(),
+		Sequence:             "2",
+	}
+
 	// Second one has incremented sequence
-	suite.EventsContains(suite.GetEvents(), sdk.NewEvent(
-		types.EventTypeWithdraw,
-		sdk.NewAttribute(types.AttributeKeySequence, "2"),
-		sdk.NewAttribute(types.AttributeKeyEthereumERC20Address, suite.pair.GetExternalAddress().String()),
-		sdk.NewAttribute(types.AttributeKeyReceiver, withdrawToAddr.String()),
-	))
+	suite.TypedEventsContains(suite.GetEvents(), expectedEvent)
+
+	// This only checks the type exists, mostly to double check that this assetion
+	// is actually checking for existence of the type properly for later uses
+	// of TypedEventsDoesNotContain
+	suite.TypedEventsContainsType(suite.GetEvents(), expectedEvent)
 }
 
 func (suite *EVMHooksTestSuite) TestERC20Withdraw_IgnoreUnregisteredERC20() {
@@ -248,9 +255,5 @@ func (suite *EVMHooksTestSuite) TestERC20Withdraw_IgnoreUnregisteredERC20() {
 	// Send Withdraw TX to the erc20 contract that is not a registered pair
 	_ = suite.Withdraw(unregisteredContractAddr, withdrawToAddr, withdrawAmount)
 
-	for _, event := range suite.GetEvents() {
-		if event.Type == types.EventTypeWithdraw {
-			suite.Require().Fail("event should not contain Withdraw event")
-		}
-	}
+	suite.TypedEventsDoesNotContain(suite.GetEvents(), &types.EventBridgeKavaToEthereum{})
 }
