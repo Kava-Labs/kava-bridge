@@ -49,7 +49,7 @@ func (suite *RelayerTestSuite) TestPermission() {
 			suite.Key1,
 			errArgs{
 				expectPass: false,
-				contains:   "signer not authorized for bridge message",
+				contains:   "signer not authorized for bridge message: unauthorized",
 			},
 		},
 		{
@@ -58,7 +58,7 @@ func (suite *RelayerTestSuite) TestPermission() {
 			suite.Key1,
 			errArgs{
 				expectPass: false,
-				contains:   "invalid number of signers",
+				contains:   "signer not authorized for bridge message: unauthorized",
 			},
 		},
 	}
