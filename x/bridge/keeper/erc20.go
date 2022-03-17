@@ -32,18 +32,19 @@ func (k Keeper) BridgeERC20FromEthereum(
 		return err
 	}
 
-	err = k.MintERC20(ctx, internalAddress, receiver, amount)
-	if err != nil {
+	if err := k.MintERC20(ctx, internalAddress, receiver, amount); err != nil {
 		return err
 	}
 
-	ctx.EventManager().EmitTypedEvent(&types.EventBridgeEthereumToKava{
+	if err := ctx.EventManager().EmitTypedEvent(&types.EventBridgeEthereumToKava{
 		Relayer:              relayer.String(),
 		EthereumErc20Address: externalERC20Address.String(),
 		Receiver:             receiver.String(),
 		Amount:               amount.String(),
 		Sequence:             sequence.String(),
-	})
+	}); err != nil {
+		return err
+	}
 
 	return nil
 }
