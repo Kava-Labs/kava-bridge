@@ -14,9 +14,9 @@ This allows the following:
   ERC20 WETH on Kava EVM to Cosmos `sdk.Coin` to be able to use WETH in Kava
   DeFi modules such as Mint, Lend, Swap, etc.
 
-There is currently no direct path from Ethereum ERC20 to Kava Cosmos `sdk.Coin`,
-to get an ERC20 token on Ethereum into the Kava Cosmos ecosystem, tokens must
-be bridged to the Kava EVM first, then converted to an `sdk.Coin`.
+There is no direct path from Ethereum ERC20 to Kava Cosmos `sdk.Coin`. To get an
+ERC20 token on Ethereum into the Kava Cosmos ecosystem, tokens must be bridged
+to the Kava EVM first, then converted to an `sdk.Coin`.
 
 <p align="center">
   <img src="./images/high-level-overview.drawio.png">
