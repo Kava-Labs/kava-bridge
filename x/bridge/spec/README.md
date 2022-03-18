@@ -18,7 +18,9 @@ There is currently no direct path from Ethereum ERC20 to Kava Cosmos `sdk.Coin`,
 to get an ERC20 token on Ethereum into the Kava Cosmos ecosystem, tokens must
 be bridged to the Kava EVM first, then converted to an `sdk.Coin`.
 
-![High Level Overview](./images/high-level-overview.drawio.png)
+<p align="center">
+  <img src="./images/high-level-overview.drawio.png">
+</p>
 
 ## Contents
 
