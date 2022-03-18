@@ -22,7 +22,7 @@ export interface BridgeInterface extends utils.Interface {
   functions: {
     "lock(address,bytes32,uint256)": FunctionFragment;
     "relayer()": FunctionFragment;
-    "unlock(address,address,uint256)": FunctionFragment;
+    "unlock(address,address,uint256,uint256)": FunctionFragment;
   };
 
   encodeFunctionData(
@@ -32,7 +32,7 @@ export interface BridgeInterface extends utils.Interface {
   encodeFunctionData(functionFragment: "relayer", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "unlock",
-    values: [string, string, BigNumberish]
+    values: [string, string, BigNumberish, BigNumberish]
   ): string;
 
   decodeFunctionResult(functionFragment: "lock", data: BytesLike): Result;
@@ -55,7 +55,7 @@ export type LockEvent = TypedEvent<
     sender: string;
     toAddr: string;
     amount: BigNumber;
-    sequence: BigNumber;
+    lockSequence: BigNumber;
   }
 >;
 
@@ -63,7 +63,12 @@ export type LockEventFilter = TypedEventFilter<LockEvent>;
 
 export type UnlockEvent = TypedEvent<
   [string, string, BigNumber, BigNumber],
-  { token: string; toAddr: string; amount: BigNumber; sequence: BigNumber }
+  {
+    token: string;
+    toAddr: string;
+    amount: BigNumber;
+    unlockSequence: BigNumber;
+  }
 >;
 
 export type UnlockEventFilter = TypedEventFilter<UnlockEvent>;
@@ -109,6 +114,7 @@ export interface Bridge extends BaseContract {
       token: string,
       toAddr: string,
       amount: BigNumberish,
+      unlockSequence: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
   };
@@ -126,6 +132,7 @@ export interface Bridge extends BaseContract {
     token: string,
     toAddr: string,
     amount: BigNumberish,
+    unlockSequence: BigNumberish,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
@@ -143,6 +150,7 @@ export interface Bridge extends BaseContract {
       token: string,
       toAddr: string,
       amount: BigNumberish,
+      unlockSequence: BigNumberish,
       overrides?: CallOverrides
     ): Promise<void>;
   };
@@ -153,27 +161,27 @@ export interface Bridge extends BaseContract {
       sender?: string | null,
       toAddr?: BytesLike | null,
       amount?: null,
-      sequence?: null
+      lockSequence?: null
     ): LockEventFilter;
     Lock(
       token?: string | null,
       sender?: string | null,
       toAddr?: BytesLike | null,
       amount?: null,
-      sequence?: null
+      lockSequence?: null
     ): LockEventFilter;
 
     "Unlock(address,address,uint256,uint256)"(
       token?: string | null,
       toAddr?: string | null,
       amount?: null,
-      sequence?: null
+      unlockSequence?: null
     ): UnlockEventFilter;
     Unlock(
       token?: string | null,
       toAddr?: string | null,
       amount?: null,
-      sequence?: null
+      unlockSequence?: null
     ): UnlockEventFilter;
   };
 
@@ -191,6 +199,7 @@ export interface Bridge extends BaseContract {
       token: string,
       toAddr: string,
       amount: BigNumberish,
+      unlockSequence: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
   };
@@ -209,6 +218,7 @@ export interface Bridge extends BaseContract {
       token: string,
       toAddr: string,
       amount: BigNumberish,
+      unlockSequence: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
   };

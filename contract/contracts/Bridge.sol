@@ -20,25 +20,25 @@ contract Bridge is ReentrancyGuard, Sequence(0) {
     /// @param sender The Ethereum address of the sender that locked the funds
     /// @param toAddr The Kava address bytes padded to 32 bytes to send the locked funds to
     /// @param amount The amount that was locked
-    /// @param sequence The unique lock/unlock sequence
+    /// @param lockSequence The unique lock sequence
     event Lock(
         address indexed token,
         address indexed sender,
         bytes32 indexed toAddr,
         uint256 amount,
-        uint256 sequence
+        uint256 lockSequence
     );
 
     /// @notice Represents an ERC20 token unlock emitted during an unlock call
     /// @param token The ERC20 token address
     /// @param toAddr The Ethereum address the funds were unlocked to
     /// @param amount The amount that was unlocked
-    /// @param sequence The unique lock/unlock sequence
+    /// @param unlockSequence The unique unlock sequence
     event Unlock(
         address indexed token,
         address indexed toAddr,
         uint256 amount,
-        uint256 sequence
+        uint256 unlockSequence
     );
 
     /// @notice Initialize with a relayer address with a starting sequence of 0
@@ -79,13 +79,13 @@ contract Bridge is ReentrancyGuard, Sequence(0) {
     function unlock(
         address token,
         address toAddr,
-        uint256 amount
+        uint256 amount,
+        uint256 unlockSequence
     ) public nonReentrant {
         require(msg.sender == _relayer, "Bridge: untrusted address");
 
-        incrementSequence();
         IERC20(token).safeTransfer(toAddr, amount);
 
-        emit Unlock(token, toAddr, amount, getSequence());
+        emit Unlock(token, toAddr, amount, unlockSequence);
     }
 }

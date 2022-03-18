@@ -41,7 +41,7 @@ contract ERC20EvilMock {
     function transfer(address to, uint256 amount) public returns (bool) {
         if (_reentered < 3) {
             _reentered = _reentered + 1;
-            Bridge(msg.sender).unlock(address(this), to, amount);
+            Bridge(msg.sender).unlock(address(this), to, amount, 1);
         }
 
         return true;
