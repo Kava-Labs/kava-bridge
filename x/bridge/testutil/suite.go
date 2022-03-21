@@ -117,7 +117,12 @@ func (suite *Suite) SetupTest() {
 				),
 			},
 			suite.RelayerAddress,
-			types.DefaultConversionPairs,
+			types.NewConversionPairs(
+				types.NewConversionPair(
+					MustNewInternalEVMAddressFromString("000000000000000000000000000000000000000B"),
+					"usdc",
+				),
+			),
 		),
 		types.NewERC20BridgePairs(
 			types.NewERC20BridgePair(

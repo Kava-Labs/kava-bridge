@@ -29,8 +29,8 @@ func (suite *genesisTestSuite) Test_InitGenesis_Validation() {
 		{
 			"valid",
 			types.NewGenesisState(
-				types.Params{
-					EnabledERC20Tokens: types.EnabledERC20Tokens{
+				types.NewParams(
+					types.EnabledERC20Tokens{
 						types.NewEnabledERC20Token(
 							testutil.MustNewExternalEVMAddressFromString("C02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
 							"Wrapped Ether",
@@ -50,14 +50,14 @@ func (suite *genesisTestSuite) Test_InitGenesis_Validation() {
 							6,
 						),
 					},
-					Relayer: sdk.AccAddress("hi"),
-					EnabledConversionPairs: types.NewConversionPairs(
+					sdk.AccAddress("hi"),
+					types.NewConversionPairs(
 						types.NewConversionPair(
 							testutil.MustNewInternalEVMAddressFromString("0000000000000000000000000000000000000001"),
 							"usdc",
 						),
 					),
-				},
+				),
 				types.NewERC20BridgePairs(
 					types.NewERC20BridgePair(
 						testutil.MustNewExternalEVMAddressFromString("0x0000000000000000000000000000000000000001"),
@@ -73,8 +73,8 @@ func (suite *genesisTestSuite) Test_InitGenesis_Validation() {
 		{
 			"invalid - nil relayer",
 			types.NewGenesisState(
-				types.Params{
-					EnabledERC20Tokens: types.EnabledERC20Tokens{
+				types.NewParams(
+					types.EnabledERC20Tokens{
 						types.NewEnabledERC20Token(
 							testutil.MustNewExternalEVMAddressFromString("C02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
 							"Wrapped Ether",
@@ -88,8 +88,9 @@ func (suite *genesisTestSuite) Test_InitGenesis_Validation() {
 							6,
 						),
 					},
-					Relayer: nil,
-				},
+					nil,
+					types.DefaultConversionPairs,
+				),
 				types.NewERC20BridgePairs(
 					types.NewERC20BridgePair(
 						testutil.MustNewExternalEVMAddressFromString("0x0000000000000000000000000000000000000001"),
@@ -106,8 +107,8 @@ func (suite *genesisTestSuite) Test_InitGenesis_Validation() {
 		{
 			"invalid - duplicate token address",
 			types.NewGenesisState(
-				types.Params{
-					EnabledERC20Tokens: types.EnabledERC20Tokens{
+				types.NewParams(
+					types.EnabledERC20Tokens{
 						types.NewEnabledERC20Token(
 							testutil.MustNewExternalEVMAddressFromString("C02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
 							"Wrapped Ether",
@@ -121,8 +122,9 @@ func (suite *genesisTestSuite) Test_InitGenesis_Validation() {
 							6,
 						),
 					},
-					Relayer: sdk.AccAddress("hi"),
-				},
+					sdk.AccAddress("hi"),
+					types.DefaultConversionPairs,
+				),
 				types.NewERC20BridgePairs(
 					types.NewERC20BridgePair(
 						testutil.MustNewExternalEVMAddressFromString("0x0000000000000000000000000000000000000001"),
@@ -139,8 +141,8 @@ func (suite *genesisTestSuite) Test_InitGenesis_Validation() {
 		{
 			"invalid - zero token address",
 			types.NewGenesisState(
-				types.Params{
-					EnabledERC20Tokens: types.EnabledERC20Tokens{
+				types.NewParams(
+					types.EnabledERC20Tokens{
 						types.NewEnabledERC20Token(
 							testutil.MustNewExternalEVMAddressFromString("0000000000000000000000000000000000000000"),
 							"Wrapped Ether",
@@ -154,8 +156,9 @@ func (suite *genesisTestSuite) Test_InitGenesis_Validation() {
 							6,
 						),
 					},
-					Relayer: sdk.AccAddress("hi"),
-				},
+					sdk.AccAddress("hi"),
+					types.DefaultConversionPairs,
+				),
 				types.NewERC20BridgePairs(),
 				types.DefaultNextWithdrawSequence,
 			),
@@ -167,8 +170,8 @@ func (suite *genesisTestSuite) Test_InitGenesis_Validation() {
 		{
 			"invalid - empty token name",
 			types.NewGenesisState(
-				types.Params{
-					EnabledERC20Tokens: types.EnabledERC20Tokens{
+				types.NewParams(
+					types.EnabledERC20Tokens{
 						types.NewEnabledERC20Token(
 							testutil.MustNewExternalEVMAddressFromString("C02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
 							"",
@@ -176,8 +179,9 @@ func (suite *genesisTestSuite) Test_InitGenesis_Validation() {
 							18,
 						),
 					},
-					Relayer: sdk.AccAddress("hi"),
-				},
+					sdk.AccAddress("hi"),
+					types.DefaultConversionPairs,
+				),
 				types.NewERC20BridgePairs(),
 				types.DefaultNextWithdrawSequence,
 			),
@@ -205,8 +209,8 @@ func (suite *genesisTestSuite) Test_InitGenesis_Validation() {
 
 func (suite *genesisTestSuite) Test_InitAndExportGenesis() {
 	state := types.NewGenesisState(
-		types.Params{
-			EnabledERC20Tokens: types.EnabledERC20Tokens{
+		types.NewParams(
+			types.EnabledERC20Tokens{
 				types.NewEnabledERC20Token(
 					testutil.MustNewExternalEVMAddressFromString("C02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
 					"Wrapped Ether",
@@ -220,14 +224,14 @@ func (suite *genesisTestSuite) Test_InitAndExportGenesis() {
 					6,
 				),
 			},
-			Relayer: sdk.AccAddress("hello"),
-			EnabledConversionPairs: types.NewConversionPairs(
+			sdk.AccAddress("hello"),
+			types.NewConversionPairs(
 				types.NewConversionPair(
 					testutil.MustNewInternalEVMAddressFromString("0000000000000000000000000000000000000001"),
 					"usdc",
 				),
 			),
-		},
+		),
 		types.NewERC20BridgePairs(
 			types.NewERC20BridgePair(
 				testutil.MustNewExternalEVMAddressFromString("0x0000000000000000000000000000000000000002"),
@@ -250,8 +254,8 @@ func (suite *genesisTestSuite) Test_InitAndExportGenesis() {
 
 func (suite *genesisTestSuite) Test_Marshall() {
 	state := types.NewGenesisState(
-		types.Params{
-			EnabledERC20Tokens: types.EnabledERC20Tokens{
+		types.NewParams(
+			types.EnabledERC20Tokens{
 				types.NewEnabledERC20Token(
 					testutil.MustNewExternalEVMAddressFromString("C02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
 					"Wrapped Ether",
@@ -265,14 +269,14 @@ func (suite *genesisTestSuite) Test_Marshall() {
 					6,
 				),
 			},
-			Relayer: sdk.AccAddress("hello"),
-			EnabledConversionPairs: types.NewConversionPairs(
+			sdk.AccAddress("hello"),
+			types.NewConversionPairs(
 				types.NewConversionPair(
 					testutil.MustNewInternalEVMAddressFromString("0000000000000000000000000000000000000001"),
 					"usdc",
 				),
 			),
-		},
+		),
 		types.NewERC20BridgePairs(
 			types.NewERC20BridgePair(
 				testutil.MustNewExternalEVMAddressFromString("0x0000000000000000000000000000000000000001"),
@@ -301,8 +305,8 @@ func (suite *genesisTestSuite) Test_Marshall() {
 
 func (suite *genesisTestSuite) Test_LegacyJSONConversion() {
 	state := types.NewGenesisState(
-		types.Params{
-			EnabledERC20Tokens: types.EnabledERC20Tokens{
+		types.NewParams(
+			types.EnabledERC20Tokens{
 				types.NewEnabledERC20Token(
 					testutil.MustNewExternalEVMAddressFromString("C02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
 					"Wrapped Ether",
@@ -316,14 +320,14 @@ func (suite *genesisTestSuite) Test_LegacyJSONConversion() {
 					6,
 				),
 			},
-			Relayer: sdk.AccAddress("hello"),
-			EnabledConversionPairs: types.NewConversionPairs(
+			sdk.AccAddress("hello"),
+			types.NewConversionPairs(
 				types.NewConversionPair(
 					testutil.MustNewInternalEVMAddressFromString("0000000000000000000000000000000000000001"),
 					"usdc",
 				),
 			),
-		},
+		),
 		types.NewERC20BridgePairs(
 			types.NewERC20BridgePair(
 				testutil.MustNewExternalEVMAddressFromString("0x0000000000000000000000000000000000000001"),

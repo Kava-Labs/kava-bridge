@@ -122,3 +122,112 @@ func TestConversionPair_GetAddress(t *testing.T) {
 	require.Equal(t, addr.Bytes(), pair.KavaERC20Address, "struct address should match input bytes")
 	require.Equal(t, addr, pair.GetAddress(), "get internal address should match input bytes")
 }
+
+func TestConversionPairs_Validate(t *testing.T) {
+	type errArgs struct {
+		expectPass bool
+		contains   string
+	}
+	tests := []struct {
+		name      string
+		givePairs types.ConversionPairs
+		errArgs   errArgs
+	}{
+		{
+			"valid",
+			types.NewConversionPairs(
+				types.NewConversionPair(
+					testutil.MustNewInternalEVMAddressFromString("C02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
+					"weth",
+				),
+				types.NewConversionPair(
+					testutil.MustNewInternalEVMAddressFromString("000000000000000000000000000000000000000A"),
+					"kava",
+				),
+				types.NewConversionPair(
+					testutil.MustNewInternalEVMAddressFromString("000000000000000000000000000000000000000B"),
+					"usdc",
+				),
+			),
+			errArgs{
+				expectPass: true,
+			},
+		},
+		{
+			"invalid - duplicate address",
+			types.NewConversionPairs(
+				types.NewConversionPair(
+					testutil.MustNewInternalEVMAddressFromString("C02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
+					"weth",
+				),
+				types.NewConversionPair(
+					testutil.MustNewInternalEVMAddressFromString("C02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
+					"kava",
+				),
+				types.NewConversionPair(
+					testutil.MustNewInternalEVMAddressFromString("000000000000000000000000000000000000000B"),
+					"usdc",
+				),
+			),
+			errArgs{
+				expectPass: false,
+				contains:   "found duplicate enabled conversion pair internal ERC20 address",
+			},
+		},
+		{
+			"invalid - duplicate denom",
+			types.NewConversionPairs(
+				types.NewConversionPair(
+					testutil.MustNewInternalEVMAddressFromString("C02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
+					"weth",
+				),
+				types.NewConversionPair(
+					testutil.MustNewInternalEVMAddressFromString("000000000000000000000000000000000000000A"),
+					"kava",
+				),
+				types.NewConversionPair(
+					testutil.MustNewInternalEVMAddressFromString("000000000000000000000000000000000000000B"),
+					"kava",
+				),
+			),
+			errArgs{
+				expectPass: false,
+				contains:   "found duplicate enabled conversion pair denom kava",
+			},
+		},
+		{
+			"invalid - invalid pair",
+			types.NewConversionPairs(
+				types.NewConversionPair(
+					testutil.MustNewInternalEVMAddressFromString("C02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
+					"weth",
+				),
+				types.NewConversionPair(
+					testutil.MustNewInternalEVMAddressFromString("0000000000000000000000000000000000000000"),
+					"usdc",
+				),
+				types.NewConversionPair(
+					testutil.MustNewInternalEVMAddressFromString("000000000000000000000000000000000000000B"),
+					"kava",
+				),
+			),
+			errArgs{
+				expectPass: false,
+				contains:   "address cannot be zero value",
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			err := tc.givePairs.Validate()
+
+			if tc.errArgs.expectPass {
+				require.NoError(t, err)
+			} else {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tc.errArgs.contains)
+			}
+		})
+	}
+}
