@@ -1,8 +1,8 @@
 # Concepts
 
 The bridge module deploys ERC20 contracts and mints ERC20 tokens on the Kava EVM
-for cross-chain ERC-20 token transfers. This module also supports a intra-bridge
-to transfer ERC20 tokens from Kava EVM to Kava Cosmos.
+for cross-chain ERC20 token transfers. This module also supports a intra-bridge
+to convert between Kava EVM ERC20 tokens and Kava Cosmos coins.
 
 ## Requirements
 
