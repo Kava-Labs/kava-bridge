@@ -51,6 +51,12 @@ func (suite *genesisTestSuite) Test_InitGenesis_Validation() {
 						),
 					},
 					Relayer: sdk.AccAddress("hi"),
+					EnabledConversionPairs: types.NewConversionPairs(
+						types.NewConversionPair(
+							testutil.MustNewInternalEVMAddressFromString("0000000000000000000000000000000000000001"),
+							"usdc",
+						),
+					),
 				},
 				types.NewERC20BridgePairs(
 					types.NewERC20BridgePair(
@@ -215,6 +221,12 @@ func (suite *genesisTestSuite) Test_InitAndExportGenesis() {
 				),
 			},
 			Relayer: sdk.AccAddress("hello"),
+			EnabledConversionPairs: types.NewConversionPairs(
+				types.NewConversionPair(
+					testutil.MustNewInternalEVMAddressFromString("0000000000000000000000000000000000000001"),
+					"usdc",
+				),
+			),
 		},
 		types.NewERC20BridgePairs(
 			types.NewERC20BridgePair(
@@ -254,6 +266,12 @@ func (suite *genesisTestSuite) Test_Marshall() {
 				),
 			},
 			Relayer: sdk.AccAddress("hello"),
+			EnabledConversionPairs: types.NewConversionPairs(
+				types.NewConversionPair(
+					testutil.MustNewInternalEVMAddressFromString("0000000000000000000000000000000000000001"),
+					"usdc",
+				),
+			),
 		},
 		types.NewERC20BridgePairs(
 			types.NewERC20BridgePair(
@@ -299,6 +317,12 @@ func (suite *genesisTestSuite) Test_LegacyJSONConversion() {
 				),
 			},
 			Relayer: sdk.AccAddress("hello"),
+			EnabledConversionPairs: types.NewConversionPairs(
+				types.NewConversionPair(
+					testutil.MustNewInternalEVMAddressFromString("0000000000000000000000000000000000000001"),
+					"usdc",
+				),
+			),
 		},
 		types.NewERC20BridgePairs(
 			types.NewERC20BridgePair(

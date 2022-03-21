@@ -117,6 +117,7 @@ func (suite *Suite) SetupTest() {
 				),
 			},
 			suite.RelayerAddress,
+			types.DefaultConversionPairs,
 		),
 		types.NewERC20BridgePairs(
 			types.NewERC20BridgePair(

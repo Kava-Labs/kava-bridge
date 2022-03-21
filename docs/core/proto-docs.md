@@ -4,6 +4,9 @@
 
 ## Table of Contents
 
+- [bridge/v1beta1/conversion_pair.proto](#bridge/v1beta1/conversion_pair.proto)
+    - [ConversionPair](#bridge.v1beta1.ConversionPair)
+  
 - [bridge/v1beta1/erc20.proto](#bridge/v1beta1/erc20.proto)
     - [ERC20BridgePair](#bridge.v1beta1.ERC20BridgePair)
   
@@ -31,6 +34,39 @@
     - [Msg](#bridge.v1beta1.Msg)
   
 - [Scalar Value Types](#scalar-value-types)
+
+
+
+<a name="bridge/v1beta1/conversion_pair.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## bridge/v1beta1/conversion_pair.proto
+
+
+
+<a name="bridge.v1beta1.ConversionPair"></a>
+
+### ConversionPair
+ConversionPair defines a Kava ERC20 address and corresponding denom that is
+allowed to be converted between ERC20 and sdk.Coin
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `kava_erc20_address` | [bytes](#bytes) |  | ERC20 address of the token on the Kava EVM |
+| `denom` | [string](#string) |  | Denom of the corresponding sdk.Coin |
+
+
+
+
+
+ <!-- end messages -->
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
+
+ <!-- end services -->
 
 
 
@@ -171,6 +207,7 @@ Params defines the bridge module params
 | ----- | ---- | ----- | ----------- |
 | `enabled_erc20_tokens` | [EnabledERC20Token](#bridge.v1beta1.EnabledERC20Token) | repeated | List of ERC20Tokens that are allowed to be bridged to Kava |
 | `relayer` | [bytes](#bytes) |  | Permissioned relayer address that is allowed to submit bridge messages |
+| `enabled_conversion_pairs` | [ConversionPair](#bridge.v1beta1.ConversionPair) | repeated | enabled_conversion_pairs defines the list of conversion pairs allowed to be converted between Kava ERC20 and sdk.Coin |
 
 
 

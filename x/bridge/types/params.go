@@ -16,8 +16,10 @@ import (
 var (
 	KeyEnabledERC20Tokens     = []byte("EnabledERC20Tokens")
 	KeyRelayer                = []byte("Relayer")
+	KeyEnabledConversionPairs = []byte("EnabledConversionPairs")
 	DefaultEnabledERC20Tokens = EnabledERC20Tokens{}
 	DefaultRelayer            = sdk.AccAddress{}
+	DefaultConversionPairs    = ConversionPairs{}
 )
 
 // ParamKeyTable for bridge module.
@@ -31,20 +33,22 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 	return paramtypes.ParamSetPairs{
 		paramtypes.NewParamSetPair(KeyEnabledERC20Tokens, &p.EnabledERC20Tokens, validateEnabledERC20Tokens),
 		paramtypes.NewParamSetPair(KeyRelayer, &p.Relayer, validateRelayer),
+		paramtypes.NewParamSetPair(KeyEnabledConversionPairs, &p.EnabledConversionPairs, validateConversionPairs),
 	}
 }
 
 // NewParams returns new bridge module Params.
-func NewParams(enabledERC20Tokens EnabledERC20Tokens, relayer sdk.AccAddress) Params {
+func NewParams(enabledERC20Tokens EnabledERC20Tokens, relayer sdk.AccAddress, conversionPairs ConversionPairs) Params {
 	return Params{
-		EnabledERC20Tokens: enabledERC20Tokens,
-		Relayer:            relayer,
+		EnabledERC20Tokens:     enabledERC20Tokens,
+		Relayer:                relayer,
+		EnabledConversionPairs: conversionPairs,
 	}
 }
 
 // DefaultParams returns the default parameters for bridge.
 func DefaultParams() Params {
-	return NewParams(DefaultEnabledERC20Tokens, DefaultRelayer)
+	return NewParams(DefaultEnabledERC20Tokens, DefaultRelayer, DefaultConversionPairs)
 }
 
 func (p *Params) Validate() error {
@@ -54,6 +58,10 @@ func (p *Params) Validate() error {
 
 	if p.Relayer == nil {
 		return errors.New("relayer cannot be nil")
+	}
+
+	if err := p.EnabledConversionPairs.Validate(); err != nil {
+		return err
 	}
 
 	return nil
