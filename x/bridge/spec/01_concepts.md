@@ -29,7 +29,15 @@ each withdraw (Kava to Ethereum), but are not unique in that a deposit sequence
 value can be the same as a withdraw sequence. This is used by the relayer to
 properly order transactions.
 
-## Ethereum ERC20 to Kava Transfers
+## Assumptions
+
+Kava ERC20 contracts are **trusted**, as they are only deployed by the bridge
+module account. Kava ERC20 contracts deployed by non-module accounts are not
+supported at this moment.
+
+## Ethereum Bridge
+
+### Ethereum ERC20 to Kava Transfers
 
 Before being able to bridge Ethereum ERC20 tokens, they need to be added to the
 enabled ERC20 tokens in params.
@@ -82,7 +90,7 @@ stateDiagram-v2
     }
 ```
 
-## Kava ERC20 to Ethereum Transfers
+### Kava ERC20 to Ethereum Transfers
 
 Transferring from Kava to Ethereum follows a similar pattern. Of the following
 steps, only step 1 is implemented in the bridge module and the subsequent steps
@@ -133,7 +141,9 @@ sequenceDiagram
     R->>B: Unlock(Ethereum ERC20 address, toAddr, amount)
 ```
 
-## Kava ERC20 to Kava Cosmos Coin
+## ERC20 and Cosmos Coin Conversions
+
+### Kava ERC20 to Kava Cosmos Coin
 
 ERC20 tokens on the Kava EVM can be converted to Kava `sdk.Coin`s and vice
 versa.
@@ -144,38 +154,34 @@ params and exist in state.
 
 1. Account calls `ConvertToCoin(toKavaBech32Addr, amount)` on the desired ERC20
    contract. This does two things:
-   * Emit a `ConvertERC20ToCoin(toKavaBech32Addr, amount)` event.
+   * Emit a `ConvertToCoin(toKavaBech32Addr, amount)` event.
    * Transfer token amount to the module account address.
 2. Similar to Kava ERC20 to Ethereum transfers, a `PostTxProcessing` EVM hook
-   will look for corresponding transactions from enabled ERC20 contracts that
-   contain both a `ConvertERC20ToCoin` and `Transfer` event.
+   will look for corresponding transactions only emitted from from enabled
+   `InternalConversionPair`s that contain both a `ConvertToCoin` and `Transfer`
+   event.
 3. Bridge module mints `sdk.Coin` with the corresponding amount. The denom is
-   fetched from params containing a list of enabled `InternalBridgePair`s.
+   defined in the `InternalConversionPair`.
 4. Minted coins are sent to the provided `toKavaBech32Addr`.
 
-## Kava Cosmos Coin to Kava ERC20
+### Kava Cosmos Coin to Kava ERC20
 
 Similar to how only ERC20 tokens that originate from Ethereum can be bridged
 from Kava to Ethereum, converting cosmos coins to Kava ERC20 can only be done
 with coins that originated from the Kava EVM. This means assets that are native
-Cosmos coins such as SWP, HARD, native KAVA cannot be transferred this way at
-this moment.
+Cosmos coins such as SWP, HARD, native KAVA, IBC tokens, etc. **cannot** be
+converted this way.
 
-Conversions back to ERC20 are as follows.
+Conversions back to Kava ERC20 are as follows.
 
 1. **Kava** account submits `ConvertCoinToERC20` message. This contains the
    sendTo Ethereum address, and coins (containing both denom and amount).
-2. Module checks enabled `InternalBridgePair`s to see if this is permitted for
-   the provided coins.
+2. Module checks if the account balance is greater than the desired conversion
+   amount and checks enabled `InternalConversionPair`s to see if this is
+   permitted for the provided coins.
 3. Cosmos coins are transferred to the bridge module account.
 4. Module account transfers the equivalent ERC20 token to the provided address.
 5. Burn cosmos coins.
 6. Ensure account ERC20 token balance increased by the requested amount.
-
-### Assumptions
-
-Kava ERC20 contracts are **trusted**, as they are only deployed by the bridge
-module account. Kava ERC20 contracts deployed by non-module accounts are not
-supported at this moment.
 
 [cosmos-event]: https://docs.cosmos.network/master/core/events.html
