@@ -190,6 +190,36 @@ func (suite *EVMHooksTestSuite) TestERC20Withdraw_SequenceIncrement() {
 	)
 }
 
+func (suite *EVMHooksTestSuite) TestERC20Withdraw_SequenceWrap() {
+	toKey, err := ethsecp256k1.GenerateKey()
+	suite.Require().NoError(err)
+	withdrawToAddr := common.BytesToAddress(toKey.PubKey().Address())
+	withdrawAmount := big.NewInt(10)
+
+	// Set next sequence to max int
+	suite.App.BridgeKeeper.SetNextWithdrawSequence(suite.Ctx, types.MaxWithdrawSequence)
+
+	// Check it was set
+	beforeWithdrawSeq, err := suite.App.BridgeKeeper.GetNextWithdrawSequence(suite.Ctx)
+	suite.Require().NoError(err)
+	suite.Require().Equal(
+		types.MaxWithdrawSequence,
+		beforeWithdrawSeq,
+		"next withdraw sequence should be max int",
+	)
+
+	// Send Withdraw TX
+	_ = suite.Withdraw(suite.pair.GetInternalAddress(), withdrawToAddr, withdrawAmount)
+
+	afterWithdrawSeq, err := suite.App.BridgeKeeper.GetNextWithdrawSequence(suite.Ctx)
+	suite.Require().NoError(err)
+	suite.Require().Equal(
+		sdk.ZeroInt(),
+		afterWithdrawSeq,
+		"next withdraw sequence should wrap around to 0",
+	)
+}
+
 func (suite *EVMHooksTestSuite) TestERC20Withdraw_EmitsEvent() {
 	toKey, err := ethsecp256k1.GenerateKey()
 	suite.Require().NoError(err)

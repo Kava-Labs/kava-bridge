@@ -84,11 +84,12 @@ func (h Hooks) PostTxProcessing(
 		externalERC20Addr := pair.GetExternalAddress()
 		toAddr := common.BytesToAddress(log.Topics[2].Bytes())
 
+		// Panics since we actually want to revert the entire TX if any of these
+		// fail otherwise funds would be burned without event emitted for
+		// relayer to unlock.
+
 		sequence, err := h.k.GetNextWithdrawSequence(ctx)
 		if err != nil {
-			// Panic since we actually want to revert the entire TX if this
-			// fails otherwise funds would be burned without event emitted for
-			// relayer to unlock.
 			panic(err)
 		}
 
