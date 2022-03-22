@@ -25,3 +25,11 @@ var ModuleEVMAddress common.Address
 func init() {
 	ModuleEVMAddress = common.BytesToAddress(authtypes.NewModuleAddress(ModuleName).Bytes())
 }
+
+// Key prefixes
+var (
+	BridgedERC20PairKeyPrefix           = []byte{0x01} // prefix for keys that store a ERC20 bridge pair
+	BridgedERC20PairByExternalKeyPrefix = []byte{0x02} // prefix for keys that store the ID of a ERC20 bridge pair by external address
+	BridgedERC20PairByInternalKeyPrefix = []byte{0x03} // prefix for keys that store the ID of a ERC20 bridge pair by internal address
+	NextWithdrawSequenceKeyPrefix       = []byte{0x04} // prefix for key of next withdraw sequence
+)

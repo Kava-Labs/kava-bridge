@@ -337,6 +337,7 @@ func NewApp(
 		tracer,
 	)
 
+	// BridgeKeeper must be assigned before EvmKeeper hooks are set
 	app.BridgeKeeper = bridgekeeper.NewKeeper(
 		appCodec,
 		keys[bridgetypes.StoreKey],
@@ -344,6 +345,12 @@ func NewApp(
 		app.BankKeeper,
 		app.AccountKeeper,
 		app.EvmKeeper,
+	)
+
+	app.EvmKeeper = app.EvmKeeper.SetHooks(
+		evmkeeper.NewMultiEvmHooks(
+			app.BridgeKeeper.Hooks(),
+		),
 	)
 
 	// register the proposal types

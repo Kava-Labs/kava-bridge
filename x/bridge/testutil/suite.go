@@ -1,11 +1,22 @@
 package testutil
 
 import (
+	"encoding/hex"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"math/big"
+	"reflect"
 	"time"
 
+	proto "github.com/gogo/protobuf/proto"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
+	ethtypes "github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/crypto"
 
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -17,14 +28,19 @@ import (
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/tharsis/ethermint/crypto/ethsecp256k1"
+	"github.com/tharsis/ethermint/server/config"
+	etherminttests "github.com/tharsis/ethermint/tests"
 	etherminttypes "github.com/tharsis/ethermint/types"
 	evmtypes "github.com/tharsis/ethermint/x/evm/types"
 	feemarkettypes "github.com/tharsis/ethermint/x/feemarket/types"
 
 	"github.com/kava-labs/kava-bridge/app"
+	"github.com/kava-labs/kava-bridge/contract"
+	"github.com/kava-labs/kava-bridge/x/bridge/keeper"
 	"github.com/kava-labs/kava-bridge/x/bridge/types"
 )
 
@@ -38,8 +54,10 @@ type Suite struct {
 	Key2           *ethsecp256k1.PrivKey
 	ConsAddress    sdk.ConsAddress
 	RelayerAddress sdk.AccAddress
+	RelayerKey     *ethsecp256k1.PrivKey
 
-	QueryClientEvm evmtypes.QueryClient
+	QueryClientEvm    evmtypes.QueryClient
+	QueryClientBridge types.QueryClient
 }
 
 func (suite *Suite) SetupTest() {
@@ -55,6 +73,7 @@ func (suite *Suite) SetupTest() {
 	relayerPriv, err := ethsecp256k1.GenerateKey()
 	suite.Require().NoError(err)
 	suite.RelayerAddress = sdk.AccAddress(relayerPriv.PubKey().Address())
+	suite.RelayerKey = relayerPriv
 
 	// test user keys that have no minting permissions
 	suite.Key1, err = ethsecp256k1.GenerateKey()
@@ -75,30 +94,42 @@ func (suite *Suite) SetupTest() {
 		nil,
 	)
 
-	bridgeGs := types.NewGenesisState(types.NewParams(
-		types.EnabledERC20Tokens{
-			types.NewEnabledERC20Token(
-				"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
-				"Wrapped Ether",
-				"WETH",
-				18,
+	bridgeGs := types.NewGenesisState(
+		types.NewParams(
+			types.EnabledERC20Tokens{
+				types.NewEnabledERC20Token(
+					MustNewExternalEVMAddressFromString("C02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
+					"Wrapped Ether",
+					"WETH",
+					18,
+				),
+				types.NewEnabledERC20Token(
+					MustNewExternalEVMAddressFromString("000000000000000000000000000000000000000A"),
+					"Wrapped Kava",
+					"WKAVA",
+					6,
+				),
+				types.NewEnabledERC20Token(
+					MustNewExternalEVMAddressFromString("A0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"),
+					"USD Coin",
+					"USDC",
+					6,
+				),
+			},
+			suite.RelayerAddress,
+		),
+		types.NewERC20BridgePairs(
+			types.NewERC20BridgePair(
+				MustNewExternalEVMAddressFromString("0x0000000000000000000000000000000000000001"),
+				MustNewInternalEVMAddressFromString("0x000000000000000000000000000000000000000A"),
 			),
-			types.NewEnabledERC20Token(
-				"0x0000000000000000000000000000000000000000",
-				"Wrapped Kava",
-				"WKAVA",
-				6,
+			types.NewERC20BridgePair(
+				MustNewExternalEVMAddressFromString("0x0000000000000000000000000000000000000002"),
+				MustNewInternalEVMAddressFromString("0x000000000000000000000000000000000000000B"),
 			),
-			types.NewEnabledERC20Token(
-				// Missing 0x prefix allowed
-				"A0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
-				"USD Coin",
-				"USDC",
-				6,
-			),
-		},
-		suite.RelayerAddress,
-	))
+		),
+		types.DefaultNextWithdrawSequence,
+	)
 
 	feemarketGenesis := feemarkettypes.DefaultGenesisState()
 	feemarketGenesis.Params.EnableHeight = 1
@@ -157,9 +188,12 @@ func (suite *Suite) SetupTest() {
 
 	suite.App.StakingKeeper.SetValidator(suite.Ctx, validator)
 
-	queryHelperEvm := baseapp.NewQueryServerTestHelper(suite.Ctx, suite.App.InterfaceRegistry())
-	evmtypes.RegisterQueryServer(queryHelperEvm, suite.App.EvmKeeper)
-	suite.QueryClientEvm = evmtypes.NewQueryClient(queryHelperEvm)
+	queryHelper := baseapp.NewQueryServerTestHelper(suite.Ctx, suite.App.InterfaceRegistry())
+	evmtypes.RegisterQueryServer(queryHelper, suite.App.EvmKeeper)
+	suite.QueryClientEvm = evmtypes.NewQueryClient(queryHelper)
+
+	types.RegisterQueryServer(queryHelper, keeper.NewQueryServerImpl(suite.App.BridgeKeeper))
+	suite.QueryClientBridge = types.NewQueryClient(queryHelper)
 
 	// We need to commit so that the ethermint feemarket beginblock runs to set the minfee
 	// feeMarketKeeper.GetBaseFee() will return nil otherwise
@@ -176,4 +210,219 @@ func (suite *Suite) Commit() {
 
 	// update ctx
 	suite.Ctx = suite.App.NewContext(false, header)
+}
+
+func (suite *Suite) GetERC20BalanceOf(
+	contractAbi abi.ABI,
+	contractAddr types.InternalEVMAddress,
+	accountAddr types.InternalEVMAddress,
+) *big.Int {
+	// Query ERC20.balanceOf()
+	addr := common.BytesToAddress(suite.Key1.PubKey().Address())
+	res, err := suite.QueryContract(
+		contract.ERC20MintableBurnableContract.ABI,
+		addr,
+		suite.Key1,
+		contractAddr,
+		"balanceOf",
+		accountAddr.Address,
+	)
+	suite.Require().NoError(err)
+	suite.Require().Len(res, 1)
+
+	balance, ok := res[0].(*big.Int)
+	suite.Require().True(ok, "balanceOf should respond with *big.Int")
+	return balance
+}
+
+func (suite *Suite) QueryContract(
+	contractAbi abi.ABI,
+	from common.Address,
+	fromKey *ethsecp256k1.PrivKey,
+	contract types.InternalEVMAddress,
+	method string,
+	args ...interface{},
+) ([]interface{}, error) {
+	// Pack query args
+	data, err := contractAbi.Pack(method, args...)
+	suite.Require().NoError(err)
+
+	// Send TX
+	res := suite.SendTx(contract, from, fromKey, data)
+
+	// Check for VM errors and unpack returned data
+	switch res.VmError {
+	case vm.ErrExecutionReverted.Error():
+		response, err := abi.UnpackRevert(res.Ret)
+		suite.Require().NoError(err)
+
+		return nil, errors.New(response)
+	case "": // No error, continue
+	default:
+		panic(fmt.Sprintf("unhandled vm error response: %v", res.VmError))
+	}
+
+	// Unpack response
+	unpackedRes, err := contractAbi.Unpack(method, res.Ret)
+	suite.Require().NoErrorf(err, "failed to unpack method %v response", method)
+
+	return unpackedRes, nil
+}
+
+func (suite *Suite) SendTx(
+	contractAddr types.InternalEVMAddress,
+	from common.Address,
+	signerKey *ethsecp256k1.PrivKey,
+	transferData []byte,
+) *evmtypes.MsgEthereumTxResponse {
+	ctx := sdk.WrapSDKContext(suite.Ctx)
+	chainID := suite.App.EvmKeeper.ChainID()
+
+	args, err := json.Marshal(&evmtypes.TransactionArgs{
+		To:   &contractAddr.Address,
+		From: &from,
+		Data: (*hexutil.Bytes)(&transferData),
+	})
+	suite.Require().NoError(err)
+	res, err := suite.QueryClientEvm.EstimateGas(ctx, &evmtypes.EthCallRequest{
+		Args:   args,
+		GasCap: uint64(config.DefaultGasCap),
+	})
+	suite.Require().NoError(err)
+
+	nonce := suite.App.EvmKeeper.GetNonce(suite.Ctx, suite.Address)
+
+	baseFee := suite.App.FeeMarketKeeper.GetBaseFee(suite.Ctx)
+	suite.Require().NotNil(baseFee, "base fee is nil")
+
+	// Mint the max gas to the FeeCollector to ensure balance in case of refund
+	suite.MintFeeCollector(sdk.NewCoins(
+		sdk.NewCoin(
+			"ukava",
+			sdk.NewInt(baseFee.Int64()*int64(res.Gas)),
+		)))
+
+	ercTransferTx := evmtypes.NewTx(
+		chainID,
+		nonce,
+		&contractAddr.Address,
+		nil,       // amount
+		res.Gas*2, // gasLimit, TODO: runs out of gas with just res.Gas, ex: estimated was 21572 but used 24814
+		nil,       // gasPrice
+		suite.App.FeeMarketKeeper.GetBaseFee(suite.Ctx), // gasFeeCap
+		big.NewInt(1), // gasTipCap
+		transferData,
+		&ethtypes.AccessList{}, // accesses
+	)
+
+	ercTransferTx.From = hex.EncodeToString(signerKey.PubKey().Address())
+	err = ercTransferTx.Sign(ethtypes.LatestSignerForChainID(chainID), etherminttests.NewSigner(signerKey))
+	suite.Require().NoError(err)
+
+	rsp, err := suite.App.EvmKeeper.EthereumTx(ctx, ercTransferTx)
+	suite.Require().NoError(err)
+	// Do not check vm error here since we want to check for errors later
+
+	return rsp
+}
+
+func (suite *Suite) MintFeeCollector(coins sdk.Coins) {
+	err := suite.App.BankKeeper.MintCoins(suite.Ctx, minttypes.ModuleName, coins)
+	suite.Require().NoError(err)
+	err = suite.App.BankKeeper.SendCoinsFromModuleToModule(
+		suite.Ctx,
+		minttypes.ModuleName,
+		authtypes.FeeCollectorName,
+		coins,
+	)
+	suite.Require().NoError(err)
+}
+
+// GetEvents returns emitted events on the sdk context
+func (suite *Suite) GetEvents() sdk.Events {
+	return suite.Ctx.EventManager().Events()
+}
+
+// EventsContains asserts that the expected event is in the provided events
+func (suite *Suite) EventsContains(events sdk.Events, expectedEvent sdk.Event) {
+	foundMatch := false
+	for _, event := range events {
+		if event.Type == expectedEvent.Type {
+			if reflect.DeepEqual(attrsToMap(expectedEvent.Attributes), attrsToMap(event.Attributes)) {
+				foundMatch = true
+			}
+		}
+	}
+
+	suite.Truef(foundMatch, "event of type %s not found or did not match", expectedEvent.Type)
+}
+
+// TypedEventsContains asserts that the expected typed event is in the provided events
+func (suite *Suite) TypedEventsContains(events sdk.Events, tev proto.Message) {
+	foundMatch := false
+	for _, event := range events.ToABCIEvents() {
+		// Ignore non-typed events
+		msg, _ := sdk.ParseTypedEvent(event)
+		if reflect.DeepEqual(msg, tev) {
+			foundMatch = true
+		}
+	}
+
+	suite.Truef(foundMatch, "event of type %s not found or did not match", reflect.TypeOf(tev))
+}
+
+// TypedEventsDoesNotContain asserts that the expected typed event is **not** in the provided events
+func (suite *Suite) TypedEventsDoesNotContain(events sdk.Events, tev proto.Message) {
+	found := suite.TypedEventsContainsType(events, tev)
+	suite.Require().False(found, "event of type %v should not be found in events", reflect.TypeOf(tev))
+}
+
+// TypedEventsContainsType returns true if the that the expected typed event
+// **type** is in the provided events. This only checks the type, not the value.
+func (suite *Suite) TypedEventsContainsType(events sdk.Events, tev proto.Message) bool {
+	for _, event := range events.ToABCIEvents() {
+		// Ignore non-typed events
+		msg, err := sdk.ParseTypedEvent(event)
+		if err != nil {
+			continue
+		}
+
+		if reflect.TypeOf(msg) == reflect.TypeOf(tev) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func attrsToMap(attrs []abci.EventAttribute) []sdk.Attribute {
+	out := []sdk.Attribute{}
+
+	for _, attr := range attrs {
+		out = append(out, sdk.NewAttribute(string(attr.Key), string(attr.Value)))
+	}
+
+	return out
+}
+
+// MustNewExternalEVMAddressFromString returns a new ExternalEVMAddress from a
+// hex string. This will panic if the input hex string is invalid.
+func MustNewExternalEVMAddressFromString(addrStr string) types.ExternalEVMAddress {
+	addr, err := types.NewExternalEVMAddressFromString(addrStr)
+	if err != nil {
+		panic(err)
+	}
+
+	return addr
+}
+
+// MustNewInternalEVMAddressFromString returns a new InternalEVMAddress from a
+// hex string. This will panic if the input hex string is invalid.
+func MustNewInternalEVMAddressFromString(addrStr string) types.InternalEVMAddress {
+	addr, err := types.NewInternalEVMAddressFromString(addrStr)
+	if err != nil {
+		panic(err)
+	}
+
+	return addr
 }

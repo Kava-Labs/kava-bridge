@@ -4,18 +4,118 @@
 
 ## Table of Contents
 
+- [bridge/v1beta1/erc20.proto](#bridge/v1beta1/erc20.proto)
+    - [ERC20BridgePair](#bridge.v1beta1.ERC20BridgePair)
+  
+- [bridge/v1beta1/event.proto](#bridge/v1beta1/event.proto)
+    - [EventBridgeEthereumToKava](#bridge.v1beta1.EventBridgeEthereumToKava)
+    - [EventBridgeKavaToEthereum](#bridge.v1beta1.EventBridgeKavaToEthereum)
+  
 - [bridge/v1beta1/genesis.proto](#bridge/v1beta1/genesis.proto)
     - [EnabledERC20Token](#bridge.v1beta1.EnabledERC20Token)
     - [GenesisState](#bridge.v1beta1.GenesisState)
     - [Params](#bridge.v1beta1.Params)
   
+- [bridge/v1beta1/query.proto](#bridge/v1beta1/query.proto)
+    - [QueryERC20BridgePairsRequest](#bridge.v1beta1.QueryERC20BridgePairsRequest)
+    - [QueryERC20BridgePairsResponse](#bridge.v1beta1.QueryERC20BridgePairsResponse)
+    - [QueryParamsRequest](#bridge.v1beta1.QueryParamsRequest)
+    - [QueryParamsResponse](#bridge.v1beta1.QueryParamsResponse)
+  
+    - [Query](#bridge.v1beta1.Query)
+  
 - [bridge/v1beta1/tx.proto](#bridge/v1beta1/tx.proto)
-    - [MsgBridgeERC20FromEthereum](#bridge.v1beta1.MsgBridgeERC20FromEthereum)
-    - [MsgBridgeERC20FromEthereumResponse](#bridge.v1beta1.MsgBridgeERC20FromEthereumResponse)
+    - [MsgBridgeEthereumToKava](#bridge.v1beta1.MsgBridgeEthereumToKava)
+    - [MsgBridgeEthereumToKavaResponse](#bridge.v1beta1.MsgBridgeEthereumToKavaResponse)
   
     - [Msg](#bridge.v1beta1.Msg)
   
 - [Scalar Value Types](#scalar-value-types)
+
+
+
+<a name="bridge/v1beta1/erc20.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## bridge/v1beta1/erc20.proto
+
+
+
+<a name="bridge.v1beta1.ERC20BridgePair"></a>
+
+### ERC20BridgePair
+ERC20BridgePair defines an ERC20 token bridged between external and Kava EVM
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `external_erc20_address` | [bytes](#bytes) |  | external_erc20_address represents the external EVM ERC20 address |
+| `internal_erc20_address` | [bytes](#bytes) |  | internal_erc20_address represents the corresponding internal Kava EVM ERC20 address |
+
+
+
+
+
+ <!-- end messages -->
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
+
+ <!-- end services -->
+
+
+
+<a name="bridge/v1beta1/event.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## bridge/v1beta1/event.proto
+
+
+
+<a name="bridge.v1beta1.EventBridgeEthereumToKava"></a>
+
+### EventBridgeEthereumToKava
+EventBridgeEthereumToKava is emitted on Msg/BridgeEthereumToKava
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `relayer` | [string](#string) |  | Relayer is the address of the bridge relayer |
+| `ethereum_erc20_address` | [string](#string) |  | EthereumErc20Address is the originating ERC20 address on Ethereum |
+| `receiver` | [string](#string) |  | Receiver is the Kava address to bridge funds to |
+| `amount` | [string](#string) |  | Amount is the amount to be bridged |
+| `sequence` | [string](#string) |  | Sequence is the unique Ethereum lock sequence re-emitted |
+
+
+
+
+
+
+<a name="bridge.v1beta1.EventBridgeKavaToEthereum"></a>
+
+### EventBridgeKavaToEthereum
+EventBridgeKavaToEthereum is emitted on Kava ERC20 Withdraw
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `ethereum_erc20_address` | [string](#string) |  | EthereumErc20Address is the ERC20 address on Ethereum to unlock funds to |
+| `receiver` | [string](#string) |  | Receiver is the Ethereum address to unlock funds to |
+| `amount` | [string](#string) |  | Amount is the amount to be unlocked on Ethereum |
+| `sequence` | [string](#string) |  | Sequence is the unique Kava bridge withdraw sequence |
+
+
+
+
+
+ <!-- end messages -->
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
+
+ <!-- end services -->
 
 
 
@@ -34,7 +134,7 @@ EnabledERC20Token defines an external ERC20 that is allowed to be bridged to Kav
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `address` | [string](#string) |  | Address of the contract on Ethereum |
+| `address` | [bytes](#bytes) |  | Address of the contract on Ethereum |
 | `name` | [string](#string) |  | Name of the token. |
 | `symbol` | [string](#string) |  | Symbol of the ERC20 token, usually a shorter version of the name. |
 | `decimals` | [uint32](#uint32) |  | Number of decimals the ERC20 uses to get its user representation. The max value is an unsigned 8 bit integer, but is an uint32 as the smallest protobuf integer type. |
@@ -52,7 +152,9 @@ GenesisState defines the bridge module's genesis state.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `params` | [Params](#bridge.v1beta1.Params) |  | params defines all the paramaters of the module. |
+| `params` | [Params](#bridge.v1beta1.Params) |  | params defines all the parameters of the module. |
+| `erc20_bridge_pairs` | [ERC20BridgePair](#bridge.v1beta1.ERC20BridgePair) | repeated | erc20_bridge_pairs defines all of the bridged erc20 tokens. |
+| `next_withdraw_sequence` | [string](#string) |  | next_withdraw_sequence defines the unique incrementing sequence per withdraw tx. |
 
 
 
@@ -84,6 +186,83 @@ Params defines the bridge module params
 
 
 
+<a name="bridge/v1beta1/query.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## bridge/v1beta1/query.proto
+
+
+
+<a name="bridge.v1beta1.QueryERC20BridgePairsRequest"></a>
+
+### QueryERC20BridgePairsRequest
+QueryERC20BridgePairsRequest defines the request type for querying x/bridge ERC20 pairs.
+
+
+
+
+
+
+<a name="bridge.v1beta1.QueryERC20BridgePairsResponse"></a>
+
+### QueryERC20BridgePairsResponse
+QueryERC20BridgePairsRequest defines the response type for querying x/bridge ERC20 pairs.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `erc20_bridge_pairs` | [ERC20BridgePair](#bridge.v1beta1.ERC20BridgePair) | repeated | erc20_bridge_pairs defines all of the currently bridged erc20 tokens. |
+
+
+
+
+
+
+<a name="bridge.v1beta1.QueryParamsRequest"></a>
+
+### QueryParamsRequest
+QueryParamsRequest defines the request type for querying x/bridge parameters.
+
+
+
+
+
+
+<a name="bridge.v1beta1.QueryParamsResponse"></a>
+
+### QueryParamsResponse
+QueryParamsResponse defines the response type for querying x/bridge parameters.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `params` | [Params](#bridge.v1beta1.Params) |  |  |
+
+
+
+
+
+ <!-- end messages -->
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
+
+
+<a name="bridge.v1beta1.Query"></a>
+
+### Query
+Query defines the gRPC querier service for bridge module
+
+| Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
+| ----------- | ------------ | ------------- | ------------| ------- | -------- |
+| `Params` | [QueryParamsRequest](#bridge.v1beta1.QueryParamsRequest) | [QueryParamsResponse](#bridge.v1beta1.QueryParamsResponse) | Params queries all parameters of the bridge module. | GET|/kava/bridge/v1beta1/params|
+| `ERC20BridgePairs` | [QueryERC20BridgePairsRequest](#bridge.v1beta1.QueryERC20BridgePairsRequest) | [QueryERC20BridgePairsResponse](#bridge.v1beta1.QueryERC20BridgePairsResponse) | ERC20BridgePairs queries the bridge address pairs | GET|/kava/bridge/v1beta1/bridge-erc20-pairs|
+
+ <!-- end services -->
+
+
+
 <a name="bridge/v1beta1/tx.proto"></a>
 <p align="right"><a href="#top">Top</a></p>
 
@@ -91,15 +270,15 @@ Params defines the bridge module params
 
 
 
-<a name="bridge.v1beta1.MsgBridgeERC20FromEthereum"></a>
+<a name="bridge.v1beta1.MsgBridgeEthereumToKava"></a>
 
-### MsgBridgeERC20FromEthereum
-MsgBridgeERC20FromEthereum defines a ERC20 bridge transfer from Ethereum.
+### MsgBridgeEthereumToKava
+MsgBridgeEthereumToKava defines a ERC20 bridge transfer from Ethereum to Kava.
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `relayer` | [string](#string) |  |  |
+| `relayer` | [string](#string) |  | Address of the bridge relayer |
 | `ethereum_erc20_address` | [string](#string) |  | Originating Ethereum ERC20 contract address |
 | `amount` | [string](#string) |  | ERC20 token amount to transfer |
 | `receiver` | [string](#string) |  | Receiver hex address on Kava |
@@ -110,10 +289,10 @@ MsgBridgeERC20FromEthereum defines a ERC20 bridge transfer from Ethereum.
 
 
 
-<a name="bridge.v1beta1.MsgBridgeERC20FromEthereumResponse"></a>
+<a name="bridge.v1beta1.MsgBridgeEthereumToKavaResponse"></a>
 
-### MsgBridgeERC20FromEthereumResponse
-MsgBridgeERC20FromEthereumResponse defines the response value from
+### MsgBridgeEthereumToKavaResponse
+MsgBridgeEthereumToKavaResponse defines the response value from
 
 
 
@@ -133,7 +312,7 @@ Msg defines the bridge Msg service.
 
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
-| `BridgeERC20FromEthereum` | [MsgBridgeERC20FromEthereum](#bridge.v1beta1.MsgBridgeERC20FromEthereum) | [MsgBridgeERC20FromEthereumResponse](#bridge.v1beta1.MsgBridgeERC20FromEthereumResponse) | BridgeERC20FromEthereum defines a method for bridging ERC20 tokens from Ethereum. | |
+| `BridgeEthereumToKava` | [MsgBridgeEthereumToKava](#bridge.v1beta1.MsgBridgeEthereumToKava) | [MsgBridgeEthereumToKavaResponse](#bridge.v1beta1.MsgBridgeEthereumToKavaResponse) | BridgeEthereumToKava defines a method for bridging ERC20 tokens from Ethereum to Kava. | |
 
  <!-- end services -->
 

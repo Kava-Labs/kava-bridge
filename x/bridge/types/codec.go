@@ -4,16 +4,22 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/msgservice"
 )
 
 // RegisterLegacyAminoCodec registers the necessary bridge interfaces and concrete types
 // on the provided LegacyAmino codec. These types are used for Amino JSON serialization.
 func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
-	// TODO:
+	cdc.RegisterConcrete(&MsgBridgeEthereumToKava{}, "bridge/MsgBridgeEthereumToKava", nil)
 }
 
 func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
-	// TODO:
+	registry.RegisterImplementations((*sdk.Msg)(nil),
+		&MsgBridgeEthereumToKava{},
+	)
+
+	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)
 }
 
 var (

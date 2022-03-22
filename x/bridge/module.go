@@ -18,6 +18,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 
+	"github.com/kava-labs/kava-bridge/x/bridge/client/cli"
 	"github.com/kava-labs/kava-bridge/x/bridge/keeper"
 	"github.com/kava-labs/kava-bridge/x/bridge/types"
 )
@@ -73,8 +74,7 @@ func (AppModuleBasic) GetTxCmd() *cobra.Command {
 
 // GetQueryCmd returns no root query command for the bridge module.
 func (AppModuleBasic) GetQueryCmd() *cobra.Command {
-	// TODO: return cli.GetQueryCmd()
-	return nil
+	return cli.GetQueryCmd()
 }
 
 // RegisterInterfaces registers interfaces and implementations of the bridge module.
@@ -113,14 +113,12 @@ func (am AppModule) RegisterInvariants(ir sdk.InvariantRegistry) {
 // RegisterQueryService registers a GRPC query service to respond to the
 // module-specific GRPC queries.
 func (am AppModule) RegisterServices(cfg module.Configurator) {
-	// TODO:
-	// types.RegisterMsgServer(cfg.MsgServer(), am.keeper)
-	// types.RegisterQueryServer(cfg.QueryServer(), am.keeper)
+	types.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServerImpl(am.keeper))
+	types.RegisterQueryServer(cfg.QueryServer(), keeper.NewQueryServerImpl(am.keeper))
 }
 
 // Route returns the message routing key for the bridge module.
 func (am AppModule) Route() sdk.Route {
-	// TODO:
 	return sdk.Route{}
 }
 
@@ -135,13 +133,11 @@ func (am AppModule) LegacyQuerierHandler(legacyQuerierCdc *codec.LegacyAmino) sd
 
 // BeginBlock returns the begin block for the bridge module.
 func (am AppModule) BeginBlock(ctx sdk.Context, req abci.RequestBeginBlock) {
-	// am.keeper.BeginBlock(ctx, req)
 }
 
 // EndBlock returns the end blocker for the bridge module. It returns no validator
 // updates.
 func (am AppModule) EndBlock(ctx sdk.Context, req abci.RequestEndBlock) []abci.ValidatorUpdate {
-	// return am.keeper.EndBlock(ctx, req)
 	return nil
 }
 

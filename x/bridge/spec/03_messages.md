@@ -2,13 +2,13 @@
 
 ## Ethereum ERC20 to Kava Transfers
 
-Ethereum ERC20 tokens are transferred with the `MsgERC20FromEthereum` message
+Ethereum ERC20 tokens are transferred with the `MsgBridgeEthereumToKava` message
 type. Only addresses assigned as a permissioned relayer set in [params] may
 submit this message, otherwise the transaction will be rejected.
 
 ```go
-// MsgBridgeERC20FromEthereum defines a ERC20 bridge transfer from Ethereum.
-type MsgBridgeERC20FromEthereum struct {
+// MsgBridgeEthereumToKava defines a ERC20 bridge transfer from Ethereum to Kava.
+type MsgBridgeEthereumToKava struct {
 	Relayer string `protobuf:"bytes,1,opt,name=relayer,proto3" json:"relayer,omitempty"`
 	// Originating Ethereum ERC20 contract address
 	EthereumERC20Address string `protobuf:"bytes,2,opt,name=ethereum_erc20_address,json=ethereumErc20Address,proto3" json:"ethereum_erc20_address,omitempty"`
