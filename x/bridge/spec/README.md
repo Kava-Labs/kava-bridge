@@ -3,8 +3,8 @@
 ## Abstract
 
 The `x/bridge` module handles cross-chain transfers of ERC-20 tokens between
-external blockchains (Ethereum) and Kava's EVM, and bidirectional internal
-bridge to convert between ERC20 tokens on Kava EVM and Kava Cosmos `sdk.Coin`.
+external blockchains (Ethereum) and Kava's EVM, and an internal bridge to
+convert between ERC20 tokens on Kava EVM and Kava Cosmos `sdk.Coin`.
 
 This allows the following:
 
