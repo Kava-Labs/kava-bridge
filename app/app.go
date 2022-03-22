@@ -160,7 +160,7 @@ var (
 		stakingtypes.NotBondedPoolName: {authtypes.Burner, authtypes.Staking},
 		govtypes.ModuleName:            {authtypes.Burner},
 		evmtypes.ModuleName:            {authtypes.Minter, authtypes.Burner}, // used for secure addition and subtraction of balance using module account
-		bridgetypes.ModuleName:         nil,                                  // Bridge only mint and burns ERC20 tokens so Cosmos mint/burn is not needed
+		bridgetypes.ModuleName:         {authtypes.Minter, authtypes.Burner}, // used for converting between erc20 and sdk.Coin
 	}
 
 	// module accounts that are allowed to receive tokens
