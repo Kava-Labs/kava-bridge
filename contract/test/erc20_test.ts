@@ -5,6 +5,7 @@ import {
   ERC20MintableBurnable,
   ERC20MintableBurnable__factory as ERC20MintableBurnableFactory,
 } from "../typechain-types";
+import { kavaAddrToBytes32, testKavaAddrs } from "./utils";
 
 describe("ERC20MintableBurnable", function () {
   let erc20: ERC20MintableBurnable;
@@ -150,6 +151,62 @@ describe("ERC20MintableBurnable", function () {
       );
       await expect(withdrawTx).to.be.revertedWith(
         "ERC20: insufficient allowance"
+      );
+    });
+  });
+
+  describe("convertToCoin", function () {
+    let amount: bigint;
+    let toKavaAddr: string;
+
+    beforeEach(async function () {
+      const tx = await erc20
+        .connect(owner)
+        .mint(await sender.getAddress(), 100n);
+
+      await tx.wait();
+      erc20 = erc20.connect(sender);
+      amount = 10n;
+
+      toKavaAddr = ethers.utils.hexlify(kavaAddrToBytes32(testKavaAddrs[0]));
+    });
+
+    it("should emit a ConvertToCoin event with (sender, toKavaAddr, amount)", async function () {
+      const withdrawTx = erc20.convertToCoin(toKavaAddr, amount);
+
+      await expect(withdrawTx)
+        .to.emit(erc20, "ConvertToCoin")
+        .withArgs(await sender.getAddress(), toKavaAddr, amount);
+    });
+
+    it("should index sender, toAddr in the ConvertToCoin event", async function () {
+      const event =
+        erc20.interface.events["ConvertToCoin(address,bytes32,uint256)"];
+
+      expect(event.inputs).to.be.length(3);
+
+      const [tokenParam, toAddrParam, amountParam] = event.inputs;
+
+      expect(tokenParam.name).to.equal("sender");
+      expect(tokenParam.indexed).to.equal(true);
+
+      expect(toAddrParam.name).to.equal("toKavaAddr");
+      expect(toAddrParam.indexed).to.equal(true);
+
+      expect(amountParam.name).to.equal("amount");
+      expect(amountParam.indexed).to.equal(false);
+    });
+
+    it("should transfer amount to owner address", async function () {
+      await expect(() =>
+        erc20.convertToCoin(toKavaAddr, amount)
+      ).to.changeTokenBalances(erc20, [sender, owner], [-1n * amount, amount]);
+    });
+
+    it("should fail when ERC20 withdraw amount exceeds balance", async function () {
+      const withdrawTx = erc20.convertToCoin(toKavaAddr, amount * 100n);
+      await expect(withdrawTx).to.be.revertedWith(
+        "ERC20: transfer amount exceeds balance"
       );
     });
   });

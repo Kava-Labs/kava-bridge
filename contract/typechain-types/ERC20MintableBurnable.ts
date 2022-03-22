@@ -23,6 +23,7 @@ export interface ERC20MintableBurnableInterface extends utils.Interface {
     "allowance(address,address)": FunctionFragment;
     "approve(address,uint256)": FunctionFragment;
     "balanceOf(address)": FunctionFragment;
+    "convertToCoin(bytes32,uint256)": FunctionFragment;
     "decimals()": FunctionFragment;
     "decreaseAllowance(address,uint256)": FunctionFragment;
     "increaseAllowance(address,uint256)": FunctionFragment;
@@ -48,6 +49,10 @@ export interface ERC20MintableBurnableInterface extends utils.Interface {
     values: [string, BigNumberish]
   ): string;
   encodeFunctionData(functionFragment: "balanceOf", values: [string]): string;
+  encodeFunctionData(
+    functionFragment: "convertToCoin",
+    values: [BytesLike, BigNumberish]
+  ): string;
   encodeFunctionData(functionFragment: "decimals", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "decreaseAllowance",
@@ -96,6 +101,10 @@ export interface ERC20MintableBurnableInterface extends utils.Interface {
   decodeFunctionResult(functionFragment: "allowance", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "approve", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "balanceOf", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "convertToCoin",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "decimals", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "decreaseAllowance",
@@ -134,12 +143,14 @@ export interface ERC20MintableBurnableInterface extends utils.Interface {
 
   events: {
     "Approval(address,address,uint256)": EventFragment;
+    "ConvertToCoin(address,bytes32,uint256)": EventFragment;
     "OwnershipTransferred(address,address)": EventFragment;
     "Transfer(address,address,uint256)": EventFragment;
     "Withdraw(address,address,uint256)": EventFragment;
   };
 
   getEvent(nameOrSignatureOrTopic: "Approval"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "ConvertToCoin"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "OwnershipTransferred"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Transfer"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Withdraw"): EventFragment;
@@ -151,6 +162,13 @@ export type ApprovalEvent = TypedEvent<
 >;
 
 export type ApprovalEventFilter = TypedEventFilter<ApprovalEvent>;
+
+export type ConvertToCoinEvent = TypedEvent<
+  [string, string, BigNumber],
+  { sender: string; toKavaAddr: string; amount: BigNumber }
+>;
+
+export type ConvertToCoinEventFilter = TypedEventFilter<ConvertToCoinEvent>;
 
 export type OwnershipTransferredEvent = TypedEvent<
   [string, string],
@@ -215,6 +233,12 @@ export interface ERC20MintableBurnable extends BaseContract {
     ): Promise<ContractTransaction>;
 
     balanceOf(account: string, overrides?: CallOverrides): Promise<[BigNumber]>;
+
+    convertToCoin(
+      toKavaAddr: BytesLike,
+      amount: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
 
     decimals(overrides?: CallOverrides): Promise<[number]>;
 
@@ -294,6 +318,12 @@ export interface ERC20MintableBurnable extends BaseContract {
 
   balanceOf(account: string, overrides?: CallOverrides): Promise<BigNumber>;
 
+  convertToCoin(
+    toKavaAddr: BytesLike,
+    amount: BigNumberish,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
   decimals(overrides?: CallOverrides): Promise<number>;
 
   decreaseAllowance(
@@ -372,6 +402,12 @@ export interface ERC20MintableBurnable extends BaseContract {
 
     balanceOf(account: string, overrides?: CallOverrides): Promise<BigNumber>;
 
+    convertToCoin(
+      toKavaAddr: BytesLike,
+      amount: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
     decimals(overrides?: CallOverrides): Promise<number>;
 
     decreaseAllowance(
@@ -446,6 +482,17 @@ export interface ERC20MintableBurnable extends BaseContract {
       value?: null
     ): ApprovalEventFilter;
 
+    "ConvertToCoin(address,bytes32,uint256)"(
+      sender?: string | null,
+      toKavaAddr?: BytesLike | null,
+      amount?: null
+    ): ConvertToCoinEventFilter;
+    ConvertToCoin(
+      sender?: string | null,
+      toKavaAddr?: BytesLike | null,
+      amount?: null
+    ): ConvertToCoinEventFilter;
+
     "OwnershipTransferred(address,address)"(
       previousOwner?: string | null,
       newOwner?: string | null
@@ -492,6 +539,12 @@ export interface ERC20MintableBurnable extends BaseContract {
     ): Promise<BigNumber>;
 
     balanceOf(account: string, overrides?: CallOverrides): Promise<BigNumber>;
+
+    convertToCoin(
+      toKavaAddr: BytesLike,
+      amount: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
 
     decimals(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -573,6 +626,12 @@ export interface ERC20MintableBurnable extends BaseContract {
     balanceOf(
       account: string,
       overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    convertToCoin(
+      toKavaAddr: BytesLike,
+      amount: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
     decimals(overrides?: CallOverrides): Promise<PopulatedTransaction>;
