@@ -7,10 +7,14 @@ import (
 )
 
 var (
-	ErrSourceBlockAhead   = errors.New("source block must have a timestamp less than the last destination block")
+	// ErrSourceBlockAhead is returned when the source blocks are ahead of the destination blocks
+	ErrSourceBlockAhead = errors.New("source block must have a timestamp less than the last destination block")
+	// ErrInvalidBlockHeight is returned when an invalid block height is added
 	ErrInvalidBlockHeight = errors.New("block height must be 1 greater than last block")
-	ErrInvalidBlockTime   = errors.New("timestamp must be greater than last timestamp")
-	ErrUnkownBlockOrigin  = errors.New("unknown block type")
+	// ErrInvalidBlockTime is returned when an invalid block time is added
+	ErrInvalidBlockTime = errors.New("timestamp must be greater than last timestamp")
+	// ErrUnkownBlockOrigin is returned when in invalid block origin is added
+	ErrUnkownBlockOrigin = errors.New("unknown block type")
 )
 
 // BlockOrigin determines if a block is a Source or Desitation block.  The coordinator uses
@@ -70,7 +74,8 @@ func (s SigningOutput) Payload() Payload {
 	return s.payload
 }
 
-// coordinator implements Coordinator
+// Coordinator sequences source and destination blocks between chains
+// and outputs deterministicly ordered signing outputs
 type Coordinator struct {
 	// record the last height and time for the source chain
 	lastSourceHeight uint64
@@ -81,14 +86,14 @@ type Coordinator struct {
 	lastDestinationTime   time.Time
 
 	nonce uint64
-	// TODO: add bounds/backpressure
+	// TODO: add bounds/backpressure, prevent OOM on syncing
 	pending []Block
 
 	outputs chan []SigningOutput
 }
 
-// NewEthToKavaCoordinator returns a new coordinator
-// How do we initialize the coordinator state?
+// NewCoordinator returns a new coordinator
+// TODO: nonce and block initialization
 func NewCoordinator() *Coordinator {
 	return &Coordinator{
 		nonce:   0,

@@ -11,6 +11,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// TestCoordinator_EthToKavaSigning tests that the coordinator produces the correct
+// signing outputs for all permuations of block sequences.  This ensures that relayers
+// receiving blocks in any order in real time or during syncing always produce the
+// same signing outputs.
 func TestCoordinator_EthToKavaSigning(t *testing.T) {
 	refTime := time.Now()
 	confTime := refTime.Add(-5 * time.Minute)
