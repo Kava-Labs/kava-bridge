@@ -216,8 +216,6 @@ func TestCoordinator_InvalidSequences(t *testing.T) {
 		block       relayer.Block
 		expectedErr error
 	}{
-		// An ethereum block can not be added if no kava blocks have been added
-		//{"no kava blocks added", blocks(), eth(1, refTime), relayer.ErrKavaNotInitialized},
 		// A block with the same height can not be added
 		{"kava same height", blocks(kava(1, refTime)), kava(1, addSecond(refTime, 1)), relayer.ErrInvalidBlockHeight},
 		{"eth same height", blocks(kava(1, refTime), eth(1, addSecond(refTime, -2))), eth(1, addSecond(refTime, -1)), relayer.ErrInvalidBlockHeight},
