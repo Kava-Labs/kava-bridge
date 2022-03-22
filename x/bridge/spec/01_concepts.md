@@ -152,9 +152,9 @@ To convert Kava ERC20 to Kava Cosmos Coin, the following steps are taken. Note
 that any method calls on ERC20 will only apply to contracts which are enabled in
 params and exist in state.
 
-1. Account calls `ConvertToCoin(toKavaBech32Addr, amount)` on the desired ERC20
+1. Account calls `ConvertToCoin(toKavaAddr, amount)` on the desired ERC20
    contract. This does two things:
-   * Emit a `ConvertToCoin(toKavaBech32Addr, amount)` event.
+   * Emit a `ConvertToCoin(toKavaAddr, amount)` event.
    * Transfer token amount to the module account address.
 2. Similar to Kava ERC20 to Ethereum transfers, a `PostTxProcessing` EVM hook
    will look for corresponding transactions only emitted from from enabled
@@ -162,7 +162,7 @@ params and exist in state.
    event.
 3. Bridge module mints `sdk.Coin` with the corresponding amount. The denom is
    defined in the `ConversionPair`.
-4. Minted coins are sent to the provided `toKavaBech32Addr`.
+4. Minted coins are sent to the provided `toKavaAddr`.
 
 ### Kava Cosmos Coin to Kava ERC20
 
