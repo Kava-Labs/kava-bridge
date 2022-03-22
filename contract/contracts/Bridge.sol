@@ -18,13 +18,13 @@ contract Bridge is ReentrancyGuard, Sequence(0) {
     /// @notice Represents an ERC20 token lock emitted during a lock call
     /// @param token The ERC20 token address
     /// @param sender The Ethereum address of the sender that locked the funds
-    /// @param toAddr The Kava address bytes padded to 32 bytes to send the locked funds to
+    /// @param toKavaAddr The Kava address to send the locked funds to
     /// @param amount The amount that was locked
     /// @param lockSequence The unique lock sequence
     event Lock(
         address indexed token,
         address indexed sender,
-        bytes32 indexed toAddr,
+        address indexed toKavaAddr,
         uint256 amount,
         uint256 lockSequence
     );
@@ -55,13 +55,12 @@ contract Bridge is ReentrancyGuard, Sequence(0) {
 
     /// @notice Locks an ERC20 amount and emits a Lock event with the Kava address to mint funds to
     /// @param token The ERC20 token address
-    /// @param toAddr The Kava address bytes padded to 32 bytes to send the locked funds to
+    /// @param toKavaAddr The Kava address to send the locked funds to
     /// @param amount The amount to lock
-    /// @dev The toAddr is the raw byte representation of a Kava address padding to 32 bytes
     /// @dev Emits a Lock event
     function lock(
         address token,
-        bytes32 toAddr,
+        address toKavaAddr,
         uint256 amount
     ) public nonReentrant {
         incrementSequence();
