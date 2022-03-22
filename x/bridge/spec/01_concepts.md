@@ -158,10 +158,10 @@ params and exist in state.
    * Transfer token amount to the module account address.
 2. Similar to Kava ERC20 to Ethereum transfers, a `PostTxProcessing` EVM hook
    will look for corresponding transactions only emitted from from enabled
-   `InternalConversionPair`s that contain both a `ConvertToCoin` and `Transfer`
+   `ConversionPair`s that contain both a `ConvertToCoin` and `Transfer`
    event.
 3. Bridge module mints `sdk.Coin` with the corresponding amount. The denom is
-   defined in the `InternalConversionPair`.
+   defined in the `ConversionPair`.
 4. Minted coins are sent to the provided `toKavaBech32Addr`.
 
 ### Kava Cosmos Coin to Kava ERC20
@@ -177,7 +177,7 @@ Conversions back to Kava ERC20 are as follows.
 1. **Kava** account submits `ConvertCoinToERC20` message. This contains the
    sendTo Ethereum address, and coins (containing both denom and amount).
 2. Module checks if the account balance is greater than the desired conversion
-   amount and checks enabled `InternalConversionPair`s to see if this is
+   amount and checks enabled `ConversionPair`s to see if this is
    permitted for the provided coins.
 3. Cosmos coins are transferred to the bridge module account.
 4. Module account transfers the equivalent ERC20 token to the provided address.

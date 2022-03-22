@@ -2,11 +2,11 @@
 
 The bridge module contains the following parameters:
 
-| Key                           | Type                    | Example                                         | Description                                                                |
-| ----------------------------- | ----------------------- | ----------------------------------------------- | -------------------------------------------------------------------------- |
-| EnabledERC20Tokens            | EnabledERC20Tokens      | `[]EnabledERC20Token`                           | list of ERC20 tokens allowed to bridge                                     |
-| EnabledInternalConversionPair | InternalConversionPairs | []InternalConversionPair                        | list of internal denom and ERC20 addresses allowed to be converted between |
-| Relayer                       | sdk.AccAddress          | `"kava123fxg0l602etulhhcdm0vt7l57qya5wjcrwhzz"` | bridge relayer address                                                     |
+| Key                   | Type               | Example                                         | Description                                                                            |
+| --------------------- | ------------------ | ----------------------------------------------- | -------------------------------------------------------------------------------------- |
+| EnabledERC20Tokens    | EnabledERC20Tokens | `[]EnabledERC20Token`                           | list of ERC20 tokens allowed to bridge                                                 |
+| EnabledConversionPair | ConversionPairs    | []ConversionPair                                | list of internal denom and ERC20 addresses allowed to be converted between one another |
+| Relayer               | sdk.AccAddress     | `"kava123fxg0l602etulhhcdm0vt7l57qya5wjcrwhzz"` | bridge relayer address                                                                 |
 
 ## EnabledERC20Token
 
@@ -21,7 +21,7 @@ Governance param change proposals are used to add new Ethereum ERC20s to the
 enabled list. Ethereum ERC20s that are not in the list are rejected from
 being bridged to Kava.
 
-## EnabledInternalConversionPair
+## ConversionPair
 
 | Key          | Type   | Example                                      | Description        |
 | ------------ | ------ | -------------------------------------------- | ------------------ |
