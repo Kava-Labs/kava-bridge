@@ -197,10 +197,10 @@ describe("ERC20MintableBurnable", function () {
       expect(amountParam.indexed).to.equal(false);
     });
 
-    it("should transfer amount to contract address", async function () {
+    it("should transfer amount to owner address", async function () {
       await expect(() =>
         erc20.convertToCoin(toKavaAddr, amount)
-      ).to.changeTokenBalances(erc20, [sender, erc20], [-1n * amount, amount]);
+      ).to.changeTokenBalances(erc20, [sender, owner], [-1n * amount, amount]);
     });
 
     it("should fail when ERC20 withdraw amount exceeds balance", async function () {

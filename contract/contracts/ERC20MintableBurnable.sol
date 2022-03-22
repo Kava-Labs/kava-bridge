@@ -89,12 +89,12 @@ contract ERC20MintableBurnable is ERC20, Ownable {
     }
 
     /// @notice Converts an amount of tokens to Cosmos sdk.Coin
-    /// @dev Transfers amount of tokens to the contract address and emits a
-    ///      ConvertToCoin event.
+    /// @dev Transfers amount of tokens to the owner address (module account)
+    ///      and emits a ConvertToCoin event.
     /// @param toKavaAddr The Kava address where to send the converted coins to.
     /// @param amount The amount of the token to convert.
     function convertToCoin(bytes32 toKavaAddr, uint256 amount) public virtual {
-        _transfer(msg.sender, address(this), amount);
+        _transfer(msg.sender, owner(), amount);
         emit ConvertToCoin(msg.sender, toKavaAddr, amount);
     }
 }
