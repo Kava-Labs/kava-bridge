@@ -68,8 +68,8 @@ func newOutput(nonce uint64, payload relayer.Payload) expectedOutput {
 }
 
 // newCoordinator is a test helper for creating a new default eth to kava coordinator
-func newCoordinator() relayer.Coordinator {
-	return relayer.NewEthToKavaCoordinator()
+func newCoordinator() *relayer.Coordinator {
+	return relayer.NewCoordinator()
 }
 
 // orderedBlockPermutations is a recursive function that takes a slice pointer to store results in,
@@ -95,7 +95,7 @@ func orderedBlockPermutations(permutations *[][]relayer.Block, acc, a, b []relay
 // writeBlocks continually calls AddBlock, skipping to future blocks when adding a block results in an error.
 // If all blocks in the slice error, then it returns an error; otherwise it collects all outputs generated from the
 // coordinator.
-func writeBlocks(ctx context.Context, c relayer.Coordinator, blocks []relayer.Block) ([][]relayer.SigningOutput, error) {
+func writeBlocks(ctx context.Context, c *relayer.Coordinator, blocks []relayer.Block) ([][]relayer.SigningOutput, error) {
 	writeErr := make(chan error)
 
 	go func() {
@@ -158,7 +158,7 @@ func writeBlocks(ctx context.Context, c relayer.Coordinator, blocks []relayer.Bl
 }
 
 // startNullReader starts a null reader and returns a stop func
-func startNullReader(c relayer.Coordinator) context.CancelFunc {
+func startNullReader(c *relayer.Coordinator) context.CancelFunc {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	go func() {
