@@ -59,7 +59,7 @@ clean: ## Clean up build and temporary files
 	rm c.out coverage.html
 
 .PHONY: install-devtools
-install-devtools:
+install-devtools: ## Install solc and abigen used by compile-contracts
 	cd contract && npm install
 	$(GO) install github.com/ethereum/go-ethereum/cmd/abigen@latest
 
