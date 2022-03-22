@@ -60,13 +60,16 @@ clean: ## Clean up build and temporary files
 
 .PHONY: install-devtools
 install-devtools:
+	cd contract && npm install
 	$(GO) install github.com/ethereum/go-ethereum/cmd/abigen@latest
 
 JQ ?= jq
 NPM ?= npm
+SOLC ?= npx solc
+ABIGEN ?= abigen
 
 .PHONY: compile-contracts
-compile-contracts: contract/ethermint_json/ERC20MintableBurnable.json ## Compiles contracts and creates ethermint compatible json
+compile-contracts: contract/ethermint_json/ERC20MintableBurnable.json relayer/bridge.go ## Compiles contracts and creates ethermint compatible json
 
 contract/artifacts/contracts/ERC20MintableBurnable.sol/ERC20MintableBurnable.json: contract/contracts/ERC20MintableBurnable.sol
 	cd contract && $(NPM) run compile
@@ -77,6 +80,12 @@ contract/artifacts/contracts/ERC20MintableBurnable.sol/ERC20MintableBurnable.jso
 contract/ethermint_json/ERC20MintableBurnable.json: contract/artifacts/contracts/ERC20MintableBurnable.sol/ERC20MintableBurnable.json
 	mkdir -p contract/ethermint_json
 	$(JQ) '.abi = (.abi | tostring) | {abi, bin: .bytecode[2:] }' < $< > $@
+
+contract/artifacts/contracts_Bridge_sol_Bridge.abi: contract/contracts/Bridge.sol
+	cd contract && $(SOLC) --abi contracts/Bridge.sol --base-path . --include-path node_modules/ -o artifacts
+
+relayer/bridge.go: contract/artifacts/contracts_Bridge_sol_Bridge.abi
+	$(ABIGEN) --abi $< --pkg relayer --type Bridge --out $@
 
 ################################################################################
 ###                                 Includes                                 ###
