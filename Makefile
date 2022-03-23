@@ -46,6 +46,10 @@ build: ## Run go build
 test: ## Run go test
 	$(GO) test $(PKGS)
 
+.PHONY: test-integration
+test-integration: ## Run go integration tests
+	$(GO) test -tags integration ./testing
+
 .PHONY: cover
 cover: ## Run tests with coverage and save to coverage.html
 	$(GO) test -coverprofile=c.out $(PKGS)
@@ -54,6 +58,10 @@ cover: ## Run tests with coverage and save to coverage.html
 .PHONY: watch
 watch: ## Run tests on file changes
 	while sleep 0.5; do find . -type f -name '*.go' | entr -d $(GO) test $(PKGS); done
+
+.PHONY: watch-integration
+watch-integration: ## Run integration tests on file changes
+	while sleep 0.5; do find . -type f -name '*.go' | entr -d $(GO) test -tags integration ./testing; done
 
 .PHONY: clean
 clean: ## Clean up build and temporary files
