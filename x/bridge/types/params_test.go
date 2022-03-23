@@ -192,7 +192,7 @@ func (suite *ParamsTestSuite) TestParamValidation() {
 
 	for _, tc := range testCases {
 		suite.Run(tc.name, func() {
-			params := types.NewParams(tc.args.enabledERC20Tokens, tc.args.relayer)
+			params := types.NewParams(tc.args.enabledERC20Tokens, tc.args.relayer, types.DefaultConversionPairs)
 
 			err := params.Validate()
 			if tc.errArgs.expectPass {
@@ -282,10 +282,18 @@ func (suite *ParamsTestSuite) TestMarshalYAML() {
 	relayer, err := sdk.AccAddressFromBech32("kava1esagqd83rhqdtpy5sxhklaxgn58k2m3s3mnpea")
 	suite.Require().NoError(err)
 
-	p := types.Params{
-		EnabledERC20Tokens: enabledTokens,
-		Relayer:            relayer,
-	}
+	conversionPairs := types.NewConversionPairs(
+		types.NewConversionPair(
+			testutil.MustNewInternalEVMAddressFromString("0000000000000000000000000000000000000001"),
+			"usdc",
+		),
+	)
+
+	p := types.NewParams(
+		enabledTokens,
+		relayer,
+		conversionPairs,
+	)
 
 	data, err := yaml.Marshal(p)
 	suite.Require().NoError(err)
@@ -298,6 +306,8 @@ func (suite *ParamsTestSuite) TestMarshalYAML() {
 	suite.Require().True(ok, "enabled_erc20_tokens should exist in yaml")
 	_, ok = params["relayer"]
 	suite.Require().True(ok, "relayer should exist in yaml")
+	_, ok = params["enabled_conversion_pairs"]
+	suite.Require().True(ok, "enabled_conversion_pairs should exist in yaml")
 }
 
 func (suite *ParamsTestSuite) TestParamSetPairs_EnabledERC20Tokens() {
@@ -337,6 +347,27 @@ func (suite *ParamsTestSuite) TestParamSetPairs_Relayer() {
 	pairs, ok := paramSetPair.Value.(*sdk.AccAddress)
 	suite.Require().True(ok)
 	suite.Require().Equal(pairs, &defaultParams.Relayer)
+
+	suite.Require().Nil(paramSetPair.ValidatorFn(*pairs))
+	suite.Require().EqualError(paramSetPair.ValidatorFn(struct{}{}), "invalid parameter type: struct {}")
+}
+
+func (suite *ParamsTestSuite) TestParamSetPairs_EnabledConversionPairs() {
+	suite.Require().Equal([]byte("EnabledConversionPairs"), types.KeyEnabledConversionPairs)
+	defaultParams := types.DefaultParams()
+
+	var paramSetPair *paramstypes.ParamSetPair
+	for _, pair := range defaultParams.ParamSetPairs() {
+		if bytes.Equal(pair.Key, types.KeyEnabledConversionPairs) {
+			paramSetPair = &pair
+			break
+		}
+	}
+	suite.Require().NotNil(paramSetPair)
+
+	pairs, ok := paramSetPair.Value.(*types.ConversionPairs)
+	suite.Require().True(ok)
+	suite.Require().Equal(pairs, &defaultParams.EnabledConversionPairs)
 
 	suite.Require().Nil(paramSetPair.ValidatorFn(*pairs))
 	suite.Require().EqualError(paramSetPair.ValidatorFn(struct{}{}), "invalid parameter type: struct {}")

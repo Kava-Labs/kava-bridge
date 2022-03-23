@@ -4,6 +4,7 @@ package bridge.v1beta1;
 import "gogoproto/gogo.proto";
 import "cosmos_proto/cosmos.proto";
 import "bridge/v1beta1/erc20.proto";
+import "bridge/v1beta1/conversion_pair.proto";
 
 option go_package                    = "github.com/kava-labs/kava-bridge/x/bridge/types";
 option (gogoproto.equal_all)         = true;
@@ -37,11 +38,17 @@ message Params {
     (gogoproto.castrepeated) = "EnabledERC20Tokens",
     (gogoproto.customname)   = "EnabledERC20Tokens"
   ];
+
   // Permissioned relayer address that is allowed to submit bridge messages
   bytes relayer = 2 [
     (cosmos_proto.scalar) = "cosmos.AddressBytes",
     (gogoproto.casttype)  = "github.com/cosmos/cosmos-sdk/types.AccAddress"
   ];
+
+  // enabled_conversion_pairs defines the list of conversion pairs allowed to be
+  // converted between Kava ERC20 and sdk.Coin
+  repeated ConversionPair enabled_conversion_pairs = 3
+      [(gogoproto.nullable) = false, (gogoproto.castrepeated) = "ConversionPairs"];
 }
 
 // EnabledERC20Token defines an external ERC20 that is allowed to be bridged to Kava
