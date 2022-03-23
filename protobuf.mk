@@ -57,12 +57,15 @@ GOOGLE_PROTO_TYPES = third_party/proto/google/api
 
 COSMOS_PROTO_PATH := $(shell go list -m -f '{{.Dir}}' github.com/cosmos/cosmos-proto)
 GOGO_PROTO_PATH := $(shell go list -m -f '{{.Dir}}' github.com/gogo/protobuf)
+COSMOS_SDK_PATH := $(shell go list -m -f '{{.Dir}}' github.com/cosmos/cosmos-sdk)
+
 .PHONY: proto-update-deps
 proto-update-deps: ## Update proto
 	mkdir -p third_party/proto
 
 	$(call sync_proto_deps,$(COSMOS_PROTO_PATH)/proto third_party)
 	$(call sync_proto_deps,$(GOGO_PROTO_PATH)/gogoproto third_party/proto)
+	$(call sync_proto_deps,$(COSMOS_SDK_PATH)/proto third_party)
 
 	mkdir -p $(GOOGLE_PROTO_TYPES)
 	curl -sSL $(GOOGLE_PROTO_URL)/annotations.proto > $(GOOGLE_PROTO_TYPES)/annotations.proto
