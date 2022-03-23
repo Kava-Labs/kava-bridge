@@ -20,7 +20,7 @@ type ConversionHooks struct {
 var _ evmtypes.EvmHooks = ConversionHooks{}
 
 // Return the wrapper struct
-func (k Keeper) ConversionHookss() ConversionHooks {
+func (k Keeper) ConversionHooks() ConversionHooks {
 	return ConversionHooks{k}
 }
 
@@ -36,7 +36,7 @@ func (h ConversionHooks) PostTxProcessing(
 
 	for _, log := range receipt.Logs {
 		// ERC20MintableBurnableContract should contain 3 topics:
-		// 0: Keccak-256 hash of Withdraw(address,address,uint256)
+		// 0: Keccak-256 hash of ConvertToCoin(address,bytes32,uint256)
 		// 1: address indexed sender
 		// 2: address indexed toAddr
 		if len(log.Topics) != 3 {
@@ -74,7 +74,7 @@ func (h ConversionHooks) PostTxProcessing(
 			continue
 		}
 
-		// Check that the contract is an enabled token pair
+		// Check that the contract is enabled to convert to coin
 		contractAddr := types.NewInternalEVMAddress(log.Address)
 		conversionPair, err := h.k.GetEnabledConversionPair(ctx, contractAddr)
 		if err != nil {
@@ -90,7 +90,7 @@ func (h ConversionHooks) PostTxProcessing(
 		// Initiator is a **different** address from receiver
 		coin, err := h.k.MintConversionPairCoin(ctx, conversionPair, amount, receiver)
 		if err != nil {
-			// Revert if conversion fails
+			// Revert tx if conversion fails
 			panic(err)
 		}
 
