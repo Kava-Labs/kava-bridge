@@ -1,7 +1,10 @@
 package keeper
 
 import (
+	"math/big"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/kava-labs/kava-bridge/contract"
 	"github.com/kava-labs/kava-bridge/x/bridge/types"
 )
 
@@ -27,18 +30,38 @@ func (k Keeper) MintConversionPairCoin(
 	return nil
 }
 
+// ConvertCoinToERC20 converts an sdk.Coin from the originating account to an
+// ERC20 to the receiver account.
+func (k Keeper) ConvertCoinToERC20(
+	ctx sdk.Context,
+	pair types.ConversionPair,
+	amount sdk.Int,
+	originAccount sdk.AccAddress,
+	receiverAccount types.InternalEVMAddress,
+) error {
+	if err := k.BurnConversionPairCoin(ctx, pair, amount, originAccount); err != nil {
+		return err
+	}
+
+	if err := k.UnlockERC20Tokens(ctx, pair, amount.BigInt(), receiverAccount); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // BurnConversionPairCoin transfers the provided amount to the module account
 // then burns it.
 func (k Keeper) BurnConversionPairCoin(
 	ctx sdk.Context,
 	pair types.ConversionPair,
 	amount sdk.Int,
-	address sdk.AccAddress,
+	account sdk.AccAddress,
 ) error {
 	coin := sdk.NewCoin(pair.Denom, amount)
 	coins := sdk.NewCoins(coin)
 
-	if err := k.bankKeeper.SendCoinsFromAccountToModule(ctx, address, types.ModuleName, coins); err != nil {
+	if err := k.bankKeeper.SendCoinsFromAccountToModule(ctx, account, types.ModuleName, coins); err != nil {
 		return err
 	}
 
@@ -47,4 +70,26 @@ func (k Keeper) BurnConversionPairCoin(
 	}
 
 	return nil
+}
+
+// UnlockERC20Tokens transfers the given amount of a conversion pair ERC20 token
+// to the provided account.
+func (k Keeper) UnlockERC20Tokens(
+	ctx sdk.Context,
+	pair types.ConversionPair,
+	amount *big.Int,
+	receiver types.InternalEVMAddress,
+) error {
+	_, err := k.CallEVM(
+		ctx,
+		contract.ERC20MintableBurnableContract.ABI, // abi
+		types.ModuleEVMAddress,                     // from addr
+		pair.GetAddress(),                          // contract addr
+		"transfer",                                 // method
+		// Transfer ERC20 args
+		receiver.Address,
+		amount,
+	)
+
+	return err
 }

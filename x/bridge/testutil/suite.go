@@ -218,6 +218,26 @@ func (suite *Suite) Commit() {
 	suite.Ctx = suite.App.NewContext(false, header)
 }
 
+func (suite *Suite) DeployERC20() types.InternalEVMAddress {
+	// We can assume token is valid as it is from params and should be validated
+	token := types.NewEnabledERC20Token(
+		MustNewExternalEVMAddressFromString("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
+		"Wrapped ETH",
+		"WETH",
+		18,
+	)
+
+	contractAddr, err := suite.App.BridgeKeeper.DeployMintableERC20Contract(suite.Ctx, token)
+	suite.Require().NoError(err)
+	suite.Require().Greater(len(contractAddr.Address), 0)
+
+	return contractAddr
+}
+
+func (suite *Suite) TestDeployERC20() {
+	suite.DeployERC20()
+}
+
 func (suite *Suite) GetERC20BalanceOf(
 	contractAbi abi.ABI,
 	contractAddr types.InternalEVMAddress,
