@@ -349,7 +349,7 @@ func NewApp(
 
 	app.EvmKeeper = app.EvmKeeper.SetHooks(
 		evmkeeper.NewMultiEvmHooks(
-			app.BridgeKeeper.Hooks(),
+			app.BridgeKeeper.WithdrawHooks(),
 		),
 	)
 

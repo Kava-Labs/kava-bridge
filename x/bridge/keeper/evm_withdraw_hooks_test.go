@@ -48,7 +48,7 @@ func (suite *EVMHooksTestSuite) SetupTest() {
 
 func (suite *EVMHooksTestSuite) TestHooksSet() {
 	suite.Require().PanicsWithValue("cannot set evm hooks twice", func() {
-		suite.App.EvmKeeper.SetHooks(suite.App.BridgeKeeper.Hooks())
+		suite.App.EvmKeeper.SetHooks(suite.App.BridgeKeeper.WithdrawHooks())
 	})
 }
 

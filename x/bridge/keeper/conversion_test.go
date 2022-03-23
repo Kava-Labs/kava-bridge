@@ -26,14 +26,15 @@ func (suite *ConversionTestSuite) TestMint() {
 		"erc20/usdc",
 	)
 
-	amount := sdk.NewInt(100)
+	amount := big.NewInt(100)
 	recipient := suite.Key1.PubKey().Address().Bytes()
 
-	err := suite.App.BridgeKeeper.MintConversionPairCoin(suite.Ctx, pair, amount, recipient)
+	coin, err := suite.App.BridgeKeeper.MintConversionPairCoin(suite.Ctx, pair, amount, recipient)
 	suite.Require().NoError(err)
+	suite.Require().Equal(sdk.NewCoin(pair.Denom, sdk.NewIntFromBigInt(amount)), coin)
 
 	bal := suite.App.BankKeeper.GetBalance(suite.Ctx, recipient, pair.Denom)
-	suite.Require().Equal(amount, bal.Amount, "minted amount should increase balance")
+	suite.Require().Equal(amount, bal.Amount.BigInt(), "minted amount should increase balance")
 }
 
 func (suite *ConversionTestSuite) TestBurn_InsufficientBalance() {
@@ -59,8 +60,9 @@ func (suite *ConversionTestSuite) TestBurn() {
 	amount := sdk.NewInt(100)
 	recipient := suite.Key1.PubKey().Address().Bytes()
 
-	err := suite.App.BridgeKeeper.MintConversionPairCoin(suite.Ctx, pair, amount, recipient)
+	coin, err := suite.App.BridgeKeeper.MintConversionPairCoin(suite.Ctx, pair, amount.BigInt(), recipient)
 	suite.Require().NoError(err)
+	suite.Require().Equal(sdk.NewCoin(pair.Denom, amount), coin)
 
 	bal := suite.App.BankKeeper.GetBalance(suite.Ctx, recipient, pair.Denom)
 	suite.Require().Equal(amount, bal.Amount, "minted amount should increase balance")
@@ -149,8 +151,9 @@ func (suite *ConversionTestSuite) TestConvertCoinToERC20() {
 	moduleAddr := types.NewInternalEVMAddress(types.ModuleEVMAddress)
 
 	// Starting balance of origin account
-	err := suite.App.BridgeKeeper.MintConversionPairCoin(suite.Ctx, pair, sdk.NewIntFromBigInt(amount), originAcc)
+	coin, err := suite.App.BridgeKeeper.MintConversionPairCoin(suite.Ctx, pair, amount, originAcc)
 	suite.Require().NoError(err)
+	suite.Require().Equal(sdk.NewCoin(pair.Denom, sdk.NewIntFromBigInt(amount)), coin)
 
 	// Mint same initial balance for module account as backing erc20 supply
 	err = suite.App.BridgeKeeper.MintERC20(
