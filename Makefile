@@ -19,6 +19,7 @@ help: ## Display this help message
 .PHONY: install
 install: ## Install kava-bridge
 	$(GO) install -mod=readonly ./cmd/kava-bridged
+	$(GO) install -mod=readonly ./cmd/kava-relayer
 
 .PHONY: start
 start: install ## Start kava-bridge chain locally
