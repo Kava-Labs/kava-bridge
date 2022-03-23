@@ -21,28 +21,8 @@ func TestERC20TestSuite(t *testing.T) {
 	suite.Run(t, new(ERC20TestSuite))
 }
 
-func (suite *ERC20TestSuite) deployERC20() types.InternalEVMAddress {
-	// We can assume token is valid as it is from params and should be validated
-	token := types.NewEnabledERC20Token(
-		testutil.MustNewExternalEVMAddressFromString("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
-		"Wrapped ETH",
-		"WETH",
-		18,
-	)
-
-	contractAddr, err := suite.App.BridgeKeeper.DeployMintableERC20Contract(suite.Ctx, token)
-	suite.Require().NoError(err)
-	suite.Require().Greater(len(contractAddr.Address), 0)
-
-	return contractAddr
-}
-
-func (suite *ERC20TestSuite) TestDeployERC20() {
-	suite.deployERC20()
-}
-
 func (suite *ERC20TestSuite) TestERC20Query() {
-	contractAddr := suite.deployERC20()
+	contractAddr := suite.DeployERC20()
 
 	// Query ERC20.decimals()
 	addr := common.BytesToAddress(suite.Key1.PubKey().Address())
@@ -63,7 +43,7 @@ func (suite *ERC20TestSuite) TestERC20Query() {
 }
 
 func (suite *ERC20TestSuite) TestERC20Mint_Unauthorized() {
-	contractAddr := suite.deployERC20()
+	contractAddr := suite.DeployERC20()
 
 	// ERC20.mint() from key1 to key2
 	addr := common.BytesToAddress(suite.Key1.PubKey().Address())
@@ -83,7 +63,7 @@ func (suite *ERC20TestSuite) TestERC20Mint_Unauthorized() {
 }
 
 func (suite *ERC20TestSuite) TestERC20Mint() {
-	contractAddr := suite.deployERC20()
+	contractAddr := suite.DeployERC20()
 
 	// We can't test mint by module account like the Unauthorized test as we
 	// cannot sign as the module account. Instead, we test the keeper method for

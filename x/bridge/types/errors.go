@@ -10,4 +10,5 @@ var (
 	ErrABIPack                        = sdkerrors.Register(ModuleName, 3, "contract ABI pack failed")
 	ErrABIUnpack                      = sdkerrors.Register(ModuleName, 4, "contract ABI unpack failed")
 	ErrInvalidInitialWithdrawSequence = sdkerrors.Register(ModuleName, 5, "initial withdraw sequence hasn't been set")
+	ErrConversionNotEnabled           = sdkerrors.Register(ModuleName, 6, "ERC20 token not enabled to convert to sdk.Coin")
 )
