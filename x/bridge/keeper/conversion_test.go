@@ -200,3 +200,27 @@ func (suite *ConversionTestSuite) TestConvertCoinToERC20() {
 		"recipient balance should increase",
 	)
 }
+
+func (suite *ConversionTestSuite) TestConvertCoinToERC20_InsufficientBalance() {
+	contractAddr := suite.DeployERC20()
+
+	pair := types.NewConversionPair(
+		contractAddr,
+		"erc20/usdc",
+	)
+
+	amount := big.NewInt(100)
+	originAcc := sdk.AccAddress(suite.Key1.PubKey().Address().Bytes())
+	recipientAcc := types.NewInternalEVMAddress(common.BytesToAddress(suite.Key2.PubKey().Address()))
+
+	err := suite.App.BridgeKeeper.ConvertCoinToERC20(
+		suite.Ctx,
+		pair,
+		sdk.NewIntFromBigInt(amount),
+		originAcc,
+		recipientAcc,
+	)
+
+	suite.Require().Error(err)
+	suite.Require().Equal("0erc20/usdc is smaller than 100erc20/usdc: insufficient funds", err.Error())
+}
