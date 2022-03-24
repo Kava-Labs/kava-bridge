@@ -2,7 +2,7 @@ import { expect } from "chai";
 import { ethers } from "hardhat";
 import { Signer } from "ethers";
 import { deployBridge } from "../scripts/deploy";
-import { kavaAddrToBytes32, tokens, testKavaAddrs } from "./utils";
+import { tokens } from "./utils";
 import type { Bridge, ERC20Mock } from "../typechain-types";
 
 describe("Bridge", function () {
@@ -56,7 +56,7 @@ describe("Bridge", function () {
       bridge = bridge.connect(sender);
 
       // assign valid attribute for #lock
-      toAddr = ethers.utils.hexlify(kavaAddrToBytes32(testKavaAddrs[0]));
+      toAddr = await receiver.getAddress();
       amount = tokens(1);
       sequence = BigInt(1);
 
@@ -130,10 +130,10 @@ describe("Bridge", function () {
       }
     });
 
-    it("should index token, sender, toAddr in the Lock event", async function () {
+    it("should index token, sender, toKavaAddr in the Lock event", async function () {
       const event =
         bridge.interface.events[
-          "Lock(address,address,bytes32,uint256,uint256)"
+          "Lock(address,address,address,uint256,uint256)"
         ];
 
       const tokenParam = event.inputs[0];
@@ -145,7 +145,7 @@ describe("Bridge", function () {
       expect(senderParam.indexed).to.equal(true);
 
       const toAddrParam = event.inputs[2];
-      expect(toAddrParam.name).to.equal("toAddr");
+      expect(toAddrParam.name).to.equal("toKavaAddr");
       expect(toAddrParam.indexed).to.equal(true);
     });
 
@@ -211,7 +211,6 @@ describe("Bridge", function () {
     let toAddr: string;
     let amount: bigint;
     let sequence: bigint;
-    let kavaAddr: string;
 
     beforeEach(async function () {
       // connect relayer to the bridge
@@ -221,8 +220,6 @@ describe("Bridge", function () {
       toAddr = await receiver.getAddress();
       amount = tokens(1);
       sequence = 1n;
-
-      kavaAddr = ethers.utils.hexlify(kavaAddrToBytes32(testKavaAddrs[0]));
 
       // deploy an ERC20 token
       const Token = await ethers.getContractFactory("ERC20Mock");
@@ -261,14 +258,14 @@ describe("Bridge", function () {
       await tokenCon.approve(bridge.address, 4n * amount);
       const lockSequence = 1n;
       bridge = bridge.connect(sender);
-      const lockTx = bridge.lock(token.address, kavaAddr, amount);
+      const lockTx = bridge.lock(token.address, toAddr, amount);
 
       await expect(lockTx)
         .to.emit(bridge, "Lock")
         .withArgs(
           token.address,
           await sender.getAddress(),
-          kavaAddr,
+          toAddr,
           amount,
           lockSequence
         );
@@ -283,14 +280,14 @@ describe("Bridge", function () {
 
       // Back to sender to check if next lock sequence is expected
       bridge = bridge.connect(sender);
-      const lockTx2 = bridge.lock(token.address, kavaAddr, amount);
+      const lockTx2 = bridge.lock(token.address, toAddr, amount);
 
       await expect(lockTx2)
         .to.emit(bridge, "Lock")
         .withArgs(
           token.address,
           await sender.getAddress(),
-          kavaAddr,
+          toAddr,
           amount,
           lockSequence + 1n
         );

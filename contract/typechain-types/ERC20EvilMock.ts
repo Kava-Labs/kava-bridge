@@ -20,14 +20,14 @@ import { TypedEventFilter, TypedEvent, TypedListener, OnEvent } from "./common";
 export interface ERC20EvilMockInterface extends utils.Interface {
   contractName: "ERC20EvilMock";
   functions: {
-    "attackLock(address,bytes32,uint256)": FunctionFragment;
+    "attackLock(address,address,uint256)": FunctionFragment;
     "transfer(address,uint256)": FunctionFragment;
     "transferFrom(address,address,uint256)": FunctionFragment;
   };
 
   encodeFunctionData(
     functionFragment: "attackLock",
-    values: [string, BytesLike, BigNumberish]
+    values: [string, string, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "transfer",
@@ -78,7 +78,7 @@ export interface ERC20EvilMock extends BaseContract {
   functions: {
     attackLock(
       target: string,
-      toAddr: BytesLike,
+      toAddr: string,
       amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
@@ -99,7 +99,7 @@ export interface ERC20EvilMock extends BaseContract {
 
   attackLock(
     target: string,
-    toAddr: BytesLike,
+    toAddr: string,
     amount: BigNumberish,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
@@ -120,7 +120,7 @@ export interface ERC20EvilMock extends BaseContract {
   callStatic: {
     attackLock(
       target: string,
-      toAddr: BytesLike,
+      toAddr: string,
       amount: BigNumberish,
       overrides?: CallOverrides
     ): Promise<void>;
@@ -144,7 +144,7 @@ export interface ERC20EvilMock extends BaseContract {
   estimateGas: {
     attackLock(
       target: string,
-      toAddr: BytesLike,
+      toAddr: string,
       amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
@@ -166,7 +166,7 @@ export interface ERC20EvilMock extends BaseContract {
   populateTransaction: {
     attackLock(
       target: string,
-      toAddr: BytesLike,
+      toAddr: string,
       amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
