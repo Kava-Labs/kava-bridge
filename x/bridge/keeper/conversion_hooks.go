@@ -35,15 +35,15 @@ func (h ConversionHooks) PostTxProcessing(
 	erc20Abi := contract.ERC20MintableBurnableContract.ABI
 
 	for _, log := range receipt.Logs {
-		// ERC20MintableBurnableContract should contain 3 topics:
-		// 0: Keccak-256 hash of ConvertToCoin(address,bytes32,uint256)
+		// ERC20MintableBurnableContract ConvertToCoin event should contain 3 topics:
+		// 0: Keccak-256 hash of ConvertToCoin(address,address,uint256)
 		// 1: address indexed sender
 		// 2: address indexed toAddr
 		if len(log.Topics) != 3 {
 			continue
 		}
 
-		// event ID, e.g. Keccak-256 hash of ConvertToCoin(address,bytes32,uint256)
+		// event ID, e.g. Keccak-256 hash of ConvertToCoin(address,address,uint256)
 		eventID := log.Topics[0]
 
 		event, err := erc20Abi.EventByID(eventID)
@@ -86,8 +86,10 @@ func (h ConversionHooks) PostTxProcessing(
 
 		// Receiver is an sdk.AccAddress, but we use common.BytesToAddress
 		// to remove the zero padding, then convert to AccAddress.
-		receiverBytes := common.BytesToAddress(log.Topics[2].Bytes()).Bytes()
-		receiver := sdk.AccAddress(receiverBytes)
+		receiverCommonAddr := common.BytesToAddress(log.Topics[2].Bytes())
+		receiver := sdk.AccAddress(receiverCommonAddr.Bytes())
+
+		// Does **not** check for Transfer event, assumes Contracts are trusted.
 
 		// Initiator is a **different** address from receiver
 		coin, err := h.k.MintConversionPairCoin(ctx, conversionPair, amount, receiver)
