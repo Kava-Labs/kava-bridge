@@ -14,7 +14,7 @@ var (
 	// ErrInvalidBlockTime is returned when an invalid block time is added
 	ErrInvalidBlockTime = errors.New("timestamp must be greater than last timestamp")
 	// ErrUnkownBlockOrigin is returned when in invalid block origin is added
-	ErrUnkownBlockOrigin = errors.New("unknown block type")
+	ErrUnknownBlockOrigin = errors.New("unknown block type")
 )
 
 // BlockOrigin determines if a block is a Source or Desitation block.  The coordinator uses
@@ -23,7 +23,7 @@ type BlockOrigin uint8
 
 const (
 	// Source represents a block origin of the source chain.
-	Source BlockOrigin = iota
+	Source BlockOrigin = iota + 1
 	// Destination represents a block origin of the destinatino chain.
 	Destination
 )
@@ -114,7 +114,7 @@ func (c *Coordinator) AddBlock(ctx context.Context, block Block) (err error) {
 	case Destination:
 		err = c.addDestinationBlock(block)
 	default:
-		err = ErrUnkownBlockOrigin
+		err = ErrUnknownBlockOrigin
 	}
 
 	return err

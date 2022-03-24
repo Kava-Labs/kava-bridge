@@ -450,5 +450,5 @@ func TestCoordinator_UnknownBlockType(t *testing.T) {
 
 	err := coordinator.AddBlock(context.Background(), relayer.NewBlock(100, 1, time.Now(), nil))
 
-	assert.Equal(t, relayer.ErrUnkownBlockOrigin, err, "expected a unkown block origin to error")
+	assert.Equal(t, relayer.ErrUnknownBlockOrigin, err, "expected a unkown block origin to error")
 }
