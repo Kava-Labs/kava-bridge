@@ -295,6 +295,7 @@ func (suite *Suite) QueryContract(
 	return unpackedRes, nil
 }
 
+// SendTx submits a transaction to the block.
 func (suite *Suite) SendTx(
 	contractAddr types.InternalEVMAddress,
 	from common.Address,
@@ -310,9 +311,9 @@ func (suite *Suite) SendTx(
 		Data: (*hexutil.Bytes)(&transferData),
 	})
 	suite.Require().NoError(err)
-	res, err := suite.QueryClientEvm.EstimateGas(ctx, &evmtypes.EthCallRequest{
+	gasRes, err := suite.QueryClientEvm.EstimateGas(ctx, &evmtypes.EthCallRequest{
 		Args:   args,
-		GasCap: uint64(config.DefaultGasCap),
+		GasCap: config.DefaultGasCap,
 	})
 	suite.Require().NoError(err)
 
@@ -325,16 +326,16 @@ func (suite *Suite) SendTx(
 	suite.MintFeeCollector(sdk.NewCoins(
 		sdk.NewCoin(
 			"ukava",
-			sdk.NewInt(baseFee.Int64()*int64(res.Gas)),
+			sdk.NewInt(baseFee.Int64()*int64(gasRes.Gas*2)),
 		)))
 
 	ercTransferTx := evmtypes.NewTx(
 		chainID,
 		nonce,
 		&contractAddr.Address,
-		nil,       // amount
-		res.Gas*2, // gasLimit, TODO: runs out of gas with just res.Gas, ex: estimated was 21572 but used 24814
-		nil,       // gasPrice
+		nil,          // amount
+		gasRes.Gas*2, // gasLimit, TODO: runs out of gas with just res.Gas, ex: estimated was 21572 but used 24814
+		nil,          // gasPrice
 		suite.App.FeeMarketKeeper.GetBaseFee(suite.Ctx), // gasFeeCap
 		big.NewInt(1), // gasTipCap
 		transferData,

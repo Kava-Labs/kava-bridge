@@ -84,8 +84,10 @@ func (h ConversionHooks) PostTxProcessing(
 
 		initiator := common.BytesToAddress(log.Topics[1].Bytes())
 
-		// TODO: Must handle padded value
-		receiver := sdk.AccAddress(log.Topics[2].Bytes())
+		// Receiver is an sdk.AccAddress, but we use common.BytesToAddress
+		// to remove the zero padding, then convert to AccAddress.
+		receiverBytes := common.BytesToAddress(log.Topics[2].Bytes()).Bytes()
+		receiver := sdk.AccAddress(receiverBytes)
 
 		// Initiator is a **different** address from receiver
 		coin, err := h.k.MintConversionPairCoin(ctx, conversionPair, amount, receiver)

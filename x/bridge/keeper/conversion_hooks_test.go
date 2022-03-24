@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"fmt"
 	"math/big"
 	"testing"
 
@@ -43,7 +44,12 @@ func (suite *ConversionHooksTestSuite) SetupTest() {
 	bridgePair, found := suite.App.BridgeKeeper.GetBridgePairFromExternal(suite.Ctx, externalWethAddr)
 	suite.Require().True(found, "bridge pair must exist after bridge")
 
+	// Cannot be set in genesis since we need to deploy the erc20 contract and get internal addr
 	suite.conversionPair = types.NewConversionPair(bridgePair.GetInternalAddress(), "erc20/weth")
+	params := suite.App.BridgeKeeper.GetParams(suite.Ctx)
+	params.EnabledConversionPairs = append(params.EnabledConversionPairs, suite.conversionPair)
+
+	suite.App.BridgeKeeper.SetParams(suite.Ctx, params)
 }
 
 func (suite *ConversionHooksTestSuite) TestHooksSet() {
@@ -74,10 +80,17 @@ func (suite *ConversionHooksTestSuite) ConvertToCoin(
 	toKavaAddr sdk.AccAddress,
 	amount *big.Int,
 ) *evmtypes.MsgEthereumTxResponse {
+	// Fixes out of gas error
+	suite.Commit()
+
+	// LEFT zero padded
+	var toKavaAddrBytes32 [32]byte
+	copy(toKavaAddrBytes32[32-20:], toKavaAddr)
+
 	// method is lowercase but event is upper
 	data, err := suite.erc20Abi.Pack(
 		"convertToCoin",
-		toKavaAddr,
+		toKavaAddrBytes32,
 		amount,
 	)
 	suite.Require().NoError(err)
@@ -93,4 +106,56 @@ func (suite *ConversionHooksTestSuite) TestConvertToCoin() {
 	amount := big.NewInt(100)
 
 	_ = suite.ConvertToCoin(suite.conversionPair.GetAddress(), toKavaAddr, amount)
+}
+
+func (suite *ConversionHooksTestSuite) TestConvert_BalanceChange() {
+	suite.Commit()
+
+	toKavaAddr := sdk.AccAddress(suite.Key2.PubKey().Address())
+	amount := big.NewInt(100)
+
+	fmt.Printf("orig raw bytes: %b\nbech32: %v (bytes: %b)\n", toKavaAddr, toKavaAddr.String(), toKavaAddr.Bytes())
+
+	balBefore := suite.GetERC20BalanceOf(
+		contract.ERC20MintableBurnableContract.ABI,
+		suite.conversionPair.GetAddress(),
+		types.NewInternalEVMAddress(suite.key1Addr),
+	)
+	balModuleBefore := suite.GetERC20BalanceOf(
+		contract.ERC20MintableBurnableContract.ABI,
+		suite.conversionPair.GetAddress(),
+		types.NewInternalEVMAddress(types.ModuleEVMAddress),
+	)
+	recipientBalBefore := suite.App.BankKeeper.GetBalance(suite.Ctx, toKavaAddr, suite.conversionPair.Denom)
+
+	// Sends from key1
+	_ = suite.ConvertToCoin(suite.conversionPair.GetAddress(), toKavaAddr, amount)
+
+	balAfter := suite.GetERC20BalanceOf(
+		contract.ERC20MintableBurnableContract.ABI,
+		suite.conversionPair.GetAddress(),
+		types.NewInternalEVMAddress(suite.key1Addr),
+	)
+	balModuleAfter := suite.GetERC20BalanceOf(
+		contract.ERC20MintableBurnableContract.ABI,
+		suite.conversionPair.GetAddress(),
+		types.NewInternalEVMAddress(types.ModuleEVMAddress),
+	)
+	recipientBalAfter := suite.App.BankKeeper.GetBalance(suite.Ctx, toKavaAddr, suite.conversionPair.Denom)
+
+	suite.Require().Equal(
+		new(big.Int).Sub(balBefore, amount),
+		balAfter,
+		"evm initiator balance after convert should decrease by amount",
+	)
+	suite.Require().Equal(
+		new(big.Int).Add(balModuleBefore, amount),
+		balModuleAfter,
+		"module balance after convert should increase by amount",
+	)
+	suite.Require().Equal(
+		recipientBalBefore.Amount.Add(sdk.NewIntFromBigInt(amount)),
+		recipientBalAfter.Amount,
+		"kava receiver balance after convert should increase by amount",
+	)
 }
