@@ -45,7 +45,7 @@ proto-format: ## Format protobuf files
 
 .PHONY: proto-lint
 proto-lint: ## Lint protobuf files
-	@$(DOCKER_BUF) lint --error-format=json --exclude-path ./third_party/proto/cosmos_proto,./third_party/proto/gogoproto
+	@$(DOCKER_BUF) lint --error-format=json --exclude-path ./third_party/proto/cosmos_proto,./third_party/proto/gogoproto,./third_party/proto/google
 
 PROTO_CHECK_REF ?= .git\#branch=main
 .PHONY: proto-check-breaking
