@@ -274,7 +274,8 @@ func (suite *Suite) QueryContract(
 	suite.Require().NoError(err)
 
 	// Send TX
-	res := suite.SendTx(contract, from, fromKey, data)
+	res, err := suite.SendTx(contract, from, fromKey, data)
+	suite.Require().NoError(err)
 
 	// Check for VM errors and unpack returned data
 	switch res.VmError {
@@ -301,7 +302,7 @@ func (suite *Suite) SendTx(
 	from common.Address,
 	signerKey *ethsecp256k1.PrivKey,
 	transferData []byte,
-) *evmtypes.MsgEthereumTxResponse {
+) (*evmtypes.MsgEthereumTxResponse, error) {
 	ctx := sdk.WrapSDKContext(suite.Ctx)
 	chainID := suite.App.EvmKeeper.ChainID()
 
@@ -310,12 +311,16 @@ func (suite *Suite) SendTx(
 		From: &from,
 		Data: (*hexutil.Bytes)(&transferData),
 	})
-	suite.Require().NoError(err)
+	if err != nil {
+		return nil, err
+	}
 	gasRes, err := suite.QueryClientEvm.EstimateGas(ctx, &evmtypes.EthCallRequest{
 		Args:   args,
 		GasCap: config.DefaultGasCap,
 	})
-	suite.Require().NoError(err)
+	if err != nil {
+		return nil, err
+	}
 
 	nonce := suite.App.EvmKeeper.GetNonce(suite.Ctx, suite.Address)
 
@@ -344,13 +349,17 @@ func (suite *Suite) SendTx(
 
 	ercTransferTx.From = hex.EncodeToString(signerKey.PubKey().Address())
 	err = ercTransferTx.Sign(ethtypes.LatestSignerForChainID(chainID), etherminttests.NewSigner(signerKey))
-	suite.Require().NoError(err)
+	if err != nil {
+		return nil, err
+	}
 
 	rsp, err := suite.App.EvmKeeper.EthereumTx(ctx, ercTransferTx)
-	suite.Require().NoError(err)
+	if err != nil {
+		return nil, err
+	}
 	// Do not check vm error here since we want to check for errors later
 
-	return rsp
+	return rsp, nil
 }
 
 func (suite *Suite) MintFeeCollector(coins sdk.Coins) {

@@ -82,7 +82,8 @@ func (suite *EVMHooksTestSuite) Withdraw(
 	)
 	suite.Require().NoError(err)
 
-	res := suite.SendTx(contractAddr, suite.key1Addr, suite.Key1, data)
+	res, err := suite.SendTx(contractAddr, suite.key1Addr, suite.Key1, data)
+	suite.Require().NoError(err)
 	suite.Require().False(res.Failed(), "evm tx should not fail %v", res)
 
 	return res
