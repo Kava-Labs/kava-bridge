@@ -3,7 +3,6 @@ package bridge.v1beta1;
 
 import "bridge/v1beta1/erc20.proto";
 import "bridge/v1beta1/genesis.proto";
-import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 

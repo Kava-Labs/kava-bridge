@@ -21,7 +21,7 @@ func TestConversionPairValidate(t *testing.T) {
 	}{
 		{
 			"valid",
-			testutil.MustNewInternalEVMAddressFromString("C02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
+			testutil.MustNewInternalEVMAddressFromString("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
 			"weth",
 			errArgs{
 				expectPass: true,
@@ -29,7 +29,7 @@ func TestConversionPairValidate(t *testing.T) {
 		},
 		{
 			"invalid - empty denom",
-			testutil.MustNewInternalEVMAddressFromString("C02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
+			testutil.MustNewInternalEVMAddressFromString("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
 			"",
 			errArgs{
 				expectPass: false,
@@ -38,7 +38,7 @@ func TestConversionPairValidate(t *testing.T) {
 		},
 		{
 			"invalid - zero address",
-			testutil.MustNewInternalEVMAddressFromString("0000000000000000000000000000000000000000"),
+			testutil.MustNewInternalEVMAddressFromString("0x0000000000000000000000000000000000000000"),
 			"weth",
 			errArgs{
 				expectPass: false,
@@ -76,7 +76,7 @@ func TestConversionPairValidate_Direct(t *testing.T) {
 		{
 			"valid",
 			types.ConversionPair{
-				KavaERC20Address: testutil.MustNewInternalEVMAddressFromString("C02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2").Bytes(),
+				KavaERC20Address: testutil.MustNewInternalEVMAddressFromString("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2").Bytes(),
 				Denom:            "weth",
 			},
 			errArgs{
@@ -112,14 +112,14 @@ func TestConversionPairValidate_Direct(t *testing.T) {
 }
 
 func TestConversionPair_GetAddress(t *testing.T) {
-	addr := testutil.MustNewInternalEVMAddressFromString("C02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2")
+	addr := testutil.MustNewInternalEVMAddressFromString("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2")
 
 	pair := types.NewConversionPair(
 		addr,
 		"weth",
 	)
 
-	require.Equal(t, addr.Bytes(), pair.KavaERC20Address, "struct address should match input bytes")
+	require.Equal(t, types.HexBytes(addr.Bytes()), pair.KavaERC20Address, "struct address should match input bytes")
 	require.Equal(t, addr, pair.GetAddress(), "get internal address should match input bytes")
 }
 
@@ -137,15 +137,15 @@ func TestConversionPairs_Validate(t *testing.T) {
 			"valid",
 			types.NewConversionPairs(
 				types.NewConversionPair(
-					testutil.MustNewInternalEVMAddressFromString("C02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
+					testutil.MustNewInternalEVMAddressFromString("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
 					"weth",
 				),
 				types.NewConversionPair(
-					testutil.MustNewInternalEVMAddressFromString("000000000000000000000000000000000000000A"),
+					testutil.MustNewInternalEVMAddressFromString("0x000000000000000000000000000000000000000A"),
 					"kava",
 				),
 				types.NewConversionPair(
-					testutil.MustNewInternalEVMAddressFromString("000000000000000000000000000000000000000B"),
+					testutil.MustNewInternalEVMAddressFromString("0x000000000000000000000000000000000000000B"),
 					"usdc",
 				),
 			),
@@ -157,15 +157,15 @@ func TestConversionPairs_Validate(t *testing.T) {
 			"invalid - duplicate address",
 			types.NewConversionPairs(
 				types.NewConversionPair(
-					testutil.MustNewInternalEVMAddressFromString("C02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
+					testutil.MustNewInternalEVMAddressFromString("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
 					"weth",
 				),
 				types.NewConversionPair(
-					testutil.MustNewInternalEVMAddressFromString("C02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
+					testutil.MustNewInternalEVMAddressFromString("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
 					"kava",
 				),
 				types.NewConversionPair(
-					testutil.MustNewInternalEVMAddressFromString("000000000000000000000000000000000000000B"),
+					testutil.MustNewInternalEVMAddressFromString("0x000000000000000000000000000000000000000B"),
 					"usdc",
 				),
 			),
@@ -178,15 +178,15 @@ func TestConversionPairs_Validate(t *testing.T) {
 			"invalid - duplicate denom",
 			types.NewConversionPairs(
 				types.NewConversionPair(
-					testutil.MustNewInternalEVMAddressFromString("C02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
+					testutil.MustNewInternalEVMAddressFromString("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
 					"weth",
 				),
 				types.NewConversionPair(
-					testutil.MustNewInternalEVMAddressFromString("000000000000000000000000000000000000000A"),
+					testutil.MustNewInternalEVMAddressFromString("0x000000000000000000000000000000000000000A"),
 					"kava",
 				),
 				types.NewConversionPair(
-					testutil.MustNewInternalEVMAddressFromString("000000000000000000000000000000000000000B"),
+					testutil.MustNewInternalEVMAddressFromString("0x000000000000000000000000000000000000000B"),
 					"kava",
 				),
 			),
@@ -199,15 +199,15 @@ func TestConversionPairs_Validate(t *testing.T) {
 			"invalid - invalid pair",
 			types.NewConversionPairs(
 				types.NewConversionPair(
-					testutil.MustNewInternalEVMAddressFromString("C02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
+					testutil.MustNewInternalEVMAddressFromString("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
 					"weth",
 				),
 				types.NewConversionPair(
-					testutil.MustNewInternalEVMAddressFromString("0000000000000000000000000000000000000000"),
+					testutil.MustNewInternalEVMAddressFromString("0x0000000000000000000000000000000000000000"),
 					"usdc",
 				),
 				types.NewConversionPair(
-					testutil.MustNewInternalEVMAddressFromString("000000000000000000000000000000000000000B"),
+					testutil.MustNewInternalEVMAddressFromString("0x000000000000000000000000000000000000000B"),
 					"kava",
 				),
 			),

@@ -44,7 +44,7 @@ func (suite *ParamsTestSuite) TestParamValidation() {
 			args{
 				enabledERC20Tokens: types.EnabledERC20Tokens{
 					types.NewEnabledERC20Token(
-						testutil.MustNewExternalEVMAddressFromString("C02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
+						testutil.MustNewExternalEVMAddressFromString("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
 						"Wrapped Ether",
 						"WETH",
 						18,
@@ -61,13 +61,13 @@ func (suite *ParamsTestSuite) TestParamValidation() {
 			args{
 				enabledERC20Tokens: types.EnabledERC20Tokens{
 					types.NewEnabledERC20Token(
-						testutil.MustNewExternalEVMAddressFromString("C02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
+						testutil.MustNewExternalEVMAddressFromString("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
 						"Wrapped Ether",
 						"WETH",
 						18,
 					),
 					types.NewEnabledERC20Token(
-						testutil.MustNewExternalEVMAddressFromString("C02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
+						testutil.MustNewExternalEVMAddressFromString("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
 						"Wrapped Ether",
 						"WETH",
 						18,
@@ -85,7 +85,7 @@ func (suite *ParamsTestSuite) TestParamValidation() {
 			args{
 				enabledERC20Tokens: types.EnabledERC20Tokens{
 					types.NewEnabledERC20Token(
-						testutil.MustNewExternalEVMAddressFromString("0000000000000000000000000000000000000000"),
+						testutil.MustNewExternalEVMAddressFromString("0x0000000000000000000000000000000000000000"),
 						"Wrapped Ether",
 						"WETH",
 						18,
@@ -103,7 +103,7 @@ func (suite *ParamsTestSuite) TestParamValidation() {
 			args{
 				enabledERC20Tokens: types.EnabledERC20Tokens{
 					types.NewEnabledERC20Token(
-						testutil.MustNewExternalEVMAddressFromString("C02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
+						testutil.MustNewExternalEVMAddressFromString("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
 						"",
 						"WETH",
 						18,
@@ -121,7 +121,7 @@ func (suite *ParamsTestSuite) TestParamValidation() {
 			args{
 				enabledERC20Tokens: types.EnabledERC20Tokens{
 					types.NewEnabledERC20Token(
-						testutil.MustNewExternalEVMAddressFromString("C02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
+						testutil.MustNewExternalEVMAddressFromString("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
 						"Wrapped Ether",
 						"",
 						18,
@@ -139,7 +139,7 @@ func (suite *ParamsTestSuite) TestParamValidation() {
 			args{
 				enabledERC20Tokens: types.EnabledERC20Tokens{
 					types.NewEnabledERC20Token(
-						testutil.MustNewExternalEVMAddressFromString("C02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
+						testutil.MustNewExternalEVMAddressFromString("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
 						"Wrapped Ether",
 						"WETH",
 						0,
@@ -157,7 +157,7 @@ func (suite *ParamsTestSuite) TestParamValidation() {
 			args{
 				enabledERC20Tokens: types.EnabledERC20Tokens{
 					types.NewEnabledERC20Token(
-						testutil.MustNewExternalEVMAddressFromString("C02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
+						testutil.MustNewExternalEVMAddressFromString("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
 						"Wrapped Ether",
 						"WETH",
 						256,
@@ -175,7 +175,7 @@ func (suite *ParamsTestSuite) TestParamValidation() {
 			args{
 				enabledERC20Tokens: types.EnabledERC20Tokens{
 					types.NewEnabledERC20Token(
-						testutil.MustNewExternalEVMAddressFromString("C02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
+						testutil.MustNewExternalEVMAddressFromString("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
 						"Wrapped Ether",
 						"WETH",
 						18,
@@ -218,19 +218,19 @@ func (suite *ParamsTestSuite) TestDefault() {
 func (suite *ParamsTestSuite) TestUnmarshalJSON() {
 	enabledTokens := types.NewEnabledERC20Tokens(
 		types.NewEnabledERC20Token(
-			testutil.MustNewExternalEVMAddressFromString("C02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
+			testutil.MustNewExternalEVMAddressFromString("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
 			"Wrapped Ether",
 			"WETH",
 			18,
 		),
 		types.NewEnabledERC20Token(
-			testutil.MustNewExternalEVMAddressFromString("000000000000000000000000000000000000000A"),
+			testutil.MustNewExternalEVMAddressFromString("0x000000000000000000000000000000000000000A"),
 			"Wrapped Kava",
 			"WKAVA",
 			6,
 		),
 		types.NewEnabledERC20Token(
-			testutil.MustNewExternalEVMAddressFromString("A0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"),
+			testutil.MustNewExternalEVMAddressFromString("0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"),
 			"USD Coin",
 			"USDC",
 			6,
@@ -250,6 +250,7 @@ func (suite *ParamsTestSuite) TestUnmarshalJSON() {
 	}`, string(enabledTokensJson), string(relayerJson))
 
 	var params types.Params
+	fmt.Println(data)
 	err = json.Unmarshal([]byte(data), &params)
 	suite.Require().NoError(err)
 
@@ -260,19 +261,19 @@ func (suite *ParamsTestSuite) TestUnmarshalJSON() {
 func (suite *ParamsTestSuite) TestMarshalYAML() {
 	enabledTokens := types.NewEnabledERC20Tokens(
 		types.NewEnabledERC20Token(
-			testutil.MustNewExternalEVMAddressFromString("C02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
+			testutil.MustNewExternalEVMAddressFromString("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
 			"Wrapped Ether",
 			"WETH",
 			18,
 		),
 		types.NewEnabledERC20Token(
-			testutil.MustNewExternalEVMAddressFromString("000000000000000000000000000000000000000A"),
+			testutil.MustNewExternalEVMAddressFromString("0x000000000000000000000000000000000000000A"),
 			"Wrapped Kava",
 			"WKAVA",
 			6,
 		),
 		types.NewEnabledERC20Token(
-			testutil.MustNewExternalEVMAddressFromString("A0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"),
+			testutil.MustNewExternalEVMAddressFromString("0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"),
 			"USD Coin",
 			"USDC",
 			6,
@@ -284,7 +285,7 @@ func (suite *ParamsTestSuite) TestMarshalYAML() {
 
 	conversionPairs := types.NewConversionPairs(
 		types.NewConversionPair(
-			testutil.MustNewInternalEVMAddressFromString("0000000000000000000000000000000000000001"),
+			testutil.MustNewInternalEVMAddressFromString("0x0000000000000000000000000000000000000001"),
 			"usdc",
 		),
 	)
