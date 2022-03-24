@@ -82,14 +82,10 @@ func (suite *ConversionHooksTestSuite) ConvertToCoin(
 	// Fixes out of gas error
 	suite.Commit()
 
-	// LEFT zero padded
-	var toKavaAddrBytes32 [32]byte
-	copy(toKavaAddrBytes32[32-20:], toKavaAddr)
-
 	// method is lowercase but event is upper
 	data, err := suite.erc20Abi.Pack(
 		"convertToCoin",
-		toKavaAddrBytes32,
+		common.BytesToAddress(toKavaAddr.Bytes()),
 		amount,
 	)
 	suite.Require().NoError(err)
