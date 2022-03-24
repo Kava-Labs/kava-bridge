@@ -79,7 +79,7 @@ func (suite *ConversionHooksTestSuite) ConvertToCoin(
 	toKavaAddr sdk.AccAddress,
 	amount *big.Int,
 ) *evmtypes.MsgEthereumTxResponse {
-	// Fixes out of gas error
+	// Prevents out of gas error
 	suite.Commit()
 
 	// method is lowercase but event is upper
@@ -90,7 +90,8 @@ func (suite *ConversionHooksTestSuite) ConvertToCoin(
 	)
 	suite.Require().NoError(err)
 
-	res := suite.SendTx(contractAddr, suite.key1Addr, suite.Key1, data)
+	res, err := suite.SendTx(contractAddr, suite.key1Addr, suite.Key1, data)
+	suite.Require().NoError(err)
 	suite.Require().False(res.Failed(), "evm tx should not fail %v", res)
 
 	return res
@@ -168,4 +169,25 @@ func (suite *ConversionHooksTestSuite) TestConvert_BalanceChange() {
 		recipientBalAfter.Amount,
 		"kava receiver balance after convert should increase by amount",
 	)
+}
+
+func (suite *ConversionHooksTestSuite) TestConvert_InsufficientBalance() {
+	suite.Commit()
+
+	toKavaAddr := sdk.AccAddress(suite.Key2.PubKey().Address())
+	// Bal is 100
+	amount := big.NewInt(1000)
+
+	// Sends from key1
+	// method is lowercase but event is upper
+	data, err := suite.erc20Abi.Pack(
+		"convertToCoin",
+		common.BytesToAddress(toKavaAddr.Bytes()),
+		amount,
+	)
+	suite.Require().NoError(err)
+
+	_, err = suite.SendTx(suite.conversionPair.GetAddress(), suite.key1Addr, suite.Key1, data)
+	suite.Require().Error(err)
+	suite.Require().Equal("execution reverted: ERC20: transfer amount exceeds balance", err.Error())
 }
