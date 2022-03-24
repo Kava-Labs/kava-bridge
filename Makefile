@@ -91,10 +91,10 @@ contract/ethermint_json/ERC20MintableBurnable.json: contract/artifacts/contracts
 	$(JQ) '.abi = (.abi | tostring) | {abi, bin: .bytecode[2:] }' < $< > $@
 
 contract/artifacts/contracts_Bridge_sol_Bridge.abi: contract/contracts/Bridge.sol
-	cd contract && $(SOLC) --abi contracts/Bridge.sol --base-path . --include-path node_modules/ -o artifacts
+	cd contract && $(SOLC) --bin contracts/Bridge.sol --abi contracts/Bridge.sol --base-path . --include-path node_modules/ -o artifacts
 
-relayer/bridge.go: contract/artifacts/contracts_Bridge_sol_Bridge.abi
-	$(ABIGEN) --abi $< --pkg relayer --type Bridge --out $@
+relayer/bridge.go: contract/artifacts/contracts_Bridge_sol_Bridge.bin contract/artifacts/contracts_Bridge_sol_Bridge.abi
+	$(ABIGEN) --bin $< --abi $(word 2,$^) --pkg relayer --type Bridge --out $@
 
 ################################################################################
 ###                                 Includes                                 ###
