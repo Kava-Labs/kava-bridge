@@ -107,6 +107,22 @@ func (suite *ConversionHooksTestSuite) TestConvertToCoin() {
 	_ = suite.ConvertToCoin(suite.conversionPair.GetAddress(), toKavaAddr, amount)
 }
 
+func (suite *ConversionHooksTestSuite) TestConvertToCoin_Events() {
+	toKavaAddr := sdk.AccAddress(suite.Key2.PubKey().Address())
+	amount := big.NewInt(100)
+
+	res := suite.ConvertToCoin(suite.conversionPair.GetAddress(), toKavaAddr, amount)
+	suite.Require().False(res.Failed(), "tx should not fail")
+
+	coinAmount := sdk.NewCoin(suite.conversionPair.Denom, sdk.NewIntFromBigInt(amount))
+	suite.TypedEventsContains(suite.GetEvents(), &types.EventConvertERC20ToCoin{
+		ERC20Address: suite.conversionPair.GetAddress().String(),
+		Initiator:    suite.key1Addr.String(),
+		Receiver:     toKavaAddr.String(),
+		Amount:       &coinAmount,
+	})
+}
+
 func (suite *ConversionHooksTestSuite) TestConvert_BalanceChange() {
 	suite.Commit()
 
@@ -126,7 +142,8 @@ func (suite *ConversionHooksTestSuite) TestConvert_BalanceChange() {
 	recipientBalBefore := suite.App.BankKeeper.GetBalance(suite.Ctx, toKavaAddr, suite.conversionPair.Denom)
 
 	// Sends from key1
-	_ = suite.ConvertToCoin(suite.conversionPair.GetAddress(), toKavaAddr, amount)
+	res := suite.ConvertToCoin(suite.conversionPair.GetAddress(), toKavaAddr, amount)
+	suite.Require().False(res.Failed(), "tx should not fail")
 
 	balAfter := suite.GetERC20BalanceOf(
 		contract.ERC20MintableBurnableContract.ABI,
