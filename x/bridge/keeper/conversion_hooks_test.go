@@ -18,10 +18,11 @@ import (
 type ConversionHooksTestSuite struct {
 	testutil.Suite
 
-	msgServer      types.MsgServer
-	key1Addr       common.Address
-	erc20Abi       abi.ABI
-	conversionPair types.ConversionPair
+	msgServer             types.MsgServer
+	key1Addr              common.Address
+	erc20Abi              abi.ABI
+	conversionPair        types.ConversionPair
+	invalidConversionPair types.ConversionPair
 }
 
 func TestConversionHooksTestSuite(t *testing.T) {
@@ -49,6 +50,21 @@ func (suite *ConversionHooksTestSuite) SetupTest() {
 	params.EnabledConversionPairs = append(params.EnabledConversionPairs, suite.conversionPair)
 
 	suite.App.BridgeKeeper.SetParams(suite.Ctx, params)
+
+	// Create a bridge pair that is not enabled for conversion, does not need
+	// to be enabled as a bridge pair, just that it is deployed to EVM.
+	bridgePair2Addr, err := suite.App.BridgeKeeper.DeployMintableERC20Contract(
+		suite.Ctx,
+		types.NewEnabledERC20Token(
+			testutil.MustNewExternalEVMAddressFromString("0x0000000000000000000000000000000000000000"),
+			"Invald Token",
+			"IT",
+			18,
+		),
+	)
+	suite.Require().NoError(err)
+	suite.App.BridgeKeeper.MintERC20(suite.Ctx, bridgePair2Addr, types.NewInternalEVMAddress(suite.key1Addr), big.NewInt(100))
+	suite.invalidConversionPair = types.NewConversionPair(bridgePair2Addr, "erc20/invalid")
 }
 
 func (suite *ConversionHooksTestSuite) TestHooksSet() {
@@ -190,4 +206,55 @@ func (suite *ConversionHooksTestSuite) TestConvert_InsufficientBalance() {
 	_, err = suite.SendTx(suite.conversionPair.GetAddress(), suite.key1Addr, suite.Key1, data)
 	suite.Require().Error(err)
 	suite.Require().Equal("execution reverted: ERC20: transfer amount exceeds balance", err.Error())
+}
+
+func (suite *ConversionHooksTestSuite) TestConvertToCoin_NotEnabled() {
+	suite.Commit()
+	toKavaAddr := sdk.AccAddress(suite.Key2.PubKey().Address())
+	amount := big.NewInt(100)
+
+	balBefore := suite.GetERC20BalanceOf(
+		contract.ERC20MintableBurnableContract.ABI,
+		suite.invalidConversionPair.GetAddress(),
+		types.NewInternalEVMAddress(suite.key1Addr),
+	)
+	balModuleBefore := suite.GetERC20BalanceOf(
+		contract.ERC20MintableBurnableContract.ABI,
+		suite.invalidConversionPair.GetAddress(),
+		types.NewInternalEVMAddress(types.ModuleEVMAddress),
+	)
+	recipientBalBefore := suite.App.BankKeeper.GetBalance(suite.Ctx, toKavaAddr, suite.invalidConversionPair.Denom)
+
+	res := suite.ConvertToCoin(suite.invalidConversionPair.GetAddress(), toKavaAddr, amount)
+	suite.Require().False(res.Failed(), "tx should not fail")
+
+	balAfter := suite.GetERC20BalanceOf(
+		contract.ERC20MintableBurnableContract.ABI,
+		suite.invalidConversionPair.GetAddress(),
+		types.NewInternalEVMAddress(suite.key1Addr),
+	)
+	balModuleAfter := suite.GetERC20BalanceOf(
+		contract.ERC20MintableBurnableContract.ABI,
+		suite.invalidConversionPair.GetAddress(),
+		types.NewInternalEVMAddress(types.ModuleEVMAddress),
+	)
+	recipientBalAfter := suite.App.BankKeeper.GetBalance(suite.Ctx, toKavaAddr, suite.invalidConversionPair.Denom)
+
+	suite.Require().Equal(
+		new(big.Int).Sub(balBefore, amount),
+		balAfter,
+		"evm initiator balance after non-enabled convert should decrease by amount",
+	)
+	suite.Require().Equal(
+		new(big.Int).Add(balModuleBefore, amount),
+		balModuleAfter,
+		"module balance after non-enabled convert should increase by amount",
+	)
+	suite.Require().Equal(
+		recipientBalBefore.Amount,
+		recipientBalAfter.Amount,
+		"recipient balance should NOT change for non enabled conversions",
+	)
+
+	suite.TypedEventsDoesNotContain(suite.GetEvents(), &types.EventConvertERC20ToCoin{})
 }
