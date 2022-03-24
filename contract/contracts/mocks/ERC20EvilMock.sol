@@ -30,7 +30,7 @@ import "../Bridge.sol";
 
 contract ERC20EvilMock {
     uint256 private _reentered;
-    bytes32 private _toKavaAddr;
+    address private _toKavaAddr;
 
     constructor() {
         _reentered = 0;
@@ -39,7 +39,7 @@ contract ERC20EvilMock {
     // Lock attack requires a separate function to set thei kava address
     function attackLock(
         address target,
-        bytes32 toAddr,
+        address toAddr,
         uint256 amount
     ) external {
         _toKavaAddr = toAddr;

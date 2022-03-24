@@ -28,7 +28,7 @@ contract ERC20MintableBurnable is ERC20, Ownable {
     /// @param amount The amount that was converted
     event ConvertToCoin(
         address indexed sender,
-        bytes32 indexed toKavaAddr,
+        address indexed toKavaAddr,
         uint256 amount
     );
 
@@ -93,7 +93,7 @@ contract ERC20MintableBurnable is ERC20, Ownable {
     ///      and emits a ConvertToCoin event.
     /// @param toKavaAddr The Kava address where to send the converted coins to.
     /// @param amount The amount of the token to convert.
-    function convertToCoin(bytes32 toKavaAddr, uint256 amount) public virtual {
+    function convertToCoin(address toKavaAddr, uint256 amount) public virtual {
         _transfer(msg.sender, owner(), amount);
         emit ConvertToCoin(msg.sender, toKavaAddr, amount);
     }

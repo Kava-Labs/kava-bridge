@@ -5,7 +5,6 @@ import {
   ERC20MintableBurnable,
   ERC20MintableBurnable__factory as ERC20MintableBurnableFactory,
 } from "../typechain-types";
-import { kavaAddrToBytes32, testKavaAddrs } from "./utils";
 
 describe("ERC20MintableBurnable", function () {
   let erc20: ERC20MintableBurnable;
@@ -13,11 +12,12 @@ describe("ERC20MintableBurnable", function () {
   let owner: Signer;
   let sender: Signer;
   let ethAddr: Signer;
+  let receiver: Signer;
 
   beforeEach(async function () {
     erc20Factory = await ethers.getContractFactory("ERC20MintableBurnable");
     erc20 = await erc20Factory.deploy("Wrapped Kava", "WKAVA", 6n);
-    [owner, sender, ethAddr] = await ethers.getSigners();
+    [owner, sender, ethAddr, receiver] = await ethers.getSigners();
   });
 
   describe("decimals", function () {
@@ -157,7 +157,7 @@ describe("ERC20MintableBurnable", function () {
 
   describe("convertToCoin", function () {
     let amount: bigint;
-    let toKavaAddr: string;
+    let toAddr: string;
 
     beforeEach(async function () {
       const tx = await erc20
@@ -168,20 +168,20 @@ describe("ERC20MintableBurnable", function () {
       erc20 = erc20.connect(sender);
       amount = 10n;
 
-      toKavaAddr = ethers.utils.hexlify(kavaAddrToBytes32(testKavaAddrs[0]));
+      toAddr = await receiver.getAddress();
     });
 
     it("should emit a ConvertToCoin event with (sender, toKavaAddr, amount)", async function () {
-      const withdrawTx = erc20.convertToCoin(toKavaAddr, amount);
+      const withdrawTx = erc20.convertToCoin(toAddr, amount);
 
       await expect(withdrawTx)
         .to.emit(erc20, "ConvertToCoin")
-        .withArgs(await sender.getAddress(), toKavaAddr, amount);
+        .withArgs(await sender.getAddress(), toAddr, amount);
     });
 
     it("should index sender, toAddr in the ConvertToCoin event", async function () {
       const event =
-        erc20.interface.events["ConvertToCoin(address,bytes32,uint256)"];
+        erc20.interface.events["ConvertToCoin(address,address,uint256)"];
 
       expect(event.inputs).to.be.length(3);
 
@@ -199,12 +199,12 @@ describe("ERC20MintableBurnable", function () {
 
     it("should transfer amount to owner address", async function () {
       await expect(() =>
-        erc20.convertToCoin(toKavaAddr, amount)
+        erc20.convertToCoin(toAddr, amount)
       ).to.changeTokenBalances(erc20, [sender, owner], [-1n * amount, amount]);
     });
 
     it("should fail when ERC20 withdraw amount exceeds balance", async function () {
-      const withdrawTx = erc20.convertToCoin(toKavaAddr, amount * 100n);
+      const withdrawTx = erc20.convertToCoin(toAddr, amount * 100n);
       await expect(withdrawTx).to.be.revertedWith(
         "ERC20: transfer amount exceeds balance"
       );

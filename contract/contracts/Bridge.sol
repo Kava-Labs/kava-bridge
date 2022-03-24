@@ -66,7 +66,7 @@ contract Bridge is ReentrancyGuard, Sequence(0) {
         incrementSequence();
         IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
 
-        emit Lock(token, msg.sender, toAddr, amount, getSequence());
+        emit Lock(token, msg.sender, toKavaAddr, amount, getSequence());
     }
 
     /// @notice Unlocks an ERC20 amount and emits an Unlock event
