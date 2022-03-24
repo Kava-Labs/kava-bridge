@@ -49,4 +49,10 @@ sed -in-place='' 's/stake/ukava/g' $DATA/config/genesis.json
 sed -in-place='' 's/aphoton/ukava/g' $DATA/config/genesis.json
 
 # Zero out the total supply so it gets recalculated during InitGenesis
-jq '.app_state.bank.supply = []' $DATA/config/genesis.json|sponge $DATA/config/genesis.json
+jq '.app_state.bank.supply = []' $DATA/config/genesis.json | sponge $DATA/config/genesis.json
+
+# Set relayer to facuet address
+jq '.app_state.bridge.params.relayer = "kava123fxg0l602etulhhcdm0vt7l57qya5wjcrwhzz"' $DATA/config/genesis.json | sponge $DATA/config/genesis.json
+
+# Set enabled erc20 tokens to match ropsten testnet
+jq '.app_state.bridge.params.enabled_erc20_tokens = [{address: "0xc778417e063141139fce010982780140aa0cd5ab", name: "Wrapped ETH", symbol: "WETH", decimals: 18},{address: "0x07865c6e87b9f70255377e024ace6630c1eaa37f", name: "USDC", symbol: "USDC", decimals: 18}]' $DATA/config/genesis.json | sponge $DATA/config/genesis.json
