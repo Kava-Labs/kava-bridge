@@ -78,7 +78,7 @@ SOLC ?= npx solc
 ABIGEN ?= abigen
 
 .PHONY: compile-contracts
-compile-contracts: contract/ethermint_json/ERC20MintableBurnable.json relayer/bridge.go ## Compiles contracts and creates ethermint compatible json
+compile-contracts: contract/ethermint_json/ERC20MintableBurnable.json relayer/bridge.go relayer/erc20.go ## Compiles contracts and creates ethermint compatible json
 
 contract/artifacts/contracts/ERC20MintableBurnable.sol/ERC20MintableBurnable.json: contract/contracts/ERC20MintableBurnable.sol
 	cd contract && $(NPM) run compile
@@ -96,9 +96,14 @@ contract/artifacts/contracts_Bridge_sol_Bridge.abi: contract/contracts/Bridge.so
 contract/artifacts/contracts_Bridge_sol_Bridge.bin: contract/contracts/Bridge.sol
 	cd contract && $(SOLC) --optimize --bin contracts/Bridge.sol --base-path . --include-path node_modules/ -o artifacts
 
+contract/artifacts/contracts_ERC20_sol_ERC20.abi: contract/contracts/ERC20.sol
+	cd contract && $(SOLC) --abi contracts/ERC20.sol --base-path . --include-path node_modules/ -o artifacts
+
 relayer/bridge.go: contract/artifacts/contracts_Bridge_sol_Bridge.bin contract/artifacts/contracts_Bridge_sol_Bridge.abi
 	$(ABIGEN) --bin $< --abi $(word 2,$^) --pkg relayer --type Bridge --out $@
 
+relayer/erc20.go: contract/artifacts/contracts_ERC20_sol_Erc20.abi
+	$(ABIGEN) --abi $< --pkg relayer --type ERC20 --out $@
 ################################################################################
 ###                                 Includes                                 ###
 ################################################################################
