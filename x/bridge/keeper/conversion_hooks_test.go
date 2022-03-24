@@ -63,7 +63,9 @@ func (suite *ConversionHooksTestSuite) SetupTest() {
 		),
 	)
 	suite.Require().NoError(err)
-	suite.App.BridgeKeeper.MintERC20(suite.Ctx, bridgePair2Addr, types.NewInternalEVMAddress(suite.key1Addr), big.NewInt(100))
+
+	err = suite.App.BridgeKeeper.MintERC20(suite.Ctx, bridgePair2Addr, types.NewInternalEVMAddress(suite.key1Addr), big.NewInt(100))
+	suite.Require().NoError(err)
 	suite.invalidConversionPair = types.NewConversionPair(bridgePair2Addr, "erc20/invalid")
 }
 
