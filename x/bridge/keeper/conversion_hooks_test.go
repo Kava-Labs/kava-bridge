@@ -1,7 +1,6 @@
 package keeper_test
 
 import (
-	"fmt"
 	"math/big"
 	"testing"
 
@@ -113,8 +112,6 @@ func (suite *ConversionHooksTestSuite) TestConvert_BalanceChange() {
 
 	toKavaAddr := sdk.AccAddress(suite.Key2.PubKey().Address())
 	amount := big.NewInt(100)
-
-	fmt.Printf("orig raw bytes: %b\nbech32: %v (bytes: %b)\n", toKavaAddr, toKavaAddr.String(), toKavaAddr.Bytes())
 
 	balBefore := suite.GetERC20BalanceOf(
 		contract.ERC20MintableBurnableContract.ABI,
