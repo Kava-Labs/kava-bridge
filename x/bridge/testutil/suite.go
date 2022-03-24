@@ -98,19 +98,19 @@ func (suite *Suite) SetupTest() {
 		types.NewParams(
 			types.EnabledERC20Tokens{
 				types.NewEnabledERC20Token(
-					MustNewExternalEVMAddressFromString("C02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
+					MustNewExternalEVMAddressFromString("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
 					"Wrapped Ether",
 					"WETH",
 					18,
 				),
 				types.NewEnabledERC20Token(
-					MustNewExternalEVMAddressFromString("000000000000000000000000000000000000000A"),
+					MustNewExternalEVMAddressFromString("0x000000000000000000000000000000000000000A"),
 					"Wrapped Kava",
 					"WKAVA",
 					6,
 				),
 				types.NewEnabledERC20Token(
-					MustNewExternalEVMAddressFromString("A0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"),
+					MustNewExternalEVMAddressFromString("0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"),
 					"USD Coin",
 					"USDC",
 					6,
@@ -119,7 +119,7 @@ func (suite *Suite) SetupTest() {
 			suite.RelayerAddress,
 			types.NewConversionPairs(
 				types.NewConversionPair(
-					MustNewInternalEVMAddressFromString("000000000000000000000000000000000000000B"),
+					MustNewInternalEVMAddressFromString("0x000000000000000000000000000000000000000B"),
 					"usdc",
 				),
 			),

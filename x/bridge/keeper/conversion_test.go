@@ -22,7 +22,7 @@ func TestConversionTestSuite(t *testing.T) {
 
 func (suite *ConversionTestSuite) TestMint() {
 	pair := types.NewConversionPair(
-		testutil.MustNewInternalEVMAddressFromString("000000000000000000000000000000000000000A"),
+		testutil.MustNewInternalEVMAddressFromString("0x000000000000000000000000000000000000000A"),
 		"erc20/usdc",
 	)
 
@@ -38,7 +38,7 @@ func (suite *ConversionTestSuite) TestMint() {
 
 func (suite *ConversionTestSuite) TestBurn_InsufficientBalance() {
 	pair := types.NewConversionPair(
-		testutil.MustNewInternalEVMAddressFromString("000000000000000000000000000000000000000A"),
+		testutil.MustNewInternalEVMAddressFromString("0x000000000000000000000000000000000000000A"),
 		"erc20/usdc",
 	)
 
@@ -52,7 +52,7 @@ func (suite *ConversionTestSuite) TestBurn_InsufficientBalance() {
 
 func (suite *ConversionTestSuite) TestBurn() {
 	pair := types.NewConversionPair(
-		testutil.MustNewInternalEVMAddressFromString("000000000000000000000000000000000000000A"),
+		testutil.MustNewInternalEVMAddressFromString("0x000000000000000000000000000000000000000A"),
 		"erc20/usdc",
 	)
 
