@@ -4,6 +4,7 @@
 PROJECT_NAME := kava-bridge
 PROJECT_DIR := $(patsubst %/,%,$(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
 
+GO ?= go
 PKGS ?= ./...
 
 ################################################################################
@@ -17,7 +18,7 @@ help: ## Display this help message
 ################################################################################
 .PHONY: install
 install: ## Install kava-bridge
-	go install -mod=readonly ./cmd/kava-bridged
+	$(GO) install -mod=readonly ./cmd/kava-bridged
 
 .PHONY: start
 start: install ## Start kava-bridge chain locally
@@ -34,34 +35,41 @@ golangci-lint: ## Run golangci-lint
 
 .PHONY: vet
 vet: ## Run go vet
-	go vet $(PKGS)
+	$(GO) vet $(PKGS)
 
 .PHONY: build
 build: ## Run go build
-	go build $(PKGS)
+	$(GO) build $(PKGS)
 
 .PHONY: test
 test: ## Run go test
-	go test $(PKGS)
+	$(GO) test $(PKGS)
 
 .PHONY: cover
 cover: ## Run tests with coverage and save to coverage.html
-	go test -coverprofile=c.out $(PKGS)
-	go tool cover -html=c.out -o coverage.html
+	$(GO) test -coverprofile=c.out $(PKGS)
+	$(GO) tool cover -html=c.out -o coverage.html
 
 .PHONY: watch
 watch: ## Run tests on file changes
-	while sleep 0.5; do find . -type f -name '*.go' | entr -d go test $(PKGS); done
+	while sleep 0.5; do find . -type f -name '*.go' | entr -d $(GO) test $(PKGS); done
 
 .PHONY: clean
 clean: ## Clean up build and temporary files
 	rm c.out coverage.html
 
+.PHONY: install-devtools
+install-devtools: ## Install solc and abigen used by compile-contracts
+	cd contract && npm install
+	$(GO) install github.com/ethereum/go-ethereum/cmd/abigen@latest
+
 JQ ?= jq
 NPM ?= npm
+SOLC ?= npx solc
+ABIGEN ?= abigen
 
 .PHONY: compile-contracts
-compile-contracts: contract/ethermint_json/ERC20MintableBurnable.json ## Compiles contracts and creates ethermint compatible json
+compile-contracts: contract/ethermint_json/ERC20MintableBurnable.json relayer/bridge.go ## Compiles contracts and creates ethermint compatible json
 
 contract/artifacts/contracts/ERC20MintableBurnable.sol/ERC20MintableBurnable.json: contract/contracts/ERC20MintableBurnable.sol
 	cd contract && $(NPM) run compile
@@ -72,6 +80,12 @@ contract/artifacts/contracts/ERC20MintableBurnable.sol/ERC20MintableBurnable.jso
 contract/ethermint_json/ERC20MintableBurnable.json: contract/artifacts/contracts/ERC20MintableBurnable.sol/ERC20MintableBurnable.json
 	mkdir -p contract/ethermint_json
 	$(JQ) '.abi = (.abi | tostring) | {abi, bin: .bytecode[2:] }' < $< > $@
+
+contract/artifacts/contracts_Bridge_sol_Bridge.abi: contract/contracts/Bridge.sol
+	cd contract && $(SOLC) --abi contracts/Bridge.sol --base-path . --include-path node_modules/ -o artifacts
+
+relayer/bridge.go: contract/artifacts/contracts_Bridge_sol_Bridge.abi
+	$(ABIGEN) --abi $< --pkg relayer --type Bridge --out $@
 
 ################################################################################
 ###                                 Includes                                 ###
