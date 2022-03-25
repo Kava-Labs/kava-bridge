@@ -98,14 +98,13 @@ func (h ConversionHooks) PostTxProcessing(
 			panic(err)
 		}
 
-		if err := ctx.EventManager().EmitTypedEvent(&types.EventConvertERC20ToCoin{
-			ERC20Address: contractAddr.String(),
-			Initiator:    initiator.String(),
-			Receiver:     receiver.String(),
-			Amount:       &coin,
-		}); err != nil {
-			panic(err)
-		}
+		ctx.EventManager().EmitEvent(sdk.NewEvent(
+			types.EventTypeConvertERC20ToCoin,
+			sdk.NewAttribute(types.AttributeKeyERC20Address, contractAddr.String()),
+			sdk.NewAttribute(types.AttributeKeyInitiator, initiator.String()),
+			sdk.NewAttribute(types.AttributeKeyReceiver, receiver.String()),
+			sdk.NewAttribute(types.AttributeKeyAmount, coin.String()),
+		))
 	}
 
 	return nil

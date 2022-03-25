@@ -111,14 +111,13 @@ func (h WithdrawHook) PostTxProcessing(
 			panic(err)
 		}
 
-		if err := ctx.EventManager().EmitTypedEvent(&types.EventBridgeKavaToEthereum{
-			EthereumErc20Address: externalERC20Addr.String(),
-			Receiver:             toAddr.String(),
-			Amount:               amount.String(),
-			Sequence:             sequence.String(),
-		}); err != nil {
-			panic(err)
-		}
+		ctx.EventManager().EmitEvent(sdk.NewEvent(
+			types.EventTypeBridgeKavaToEthereum,
+			sdk.NewAttribute(types.AttributeKeyEthereumERC20Address, externalERC20Addr.String()),
+			sdk.NewAttribute(types.AttributeKeyReceiver, toAddr.String()),
+			sdk.NewAttribute(types.AttributeKeyAmount, amount.String()),
+			sdk.NewAttribute(types.AttributeKeySequence, sequence.String()),
+		))
 	}
 
 	return nil
