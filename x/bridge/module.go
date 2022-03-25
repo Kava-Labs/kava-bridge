@@ -68,8 +68,7 @@ func (b AppModuleBasic) RegisterGRPCGatewayRoutes(c client.Context, serveMux *ru
 
 // GetTxCmd returns the root tx command for the bridge module.
 func (AppModuleBasic) GetTxCmd() *cobra.Command {
-	// TODO: return cli.GetTxCmd()
-	return nil
+	return cli.GetTxCmd()
 }
 
 // GetQueryCmd returns no root query command for the bridge module.
