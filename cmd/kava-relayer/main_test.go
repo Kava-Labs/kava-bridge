@@ -16,7 +16,7 @@ const (
 func TestMain(m *testing.M) {
 	build := exec.Command("go", "build", "-o", binName)
 	if err := build.Run(); err != nil {
-		fmt.Errorf("Failed to build %s: %s", binName, err)
+		fmt.Fprintf(os.Stderr, "Failed to build %s: %s", binName, err)
 		os.Exit(1)
 	}
 
