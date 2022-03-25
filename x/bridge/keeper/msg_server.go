@@ -64,3 +64,11 @@ func (s msgServer) BridgeEthereumToKava(
 
 	return &types.MsgBridgeEthereumToKavaResponse{}, nil
 }
+
+func (s msgServer) ConvertCoinToERC20(
+	goCtx context.Context,
+	msg *types.MsgConvertCoinToERC20,
+) (*types.MsgConvertCoinToERC20Response, error) {
+
+	return &types.MsgConvertCoinToERC20Response{}, nil
+}

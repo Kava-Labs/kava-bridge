@@ -9,9 +9,10 @@ import (
 // ensure Msg interface compliance at compile time
 var (
 	_ sdk.Msg = &MsgBridgeEthereumToKava{}
+	_ sdk.Msg = &MsgConvertCoinToERC20{}
 )
 
-// NewMsgBridgeEthereumToKava returns a newMsgBridgeEthereumToKava
+// NewMsgBridgeEthereumToKava returns a new MsgBridgeEthereumToKava
 func NewMsgBridgeEthereumToKava(
 	relayer string,
 	ethereumERC20Address string,
@@ -67,4 +68,48 @@ func (msg MsgBridgeEthereumToKava) ValidateBasic() error {
 	}
 
 	return nil
+}
+
+// NewMsgConvertCoinToERC20 returns a new MsgConvertCoinToERC20
+func NewMsgConvertCoinToERC20(
+	initiator string,
+	receiver string,
+	amount sdk.Coin,
+) MsgConvertCoinToERC20 {
+	return MsgConvertCoinToERC20{
+		Initiator: initiator,
+		Receiver:  receiver,
+		Amount:    &amount,
+	}
+}
+
+// GetSigners returns the addresses of signers that must sign.
+func (msg MsgConvertCoinToERC20) GetSigners() []sdk.AccAddress {
+	sender, err := sdk.AccAddressFromBech32(msg.Initiator)
+	if err != nil {
+		panic(err)
+	}
+	return []sdk.AccAddress{sender}
+}
+
+// ValidateBasic does a simple validation check that doesn't require access to any other information.
+func (msg MsgConvertCoinToERC20) ValidateBasic() error {
+	_, err := sdk.AccAddressFromBech32(msg.Initiator)
+	if err != nil {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, err.Error())
+	}
+
+	if !common.IsHexAddress(msg.Receiver) {
+		return sdkerrors.Wrap(
+			sdkerrors.ErrInvalidAddress,
+			"Receiver is not a valid hex address",
+		)
+	}
+
+	if msg.Amount.IsZero() {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "amount cannot be zero")
+	}
+
+	// Checks for negative
+	return msg.Amount.Validate()
 }
