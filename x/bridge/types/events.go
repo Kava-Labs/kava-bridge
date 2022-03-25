@@ -15,13 +15,13 @@ const (
 	EventTypeConvertCoinToERC20   = "convert_coin_to_erc20"
 
 	// Event Attributes - Common
-	AttributeKeyEthereumERC20Address = "ethereum_erc20_address"
-	AttributeKeyReceiver             = "receiver"
-	AttributeKeyAmount               = "amount"
+	AttributeKeyReceiver = "receiver"
+	AttributeKeyAmount   = "amount"
 
 	// Event Attributes - Bridge
-	AttributeKeyRelayer  = "relayer"
-	AttributeKeySequence = "sequence"
+	AttributeKeyEthereumERC20Address = "ethereum_erc20_address"
+	AttributeKeyRelayer              = "relayer"
+	AttributeKeySequence             = "sequence"
 
 	// Event Attributes - Conversions
 	AttributeKeyInitiator    = "initiator"
