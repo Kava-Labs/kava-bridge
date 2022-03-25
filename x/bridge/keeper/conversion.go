@@ -44,7 +44,7 @@ func (k Keeper) ConvertCoinToERC20(
 		return err
 	}
 
-	if err := k.BurnConversionPairCoin(ctx, pair, coin.Amount, initiatorAccount); err != nil {
+	if err := k.BurnConversionPairCoin(ctx, pair, coin, initiatorAccount); err != nil {
 		return err
 	}
 
@@ -68,10 +68,9 @@ func (k Keeper) ConvertCoinToERC20(
 func (k Keeper) BurnConversionPairCoin(
 	ctx sdk.Context,
 	pair types.ConversionPair,
-	amount sdk.Int,
+	coin sdk.Coin,
 	account sdk.AccAddress,
 ) error {
-	coin := sdk.NewCoin(pair.Denom, amount)
 	coins := sdk.NewCoins(coin)
 
 	if err := k.bankKeeper.SendCoinsFromAccountToModule(ctx, account, types.ModuleName, coins); err != nil {

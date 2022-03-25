@@ -46,7 +46,7 @@ func (suite *ConversionTestSuite) TestBurn_InsufficientBalance() {
 	amount := sdk.NewInt(100)
 	recipient := suite.Key1.PubKey().Address().Bytes()
 
-	err := suite.App.BridgeKeeper.BurnConversionPairCoin(suite.Ctx, pair, amount, recipient)
+	err := suite.App.BridgeKeeper.BurnConversionPairCoin(suite.Ctx, pair, sdk.NewCoin(pair.Denom, amount), recipient)
 	suite.Require().Error(err)
 	suite.Require().Equal("0erc20/usdc is smaller than 100erc20/usdc: insufficient funds", err.Error())
 }
@@ -67,7 +67,7 @@ func (suite *ConversionTestSuite) TestBurn() {
 	bal := suite.App.BankKeeper.GetBalance(suite.Ctx, recipient, pair.Denom)
 	suite.Require().Equal(amount, bal.Amount, "minted amount should increase balance")
 
-	err = suite.App.BridgeKeeper.BurnConversionPairCoin(suite.Ctx, pair, amount, recipient)
+	err = suite.App.BridgeKeeper.BurnConversionPairCoin(suite.Ctx, pair, sdk.NewCoin(pair.Denom, amount), recipient)
 	suite.Require().NoError(err)
 
 	bal = suite.App.BankKeeper.GetBalance(suite.Ctx, recipient, pair.Denom)
