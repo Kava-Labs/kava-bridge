@@ -2,6 +2,7 @@ syntax = "proto3";
 package bridge.v1beta1;
 
 import "gogoproto/gogo.proto";
+import "cosmos/base/v1beta1/coin.proto";
 import "cosmos_proto/cosmos.proto";
 
 option go_package                    = "github.com/kava-labs/kava-bridge/x/bridge/types";
@@ -13,6 +14,9 @@ service Msg {
   // BridgeEthereumToKava defines a method for bridging ERC20 tokens from
   // Ethereum to Kava.
   rpc BridgeEthereumToKava(MsgBridgeEthereumToKava) returns (MsgBridgeEthereumToKavaResponse);
+
+  // ConvertCoinToERC20 defines a method for converting sdk.Coin to Kava ERC20.
+  rpc ConvertCoinToERC20(MsgConvertCoinToERC20) returns (MsgConvertCoinToERC20Response);
 }
 
 // MsgBridgeEthereumToKava defines a ERC20 bridge transfer from Ethereum to Kava.
@@ -37,5 +41,18 @@ message MsgBridgeEthereumToKava {
   ];
 }
 
-// MsgBridgeEthereumToKavaResponse defines the response value from
+// MsgBridgeEthereumToKavaResponse defines the response value from Msg/BridgeEthereumToKava
 message MsgBridgeEthereumToKavaResponse {}
+
+// MsgConvertCoinToERC20 defines a conversion from sdk.Coin to Kava ERC20.
+message MsgConvertCoinToERC20 {
+  // Kava bech32 address initiating the conversion
+  string initiator = 1;
+  // EVM hex address that will receive the converted Kava ERC20 tokens.
+  string receiver = 2;
+  // Amount is the sdk.Coin amount to convert
+  cosmos.base.v1beta1.Coin amount = 3;
+}
+
+// MsgConvertCoinToERC20Response defines the response value from Msg/ConvertCoinToERC20
+message MsgConvertCoinToERC20Response {}
