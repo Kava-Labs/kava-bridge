@@ -144,6 +144,7 @@ func (suite *ConversionTestSuite) TestConvertCoinToERC20() {
 		contractAddr,
 		"erc20/usdc",
 	)
+	suite.AddEnabledConversionPair(pair)
 
 	amount := big.NewInt(100)
 	originAcc := sdk.AccAddress(suite.Key1.PubKey().Address().Bytes())
@@ -201,9 +202,42 @@ func (suite *ConversionTestSuite) TestConvertCoinToERC20() {
 		recipientBal,
 		"recipient balance should increase",
 	)
+
+	suite.EventsContains(suite.GetEvents(),
+		sdk.NewEvent(
+			types.EventTypeConvertCoinToERC20,
+			sdk.NewAttribute(types.AttributeKeyInitiator, originAcc.String()),
+			sdk.NewAttribute(types.AttributeKeyReceiver, recipientAcc.String()),
+			sdk.NewAttribute(types.AttributeKeyERC20Address, pair.GetAddress().String()),
+			sdk.NewAttribute(types.AttributeKeyAmount, coin.String()),
+		))
 }
 
 func (suite *ConversionTestSuite) TestConvertCoinToERC20_InsufficientBalance() {
+	contractAddr := suite.DeployERC20()
+
+	pair := types.NewConversionPair(
+		contractAddr,
+		"erc20/usdc",
+	)
+	suite.AddEnabledConversionPair(pair)
+
+	amount := big.NewInt(100)
+	originAcc := sdk.AccAddress(suite.Key1.PubKey().Address().Bytes())
+	recipientAcc := types.NewInternalEVMAddress(common.BytesToAddress(suite.Key2.PubKey().Address()))
+
+	err := suite.App.BridgeKeeper.ConvertCoinToERC20(
+		suite.Ctx,
+		originAcc,
+		recipientAcc,
+		sdk.NewCoin(pair.Denom, sdk.NewIntFromBigInt(amount)),
+	)
+
+	suite.Require().Error(err)
+	suite.Require().Equal("0erc20/usdc is smaller than 100erc20/usdc: insufficient funds", err.Error())
+}
+
+func (suite *ConversionTestSuite) TestConvertCoinToERC20_NotEnabled() {
 	contractAddr := suite.DeployERC20()
 
 	pair := types.NewConversionPair(
@@ -223,5 +257,5 @@ func (suite *ConversionTestSuite) TestConvertCoinToERC20_InsufficientBalance() {
 	)
 
 	suite.Require().Error(err)
-	suite.Require().Equal("0erc20/usdc is smaller than 100erc20/usdc: insufficient funds", err.Error())
+	suite.Require().Equal("erc20/usdc: ERC20 token not enabled to convert to sdk.Coin", err.Error())
 }
