@@ -33,15 +33,15 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
 // MsgBridgeEthereumToKava defines a ERC20 bridge transfer from Ethereum to Kava.
 type MsgBridgeEthereumToKava struct {
-	// Address of the bridge relayer
+	// Address of the bridge relayer.
 	Relayer string `protobuf:"bytes,1,opt,name=relayer,proto3" json:"relayer,omitempty"`
-	// Originating Ethereum ERC20 contract address
+	// Originating Ethereum ERC20 contract address.
 	EthereumERC20Address string `protobuf:"bytes,2,opt,name=ethereum_erc20_address,json=ethereumErc20Address,proto3" json:"ethereum_erc20_address,omitempty"`
-	// ERC20 token amount to transfer
+	// ERC20 token amount to transfer.
 	Amount github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,3,opt,name=amount,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"amount"`
-	// Receiver hex address on Kava
+	// Receiver hex address on Kava.
 	Receiver string `protobuf:"bytes,4,opt,name=receiver,proto3" json:"receiver,omitempty"`
-	// Unique sequence per bridge event
+	// Unique sequence per bridge event.
 	Sequence github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,5,opt,name=sequence,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"sequence"`
 }
 
@@ -99,7 +99,8 @@ func (m *MsgBridgeEthereumToKava) GetReceiver() string {
 	return ""
 }
 
-// MsgBridgeEthereumToKavaResponse defines the response value from Msg/BridgeEthereumToKava
+// MsgBridgeEthereumToKavaResponse defines the response value from
+// Msg/BridgeEthereumToKava.
 type MsgBridgeEthereumToKavaResponse struct {
 }
 
@@ -138,11 +139,11 @@ var xxx_messageInfo_MsgBridgeEthereumToKavaResponse proto.InternalMessageInfo
 
 // MsgConvertCoinToERC20 defines a conversion from sdk.Coin to Kava ERC20.
 type MsgConvertCoinToERC20 struct {
-	// Kava bech32 address initiating the conversion
+	// Kava bech32 address initiating the conversion.
 	Initiator string `protobuf:"bytes,1,opt,name=initiator,proto3" json:"initiator,omitempty"`
 	// EVM hex address that will receive the converted Kava ERC20 tokens.
 	Receiver string `protobuf:"bytes,2,opt,name=receiver,proto3" json:"receiver,omitempty"`
-	// Amount is the sdk.Coin amount to convert
+	// Amount is the sdk.Coin amount to convert.
 	Amount *types.Coin `protobuf:"bytes,3,opt,name=amount,proto3" json:"amount,omitempty"`
 }
 
@@ -200,7 +201,8 @@ func (m *MsgConvertCoinToERC20) GetAmount() *types.Coin {
 	return nil
 }
 
-// MsgConvertCoinToERC20Response defines the response value from Msg/ConvertCoinToERC20
+// MsgConvertCoinToERC20Response defines the response value from
+// Msg/ConvertCoinToERC20.
 type MsgConvertCoinToERC20Response struct {
 }
 

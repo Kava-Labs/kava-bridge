@@ -260,11 +260,11 @@ MsgBridgeEthereumToKava defines a ERC20 bridge transfer from Ethereum to Kava.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `relayer` | [string](#string) |  | Address of the bridge relayer |
-| `ethereum_erc20_address` | [string](#string) |  | Originating Ethereum ERC20 contract address |
-| `amount` | [string](#string) |  | ERC20 token amount to transfer |
-| `receiver` | [string](#string) |  | Receiver hex address on Kava |
-| `sequence` | [string](#string) |  | Unique sequence per bridge event |
+| `relayer` | [string](#string) |  | Address of the bridge relayer. |
+| `ethereum_erc20_address` | [string](#string) |  | Originating Ethereum ERC20 contract address. |
+| `amount` | [string](#string) |  | ERC20 token amount to transfer. |
+| `receiver` | [string](#string) |  | Receiver hex address on Kava. |
+| `sequence` | [string](#string) |  | Unique sequence per bridge event. |
 
 
 
@@ -274,7 +274,8 @@ MsgBridgeEthereumToKava defines a ERC20 bridge transfer from Ethereum to Kava.
 <a name="bridge.v1beta1.MsgBridgeEthereumToKavaResponse"></a>
 
 ### MsgBridgeEthereumToKavaResponse
-MsgBridgeEthereumToKavaResponse defines the response value from Msg/BridgeEthereumToKava
+MsgBridgeEthereumToKavaResponse defines the response value from
+Msg/BridgeEthereumToKava.
 
 
 
@@ -289,9 +290,9 @@ MsgConvertCoinToERC20 defines a conversion from sdk.Coin to Kava ERC20.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `initiator` | [string](#string) |  | Kava bech32 address initiating the conversion |
+| `initiator` | [string](#string) |  | Kava bech32 address initiating the conversion. |
 | `receiver` | [string](#string) |  | EVM hex address that will receive the converted Kava ERC20 tokens. |
-| `amount` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) |  | Amount is the sdk.Coin amount to convert |
+| `amount` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) |  | Amount is the sdk.Coin amount to convert. |
 
 
 
@@ -301,7 +302,8 @@ MsgConvertCoinToERC20 defines a conversion from sdk.Coin to Kava ERC20.
 <a name="bridge.v1beta1.MsgConvertCoinToERC20Response"></a>
 
 ### MsgConvertCoinToERC20Response
-MsgConvertCoinToERC20Response defines the response value from Msg/ConvertCoinToERC20
+MsgConvertCoinToERC20Response defines the response value from
+Msg/ConvertCoinToERC20.
 
 
 
