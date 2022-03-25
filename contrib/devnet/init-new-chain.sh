@@ -18,6 +18,7 @@ BINARY=kava-bridged
 # Create new data directory, overwriting any that alread existed
 chainID="kavabridgelocalnet_8888-1"
 $BINARY init validator --chain-id $chainID
+$BINARY config chain-id $chainID
 
 # hacky enable of rest api
 sed -in-place='' 's/enable = false/enable = true/g' $DATA/config/app.toml
