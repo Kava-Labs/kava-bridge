@@ -1,4 +1,4 @@
-# Kava Etherium Bridge
+# Kava Ethereum Bridge
 
 A contract for cross-chain ERC20 token transfers.
 
