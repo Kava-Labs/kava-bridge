@@ -27,19 +27,19 @@ import (
 )
 
 // Hooks wrapper struct for bridge keeper
-type Hooks struct {
+type WithdrawHook struct {
 	k Keeper
 }
 
-var _ evmtypes.EvmHooks = Hooks{}
+var _ evmtypes.EvmHooks = WithdrawHook{}
 
 // Return the wrapper struct
-func (k Keeper) Hooks() Hooks {
-	return Hooks{k}
+func (k Keeper) WithdrawHooks() WithdrawHook {
+	return WithdrawHook{k}
 }
 
 // PostTxProcessing implements EvmHooks.PostTxProcessing
-func (h Hooks) PostTxProcessing(
+func (h WithdrawHook) PostTxProcessing(
 	ctx sdk.Context,
 	from common.Address,
 	to *common.Address,

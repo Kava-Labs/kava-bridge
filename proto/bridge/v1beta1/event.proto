@@ -1,6 +1,7 @@
 syntax = "proto3";
 package bridge.v1beta1;
 
+import "cosmos/base/v1beta1/coin.proto";
 import "gogoproto/gogo.proto";
 
 option go_package                    = "github.com/kava-labs/kava-bridge/x/bridge/types";
@@ -16,10 +17,18 @@ message EventBridgeEthereumToKava {
   string sequence               = 5; // Sequence is the unique Ethereum lock sequence re-emitted
 }
 
-// EventBridgeKavaToEthereum is emitted on Kava ERC20 Withdraw
+// EventBridgeKavaToEthereum is emitted on Kava ERC20 Withdraw()
 message EventBridgeKavaToEthereum {
   string ethereum_erc20_address = 1; // EthereumErc20Address is the ERC20 address on Ethereum to unlock funds to
   string receiver               = 2; // Receiver is the Ethereum address to unlock funds to
   string amount                 = 3; // Amount is the amount to be unlocked on Ethereum
   string sequence               = 4; // Sequence is the unique Kava bridge withdraw sequence
+}
+
+// EventConvertERC20ToCoin is emitted on Kava ERC20 ConvertToCoin()
+message EventConvertERC20ToCoin {
+  string erc20_address            = 1 [(gogoproto.customname) = "ERC20Address"]; // Kava ERC20 address converted from
+  string initiator                = 2; // Converter is the Kava EVM address that initiated the coin conversion
+  string receiver                 = 3; // Receiver is the Kava address to send converted sdk.Coins to
+  cosmos.base.v1beta1.Coin amount = 4; // Amount is the sdk.Coin amount converted
 }

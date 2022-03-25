@@ -48,7 +48,7 @@ func (suite *EVMHooksTestSuite) SetupTest() {
 
 func (suite *EVMHooksTestSuite) TestHooksSet() {
 	suite.Require().PanicsWithValue("cannot set evm hooks twice", func() {
-		suite.App.EvmKeeper.SetHooks(suite.App.BridgeKeeper.Hooks())
+		suite.App.EvmKeeper.SetHooks(suite.App.BridgeKeeper.WithdrawHooks())
 	})
 }
 
@@ -82,7 +82,8 @@ func (suite *EVMHooksTestSuite) Withdraw(
 	)
 	suite.Require().NoError(err)
 
-	res := suite.SendTx(contractAddr, suite.key1Addr, suite.Key1, data)
+	res, err := suite.SendTx(contractAddr, suite.key1Addr, suite.Key1, data)
+	suite.Require().NoError(err)
 	suite.Require().False(res.Failed(), "evm tx should not fail %v", res)
 
 	return res

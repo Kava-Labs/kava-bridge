@@ -274,7 +274,8 @@ func (suite *Suite) QueryContract(
 	suite.Require().NoError(err)
 
 	// Send TX
-	res := suite.SendTx(contract, from, fromKey, data)
+	res, err := suite.SendTx(contract, from, fromKey, data)
+	suite.Require().NoError(err)
 
 	// Check for VM errors and unpack returned data
 	switch res.VmError {
@@ -295,12 +296,13 @@ func (suite *Suite) QueryContract(
 	return unpackedRes, nil
 }
 
+// SendTx submits a transaction to the block.
 func (suite *Suite) SendTx(
 	contractAddr types.InternalEVMAddress,
 	from common.Address,
 	signerKey *ethsecp256k1.PrivKey,
 	transferData []byte,
-) *evmtypes.MsgEthereumTxResponse {
+) (*evmtypes.MsgEthereumTxResponse, error) {
 	ctx := sdk.WrapSDKContext(suite.Ctx)
 	chainID := suite.App.EvmKeeper.ChainID()
 
@@ -309,12 +311,16 @@ func (suite *Suite) SendTx(
 		From: &from,
 		Data: (*hexutil.Bytes)(&transferData),
 	})
-	suite.Require().NoError(err)
-	res, err := suite.QueryClientEvm.EstimateGas(ctx, &evmtypes.EthCallRequest{
+	if err != nil {
+		return nil, err
+	}
+	gasRes, err := suite.QueryClientEvm.EstimateGas(ctx, &evmtypes.EthCallRequest{
 		Args:   args,
-		GasCap: uint64(config.DefaultGasCap),
+		GasCap: config.DefaultGasCap,
 	})
-	suite.Require().NoError(err)
+	if err != nil {
+		return nil, err
+	}
 
 	nonce := suite.App.EvmKeeper.GetNonce(suite.Ctx, suite.Address)
 
@@ -325,16 +331,16 @@ func (suite *Suite) SendTx(
 	suite.MintFeeCollector(sdk.NewCoins(
 		sdk.NewCoin(
 			"ukava",
-			sdk.NewInt(baseFee.Int64()*int64(res.Gas)),
+			sdk.NewInt(baseFee.Int64()*int64(gasRes.Gas*2)),
 		)))
 
 	ercTransferTx := evmtypes.NewTx(
 		chainID,
 		nonce,
 		&contractAddr.Address,
-		nil,       // amount
-		res.Gas*2, // gasLimit, TODO: runs out of gas with just res.Gas, ex: estimated was 21572 but used 24814
-		nil,       // gasPrice
+		nil,          // amount
+		gasRes.Gas*2, // gasLimit, TODO: runs out of gas with just res.Gas, ex: estimated was 21572 but used 24814
+		nil,          // gasPrice
 		suite.App.FeeMarketKeeper.GetBaseFee(suite.Ctx), // gasFeeCap
 		big.NewInt(1), // gasTipCap
 		transferData,
@@ -343,13 +349,17 @@ func (suite *Suite) SendTx(
 
 	ercTransferTx.From = hex.EncodeToString(signerKey.PubKey().Address())
 	err = ercTransferTx.Sign(ethtypes.LatestSignerForChainID(chainID), etherminttests.NewSigner(signerKey))
-	suite.Require().NoError(err)
+	if err != nil {
+		return nil, err
+	}
 
 	rsp, err := suite.App.EvmKeeper.EthereumTx(ctx, ercTransferTx)
-	suite.Require().NoError(err)
+	if err != nil {
+		return nil, err
+	}
 	// Do not check vm error here since we want to check for errors later
 
-	return rsp
+	return rsp, nil
 }
 
 func (suite *Suite) MintFeeCollector(coins sdk.Coins) {

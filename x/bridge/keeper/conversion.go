@@ -13,21 +13,21 @@ import (
 func (k Keeper) MintConversionPairCoin(
 	ctx sdk.Context,
 	pair types.ConversionPair,
-	amount sdk.Int,
+	amount *big.Int,
 	recipient sdk.AccAddress,
-) error {
-	coin := sdk.NewCoin(pair.Denom, amount)
+) (sdk.Coin, error) {
+	coin := sdk.NewCoin(pair.Denom, sdk.NewIntFromBigInt(amount))
 	coins := sdk.NewCoins(coin)
 
 	if err := k.bankKeeper.MintCoins(ctx, types.ModuleName, coins); err != nil {
-		return err
+		return sdk.Coin{}, err
 	}
 
 	if err := k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, recipient, coins); err != nil {
-		return err
+		return sdk.Coin{}, err
 	}
 
-	return nil
+	return coin, nil
 }
 
 // ConvertCoinToERC20 converts an sdk.Coin from the originating account to an
