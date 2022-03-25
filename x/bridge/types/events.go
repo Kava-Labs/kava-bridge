@@ -14,7 +14,7 @@ const (
 	EventTypeConvertERC20ToCoin   = "convert_erc20_to_coin"
 	EventTypeConvertCoinToERC20   = "convert_coin_to_erc20"
 
-	// Event Attributes - General
+	// Event Attributes - Common
 	AttributeKeyEthereumERC20Address = "ethereum_erc20_address"
 	AttributeKeyReceiver             = "receiver"
 	AttributeKeyAmount               = "amount"
