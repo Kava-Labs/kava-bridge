@@ -34,16 +34,21 @@ func (k Keeper) MintConversionPairCoin(
 // ERC20 to the receiver account.
 func (k Keeper) ConvertCoinToERC20(
 	ctx sdk.Context,
-	pair types.ConversionPair,
-	amount sdk.Int,
 	originAccount sdk.AccAddress,
 	receiverAccount types.InternalEVMAddress,
+	coin sdk.Coin,
 ) error {
-	if err := k.BurnConversionPairCoin(ctx, pair, amount, originAccount); err != nil {
+	pair, err := k.GetEnabledConversionPairFromDenom(ctx, coin.Denom)
+	if err != nil {
+		// Coin not in enabled conversion pair list
 		return err
 	}
 
-	if err := k.UnlockERC20Tokens(ctx, pair, amount.BigInt(), receiverAccount); err != nil {
+	if err := k.BurnConversionPairCoin(ctx, pair, coin.Amount, originAccount); err != nil {
+		return err
+	}
+
+	if err := k.UnlockERC20Tokens(ctx, pair, coin.Amount.BigInt(), receiverAccount); err != nil {
 		return err
 	}
 

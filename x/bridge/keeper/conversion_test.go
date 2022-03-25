@@ -166,10 +166,9 @@ func (suite *ConversionTestSuite) TestConvertCoinToERC20() {
 
 	err = suite.App.BridgeKeeper.ConvertCoinToERC20(
 		suite.Ctx,
-		pair,
-		sdk.NewIntFromBigInt(amount),
 		originAcc,
 		recipientAcc,
+		sdk.NewCoin(pair.Denom, sdk.NewIntFromBigInt(amount)),
 	)
 	suite.Require().NoError(err)
 
@@ -218,10 +217,9 @@ func (suite *ConversionTestSuite) TestConvertCoinToERC20_InsufficientBalance() {
 
 	err := suite.App.BridgeKeeper.ConvertCoinToERC20(
 		suite.Ctx,
-		pair,
-		sdk.NewIntFromBigInt(amount),
 		originAcc,
 		recipientAcc,
+		sdk.NewCoin(pair.Denom, sdk.NewIntFromBigInt(amount)),
 	)
 
 	suite.Require().Error(err)

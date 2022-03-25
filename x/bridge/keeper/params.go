@@ -62,8 +62,8 @@ func (k Keeper) GetEnabledERC20Tokens(ctx sdk.Context) types.EnabledERC20Tokens 
 // EnabledConversionPairs
 // -----------------------------------------------------------------------------
 
-// GetEnabledConversionPair returns an ConversionPair from the internal contract address.
-func (k Keeper) GetEnabledConversionPair(
+// GetEnabledConversionPairFromERC20Address returns an ConversionPair from the internal contract address.
+func (k Keeper) GetEnabledConversionPairFromERC20Address(
 	ctx sdk.Context,
 	address types.InternalEVMAddress,
 ) (types.ConversionPair, error) {
@@ -75,6 +75,21 @@ func (k Keeper) GetEnabledConversionPair(
 	}
 
 	return types.ConversionPair{}, sdkerrors.Wrap(types.ErrConversionNotEnabled, address.String())
+}
+
+// GetEnabledConversionPairFromDenom returns an ConversionPair from the sdk.Coin denom.
+func (k Keeper) GetEnabledConversionPairFromDenom(
+	ctx sdk.Context,
+	denom string,
+) (types.ConversionPair, error) {
+	params := k.GetParams(ctx)
+	for _, pair := range params.EnabledConversionPairs {
+		if pair.Denom == denom {
+			return pair, nil
+		}
+	}
+
+	return types.ConversionPair{}, sdkerrors.Wrap(types.ErrConversionNotEnabled, denom)
 }
 
 // GetEnabledConversionPairs returns the all ConversionPairs

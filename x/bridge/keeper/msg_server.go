@@ -65,10 +65,40 @@ func (s msgServer) BridgeEthereumToKava(
 	return &types.MsgBridgeEthereumToKavaResponse{}, nil
 }
 
+// ConvertCoinToERC20 handles a MsgConvertCoinToERC20 message to convert
+// sdk.Coin to Kava EVM tokens.
 func (s msgServer) ConvertCoinToERC20(
 	goCtx context.Context,
 	msg *types.MsgConvertCoinToERC20,
 ) (*types.MsgConvertCoinToERC20Response, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	initiator, err := sdk.AccAddressFromBech32(msg.Initiator)
+	if err != nil {
+		return nil, fmt.Errorf("invalid Initiator address: %w", err)
+	}
+
+	receiver, err := types.NewInternalEVMAddressFromString(msg.Receiver)
+	if err != nil {
+		return nil, fmt.Errorf("invalid Receiver address: %w", err)
+	}
+
+	if err := s.keeper.ConvertCoinToERC20(
+		ctx,
+		initiator,
+		receiver,
+		*msg.Amount,
+	); err != nil {
+		return nil, err
+	}
+
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			sdk.EventTypeMessage,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+			sdk.NewAttribute(sdk.AttributeKeySender, msg.Initiator),
+		),
+	)
 
 	return &types.MsgConvertCoinToERC20Response{}, nil
 }
