@@ -10,11 +10,6 @@
 - [bridge/v1beta1/erc20.proto](#bridge/v1beta1/erc20.proto)
     - [ERC20BridgePair](#bridge.v1beta1.ERC20BridgePair)
   
-- [bridge/v1beta1/event.proto](#bridge/v1beta1/event.proto)
-    - [EventBridgeEthereumToKava](#bridge.v1beta1.EventBridgeEthereumToKava)
-    - [EventBridgeKavaToEthereum](#bridge.v1beta1.EventBridgeKavaToEthereum)
-    - [EventConvertERC20ToCoin](#bridge.v1beta1.EventConvertERC20ToCoin)
-  
 - [bridge/v1beta1/genesis.proto](#bridge/v1beta1/genesis.proto)
     - [EnabledERC20Token](#bridge.v1beta1.EnabledERC20Token)
     - [GenesisState](#bridge.v1beta1.GenesisState)
@@ -88,77 +83,6 @@ ERC20BridgePair defines an ERC20 token bridged between external and Kava EVM
 | ----- | ---- | ----- | ----------- |
 | `external_erc20_address` | [bytes](#bytes) |  | external_erc20_address represents the external EVM ERC20 address |
 | `internal_erc20_address` | [bytes](#bytes) |  | internal_erc20_address represents the corresponding internal Kava EVM ERC20 address |
-
-
-
-
-
- <!-- end messages -->
-
- <!-- end enums -->
-
- <!-- end HasExtensions -->
-
- <!-- end services -->
-
-
-
-<a name="bridge/v1beta1/event.proto"></a>
-<p align="right"><a href="#top">Top</a></p>
-
-## bridge/v1beta1/event.proto
-
-
-
-<a name="bridge.v1beta1.EventBridgeEthereumToKava"></a>
-
-### EventBridgeEthereumToKava
-EventBridgeEthereumToKava is emitted on Msg/BridgeEthereumToKava
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `relayer` | [string](#string) |  | Relayer is the address of the bridge relayer |
-| `ethereum_erc20_address` | [string](#string) |  | EthereumErc20Address is the originating ERC20 address on Ethereum |
-| `receiver` | [string](#string) |  | Receiver is the Kava address to bridge funds to |
-| `amount` | [string](#string) |  | Amount is the amount to be bridged |
-| `sequence` | [string](#string) |  | Sequence is the unique Ethereum lock sequence re-emitted |
-
-
-
-
-
-
-<a name="bridge.v1beta1.EventBridgeKavaToEthereum"></a>
-
-### EventBridgeKavaToEthereum
-EventBridgeKavaToEthereum is emitted on Kava ERC20 Withdraw()
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `ethereum_erc20_address` | [string](#string) |  | EthereumErc20Address is the ERC20 address on Ethereum to unlock funds to |
-| `receiver` | [string](#string) |  | Receiver is the Ethereum address to unlock funds to |
-| `amount` | [string](#string) |  | Amount is the amount to be unlocked on Ethereum |
-| `sequence` | [string](#string) |  | Sequence is the unique Kava bridge withdraw sequence |
-
-
-
-
-
-
-<a name="bridge.v1beta1.EventConvertERC20ToCoin"></a>
-
-### EventConvertERC20ToCoin
-EventConvertERC20ToCoin is emitted on Kava ERC20 ConvertToCoin()
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `erc20_address` | [string](#string) |  | Kava ERC20 address converted from |
-| `initiator` | [string](#string) |  | Converter is the Kava EVM address that initiated the coin conversion |
-| `receiver` | [string](#string) |  | Receiver is the Kava address to send converted sdk.Coins to |
-| `amount` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) |  | Amount is the sdk.Coin amount converted |
 
 
 

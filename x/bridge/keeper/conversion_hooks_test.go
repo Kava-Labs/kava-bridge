@@ -130,12 +130,13 @@ func (suite *ConversionHooksTestSuite) TestConvertToCoin_Events() {
 	suite.Require().False(res.Failed(), "tx should not fail")
 
 	coinAmount := sdk.NewCoin(suite.conversionPair.Denom, sdk.NewIntFromBigInt(amount))
-	suite.TypedEventsContains(suite.GetEvents(), &types.EventConvertERC20ToCoin{
-		ERC20Address: suite.conversionPair.GetAddress().String(),
-		Initiator:    suite.key1Addr.String(),
-		Receiver:     toKavaAddr.String(),
-		Amount:       &coinAmount,
-	})
+	suite.EventsContains(suite.GetEvents(), sdk.NewEvent(
+		types.EventTypeConvertERC20ToCoin,
+		sdk.NewAttribute(types.AttributeKeyERC20Address, suite.conversionPair.GetAddress().String()),
+		sdk.NewAttribute(types.AttributeKeyInitiator, suite.key1Addr.String()),
+		sdk.NewAttribute(types.AttributeKeyReceiver, toKavaAddr.String()),
+		sdk.NewAttribute(types.AttributeKeyAmount, coinAmount.String()),
+	))
 }
 
 func (suite *ConversionHooksTestSuite) TestConvert_BalanceChange() {
@@ -258,5 +259,5 @@ func (suite *ConversionHooksTestSuite) TestConvertToCoin_NotEnabled() {
 		"recipient balance should NOT change for non enabled conversions",
 	)
 
-	suite.TypedEventsDoesNotContain(suite.GetEvents(), &types.EventConvertERC20ToCoin{})
+	suite.EventsDoNotContain(suite.GetEvents(), types.EventTypeConvertERC20ToCoin)
 }

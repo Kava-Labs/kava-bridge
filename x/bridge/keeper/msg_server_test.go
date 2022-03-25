@@ -188,13 +188,15 @@ func (suite *MsgServerSuite) TestMint() {
 
 				suite.Require().Equal(total, bal, "balance should match amount minted so far")
 
-				suite.TypedEventsContains(suite.GetEvents(), &types.EventBridgeEthereumToKava{
-					Relayer:              msg.Relayer,
-					EthereumErc20Address: msg.EthereumERC20Address,
-					Receiver:             receiver.String(),
-					Amount:               amount.String(),
-					Sequence:             msg.Sequence.String(),
-				})
+				suite.EventsContains(suite.GetEvents(),
+					sdk.NewEvent(
+						types.EventTypeBridgeEthereumToKava,
+						sdk.NewAttribute(types.AttributeKeyRelayer, msg.Relayer),
+						sdk.NewAttribute(types.AttributeKeyEthereumERC20Address, msg.EthereumERC20Address),
+						sdk.NewAttribute(types.AttributeKeyReceiver, receiver.String()),
+						sdk.NewAttribute(types.AttributeKeyAmount, amount.String()),
+						sdk.NewAttribute(types.AttributeKeySequence, msg.Sequence.String()),
+					))
 			}
 		})
 	}

@@ -9,7 +9,6 @@ import (
 	"reflect"
 	"time"
 
-	proto "github.com/gogo/protobuf/proto"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -393,42 +392,16 @@ func (suite *Suite) EventsContains(events sdk.Events, expectedEvent sdk.Event) {
 	suite.Truef(foundMatch, "event of type %s not found or did not match", expectedEvent.Type)
 }
 
-// TypedEventsContains asserts that the expected typed event is in the provided events
-func (suite *Suite) TypedEventsContains(events sdk.Events, tev proto.Message) {
+// EventsDoNotContain asserts that the event is **not** is in the provided events
+func (suite *Suite) EventsDoNotContain(events sdk.Events, eventType string) {
 	foundMatch := false
-	for _, event := range events.ToABCIEvents() {
-		// Ignore non-typed events
-		msg, _ := sdk.ParseTypedEvent(event)
-		if reflect.DeepEqual(msg, tev) {
+	for _, event := range events {
+		if event.Type == eventType {
 			foundMatch = true
 		}
 	}
 
-	suite.Truef(foundMatch, "event of type %s not found or did not match", reflect.TypeOf(tev))
-}
-
-// TypedEventsDoesNotContain asserts that the expected typed event is **not** in the provided events
-func (suite *Suite) TypedEventsDoesNotContain(events sdk.Events, tev proto.Message) {
-	found := suite.TypedEventsContainsType(events, tev)
-	suite.Require().False(found, "event of type %v should not be found in events", reflect.TypeOf(tev))
-}
-
-// TypedEventsContainsType returns true if the that the expected typed event
-// **type** is in the provided events. This only checks the type, not the value.
-func (suite *Suite) TypedEventsContainsType(events sdk.Events, tev proto.Message) bool {
-	for _, event := range events.ToABCIEvents() {
-		// Ignore non-typed events
-		msg, err := sdk.ParseTypedEvent(event)
-		if err != nil {
-			continue
-		}
-
-		if reflect.TypeOf(msg) == reflect.TypeOf(tev) {
-			return true
-		}
-	}
-
-	return false
+	suite.Falsef(foundMatch, "event of type %s should not be found, but was found", eventType)
 }
 
 func attrsToMap(attrs []abci.EventAttribute) []sdk.Attribute {
