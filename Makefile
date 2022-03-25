@@ -96,7 +96,7 @@ contract/artifacts/contracts_Bridge_sol_Bridge.abi: contract/contracts/Bridge.so
 contract/artifacts/contracts_Bridge_sol_Bridge.bin: contract/contracts/Bridge.sol
 	cd contract && $(SOLC) --optimize --bin contracts/Bridge.sol --base-path . --include-path node_modules/ -o artifacts
 
-contract/artifacts/contracts_ERC20_sol_ERC20.abi: contract/contracts/ERC20.sol
+contract/artifacts/contracts_ERC20_sol_Erc20.abi: contract/contracts/ERC20.sol
 	cd contract && $(SOLC) --abi contracts/ERC20.sol --base-path . --include-path node_modules/ -o artifacts
 
 relayer/bridge.go: contract/artifacts/contracts_Bridge_sol_Bridge.bin contract/artifacts/contracts_Bridge_sol_Bridge.abi
