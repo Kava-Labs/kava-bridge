@@ -1,0 +1,9 @@
+# Ignore any coverage files
+c.out
+coverage.html
+
+# Ignore any built binaries ensureing
+kava-bridged
+!kava-bridged/
+kava-relayer
+!kava-relayer/

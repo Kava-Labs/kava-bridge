@@ -160,7 +160,7 @@ var (
 		stakingtypes.NotBondedPoolName: {authtypes.Burner, authtypes.Staking},
 		govtypes.ModuleName:            {authtypes.Burner},
 		evmtypes.ModuleName:            {authtypes.Minter, authtypes.Burner}, // used for secure addition and subtraction of balance using module account
-		bridgetypes.ModuleName:         nil,                                  // Bridge only mint and burns ERC20 tokens so Cosmos mint/burn is not needed
+		bridgetypes.ModuleName:         {authtypes.Minter, authtypes.Burner}, // used for converting between erc20 and sdk.Coin
 	}
 
 	// module accounts that are allowed to receive tokens
@@ -337,6 +337,7 @@ func NewApp(
 		tracer,
 	)
 
+	// BridgeKeeper must be assigned before EvmKeeper hooks are set
 	app.BridgeKeeper = bridgekeeper.NewKeeper(
 		appCodec,
 		keys[bridgetypes.StoreKey],
@@ -344,6 +345,13 @@ func NewApp(
 		app.BankKeeper,
 		app.AccountKeeper,
 		app.EvmKeeper,
+	)
+
+	app.EvmKeeper = app.EvmKeeper.SetHooks(
+		evmkeeper.NewMultiEvmHooks(
+			app.BridgeKeeper.WithdrawHooks(),
+			app.BridgeKeeper.ConversionHooks(),
+		),
 	)
 
 	// register the proposal types

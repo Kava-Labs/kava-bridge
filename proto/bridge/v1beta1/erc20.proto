@@ -1,0 +1,24 @@
+syntax = "proto3";
+package bridge.v1beta1;
+
+import "gogoproto/gogo.proto";
+
+option go_package                    = "github.com/kava-labs/kava-bridge/x/bridge/types";
+option (gogoproto.equal_all)         = true;
+option (gogoproto.verbose_equal_all) = true;
+
+// ERC20BridgePair defines an ERC20 token bridged between external and Kava EVM
+message ERC20BridgePair {
+  option (gogoproto.goproto_getters) = false;
+
+  // external_erc20_address represents the external EVM ERC20 address
+  bytes external_erc20_address = 1 [
+  (gogoproto.customname) = "ExternalERC20Address",
+  (gogoproto.casttype) = "HexBytes"
+  ];
+  // internal_erc20_address represents the corresponding internal Kava EVM ERC20 address
+  bytes internal_erc20_address = 2 [
+  (gogoproto.customname) = "InternalERC20Address",
+  (gogoproto.casttype) = "HexBytes"
+  ];
+}

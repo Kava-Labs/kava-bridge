@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: Apache-2.0
 
 pragma solidity ^0.8.9;
 
@@ -18,27 +18,27 @@ contract Bridge is ReentrancyGuard, Sequence(0) {
     /// @notice Represents an ERC20 token lock emitted during a lock call
     /// @param token The ERC20 token address
     /// @param sender The Ethereum address of the sender that locked the funds
-    /// @param toAddr The Kava address bytes padded to 32 bytes to send the locked funds to
+    /// @param toKavaAddr The Kava address to send the locked funds to
     /// @param amount The amount that was locked
-    /// @param sequence The unique lock/unlock sequence
+    /// @param lockSequence The unique lock sequence
     event Lock(
         address indexed token,
         address indexed sender,
-        bytes32 indexed toAddr,
+        address indexed toKavaAddr,
         uint256 amount,
-        uint256 sequence
+        uint256 lockSequence
     );
 
     /// @notice Represents an ERC20 token unlock emitted during an unlock call
     /// @param token The ERC20 token address
     /// @param toAddr The Ethereum address the funds were unlocked to
     /// @param amount The amount that was unlocked
-    /// @param sequence The unique lock/unlock sequence
+    /// @param unlockSequence The unique unlock sequence
     event Unlock(
         address indexed token,
         address indexed toAddr,
         uint256 amount,
-        uint256 sequence
+        uint256 unlockSequence
     );
 
     /// @notice Initialize with a relayer address with a starting sequence of 0
@@ -55,19 +55,18 @@ contract Bridge is ReentrancyGuard, Sequence(0) {
 
     /// @notice Locks an ERC20 amount and emits a Lock event with the Kava address to mint funds to
     /// @param token The ERC20 token address
-    /// @param toAddr The Kava address bytes padded to 32 bytes to send the locked funds to
+    /// @param toKavaAddr The Kava address to send the locked funds to
     /// @param amount The amount to lock
-    /// @dev The toAddr is the raw byte representation of a Kava address padding to 32 bytes
     /// @dev Emits a Lock event
     function lock(
         address token,
-        bytes32 toAddr,
+        address toKavaAddr,
         uint256 amount
     ) public nonReentrant {
         incrementSequence();
         IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
 
-        emit Lock(token, msg.sender, toAddr, amount, getSequence());
+        emit Lock(token, msg.sender, toKavaAddr, amount, getSequence());
     }
 
     /// @notice Unlocks an ERC20 amount and emits an Unlock event
@@ -79,13 +78,13 @@ contract Bridge is ReentrancyGuard, Sequence(0) {
     function unlock(
         address token,
         address toAddr,
-        uint256 amount
+        uint256 amount,
+        uint256 unlockSequence
     ) public nonReentrant {
         require(msg.sender == _relayer, "Bridge: untrusted address");
 
-        incrementSequence();
         IERC20(token).safeTransfer(toAddr, amount);
 
-        emit Unlock(token, toAddr, amount, getSequence());
+        emit Unlock(token, toAddr, amount, unlockSequence);
     }
 }

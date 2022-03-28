@@ -2,6 +2,7 @@ package bridge
 
 import (
 	"encoding/json"
+	"fmt"
 	"math/rand"
 
 	"github.com/gorilla/mux"
@@ -17,6 +18,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 
+	"github.com/kava-labs/kava-bridge/x/bridge/client/cli"
 	"github.com/kava-labs/kava-bridge/x/bridge/keeper"
 	"github.com/kava-labs/kava-bridge/x/bridge/types"
 )
@@ -46,19 +48,16 @@ func (AppModuleBasic) ConsensusVersion() uint64 {
 // DefaultGenesis returns default genesis state as raw bytes for thebridge
 // module.
 func (AppModuleBasic) DefaultGenesis(cdc codec.JSONCodec) json.RawMessage {
-	// TODO: return cdc.MustMarshalJSON(types.DefaultGenesisState())
-	return nil
+	return cdc.MustMarshalJSON(types.DefaultGenesisState())
 }
 
 // ValidateGenesis is the validation check of the Genesis
 func (AppModuleBasic) ValidateGenesis(cdc codec.JSONCodec, _ client.TxEncodingConfig, bz json.RawMessage) error {
-	// TODO:
-	// var genesisState types.GenesisState
-	// if err := cdc.UnmarshalJSON(bz, &genesisState); err != nil {
-	// 	return fmt.Errorf("failed to unmarshal %s genesis state: %w", types.ModuleName, err)
-	// }
-	// return genesisState.Validate()
-	return nil
+	var genesisState types.GenesisState
+	if err := cdc.UnmarshalJSON(bz, &genesisState); err != nil {
+		return fmt.Errorf("failed to unmarshal %s genesis state: %w", types.ModuleName, err)
+	}
+	return genesisState.Validate()
 }
 
 func (AppModuleBasic) RegisterRESTRoutes(clientCtx client.Context, rtr *mux.Router) {}
@@ -69,14 +68,12 @@ func (b AppModuleBasic) RegisterGRPCGatewayRoutes(c client.Context, serveMux *ru
 
 // GetTxCmd returns the root tx command for the bridge module.
 func (AppModuleBasic) GetTxCmd() *cobra.Command {
-	// TODO: return cli.GetTxCmd()
-	return nil
+	return cli.GetTxCmd()
 }
 
 // GetQueryCmd returns no root query command for the bridge module.
 func (AppModuleBasic) GetQueryCmd() *cobra.Command {
-	// TODO: return cli.GetQueryCmd()
-	return nil
+	return cli.GetQueryCmd()
 }
 
 // RegisterInterfaces registers interfaces and implementations of the bridge module.
@@ -115,14 +112,12 @@ func (am AppModule) RegisterInvariants(ir sdk.InvariantRegistry) {
 // RegisterQueryService registers a GRPC query service to respond to the
 // module-specific GRPC queries.
 func (am AppModule) RegisterServices(cfg module.Configurator) {
-	// TODO:
-	// types.RegisterMsgServer(cfg.MsgServer(), am.keeper)
-	// types.RegisterQueryServer(cfg.QueryServer(), am.keeper)
+	types.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServerImpl(am.keeper))
+	types.RegisterQueryServer(cfg.QueryServer(), keeper.NewQueryServerImpl(am.keeper))
 }
 
 // Route returns the message routing key for the bridge module.
 func (am AppModule) Route() sdk.Route {
-	// TODO:
 	return sdk.Route{}
 }
 
@@ -137,34 +132,29 @@ func (am AppModule) LegacyQuerierHandler(legacyQuerierCdc *codec.LegacyAmino) sd
 
 // BeginBlock returns the begin block for the bridge module.
 func (am AppModule) BeginBlock(ctx sdk.Context, req abci.RequestBeginBlock) {
-	// am.keeper.BeginBlock(ctx, req)
 }
 
 // EndBlock returns the end blocker for the bridge module. It returns no validator
 // updates.
 func (am AppModule) EndBlock(ctx sdk.Context, req abci.RequestEndBlock) []abci.ValidatorUpdate {
-	// return am.keeper.EndBlock(ctx, req)
 	return nil
 }
 
 // InitGenesis performs genesis initialization for the bridge module. It returns
 // no validator updates.
 func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, data json.RawMessage) []abci.ValidatorUpdate {
-	// TODO:
-	// var genesisState types.GenesisState
+	var genesisState types.GenesisState
 
-	// cdc.MustUnmarshalJSON(data, &genesisState)
-	// InitGenesis(ctx, am.keeper, am.ak, genesisState)
+	cdc.MustUnmarshalJSON(data, &genesisState)
+	InitGenesis(ctx, am.keeper, am.ak, genesisState)
 	return []abci.ValidatorUpdate{}
 }
 
 // ExportGenesis returns the exported genesis state as raw bytes for thebridge
 // module.
 func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.RawMessage {
-	// TODO: gs := ExportGenesis(ctx, am.keeper, am.ak)
-	// TODO: return cdc.MustMarshalJSON(gs)
-
-	return nil
+	gs := ExportGenesis(ctx, am.keeper, am.ak)
+	return cdc.MustMarshalJSON(gs)
 }
 
 // RandomizedParams creates randomized bridge param changes for the simulator.

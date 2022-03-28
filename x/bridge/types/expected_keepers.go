@@ -7,6 +7,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/vm"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
 	"github.com/tharsis/ethermint/x/evm/types"
@@ -15,6 +16,7 @@ import (
 // AccountKeeper defines the expected interface needed to retrieve account info.
 type AccountKeeper interface {
 	GetModuleAddress(moduleName string) sdk.AccAddress
+	GetModuleAccount(ctx sdk.Context, moduleName string) authtypes.ModuleAccountI
 	GetSequence(sdk.Context, sdk.AccAddress) (uint64, error)
 }
 
@@ -36,5 +38,5 @@ type BankKeeper interface {
 type EvmKeeper interface {
 	// This is actually a gRPC query method
 	EstimateGas(ctx context.Context, req *types.EthCallRequest) (*types.EstimateGasResponse, error)
-	ApplyMessage(ctx sdk.Context, msg core.Message, tracer vm.Tracer, commit bool) (*types.MsgEthereumTxResponse, error)
+	ApplyMessage(ctx sdk.Context, msg core.Message, tracer vm.EVMLogger, commit bool) (*types.MsgEthereumTxResponse, error)
 }

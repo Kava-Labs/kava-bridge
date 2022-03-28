@@ -1,9 +1,9 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
-import { Contract, Signer } from "ethers";
+import { Signer } from "ethers";
 import { deployBridge } from "../scripts/deploy";
-import { kavaAddrToBytes32, tokens, testKavaAddrs } from "./utils";
-import type { Bridge } from "../typechain-types";
+import { tokens } from "./utils";
+import type { Bridge, ERC20Mock } from "../typechain-types";
 
 describe("Bridge", function () {
   // the main bridge contract
@@ -46,7 +46,7 @@ describe("Bridge", function () {
   });
 
   describe("#lock", function () {
-    let token: Contract;
+    let token: ERC20Mock;
     let toAddr: string;
     let amount: bigint;
     let sequence: bigint;
@@ -56,7 +56,7 @@ describe("Bridge", function () {
       bridge = bridge.connect(sender);
 
       // assign valid attribute for #lock
-      toAddr = ethers.utils.hexlify(kavaAddrToBytes32(testKavaAddrs[0]));
+      toAddr = await receiver.getAddress();
       amount = tokens(1);
       sequence = BigInt(1);
 
@@ -130,10 +130,10 @@ describe("Bridge", function () {
       }
     });
 
-    it("should index token, sender, toAddr in the Lock event", async function () {
+    it("should index token, sender, toKavaAddr in the Lock event", async function () {
       const event =
         bridge.interface.events[
-          "Lock(address,address,bytes32,uint256,uint256)"
+          "Lock(address,address,address,uint256,uint256)"
         ];
 
       const tokenParam = event.inputs[0];
@@ -145,7 +145,7 @@ describe("Bridge", function () {
       expect(senderParam.indexed).to.equal(true);
 
       const toAddrParam = event.inputs[2];
-      expect(toAddrParam.name).to.equal("toAddr");
+      expect(toAddrParam.name).to.equal("toKavaAddr");
       expect(toAddrParam.indexed).to.equal(true);
     });
 
@@ -166,7 +166,7 @@ describe("Bridge", function () {
 
     it("should not revert when ERC20 transferFrom returns no value", async function () {
       const Token = await ethers.getContractFactory("ERC20NoReturnMock");
-      token = await Token.deploy();
+      const token = await Token.deploy();
       await token.deployed();
 
       const lockTx = bridge.lock(token.address, toAddr, amount);
@@ -175,7 +175,7 @@ describe("Bridge", function () {
 
     it("should not revert when ERC20 transferFrom returns true", async function () {
       const Token = await ethers.getContractFactory("ERC20ReturnTrueMock");
-      token = await Token.deploy();
+      const token = await Token.deploy();
       await token.deployed();
 
       const lockTx = bridge.lock(token.address, toAddr, amount);
@@ -184,7 +184,7 @@ describe("Bridge", function () {
 
     it("should revert when ERC20 transferFrom returns false", async function () {
       const Token = await ethers.getContractFactory("ERC20ReturnFalseMock");
-      token = await Token.deploy();
+      const token = await Token.deploy();
       await token.deployed();
 
       const lockTx = bridge.lock(token.address, toAddr, amount);
@@ -195,7 +195,7 @@ describe("Bridge", function () {
 
     it("should not be callable from a re-entrant ERC20 contract", async function () {
       const Token = await ethers.getContractFactory("ERC20EvilMock");
-      token = await Token.deploy();
+      const token = await Token.deploy();
       await token.deployed();
 
       // Target evil token to bridge contract
@@ -207,7 +207,7 @@ describe("Bridge", function () {
   });
 
   describe("#unlock", function () {
-    let token: Contract;
+    let token: ERC20Mock;
     let toAddr: string;
     let amount: bigint;
     let sequence: bigint;
@@ -233,6 +233,8 @@ describe("Bridge", function () {
 
       // fund bridge with deployed token
       await token.transfer(bridge.address, 10n * amount);
+
+      await token.transfer(await sender.getAddress(), 10n * amount);
     });
 
     it("should not be payable", async function () {
@@ -244,11 +246,51 @@ describe("Bridge", function () {
     });
 
     it("should emit a Unlock event with (token, to, amount, sequence)", async function () {
-      const unlockTx = bridge.unlock(token.address, toAddr, amount);
+      const unlockTx = bridge.unlock(token.address, toAddr, amount, sequence);
 
       await expect(unlockTx)
         .to.emit(bridge, "Unlock")
-        .withArgs(token.address, toAddr, amount, sequence);
+        .withArgs(token.address, toAddr, amount, 1n);
+    });
+
+    it("should not change internal sequence", async function () {
+      const tokenCon = token.connect(sender);
+      await tokenCon.approve(bridge.address, 4n * amount);
+      const lockSequence = 1n;
+      bridge = bridge.connect(sender);
+      const lockTx = bridge.lock(token.address, toAddr, amount);
+
+      await expect(lockTx)
+        .to.emit(bridge, "Lock")
+        .withArgs(
+          token.address,
+          await sender.getAddress(),
+          toAddr,
+          amount,
+          lockSequence
+        );
+
+      // Create unlock event to test if this changes internal sequence
+      bridge = bridge.connect(relayer);
+      const unlockTx = bridge.unlock(token.address, toAddr, amount, sequence);
+
+      await expect(unlockTx)
+        .to.emit(bridge, "Unlock")
+        .withArgs(token.address, toAddr, amount, 1n);
+
+      // Back to sender to check if next lock sequence is expected
+      bridge = bridge.connect(sender);
+      const lockTx2 = bridge.lock(token.address, toAddr, amount);
+
+      await expect(lockTx2)
+        .to.emit(bridge, "Lock")
+        .withArgs(
+          token.address,
+          await sender.getAddress(),
+          toAddr,
+          amount,
+          lockSequence + 1n
+        );
     });
 
     it("should index token, toAddr in the Unlock event", async function () {
@@ -265,7 +307,7 @@ describe("Bridge", function () {
     });
 
     it("should transfer the token amount to the toAddr from contract", async function () {
-      const unlockTx = bridge.unlock(token.address, toAddr, amount);
+      const unlockTx = bridge.unlock(token.address, toAddr, amount, sequence);
 
       await expect(() => unlockTx).to.changeTokenBalances(
         token,
@@ -275,7 +317,12 @@ describe("Bridge", function () {
     });
 
     it("should fail when ERC20 transfer amount exceeds balance", async function () {
-      const unlockTx = bridge.unlock(token.address, toAddr, 100n * amount);
+      const unlockTx = bridge.unlock(
+        token.address,
+        toAddr,
+        100n * amount,
+        sequence
+      );
       await expect(unlockTx).to.be.revertedWith(
         "ERC20: transfer amount exceeds balance"
       );
@@ -283,28 +330,28 @@ describe("Bridge", function () {
 
     it("should not revert when ERC20 transfer returns no value", async function () {
       const Token = await ethers.getContractFactory("ERC20NoReturnMock");
-      token = await Token.deploy();
+      const token = await Token.deploy();
       await token.deployed();
 
-      const unlockTx = bridge.unlock(token.address, toAddr, amount);
+      const unlockTx = bridge.unlock(token.address, toAddr, amount, sequence);
       await expect(unlockTx).to.not.be.reverted;
     });
 
     it("should not revert when ERC20 transfer returns true", async function () {
       const Token = await ethers.getContractFactory("ERC20ReturnTrueMock");
-      token = await Token.deploy();
+      const token = await Token.deploy();
       await token.deployed();
 
-      const unlockTx = bridge.unlock(token.address, toAddr, amount);
+      const unlockTx = bridge.unlock(token.address, toAddr, amount, sequence);
       await expect(unlockTx).to.not.be.reverted;
     });
 
     it("should revert when ERC20 transfer returns false", async function () {
       const Token = await ethers.getContractFactory("ERC20ReturnFalseMock");
-      token = await Token.deploy();
+      const token = await Token.deploy();
       await token.deployed();
 
-      const unlockTx = bridge.unlock(token.address, toAddr, amount);
+      const unlockTx = bridge.unlock(token.address, toAddr, amount, sequence);
       await expect(unlockTx).to.be.revertedWith(
         "SafeERC20: ERC20 operation did not succeed"
       );
@@ -312,16 +359,16 @@ describe("Bridge", function () {
 
     it("should not be callable from an untrusted address", async function () {
       bridge = bridge.connect(sender);
-      const unlockTx = bridge.unlock(token.address, toAddr, amount);
+      const unlockTx = bridge.unlock(token.address, toAddr, amount, sequence);
       await expect(unlockTx).to.be.revertedWith("Bridge: untrusted address");
     });
 
     it("should not be callable from a re-entrant ERC20 contract", async function () {
       const Token = await ethers.getContractFactory("ERC20EvilMock");
-      token = await Token.deploy();
+      const token = await Token.deploy();
       await token.deployed();
 
-      const unlockTx = bridge.unlock(token.address, toAddr, amount);
+      const unlockTx = bridge.unlock(token.address, toAddr, amount, sequence);
       await expect(unlockTx).to.be.revertedWith(
         "ReentrancyGuard: reentrant call"
       );

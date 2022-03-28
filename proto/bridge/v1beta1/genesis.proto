@@ -1,0 +1,68 @@
+syntax = "proto3";
+package bridge.v1beta1;
+
+import "gogoproto/gogo.proto";
+import "cosmos_proto/cosmos.proto";
+import "bridge/v1beta1/erc20.proto";
+import "bridge/v1beta1/conversion_pair.proto";
+
+option go_package                    = "github.com/kava-labs/kava-bridge/x/bridge/types";
+option (gogoproto.equal_all)         = true;
+option (gogoproto.verbose_equal_all) = true;
+
+// GenesisState defines the bridge module's genesis state.
+message GenesisState {
+  // params defines all the parameters of the module.
+  Params params = 1 [(gogoproto.nullable) = false];
+
+  // erc20_bridge_pairs defines all of the bridged erc20 tokens.
+  repeated ERC20BridgePair erc20_bridge_pairs = 2 [
+    (gogoproto.nullable)     = false,
+    (gogoproto.castrepeated) = "ERC20BridgePairs",
+    (gogoproto.customname)   = "ERC20BridgePairs"
+  ];
+
+  // next_withdraw_sequence defines the unique incrementing sequence per withdraw tx.
+  string next_withdraw_sequence = 3 [
+    (cosmos_proto.scalar)  = "cosmos.Int",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable)   = false
+  ];
+}
+
+// Params defines the bridge module params
+message Params {
+  // List of ERC20Tokens that are allowed to be bridged to Kava
+  repeated EnabledERC20Token enabled_erc20_tokens = 1 [
+    (gogoproto.nullable)     = false,
+    (gogoproto.castrepeated) = "EnabledERC20Tokens",
+    (gogoproto.customname)   = "EnabledERC20Tokens"
+  ];
+
+  // Permissioned relayer address that is allowed to submit bridge messages
+  bytes relayer = 2 [
+    (cosmos_proto.scalar) = "cosmos.AddressBytes",
+    (gogoproto.casttype)  = "github.com/cosmos/cosmos-sdk/types.AccAddress"
+  ];
+
+  // enabled_conversion_pairs defines the list of conversion pairs allowed to be
+  // converted between Kava ERC20 and sdk.Coin
+  repeated ConversionPair enabled_conversion_pairs = 3
+      [(gogoproto.nullable) = false, (gogoproto.castrepeated) = "ConversionPairs"];
+}
+
+// EnabledERC20Token defines an external ERC20 that is allowed to be bridged to Kava
+message EnabledERC20Token {
+  // Address of the contract on Ethereum
+  bytes address = 1 [
+    (gogoproto.casttype) = "HexBytes"
+  ];
+  // Name of the token.
+  string name = 2;
+  // Symbol of the ERC20 token, usually a shorter version of the name.
+  string symbol = 3;
+  // Number of decimals the ERC20 uses to get its user representation. The max
+  // value is an unsigned 8 bit integer, but is an uint32 as the smallest
+  // protobuf integer type.
+  uint32 decimals = 4;
+}
