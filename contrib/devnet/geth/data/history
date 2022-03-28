@@ -1,0 +1,6 @@
+web3.eth.getBalance('000000000000000000000000000000000b121d6e')
+web3
+web3.eth
+import bridgeContract from './contract/artifacts/contracts/Bridge.sol/Bridge.json'
+import bridgeContract from "./contract/artifacts/contracts/Bridge.sol/Bridge.json"
+import b from "./contract/artifacts/contracts/Bridge.sol/Bridge.json"
