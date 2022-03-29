@@ -26,6 +26,10 @@ start: install ## Start kava-bridge chain locally
 	./contrib/devnet/init-new-chain.sh
 	kava-bridged start
 
+.PHONY: start-geth
+start-geth:
+	./contrib/devnet/start-geth.sh
+
 .PHONY: lint
 lint: ## Run golint
 	golint -set_exit_status $(PKGS)
