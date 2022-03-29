@@ -10,6 +10,18 @@ export async function main(): Promise<void> {
   // manually to make sure everything is compiled
   // await hre.run('compile');
   //
+
+  // Addresses with a clean geth instance
+  // Signer: 0x21E360e198Cde35740e88572B59f2CAdE421E6b1
+  // Bridge:
+  //    Address: 0xb588617416D0B0A3C29618bf8Fb6aC0cAd4Ede7f
+  //    Relayer: 0x21E360e198Cde35740e88572B59f2CAdE421E6b1
+  // WKAVA:
+  //    Address: 0x6098c27D41ec6dc280c2200A737D443b0AaA2E8F
+  // ERC20:
+  //    Name:    Wrapped Dev Ether
+  //    Address: 0x8223259205A3E31C54469fCbfc9F7Cf83D515ff6
+
   const [signer] = await ethers.getSigners();
   console.log("Signing with account %s", signer.address);
 
