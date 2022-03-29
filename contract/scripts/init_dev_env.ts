@@ -47,6 +47,8 @@ export async function main(): Promise<void> {
     await erc20.name(),
     erc20.address
   );
+
+  console.log("Completed contracts deployment");
 }
 
 export async function deployBridge(relayer: string): Promise<Bridge> {
