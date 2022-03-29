@@ -35,7 +35,9 @@ export async function main(): Promise<void> {
   const wkava = await deployWKAVA();
   console.log("WKAVA deployed:\n\tAddress: %s", wkava.address);
 
-  const amounts = new Map<string, BigNumberish>([[signer.address, 100_000]]);
+  const amounts = new Map<string, BigNumberish>([
+    [signer.address, 100_000_000_000_000_000_000n],
+  ]);
   const erc20 = await deployERC20WithAmounts(
     "Wrapped Dev Ether",
     "WETH",
@@ -81,7 +83,9 @@ export async function deployERC20WithAmounts(
   await erc20.deployed();
 
   for (const [to, amount] of amounts) {
-    await erc20.mint(to, amount);
+    const tx = await erc20.mint(to, amount);
+    await tx.wait();
+    console.log("minted %s %s to %s", symbol, amount, to);
   }
 
   return erc20;
