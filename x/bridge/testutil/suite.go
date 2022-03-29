@@ -9,7 +9,6 @@ import (
 	"reflect"
 	"time"
 
-	proto "github.com/gogo/protobuf/proto"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -218,6 +217,13 @@ func (suite *Suite) Commit() {
 	suite.Ctx = suite.App.NewContext(false, header)
 }
 
+func (suite *Suite) AddEnabledConversionPair(pair types.ConversionPair) {
+	params := suite.App.BridgeKeeper.GetParams(suite.Ctx)
+	params.EnabledConversionPairs = append(params.EnabledConversionPairs, pair)
+
+	suite.App.BridgeKeeper.SetParams(suite.Ctx, params)
+}
+
 func (suite *Suite) DeployERC20() types.InternalEVMAddress {
 	// We can assume token is valid as it is from params and should be validated
 	token := types.NewEnabledERC20Token(
@@ -274,7 +280,8 @@ func (suite *Suite) QueryContract(
 	suite.Require().NoError(err)
 
 	// Send TX
-	res := suite.SendTx(contract, from, fromKey, data)
+	res, err := suite.SendTx(contract, from, fromKey, data)
+	suite.Require().NoError(err)
 
 	// Check for VM errors and unpack returned data
 	switch res.VmError {
@@ -295,12 +302,13 @@ func (suite *Suite) QueryContract(
 	return unpackedRes, nil
 }
 
+// SendTx submits a transaction to the block.
 func (suite *Suite) SendTx(
 	contractAddr types.InternalEVMAddress,
 	from common.Address,
 	signerKey *ethsecp256k1.PrivKey,
 	transferData []byte,
-) *evmtypes.MsgEthereumTxResponse {
+) (*evmtypes.MsgEthereumTxResponse, error) {
 	ctx := sdk.WrapSDKContext(suite.Ctx)
 	chainID := suite.App.EvmKeeper.ChainID()
 
@@ -309,12 +317,16 @@ func (suite *Suite) SendTx(
 		From: &from,
 		Data: (*hexutil.Bytes)(&transferData),
 	})
-	suite.Require().NoError(err)
-	res, err := suite.QueryClientEvm.EstimateGas(ctx, &evmtypes.EthCallRequest{
+	if err != nil {
+		return nil, err
+	}
+	gasRes, err := suite.QueryClientEvm.EstimateGas(ctx, &evmtypes.EthCallRequest{
 		Args:   args,
-		GasCap: uint64(config.DefaultGasCap),
+		GasCap: config.DefaultGasCap,
 	})
-	suite.Require().NoError(err)
+	if err != nil {
+		return nil, err
+	}
 
 	nonce := suite.App.EvmKeeper.GetNonce(suite.Ctx, suite.Address)
 
@@ -325,16 +337,16 @@ func (suite *Suite) SendTx(
 	suite.MintFeeCollector(sdk.NewCoins(
 		sdk.NewCoin(
 			"ukava",
-			sdk.NewInt(baseFee.Int64()*int64(res.Gas)),
+			sdk.NewInt(baseFee.Int64()*int64(gasRes.Gas*2)),
 		)))
 
 	ercTransferTx := evmtypes.NewTx(
 		chainID,
 		nonce,
 		&contractAddr.Address,
-		nil,       // amount
-		res.Gas*2, // gasLimit, TODO: runs out of gas with just res.Gas, ex: estimated was 21572 but used 24814
-		nil,       // gasPrice
+		nil,          // amount
+		gasRes.Gas*2, // gasLimit, TODO: runs out of gas with just res.Gas, ex: estimated was 21572 but used 24814
+		nil,          // gasPrice
 		suite.App.FeeMarketKeeper.GetBaseFee(suite.Ctx), // gasFeeCap
 		big.NewInt(1), // gasTipCap
 		transferData,
@@ -343,13 +355,17 @@ func (suite *Suite) SendTx(
 
 	ercTransferTx.From = hex.EncodeToString(signerKey.PubKey().Address())
 	err = ercTransferTx.Sign(ethtypes.LatestSignerForChainID(chainID), etherminttests.NewSigner(signerKey))
-	suite.Require().NoError(err)
+	if err != nil {
+		return nil, err
+	}
 
 	rsp, err := suite.App.EvmKeeper.EthereumTx(ctx, ercTransferTx)
-	suite.Require().NoError(err)
+	if err != nil {
+		return nil, err
+	}
 	// Do not check vm error here since we want to check for errors later
 
-	return rsp
+	return rsp, nil
 }
 
 func (suite *Suite) MintFeeCollector(coins sdk.Coins) {
@@ -383,42 +399,16 @@ func (suite *Suite) EventsContains(events sdk.Events, expectedEvent sdk.Event) {
 	suite.Truef(foundMatch, "event of type %s not found or did not match", expectedEvent.Type)
 }
 
-// TypedEventsContains asserts that the expected typed event is in the provided events
-func (suite *Suite) TypedEventsContains(events sdk.Events, tev proto.Message) {
+// EventsDoNotContain asserts that the event is **not** is in the provided events
+func (suite *Suite) EventsDoNotContain(events sdk.Events, eventType string) {
 	foundMatch := false
-	for _, event := range events.ToABCIEvents() {
-		// Ignore non-typed events
-		msg, _ := sdk.ParseTypedEvent(event)
-		if reflect.DeepEqual(msg, tev) {
+	for _, event := range events {
+		if event.Type == eventType {
 			foundMatch = true
 		}
 	}
 
-	suite.Truef(foundMatch, "event of type %s not found or did not match", reflect.TypeOf(tev))
-}
-
-// TypedEventsDoesNotContain asserts that the expected typed event is **not** in the provided events
-func (suite *Suite) TypedEventsDoesNotContain(events sdk.Events, tev proto.Message) {
-	found := suite.TypedEventsContainsType(events, tev)
-	suite.Require().False(found, "event of type %v should not be found in events", reflect.TypeOf(tev))
-}
-
-// TypedEventsContainsType returns true if the that the expected typed event
-// **type** is in the provided events. This only checks the type, not the value.
-func (suite *Suite) TypedEventsContainsType(events sdk.Events, tev proto.Message) bool {
-	for _, event := range events.ToABCIEvents() {
-		// Ignore non-typed events
-		msg, err := sdk.ParseTypedEvent(event)
-		if err != nil {
-			continue
-		}
-
-		if reflect.TypeOf(msg) == reflect.TypeOf(tev) {
-			return true
-		}
-	}
-
-	return false
+	suite.Falsef(foundMatch, "event of type %s should not be found, but was found", eventType)
 }
 
 func attrsToMap(attrs []abci.EventAttribute) []sdk.Attribute {

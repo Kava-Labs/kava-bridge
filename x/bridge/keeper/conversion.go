@@ -13,39 +13,52 @@ import (
 func (k Keeper) MintConversionPairCoin(
 	ctx sdk.Context,
 	pair types.ConversionPair,
-	amount sdk.Int,
+	amount *big.Int,
 	recipient sdk.AccAddress,
-) error {
-	coin := sdk.NewCoin(pair.Denom, amount)
+) (sdk.Coin, error) {
+	coin := sdk.NewCoin(pair.Denom, sdk.NewIntFromBigInt(amount))
 	coins := sdk.NewCoins(coin)
 
 	if err := k.bankKeeper.MintCoins(ctx, types.ModuleName, coins); err != nil {
-		return err
+		return sdk.Coin{}, err
 	}
 
 	if err := k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, recipient, coins); err != nil {
-		return err
+		return sdk.Coin{}, err
 	}
 
-	return nil
+	return coin, nil
 }
 
 // ConvertCoinToERC20 converts an sdk.Coin from the originating account to an
 // ERC20 to the receiver account.
 func (k Keeper) ConvertCoinToERC20(
 	ctx sdk.Context,
-	pair types.ConversionPair,
-	amount sdk.Int,
-	originAccount sdk.AccAddress,
+	initiatorAccount sdk.AccAddress,
 	receiverAccount types.InternalEVMAddress,
+	coin sdk.Coin,
 ) error {
-	if err := k.BurnConversionPairCoin(ctx, pair, amount, originAccount); err != nil {
+	pair, err := k.GetEnabledConversionPairFromDenom(ctx, coin.Denom)
+	if err != nil {
+		// Coin not in enabled conversion pair list
 		return err
 	}
 
-	if err := k.UnlockERC20Tokens(ctx, pair, amount.BigInt(), receiverAccount); err != nil {
+	if err := k.BurnConversionPairCoin(ctx, pair, coin, initiatorAccount); err != nil {
 		return err
 	}
+
+	if err := k.UnlockERC20Tokens(ctx, pair, coin.Amount.BigInt(), receiverAccount); err != nil {
+		return err
+	}
+
+	ctx.EventManager().EmitEvent(sdk.NewEvent(
+		types.EventTypeConvertCoinToERC20,
+		sdk.NewAttribute(types.AttributeKeyInitiator, initiatorAccount.String()),
+		sdk.NewAttribute(types.AttributeKeyReceiver, receiverAccount.String()),
+		sdk.NewAttribute(types.AttributeKeyERC20Address, pair.GetAddress().String()),
+		sdk.NewAttribute(types.AttributeKeyAmount, coin.String()),
+	))
 
 	return nil
 }
@@ -55,10 +68,9 @@ func (k Keeper) ConvertCoinToERC20(
 func (k Keeper) BurnConversionPairCoin(
 	ctx sdk.Context,
 	pair types.ConversionPair,
-	amount sdk.Int,
+	coin sdk.Coin,
 	account sdk.AccAddress,
 ) error {
-	coin := sdk.NewCoin(pair.Denom, amount)
 	coins := sdk.NewCoins(coin)
 
 	if err := k.bankKeeper.SendCoinsFromAccountToModule(ctx, account, types.ModuleName, coins); err != nil {

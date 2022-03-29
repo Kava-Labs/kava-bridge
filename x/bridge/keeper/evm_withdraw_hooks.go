@@ -27,19 +27,19 @@ import (
 )
 
 // Hooks wrapper struct for bridge keeper
-type Hooks struct {
+type WithdrawHook struct {
 	k Keeper
 }
 
-var _ evmtypes.EvmHooks = Hooks{}
+var _ evmtypes.EvmHooks = WithdrawHook{}
 
 // Return the wrapper struct
-func (k Keeper) Hooks() Hooks {
-	return Hooks{k}
+func (k Keeper) WithdrawHooks() WithdrawHook {
+	return WithdrawHook{k}
 }
 
 // PostTxProcessing implements EvmHooks.PostTxProcessing
-func (h Hooks) PostTxProcessing(
+func (h WithdrawHook) PostTxProcessing(
 	ctx sdk.Context,
 	from common.Address,
 	to *common.Address,
@@ -111,14 +111,13 @@ func (h Hooks) PostTxProcessing(
 			panic(err)
 		}
 
-		if err := ctx.EventManager().EmitTypedEvent(&types.EventBridgeKavaToEthereum{
-			EthereumErc20Address: externalERC20Addr.String(),
-			Receiver:             toAddr.String(),
-			Amount:               amount.String(),
-			Sequence:             sequence.String(),
-		}); err != nil {
-			panic(err)
-		}
+		ctx.EventManager().EmitEvent(sdk.NewEvent(
+			types.EventTypeBridgeKavaToEthereum,
+			sdk.NewAttribute(types.AttributeKeyEthereumERC20Address, externalERC20Addr.String()),
+			sdk.NewAttribute(types.AttributeKeyReceiver, toAddr.String()),
+			sdk.NewAttribute(types.AttributeKeyAmount, amount.String()),
+			sdk.NewAttribute(types.AttributeKeySequence, sequence.String()),
+		))
 	}
 
 	return nil
