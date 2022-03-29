@@ -30,6 +30,10 @@ start: install ## Start kava-bridge chain locally
 start-geth: ## Start private geth chain locally with the Bridge contract
 	./contrib/devnet/start-geth.sh
 
+.PHONY: export-geth
+export-geth: ## Exports the current geth state to reuse e.g. for kvtool
+	geth --datadir ./contrib/devnet/geth/data export exported_state
+
 .PHONY: lint
 lint: ## Run golint
 	golint -set_exit_status $(PKGS)
