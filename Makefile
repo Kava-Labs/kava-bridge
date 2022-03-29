@@ -27,7 +27,7 @@ start: install ## Start kava-bridge chain locally
 	kava-bridged start
 
 .PHONY: start-geth
-start-geth:
+start-geth: ## Start private geth chain locally with the Bridge contract
 	./contrib/devnet/start-geth.sh
 
 .PHONY: lint
