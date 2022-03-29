@@ -27,7 +27,7 @@ func TestMsgServerSuite(t *testing.T) {
 	suite.Run(t, new(MsgServerSuite))
 }
 
-func (suite *MsgServerSuite) TestMsg() {
+func (suite *MsgServerSuite) TestBridgeEthereumToKava() {
 	type errArgs struct {
 		expectPass bool
 		contains   string
@@ -197,6 +197,107 @@ func (suite *MsgServerSuite) TestMint() {
 						sdk.NewAttribute(types.AttributeKeyAmount, amount.String()),
 						sdk.NewAttribute(types.AttributeKeySequence, msg.Sequence.String()),
 					))
+			}
+		})
+	}
+}
+
+func (suite *MsgServerSuite) TestConvertCoinToERC20() {
+	invoker, err := sdk.AccAddressFromBech32("kava123fxg0l602etulhhcdm0vt7l57qya5wjcrwhzz")
+	suite.Require().NoError(err)
+
+	err = suite.App.FundAccount(suite.Ctx, invoker, sdk.NewCoins(sdk.NewCoin("erc20/usdc", sdk.NewInt(10000))))
+	suite.Require().NoError(err)
+
+	contractAddr := suite.DeployERC20()
+
+	pair := types.NewConversionPair(
+		contractAddr,
+		"erc20/usdc",
+	)
+	suite.AddEnabledConversionPair(pair)
+
+	// Module account should have starting balance
+	pairStartingBal := big.NewInt(10000)
+	err = suite.App.BridgeKeeper.MintERC20(
+		suite.Ctx,
+		pair.GetAddress(), // contractAddr
+		types.NewInternalEVMAddress(types.ModuleEVMAddress), //receiver
+		pairStartingBal,
+	)
+	suite.Require().NoError(err)
+
+	type errArgs struct {
+		expectPass bool
+		contains   string
+	}
+
+	tests := []struct {
+		name    string
+		msg     types.MsgConvertCoinToERC20
+		errArgs errArgs
+	}{
+		{
+			"valid",
+			types.NewMsgConvertCoinToERC20(
+				invoker.String(),
+				"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+				sdk.NewCoin("erc20/usdc", sdk.NewInt(1234)),
+			),
+			errArgs{
+				expectPass: true,
+			},
+		},
+		{
+			"invalid - odd length hex address",
+			types.NewMsgConvertCoinToERC20(
+				invoker.String(),
+				"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc",
+				sdk.NewCoin("erc20/usdc", sdk.NewInt(1234)),
+			),
+			errArgs{
+				expectPass: false,
+				contains:   "invalid Receiver address: string is not a hex address",
+			},
+		},
+		// Amount coin is not validated by msg_server, but on msg itself
+	}
+
+	for _, tc := range tests {
+		suite.Run(tc.name, func() {
+			_, err := suite.msgServer.ConvertCoinToERC20(sdk.WrapSDKContext(suite.Ctx), &tc.msg)
+
+			if tc.errArgs.expectPass {
+				suite.Require().NoError(err)
+
+				bal := suite.GetERC20BalanceOf(
+					contract.ERC20MintableBurnableContract.ABI,
+					pair.GetAddress(),
+					testutil.MustNewInternalEVMAddressFromString(tc.msg.Receiver),
+				)
+
+				suite.Require().Equal(tc.msg.Amount.Amount.BigInt(), bal, "balance should match converted amount")
+
+				// msg server event
+				suite.EventsContains(suite.GetEvents(),
+					sdk.NewEvent(
+						sdk.EventTypeMessage,
+						sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+						sdk.NewAttribute(sdk.AttributeKeySender, tc.msg.Initiator),
+					))
+
+				// keeper event
+				suite.EventsContains(suite.GetEvents(),
+					sdk.NewEvent(
+						types.EventTypeConvertCoinToERC20,
+						sdk.NewAttribute(types.AttributeKeyInitiator, tc.msg.Initiator),
+						sdk.NewAttribute(types.AttributeKeyReceiver, tc.msg.Receiver),
+						sdk.NewAttribute(types.AttributeKeyERC20Address, pair.GetAddress().String()),
+						sdk.NewAttribute(types.AttributeKeyAmount, tc.msg.Amount.String()),
+					))
+			} else {
+				suite.Require().Error(err)
+				suite.Require().Contains(err.Error(), tc.errArgs.contains)
 			}
 		})
 	}

@@ -217,6 +217,13 @@ func (suite *Suite) Commit() {
 	suite.Ctx = suite.App.NewContext(false, header)
 }
 
+func (suite *Suite) AddEnabledConversionPair(pair types.ConversionPair) {
+	params := suite.App.BridgeKeeper.GetParams(suite.Ctx)
+	params.EnabledConversionPairs = append(params.EnabledConversionPairs, pair)
+
+	suite.App.BridgeKeeper.SetParams(suite.Ctx, params)
+}
+
 func (suite *Suite) DeployERC20() types.InternalEVMAddress {
 	// We can assume token is valid as it is from params and should be validated
 	token := types.NewEnabledERC20Token(

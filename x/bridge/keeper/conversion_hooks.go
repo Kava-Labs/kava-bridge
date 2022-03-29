@@ -56,19 +56,19 @@ func (h ConversionHooks) PostTxProcessing(
 			continue
 		}
 
-		ConvertToCoinEvent, err := erc20Abi.Unpack(event.Name, log.Data)
+		convertToCoinEvent, err := erc20Abi.Unpack(event.Name, log.Data)
 		if err != nil {
 			h.k.Logger(ctx).Error("failed to unpack ConvertToCoin event", "error", err.Error())
 			continue
 		}
 
-		if len(ConvertToCoinEvent) == 0 {
+		if len(convertToCoinEvent) == 0 {
 			h.k.Logger(ctx).Error("ConvertToCoin event data is empty", "error", err.Error())
 			continue
 		}
 
 		// Data only contains non-indexed parameters, which is only the amount
-		amount, ok := ConvertToCoinEvent[0].(*big.Int)
+		amount, ok := convertToCoinEvent[0].(*big.Int)
 		// safety check and ignore if amount not positive
 		if !ok || amount == nil || amount.Sign() != 1 {
 			continue
@@ -76,7 +76,7 @@ func (h ConversionHooks) PostTxProcessing(
 
 		// Check that the contract is enabled to convert to coin
 		contractAddr := types.NewInternalEVMAddress(log.Address)
-		conversionPair, err := h.k.GetEnabledConversionPair(ctx, contractAddr)
+		conversionPair, err := h.k.GetEnabledConversionPairFromERC20Address(ctx, contractAddr)
 		if err != nil {
 			// Contract not a conversion pair in state
 			continue
