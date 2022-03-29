@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Derived from https://github.com/gnosis/canonical-weth/blob/master/contracts/WETH9.sol
+// NOT INTENDED FOR USE IN PRODUCTION
+
 // Copyright (C) 2015, 2016, 2017 Dapphub
 
 // This program is free software: you can redistribute it and/or modify
@@ -16,7 +18,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-pragma solidity >=0.4.22;
+pragma solidity ^0.8.9;
 
 contract WETH9 {
     string public name = "Wrapped Ether";
@@ -41,7 +43,7 @@ contract WETH9 {
     }
 
     function withdraw(uint256 wad) public {
-        require(balanceOf[msg.sender] >= wad);
+        require(balanceOf[msg.sender] >= wad, "WETH: amount < balance");
         balanceOf[msg.sender] -= wad;
         payable(msg.sender).transfer(wad);
         emit Withdrawal(msg.sender, wad);
@@ -66,12 +68,15 @@ contract WETH9 {
         address dst,
         uint256 wad
     ) public returns (bool) {
-        require(balanceOf[src] >= wad);
+        require(balanceOf[src] >= wad, "WKAVA: amount < balance");
 
         if (
             src != msg.sender && allowance[src][msg.sender] != type(uint256).max
         ) {
-            require(allowance[src][msg.sender] >= wad);
+            require(
+                allowance[src][msg.sender] >= wad,
+                "WETH: allowance < amount"
+            );
             allowance[src][msg.sender] -= wad;
         }
 
