@@ -7,7 +7,7 @@ GENESIS=./contrib/devnet/geth/genesis.json
 # Delete state
 rm -rf $DATADIR/geth
 
-# rm -rf $DATADIR
+# To create the account, if more are needed
 # geth account new --datadir $DATADIR --password ./contrib/devnet/eth-password
 
 geth init --datadir $DATADIR $GENESIS
