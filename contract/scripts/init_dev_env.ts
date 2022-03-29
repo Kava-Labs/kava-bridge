@@ -1,6 +1,6 @@
 import { BigNumberish } from "ethers";
 import { ethers } from "hardhat";
-import { Bridge, ERC20MintableBurnable, WKAVA } from "../typechain-types";
+import { Bridge, ERC20MintableBurnable, WETH9 } from "../typechain-types";
 
 export async function main(): Promise<void> {
   // Hardhat always runs the compile task when running scripts with its command
@@ -32,22 +32,37 @@ export async function main(): Promise<void> {
     signer.address
   );
 
-  const wkava = await deployWKAVA();
-  console.log("WKAVA deployed:\n\tAddress: %s", wkava.address);
+  const weth = await deployWETH();
+  console.log("WETH deployed:\n\tAddress: %s", weth.address);
 
-  const amounts = new Map<string, BigNumberish>([
+  const meowAmounts = new Map<string, BigNumberish>([
     [signer.address, 100_000_000_000_000_000_000n],
   ]);
-  const erc20 = await deployERC20WithAmounts(
-    "Wrapped Dev Ether",
-    "WETH",
+  const erc20MEOW = await deployERC20WithAmounts(
+    "Cat Token",
+    "MEOW",
     18,
-    amounts
+    meowAmounts
   );
   console.log(
     "ERC20 deployed:\n\tName:\t%s\n\tAddress: %s",
-    await erc20.name(),
-    erc20.address
+    await erc20MEOW.name(),
+    erc20MEOW.address
+  );
+
+  const usdcAmounts = new Map<string, BigNumberish>([
+    [signer.address, 100_000_000_000n],
+  ]);
+  const erc20USDC = await deployERC20WithAmounts(
+    "USD Coin",
+    "USDC",
+    6,
+    usdcAmounts
+  );
+  console.log(
+    "ERC20 deployed:\n\tName:\t%s\n\tAddress: %s",
+    await erc20USDC.name(),
+    erc20USDC.address
   );
 
   console.log("Completed contracts deployment");
@@ -62,13 +77,13 @@ export async function deployBridge(relayer: string): Promise<Bridge> {
   return bridge;
 }
 
-export async function deployWKAVA(): Promise<WKAVA> {
-  const wkavaFactory = await ethers.getContractFactory("WKAVA");
-  const wkava = await wkavaFactory.deploy();
+export async function deployWETH(): Promise<WETH9> {
+  const wethFactory = await ethers.getContractFactory("WETH9");
+  const weth = await wethFactory.deploy();
 
-  await wkava.deployed();
+  await weth.deployed();
 
-  return wkava;
+  return weth;
 }
 
 export async function deployERC20WithAmounts(
