@@ -1,7 +1,6 @@
 import * as dotenv from "dotenv";
 
 import { HardhatUserConfig, task } from "hardhat/config";
-import "./tasks/erc20_balance";
 import "@nomiclabs/hardhat-etherscan";
 import "@nomiclabs/hardhat-ethers";
 import "@nomiclabs/hardhat-waffle";
