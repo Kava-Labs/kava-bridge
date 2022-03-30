@@ -3,6 +3,7 @@ package cli
 import (
 	"fmt"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/spf13/cobra"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -26,6 +27,7 @@ func GetTxCmd() *cobra.Command {
 
 	cmds := []*cobra.Command{
 		getCmdMsgBridgeEthereumToKava(),
+		getCmdMsgConvertCoinToERC20(),
 	}
 
 	for _, cmd := range cmds {
@@ -67,6 +69,41 @@ func getCmdMsgBridgeEthereumToKava() *cobra.Command {
 
 			signer := clientCtx.GetFromAddress()
 			msg := types.NewMsgBridgeEthereumToKava(signer.String(), token, amount, receiver, sequence)
+			if err := msg.ValidateBasic(); err != nil {
+				return err
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
+		},
+	}
+}
+
+func getCmdMsgConvertCoinToERC20() *cobra.Command {
+	return &cobra.Command{
+		Use:   "convert-coin-to-erc20 [coin] [receiver]",
+		Short: "converts sdk.Coin to erc20 tokens on Kava eth co-chain",
+		Example: fmt.Sprintf(
+			`%s tx %s convert-coin-to-erc20 100000000weth 0x6B1088f788b412Ad1280F95240d56B886A64bc05 --from <key>`,
+			version.AppName, types.ModuleName,
+		),
+		Args: cobra.ExactArgs(4),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			coin, err := sdk.ParseCoinNormalized(args[0])
+			if err != nil {
+				return err
+			}
+			receiver := args[1]
+			if !common.IsHexAddress(receiver) {
+				return fmt.Errorf("receiver '%s' is an invalid hex address", args[1])
+			}
+
+			signer := clientCtx.GetFromAddress()
+			msg := types.NewMsgConvertCoinToERC20(signer.String(), receiver, coin)
 			if err := msg.ValidateBasic(); err != nil {
 				return err
 			}
