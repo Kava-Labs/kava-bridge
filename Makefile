@@ -96,13 +96,13 @@ contract/artifacts/contracts_Bridge_sol_Bridge.abi: contract/contracts/Bridge.so
 contract/artifacts/contracts_Bridge_sol_Bridge.bin: contract/contracts/Bridge.sol
 	cd contract && $(SOLC) --optimize --bin contracts/Bridge.sol --base-path . --include-path node_modules/ -o artifacts
 
-contract/artifacts/contracts_ERC20_sol_Erc20.abi: contract/contracts/ERC20.sol
-	cd contract && $(SOLC) --abi contracts/ERC20.sol --base-path . --include-path node_modules/ -o artifacts
+contract/artifacts/node_modules_@openzeppelin_contracts_token_ERC20_ERC20_sol_ERC20.abi: contract/node_modules/@openzeppelin/contracts/token/ERC20/ERC20.sol
+	cd contract && $(SOLC) --abi node_modules/@openzeppelin/contracts/token/ERC20/ERC20.sol --base-path . --include-path node_modules/ -o artifacts
 
 relayer/bridge.go: contract/artifacts/contracts_Bridge_sol_Bridge.bin contract/artifacts/contracts_Bridge_sol_Bridge.abi
 	$(ABIGEN) --bin $< --abi $(word 2,$^) --pkg relayer --type Bridge --out $@
 
-relayer/erc20.go: contract/artifacts/contracts_ERC20_sol_Erc20.abi
+relayer/erc20.go: contract/artifacts/node_modules_@openzeppelin_contracts_token_ERC20_ERC20_sol_ERC20.abi
 	$(ABIGEN) --abi $< --pkg relayer --type ERC20 --out $@
 ################################################################################
 ###                                 Includes                                 ###
