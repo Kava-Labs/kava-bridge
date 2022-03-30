@@ -86,7 +86,7 @@ func getCmdMsgConvertCoinToERC20() *cobra.Command {
 			`%s tx %s convert-coin-to-erc20 100000000weth 0x6B1088f788b412Ad1280F95240d56B886A64bc05 --from <key>`,
 			version.AppName, types.ModuleName,
 		),
-		Args: cobra.ExactArgs(4),
+		Args: cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
@@ -97,6 +97,7 @@ func getCmdMsgConvertCoinToERC20() *cobra.Command {
 			if err != nil {
 				return err
 			}
+
 			receiver := args[1]
 			if !common.IsHexAddress(receiver) {
 				return fmt.Errorf("receiver '%s' is an invalid hex address", args[1])
