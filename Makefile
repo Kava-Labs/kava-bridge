@@ -26,6 +26,14 @@ start: install ## Start kava-bridge chain locally
 	./contrib/devnet/init-new-chain.sh
 	kava-bridged start
 
+.PHONY: start-geth
+start-geth: ## Start private geth chain locally with the Bridge contract
+	./contrib/devnet/start-geth.sh
+
+.PHONY: export-geth
+export-geth: ## Exports the current geth state to reuse e.g. for kvtool
+	geth --datadir ./contrib/devnet/geth/data export exported_state
+
 .PHONY: lint
 lint: ## Run golint
 	golint -set_exit_status $(PKGS)
@@ -67,10 +75,13 @@ watch-integration: ## Run integration tests on file changes
 clean: ## Clean up build and temporary files
 	rm c.out coverage.html
 
+GETH_VERSION := v1.10.17
+
 .PHONY: install-devtools
 install-devtools: ## Install solc and abigen used by compile-contracts
 	cd contract && npm install
-	$(GO) install github.com/ethereum/go-ethereum/cmd/abigen@latest
+	$(GO) install github.com/ethereum/go-ethereum/cmd/abigen@$(GETH_VERSION)
+	$(GO) install github.com/ethereum/go-ethereum/cmd/geth@$(GETH_VERSION)
 
 JQ ?= jq
 NPM ?= npm
