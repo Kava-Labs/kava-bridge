@@ -544,14 +544,17 @@ func NewApp(
 	app.SetInitChainer(app.InitChainer)
 	app.SetBeginBlocker(app.BeginBlocker)
 
+	maxGasWanted := cast.ToUint64(appOpts.Get(srvflags.EVMMaxTxGasWanted))
 	anteOptions := ante.HandlerOptions{
 		AccountKeeper:   app.AccountKeeper,
 		BankKeeper:      app.BankKeeper,
 		EvmKeeper:       app.EvmKeeper,
 		FeeMarketKeeper: app.FeeMarketKeeper,
+		FeegrantKeeper:  app.FeeGrantKeeper,
 		SignModeHandler: encodingConfig.TxConfig.SignModeHandler(),
 		SigGasConsumer:  evmante.DefaultSigVerificationGasConsumer,
 		AddressFetchers: nil,
+		MaxTxGasWanted:  maxGasWanted,
 	}
 
 	anteHandler, err := ante.NewAnteHandler(anteOptions)
