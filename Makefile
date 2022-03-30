@@ -75,10 +75,13 @@ watch-integration: ## Run integration tests on file changes
 clean: ## Clean up build and temporary files
 	rm c.out coverage.html
 
+GETH_VERSION := v1.10.17
+
 .PHONY: install-devtools
 install-devtools: ## Install solc and abigen used by compile-contracts
 	cd contract && npm install
-	$(GO) install github.com/ethereum/go-ethereum/cmd/abigen@latest
+	$(GO) install github.com/ethereum/go-ethereum/cmd/abigen@$(GETH_VERSION)
+	$(GO) install github.com/ethereum/go-ethereum/cmd/geth@$(GETH_VERSION)
 
 JQ ?= jq
 NPM ?= npm
