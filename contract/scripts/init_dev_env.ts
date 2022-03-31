@@ -2,6 +2,9 @@ import { BigNumberish } from "ethers";
 import { ethers } from "hardhat";
 import { Bridge, ERC20MintableBurnable, WETH9 } from "../typechain-types";
 
+const testUserAddress = "0x7Bbf300890857b8c241b219C6a489431669b3aFA";
+const testRelayerAddress = "0xa2F728F997f62F47D4262a70947F6c36885dF9fa";
+
 export async function main(): Promise<void> {
   // Hardhat always runs the compile task when running scripts with its command
   // line interface.
@@ -10,15 +13,17 @@ export async function main(): Promise<void> {
   // manually to make sure everything is compiled
   // await hre.run('compile');
   //
-
   const [signer] = await ethers.getSigners();
+  const userAddr = ethers.utils.getAddress(testUserAddress);
+  const relayerAddr = ethers.utils.getAddress(testRelayerAddress);
+
   console.log("Signing with account %s", signer.address);
 
-  const bridge = await deployBridge(signer.address);
+  const bridge = await deployBridge(relayerAddr);
   console.log(
     "Bridge deployed:\n\tAddress: %s\n\tRelayer: %s",
     bridge.address,
-    signer.address
+    relayerAddr,
   );
 
   const weth = await deployWETH();
@@ -26,6 +31,7 @@ export async function main(): Promise<void> {
 
   const meowAmounts = new Map<string, BigNumberish>([
     [signer.address, 100_000_000_000_000_000_000n],
+    [userAddr, 100_000_000_000_000_000_000n],
   ]);
   const erc20MEOW = await deployERC20WithAmounts(
     "Cat Token",
@@ -41,6 +47,7 @@ export async function main(): Promise<void> {
 
   const usdcAmounts = new Map<string, BigNumberish>([
     [signer.address, 100_000_000_000n],
+    [userAddr, 100_000_000_000n],
   ]);
   const erc20USDC = await deployERC20WithAmounts(
     "USD Coin",
@@ -55,6 +62,26 @@ export async function main(): Promise<void> {
   );
 
   console.log("Completed contracts deployment");
+
+  const userFundTx = await signer.sendTransaction({
+    to: userAddr,
+    value: ethers.utils.parseEther("100.0"),
+  });
+  console.log(
+    "User funded in tx %s\n",
+    userFundTx.hash
+  );
+
+  const relayerFundTx = await signer.sendTransaction({
+    to: relayerAddr,
+    value: ethers.utils.parseEther("100.0"),
+  });
+  console.log(
+    "Relayer funded in tx %s\n",
+    relayerFundTx.hash
+  );
+
+  console.log("Completed funding accounts");
 }
 
 export async function deployBridge(relayer: string): Promise<Bridge> {
