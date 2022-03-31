@@ -1,10 +1,12 @@
 package cli
 
 import (
+	"bufio"
 	"context"
 	"encoding/json"
 	"fmt"
 	"math/big"
+	"os"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
@@ -15,6 +17,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
+	"github.com/cosmos/cosmos-sdk/client/input"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/version"
@@ -176,6 +179,32 @@ func getCmdBridgeKavaToEthereum() *cobra.Command {
 			)
 			if err != nil {
 				return err
+			}
+
+			if clientCtx.GenerateOnly {
+				json, err := clientCtx.TxConfig.TxJSONEncoder()(ethTx)
+				if err != nil {
+					return err
+				}
+
+				return clientCtx.PrintString(fmt.Sprintf("%s\n", json))
+			}
+
+			if !clientCtx.SkipConfirm {
+				out, err := clientCtx.TxConfig.TxJSONEncoder()(tx.GetTx())
+				if err != nil {
+					return err
+				}
+
+				_, _ = fmt.Fprintf(os.Stderr, "%s\n\n", out)
+
+				buf := bufio.NewReader(os.Stdin)
+				ok, err := input.GetConfirmation("confirm transaction before signing and broadcasting", buf, os.Stderr)
+
+				if err != nil || !ok {
+					_, _ = fmt.Fprintf(os.Stderr, "%s\n", "cancelled transaction")
+					return err
+				}
 			}
 
 			txBytes, err := clientCtx.TxConfig.TxEncoder()(ethTx)
