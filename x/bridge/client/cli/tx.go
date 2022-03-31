@@ -80,10 +80,10 @@ func getCmdMsgBridgeEthereumToKava() *cobra.Command {
 
 func getCmdMsgConvertCoinToERC20() *cobra.Command {
 	return &cobra.Command{
-		Use:   "convert-coin-to-erc20 [coin] [receiver]",
+		Use:   "convert-coin-to-erc20 [receiver] [coin]",
 		Short: "converts sdk.Coin to erc20 tokens on Kava eth co-chain",
 		Example: fmt.Sprintf(
-			`%s tx %s convert-coin-to-erc20 100000000weth 0x6B1088f788b412Ad1280F95240d56B886A64bc05 --from <key>`,
+			`%s tx %s convert-coin-to-erc20 0x6B1088f788b412Ad1280F95240d56B886A64bc05 100000000weth --from <key>`,
 			version.AppName, types.ModuleName,
 		),
 		Args: cobra.ExactArgs(2),
@@ -93,14 +93,14 @@ func getCmdMsgConvertCoinToERC20() *cobra.Command {
 				return err
 			}
 
-			coin, err := sdk.ParseCoinNormalized(args[0])
-			if err != nil {
-				return err
+			receiver := args[0]
+			if !common.IsHexAddress(receiver) {
+				return fmt.Errorf("receiver '%s' is an invalid hex address", args[0])
 			}
 
-			receiver := args[1]
-			if !common.IsHexAddress(receiver) {
-				return fmt.Errorf("receiver '%s' is an invalid hex address", args[1])
+			coin, err := sdk.ParseCoinNormalized(args[1])
+			if err != nil {
+				return err
 			}
 
 			signer := clientCtx.GetFromAddress()
