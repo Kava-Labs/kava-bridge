@@ -193,6 +193,7 @@ func (suite *MsgServerSuite) TestMint() {
 						types.EventTypeBridgeEthereumToKava,
 						sdk.NewAttribute(types.AttributeKeyRelayer, msg.Relayer),
 						sdk.NewAttribute(types.AttributeKeyEthereumERC20Address, msg.EthereumERC20Address),
+						sdk.NewAttribute(types.AttributeKeyKavaERC20Address, pair.GetInternalAddress().String()),
 						sdk.NewAttribute(types.AttributeKeyReceiver, receiver.String()),
 						sdk.NewAttribute(types.AttributeKeyAmount, amount.String()),
 						sdk.NewAttribute(types.AttributeKeySequence, msg.Sequence.String()),

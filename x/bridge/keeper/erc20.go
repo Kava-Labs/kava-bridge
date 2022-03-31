@@ -40,6 +40,7 @@ func (k Keeper) BridgeEthereumToKava(
 		types.EventTypeBridgeEthereumToKava,
 		sdk.NewAttribute(types.AttributeKeyRelayer, relayer.String()),
 		sdk.NewAttribute(types.AttributeKeyEthereumERC20Address, externalERC20Address.String()),
+		sdk.NewAttribute(types.AttributeKeyKavaERC20Address, internalAddress.String()),
 		sdk.NewAttribute(types.AttributeKeyReceiver, receiver.String()),
 		sdk.NewAttribute(types.AttributeKeyAmount, amount.String()),
 		sdk.NewAttribute(types.AttributeKeySequence, sequence.String()),

@@ -114,6 +114,7 @@ func (h WithdrawHook) PostTxProcessing(
 		ctx.EventManager().EmitEvent(sdk.NewEvent(
 			types.EventTypeBridgeKavaToEthereum,
 			sdk.NewAttribute(types.AttributeKeyEthereumERC20Address, externalERC20Addr.String()),
+			sdk.NewAttribute(types.AttributeKeyKavaERC20Address, contractAddr.String()),
 			sdk.NewAttribute(types.AttributeKeyReceiver, toAddr.String()),
 			sdk.NewAttribute(types.AttributeKeyAmount, amount.String()),
 			sdk.NewAttribute(types.AttributeKeySequence, sequence.String()),
