@@ -24,6 +24,7 @@ type HandlerOptions struct {
 	SigGasConsumer  authante.SignatureVerificationGasConsumer
 	FeeMarketKeeper evmtypes.FeeMarketKeeper
 	AddressFetchers []AddressFetcher
+	MaxTxGasWanted  uint64
 }
 
 func (options HandlerOptions) Validate() error {
@@ -120,7 +121,7 @@ func newEthAnteHandler(options HandlerOptions) sdk.AnteHandler {
 		evmante.NewEthValidateBasicDecorator(options.EvmKeeper),
 		evmante.NewEthSigVerificationDecorator(options.EvmKeeper),
 		evmante.NewEthAccountVerificationDecorator(options.AccountKeeper, options.BankKeeper, options.EvmKeeper),
-		evmante.NewEthGasConsumeDecorator(options.EvmKeeper),
+		evmante.NewEthGasConsumeDecorator(options.EvmKeeper, options.MaxTxGasWanted),
 		evmante.NewCanTransferDecorator(options.EvmKeeper),
 		evmante.NewEthIncrementSenderSequenceDecorator(options.AccountKeeper), // innermost AnteDecorator.
 	)

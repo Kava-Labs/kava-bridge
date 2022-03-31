@@ -7,3 +7,5 @@ kava-bridged
 !kava-bridged/
 kava-relayer
 !kava-relayer/
+
+contrib/devnet/geth/data/geth

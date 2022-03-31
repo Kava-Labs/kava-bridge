@@ -33,10 +33,6 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.Bridge__factory>;
     getContractFactory(
-      name: "Erc20",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.Erc20__factory>;
-    getContractFactory(
       name: "ERC20MintableBurnable",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.ERC20MintableBurnable__factory>;
@@ -69,6 +65,10 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.Withdrawer__factory>;
     getContractFactory(
+      name: "WETH9",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.WETH9__factory>;
+    getContractFactory(
       name: "WKAVA",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.WKAVA__factory>;
@@ -98,11 +98,6 @@ declare module "hardhat/types/runtime" {
       address: string,
       signer?: ethers.Signer
     ): Promise<Contracts.Bridge>;
-    getContractAt(
-      name: "Erc20",
-      address: string,
-      signer?: ethers.Signer
-    ): Promise<Contracts.Erc20>;
     getContractAt(
       name: "ERC20MintableBurnable",
       address: string,
@@ -143,6 +138,11 @@ declare module "hardhat/types/runtime" {
       address: string,
       signer?: ethers.Signer
     ): Promise<Contracts.Withdrawer>;
+    getContractAt(
+      name: "WETH9",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.WETH9>;
     getContractAt(
       name: "WKAVA",
       address: string,

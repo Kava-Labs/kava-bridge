@@ -26,6 +26,14 @@ start: install ## Start kava-bridge chain locally
 	./contrib/devnet/init-new-chain.sh
 	kava-bridged start
 
+.PHONY: start-geth
+start-geth: ## Start private geth chain locally with the Bridge contract
+	./contrib/devnet/start-geth.sh
+
+.PHONY: export-geth
+export-geth: ## Exports the current geth state to reuse e.g. for kvtool
+	geth --datadir ./contrib/devnet/geth/data export exported_state
+
 .PHONY: lint
 lint: ## Run golint
 	golint -set_exit_status $(PKGS)
@@ -67,10 +75,13 @@ watch-integration: ## Run integration tests on file changes
 clean: ## Clean up build and temporary files
 	rm c.out coverage.html
 
+GETH_VERSION := v1.10.17
+
 .PHONY: install-devtools
 install-devtools: ## Install solc and abigen used by compile-contracts
 	cd contract && npm install
-	$(GO) install github.com/ethereum/go-ethereum/cmd/abigen@latest
+	$(GO) install github.com/ethereum/go-ethereum/cmd/abigen@$(GETH_VERSION)
+	$(GO) install github.com/ethereum/go-ethereum/cmd/geth@$(GETH_VERSION)
 
 JQ ?= jq
 NPM ?= npm
@@ -96,13 +107,13 @@ contract/artifacts/contracts_Bridge_sol_Bridge.abi: contract/contracts/Bridge.so
 contract/artifacts/contracts_Bridge_sol_Bridge.bin: contract/contracts/Bridge.sol
 	cd contract && $(SOLC) --optimize --bin contracts/Bridge.sol --base-path . --include-path node_modules/ -o artifacts
 
-contract/artifacts/contracts_ERC20_sol_Erc20.abi: contract/contracts/ERC20.sol
-	cd contract && $(SOLC) --abi contracts/ERC20.sol --base-path . --include-path node_modules/ -o artifacts
+contract/artifacts/node_modules_@openzeppelin_contracts_token_ERC20_ERC20_sol_ERC20.abi: contract/node_modules/@openzeppelin/contracts/token/ERC20/ERC20.sol
+	cd contract && $(SOLC) --abi node_modules/@openzeppelin/contracts/token/ERC20/ERC20.sol --base-path . --include-path node_modules/ -o artifacts
 
 relayer/bridge.go: contract/artifacts/contracts_Bridge_sol_Bridge.bin contract/artifacts/contracts_Bridge_sol_Bridge.abi
 	$(ABIGEN) --bin $< --abi $(word 2,$^) --pkg relayer --type Bridge --out $@
 
-relayer/erc20.go: contract/artifacts/contracts_ERC20_sol_Erc20.abi
+relayer/erc20.go: contract/artifacts/node_modules_@openzeppelin_contracts_token_ERC20_ERC20_sol_ERC20.abi
 	$(ABIGEN) --abi $< --pkg relayer --type ERC20 --out $@
 ################################################################################
 ###                                 Includes                                 ###
