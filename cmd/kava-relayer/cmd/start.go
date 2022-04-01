@@ -13,7 +13,8 @@ func newStartCmd() *cobra.Command {
 		Short: "Starts the relayer",
 		Long:  "Starts processing blocks and relaying transactions.",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			viper.BindPFlags(cmd.Flags())
+			err := viper.BindPFlags(cmd.Flags())
+			cobra.CheckErr(err)
 
 			// get config from env, flags, file, etc
 			ethRpcUrl := viper.GetString("eth.rpc")

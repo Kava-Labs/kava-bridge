@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"fmt"
 	"os"
 	"path"
 	"strings"
@@ -37,7 +36,7 @@ func NewRootCmd() (*cobra.Command, error) {
 	}
 
 	// TODO: allow configuration of config and data separately
-	rootCmd.PersistentFlags().StringVar(&appDir, "home", defaultAppDir, fmt.Sprintf("Directory for config and data"))
+	rootCmd.PersistentFlags().StringVar(&appDir, "home", defaultAppDir, "Directory for config and data")
 
 	rootCmd.AddCommand(newStartCmd())
 
