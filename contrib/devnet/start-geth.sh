@@ -20,6 +20,7 @@ geth --datadir $DATADIR \
      --http \
      --http.corsdomain '*' \
      --http.port 8555 \
+     --http.api eth,net,rpc,web3,debug \
      --ws.port 8556 &
 
 # Deploy contracts after geth started
