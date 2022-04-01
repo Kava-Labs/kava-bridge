@@ -99,6 +99,10 @@ func getCmdBridgeKavaToEthereum() *cobra.Command {
 				return err
 			}
 
+			if err := CanSignEthTx(clientCtx); err != nil {
+				return err
+			}
+
 			if !common.IsHexAddress(args[0]) {
 				return fmt.Errorf("receiver '%s' is an invalid hex address", args[1])
 			}
@@ -150,10 +154,6 @@ func getCmdMsgConvertCoinToERC20() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
-				return err
-			}
-
-			if err := CanSignEthTx(clientCtx); err != nil {
 				return err
 			}
 
