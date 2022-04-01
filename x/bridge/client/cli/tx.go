@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"context"
 	"fmt"
 	"math/big"
 
@@ -32,6 +33,7 @@ func GetTxCmd() *cobra.Command {
 		getCmdMsgBridgeEthereumToKava(),
 		getCmdMsgConvertCoinToERC20(),
 		getCmdBridgeKavaToEthereum(),
+		getCmdConvertERC20ToCoin(),
 	}
 
 	for _, cmd := range cmds {
@@ -120,10 +122,10 @@ func getCmdMsgConvertCoinToERC20() *cobra.Command {
 
 func getCmdBridgeKavaToEthereum() *cobra.Command {
 	return &cobra.Command{
-		Use:   "bridge-kava-to-eth [Kava ERC20 address] [Ethereum receiver address] [amount]",
+		Use:   "bridge-kava-to-eth [Ethereum receiver address] [Kava ERC20 address] [amount]",
 		Short: "burns ERC20 tokens on Kava EVM co-chain and unlocks on Ethereum",
 		Example: fmt.Sprintf(
-			`%s tx %s bridge-kava-to-eth 0x8223259205A3E31C54469fCbfc9F7Cf83D515ff6 0x21E360e198Cde35740e88572B59f2CAdE421E6b1 1000000000000000 --from <key>`,
+			`%s tx %s bridge-kava-to-eth 0x21E360e198Cde35740e88572B59f2CAdE421E6b1 0x8223259205A3E31C54469fCbfc9F7Cf83D515ff6 1000000000000000 --from <key>`,
 			version.AppName, types.ModuleName,
 		),
 		Args: cobra.ExactArgs(3),
@@ -134,14 +136,14 @@ func getCmdBridgeKavaToEthereum() *cobra.Command {
 			}
 
 			if !common.IsHexAddress(args[0]) {
-				return fmt.Errorf("contract address '%s' is an invalid hex address", args[0])
-			}
-			contractAddr := common.HexToAddress(args[0])
-
-			if !common.IsHexAddress(args[1]) {
 				return fmt.Errorf("receiver '%s' is an invalid hex address", args[1])
 			}
-			receiver := common.HexToAddress(args[1])
+			receiver := common.HexToAddress(args[0])
+
+			if !common.IsHexAddress(args[1]) {
+				return fmt.Errorf("contract address '%s' is an invalid hex address", args[0])
+			}
+			contractAddr := common.HexToAddress(args[1])
 
 			amount, ok := new(big.Int).SetString(args[2], 10)
 			if !ok {
@@ -151,6 +153,118 @@ func getCmdBridgeKavaToEthereum() *cobra.Command {
 			data, err := PackContractCallData(
 				contract.ERC20MintableBurnableContract.ABI,
 				"withdraw",
+				receiver,
+				amount,
+			)
+			if err != nil {
+				return err
+			}
+
+			ethTx, err := CreateEthCallContractTx(
+				clientCtx,
+				&contractAddr,
+				data,
+			)
+			if err != nil {
+				return err
+			}
+
+			// These manual flag checks are required as we use broadcast the tx
+			// directly via BroadcastTx instead of tx.GenerateOrBroadcastTxCLI
+			// which handles flags for us.
+
+			if clientCtx.GenerateOnly {
+				if err := PrintTx(clientCtx, ethTx); err != nil {
+					return err
+				}
+			}
+
+			if err := CheckConfirm(clientCtx, ethTx); err != nil {
+				return err
+			}
+
+			txBytes, err := clientCtx.TxConfig.TxEncoder()(ethTx)
+			if err != nil {
+				return err
+			}
+
+			res, err := clientCtx.BroadcastTx(txBytes)
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+}
+
+func getCmdConvertERC20ToCoin() *cobra.Command {
+	return &cobra.Command{
+		Use:   "convert-erc20-to-coin [Kava receiver address] [Kava ERC20 address or Denom] [amount]",
+		Short: "burns ERC20 tokens on Kava EVM co-chain and unlocks on Ethereum",
+		Example: fmt.Sprintf(
+			`%s tx %s convert-erc20-to-coin 0x8223259205A3E31C54469fCbfc9F7Cf83D515ff6 0x21E360e198Cde35740e88572B59f2CAdE421E6b1 1000000000000000 --from <key>`,
+			version.AppName, types.ModuleName,
+		),
+		Args: cobra.ExactArgs(3),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			// Support both bech32 and hex address, try to parse as bech32 if is
+			// not a hex address
+			var receiver common.Address
+			if !common.IsHexAddress(args[0]) {
+				accAddr, err := sdk.AccAddressFromBech32(args[0])
+				if err != nil {
+					return fmt.Errorf("receiver '%s' is not a hex or bech32 address", args[1])
+				}
+
+				receiver = common.BytesToAddress(accAddr)
+			} else {
+				receiver = common.HexToAddress(args[0])
+			}
+
+			queryClient := types.NewQueryClient(clientCtx)
+
+			var contractAddr common.Address
+			if !common.IsHexAddress(args[1]) {
+				if err := sdk.ValidateDenom(args[1]); err != nil {
+					return fmt.Errorf("Kava ERC20 '%s' is not a valid hex address or denom", args[0])
+				}
+
+				// Valid denom, try looking up as denom to get corresponding Kava ERC20 address
+				paramsRes, err := queryClient.Params(context.Background(), &types.QueryParamsRequest{})
+				if err != nil {
+					return err
+				}
+
+				found := false
+				for _, pair := range paramsRes.Params.EnabledConversionPairs {
+					if pair.Denom == args[1] {
+						contractAddr = pair.GetAddress().Address
+						found = true
+						break
+					}
+				}
+
+				if !found {
+					return fmt.Errorf("Kava ERC20 '%s' is not a valid hex address or denom", args[0])
+				}
+			} else {
+				contractAddr = common.HexToAddress(args[1])
+			}
+
+			amount, ok := new(big.Int).SetString(args[2], 10)
+			if !ok {
+				return fmt.Errorf("amount '%s' is invalid", args[2])
+			}
+
+			data, err := PackContractCallData(
+				contract.ERC20MintableBurnableContract.ABI,
+				"convertToCoin",
 				receiver,
 				amount,
 			)
