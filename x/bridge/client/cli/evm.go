@@ -14,14 +14,29 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 
+	"github.com/tharsis/ethermint/crypto/hd"
 	"github.com/tharsis/ethermint/server/config"
 	etherminttypes "github.com/tharsis/ethermint/types"
 	evmtypes "github.com/tharsis/ethermint/x/evm/types"
 	feemarkettypes "github.com/tharsis/ethermint/x/feemarket/types"
 )
 
+// CanSignEthTx returns an error if the signing key algorithm is not eth_secp256k1.
+func CanSignEthTx(ctx client.Context) error {
+	keyInfo, err := ctx.Keyring.KeyByAddress(ctx.FromAddress)
+	if err != nil {
+		return err
+	}
+
+	if keyInfo.GetAlgo() != hd.EthSecp256k1Type {
+		return fmt.Errorf("from address does not support %v", hd.EthSecp256k1Type)
+	}
+
+	return nil
+}
+
 // PackContractCallData creates a smart contract method call data with the
-// provided method and args
+// provided method and args.
 func PackContractCallData(abi abi.ABI, method string, args ...interface{}) ([]byte, error) {
 	data, err := abi.Pack(method, args...)
 	if err != nil {
@@ -104,6 +119,9 @@ func CreateEthCallContractTx(
 	// Sign Ethereum TX (not the cosmos Msg)
 	signer := ethtypes.LatestSignerForChainID(chainID)
 
+	// Must sign with a `/ethermint.crypto.v1.ethsecp256k1.PubKey` and not
+	// `/cosmos.crypto.secp256k1.PubKey` or this will panic with the following:
+	// panic: wrong size for signature: got 64, want 65
 	if err := ethTx.Sign(signer, ctx.Keyring); err != nil {
 		return nil, err
 	}
