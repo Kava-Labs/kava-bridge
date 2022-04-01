@@ -68,7 +68,7 @@ contract WETH9 {
         address dst,
         uint256 wad
     ) public returns (bool) {
-        require(balanceOf[src] >= wad, "WKAVA: amount < balance");
+        require(balanceOf[src] >= wad, "WETH: amount < balance");
 
         if (
             src != msg.sender && allowance[src][msg.sender] != type(uint256).max
