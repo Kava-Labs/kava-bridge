@@ -64,14 +64,22 @@ func CheckConfirm(clientCtx client.Context, signingTx signing.Tx) error {
 		return err
 	}
 
-	_, _ = fmt.Fprintf(os.Stderr, "%s\n\n", out)
+	_, err = fmt.Fprintf(os.Stderr, "%s\n\n", out)
+	if err != nil {
+		return err
+	}
 
 	buf := bufio.NewReader(os.Stdin)
 	ok, err := input.GetConfirmation("confirm transaction before signing and broadcasting", buf, os.Stderr)
-
-	if err != nil || !ok {
-		_, _ = fmt.Fprintf(os.Stderr, "%s\n", "cancelled transaction")
+	if err != nil {
 		return err
+	}
+
+	if !ok {
+		_, err = fmt.Fprintf(os.Stderr, "%s\n", "cancelled transaction")
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
