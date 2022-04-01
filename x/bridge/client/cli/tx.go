@@ -182,8 +182,10 @@ func getCmdConvertERC20ToCoin() *cobra.Command {
 	return &cobra.Command{
 		Use:   "convert-erc20-to-coin [Kava receiver address] [Kava ERC20 address or Denom] [amount]",
 		Short: "burns ERC20 tokens on Kava EVM co-chain and unlocks on Ethereum",
-		Example: fmt.Sprintf(
-			`%s tx %s convert-erc20-to-coin 0x8223259205A3E31C54469fCbfc9F7Cf83D515ff6 0x21E360e198Cde35740e88572B59f2CAdE421E6b1 1000000000000000 --from <key>`,
+		Example: fmt.Sprintf(`
+%[1]s tx %[2]s convert-erc20-to-coin 0x8223259205A3E31C54469fCbfc9F7Cf83D515ff6 0x21E360e198Cde35740e88572B59f2CAdE421E6b1 1000000000000000 --from <key>
+%[1]s tx %[2]s convert-erc20-to-coin 0x0b7c8829a409b6C58293da3B31Eb2e3b3bA72C59 erc20/weth 1000000000000000 --from <key>
+`,
 			version.AppName, types.ModuleName,
 		),
 		Args: cobra.ExactArgs(3),
