@@ -169,31 +169,7 @@ func getCmdBridgeKavaToEthereum() *cobra.Command {
 				return err
 			}
 
-			// These manual flag checks are required as we use broadcast the tx
-			// directly via BroadcastTx instead of tx.GenerateOrBroadcastTxCLI
-			// which handles flags for us.
-
-			if clientCtx.GenerateOnly {
-				if err := PrintTx(clientCtx, ethTx); err != nil {
-					return err
-				}
-			}
-
-			if err := CheckConfirm(clientCtx, ethTx); err != nil {
-				return err
-			}
-
-			txBytes, err := clientCtx.TxConfig.TxEncoder()(ethTx)
-			if err != nil {
-				return err
-			}
-
-			res, err := clientCtx.BroadcastTx(txBytes)
-			if err != nil {
-				return err
-			}
-
-			return clientCtx.PrintProto(res)
+			return GenerateOrBroadcastTx(clientCtx, ethTx)
 		},
 	}
 }
@@ -281,31 +257,7 @@ func getCmdConvertERC20ToCoin() *cobra.Command {
 				return err
 			}
 
-			// These manual flag checks are required as we use broadcast the tx
-			// directly via BroadcastTx instead of tx.GenerateOrBroadcastTxCLI
-			// which handles flags for us.
-
-			if clientCtx.GenerateOnly {
-				if err := PrintTx(clientCtx, ethTx); err != nil {
-					return err
-				}
-			}
-
-			if err := CheckConfirm(clientCtx, ethTx); err != nil {
-				return err
-			}
-
-			txBytes, err := clientCtx.TxConfig.TxEncoder()(ethTx)
-			if err != nil {
-				return err
-			}
-
-			res, err := clientCtx.BroadcastTx(txBytes)
-			if err != nil {
-				return err
-			}
-
-			return clientCtx.PrintProto(res)
+			return GenerateOrBroadcastTx(clientCtx, ethTx)
 		},
 	}
 }
