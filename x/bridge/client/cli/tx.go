@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"context"
 	"fmt"
 	"math/big"
 
@@ -199,48 +198,15 @@ func getCmdConvertERC20ToCoin() *cobra.Command {
 				return err
 			}
 
-			// Support both bech32 and hex address, try to parse as bech32 if is
-			// not a hex address
-			var receiver common.Address
-			if !common.IsHexAddress(args[0]) {
-				accAddr, err := sdk.AccAddressFromBech32(args[0])
-				if err != nil {
-					return fmt.Errorf("receiver '%s' is not a hex or bech32 address", args[1])
-				}
-
-				receiver = common.BytesToAddress(accAddr)
-			} else {
-				receiver = common.HexToAddress(args[0])
+			receiver, err := ParseAddrFromHexOrBech32(args[1])
+			if err != nil {
+				return err
 			}
 
 			queryClient := types.NewQueryClient(clientCtx)
-
-			var contractAddr common.Address
-			if !common.IsHexAddress(args[1]) {
-				if err := sdk.ValidateDenom(args[1]); err != nil {
-					return fmt.Errorf("Kava ERC20 '%s' is not a valid hex address or denom", args[0])
-				}
-
-				// Valid denom, try looking up as denom to get corresponding Kava ERC20 address
-				paramsRes, err := queryClient.Params(context.Background(), &types.QueryParamsRequest{})
-				if err != nil {
-					return err
-				}
-
-				found := false
-				for _, pair := range paramsRes.Params.EnabledConversionPairs {
-					if pair.Denom == args[1] {
-						contractAddr = pair.GetAddress().Address
-						found = true
-						break
-					}
-				}
-
-				if !found {
-					return fmt.Errorf("Kava ERC20 '%s' is not a valid hex address or denom", args[0])
-				}
-			} else {
-				contractAddr = common.HexToAddress(args[1])
+			contractAddr, err := ParseOrQueryConversionPairAddress(queryClient, args[1])
+			if err != nil {
+				return err
 			}
 
 			amount, ok := new(big.Int).SetString(args[2], 10)
