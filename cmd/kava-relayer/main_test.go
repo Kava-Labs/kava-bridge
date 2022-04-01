@@ -15,8 +15,9 @@ const (
 
 func TestMain(m *testing.M) {
 	build := exec.Command("go", "build", "-o", binName)
-	if err := build.Run(); err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to build %s: %s", binName, err)
+	if out, err := build.CombinedOutput(); err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to build %s: %s\n\n", binName, err)
+		fmt.Fprintf(os.Stderr, "%s\n\n", string(out))
 		os.Exit(1)
 	}
 
@@ -30,15 +31,6 @@ func TestNoArgs(t *testing.T) {
 	cmd := exec.Command(fmt.Sprintf("./%s", binName))
 	out, err := cmd.CombinedOutput()
 
-	usageMsg := fmt.Sprintf("usage: %s \n", cmd.String())
-
-	assert.Equal(t, usageMsg, string(out))
-	assert.EqualError(t, err, "exit status 1")
-}
-
-func TestUnkownCommand(t *testing.T) {
-	cmd := exec.Command(fmt.Sprintf("./%s", binName), "some-command")
-	out, err := cmd.CombinedOutput()
-	assert.Equal(t, "unknown command: some-command\n", string(out))
-	assert.EqualError(t, err, "exit status 1")
+	assert.Contains(t, string(out), "The kava relayer processes ethereum and kava blocks to transfer ERC20 tokens between chains.")
+	assert.NoError(t, err)
 }
