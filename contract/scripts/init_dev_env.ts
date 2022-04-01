@@ -23,7 +23,7 @@ export async function main(): Promise<void> {
   console.log(
     "Bridge deployed:\n\tAddress: %s\n\tRelayer: %s",
     bridge.address,
-    relayerAddr,
+    relayerAddr
   );
 
   const weth = await deployWETH();
@@ -67,21 +67,28 @@ export async function main(): Promise<void> {
     to: userAddr,
     value: ethers.utils.parseEther("100.0"),
   });
-  console.log(
-    "User funded in tx %s\n",
-    userFundTx.hash
-  );
+  console.log("User funded in tx %s\n", userFundTx.hash);
 
   const relayerFundTx = await signer.sendTransaction({
     to: relayerAddr,
     value: ethers.utils.parseEther("100.0"),
   });
-  console.log(
-    "Relayer funded in tx %s\n",
-    relayerFundTx.hash
-  );
+  console.log("Relayer funded in tx %s\n", relayerFundTx.hash);
 
-  console.log("Completed funding accounts");
+  console.log("Completed funding accounts with eth");
+
+  const depositTx = await weth.deposit({
+    value: ethers.utils.parseEther("1000.0"),
+  });
+  await depositTx.wait();
+
+  const transferTx = await weth.transfer(
+    userAddr,
+    ethers.utils.parseEther("100.0")
+  );
+  await transferTx.wait();
+
+  console.log("Completed funding WETH for user");
 }
 
 export async function deployBridge(relayer: string): Promise<Bridge> {
