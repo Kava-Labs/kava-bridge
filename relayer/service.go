@@ -8,8 +8,5 @@ func NewService(ethRpc string, ethBridgeAddr string, kavaGrpc string, relayerMne
 }
 
 func (s *Service) Run() error {
-	for {
-	}
-
 	return nil
 }
