@@ -43,11 +43,12 @@ subject to change.
 
 * Signer Address (miner): `0x21E360e198Cde35740e88572B59f2CAdE421E6b1`
 * Bridge Address `0xb588617416D0B0A3C29618bf8Fb6aC0cAd4Ede7f`
-* Bridge Relayer: `0x21E360e198Cde35740e88572B59f2CAdE421E6b1`
+* Bridge Relayer: `0xa2F728F997f62F47D4262a70947F6c36885dF9fa`
 * WETH Address: `0x6098c27D41ec6dc280c2200A737D443b0AaA2E8F`
 * ERC20 Tokens (mintable by signer, see [`ERC20MintableBurnable.sol`]):
   * `MEOW` Address (18 decimals): `0x8223259205A3E31C54469fCbfc9F7Cf83D515ff6`
   * `USDC` Address (6 decimals): `0x60D5BE29a0ceb5888F15035d8CcdeACCD5Fd837F`
+* Test User Address: `0x7Bbf300890857b8c241b219C6a489431669b3aFA`
 
 ### Install
 

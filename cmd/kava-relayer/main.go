@@ -3,20 +3,19 @@ package main
 import (
 	"fmt"
 	"os"
-	"strings"
+
+	"github.com/kava-labs/kava-bridge/cmd/kava-relayer/cmd"
 )
 
-var cmds = []string{}
-
 func main() {
-	if len(os.Args) < 2 {
-		fmt.Fprintf(os.Stderr, "usage: %s %s\n", os.Args[0], strings.Join(cmds, "|"))
+	rootCmd, err := cmd.NewRootCmd()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 
-	switch cmd := os.Args[1]; cmd {
-	default:
-		fmt.Fprintf(os.Stderr, "unknown command: %s\n", cmd)
+	if err := rootCmd.Execute(); err != nil {
+		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 }
