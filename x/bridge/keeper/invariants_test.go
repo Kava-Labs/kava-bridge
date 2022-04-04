@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/kava-labs/kava-bridge/contract"
@@ -116,7 +117,46 @@ func (suite *InvariantTestSuite) TestBridgePairs() {
 	_, broken = suite.runInvariant("bridge-pairs", keeper.BridgePairsInvariant)
 	suite.Equal(false, broken)
 
+	suite.Keeper.RegisterBridgePair(
+		suite.Ctx,
+		types.NewERC20BridgePair(
+			types.NewExternalEVMAddress(common.Address{}),
+			types.NewInternalEVMAddress(common.Address{}),
+		),
+	)
+
 	message, broken := suite.runInvariant("bridge-pairs", keeper.BridgePairsInvariant)
-	suite.Equal("bridge: bridge pairs broken invariant\nminor balances not all less than overflow\n", message)
+	suite.Equal("bridge: validate bridge pairs broken invariant\nbridge pair invalid\n", message)
+	suite.Equal(true, broken)
+}
+
+func (suite *InvariantTestSuite) TestBridgePairsIndex() {
+	// default state is valid
+	_, broken := suite.runInvariant("bridge-pairs-index", keeper.BridgePairsIndexInvariant)
+	suite.Equal(false, broken)
+
+	suite.SetupValidState()
+	_, broken = suite.runInvariant("bridge-pairs-index", keeper.BridgePairsIndexInvariant)
+	suite.Equal(false, broken)
+
+	// Break invaraint by registering two bridge pairs with same external address
+	suite.Keeper.RegisterBridgePair(
+		suite.Ctx,
+		types.NewERC20BridgePair(
+			types.NewExternalEVMAddress(common.Address{1}),
+			types.NewInternalEVMAddress(common.Address{2}),
+		),
+	)
+
+	suite.Keeper.RegisterBridgePair(
+		suite.Ctx,
+		types.NewERC20BridgePair(
+			types.NewExternalEVMAddress(common.Address{1}),
+			types.NewInternalEVMAddress(common.Address{3}),
+		),
+	)
+
+	message, broken := suite.runInvariant("bridge-pairs-index", keeper.BridgePairsIndexInvariant)
+	suite.Equal("bridge: valid index invariant\n\tmismatched number of items in bridge pair store (4), internal index (4), and external index (3)\n", message)
 	suite.Equal(true, broken)
 }

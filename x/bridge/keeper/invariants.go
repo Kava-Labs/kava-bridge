@@ -55,7 +55,11 @@ func BridgePairsInvariant(k Keeper) sdk.Invariant {
 // querying are all valid.
 func BridgePairsIndexInvariant(k Keeper) sdk.Invariant {
 	broken := false
-	message := sdk.FormatInvariant(types.ModuleName, "validate bridge pairs broken", "bridge pair invalid")
+	message := sdk.FormatInvariant(
+		types.ModuleName,
+		"validate bridge pairs broken",
+		"bridge pair index invalid",
+	)
 
 	return func(ctx sdk.Context) (string, bool) {
 		store := prefix.NewStore(ctx.KVStore(k.storeKey), types.BridgedERC20PairKeyPrefix)
