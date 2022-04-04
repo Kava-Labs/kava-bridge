@@ -129,7 +129,7 @@ func (suite *Suite) SetupTest() {
 				types.NewConversionPair(
 					// First contract bridge module deploys
 					MustNewInternalEVMAddressFromString("0x404F9466d758eA33eA84CeBE9E444b06533b369e"),
-					"usdc",
+					"erc20/usdc",
 				),
 			),
 		),
@@ -225,13 +225,6 @@ func (suite *Suite) Commit() {
 
 	// update ctx
 	suite.Ctx = suite.App.NewContext(false, header)
-}
-
-func (suite *Suite) AddEnabledConversionPair(pair types.ConversionPair) {
-	params := suite.App.BridgeKeeper.GetParams(suite.Ctx)
-	params.EnabledConversionPairs = append(params.EnabledConversionPairs, pair)
-
-	suite.App.BridgeKeeper.SetParams(suite.Ctx, params)
 }
 
 func (suite *Suite) DeployERC20() types.InternalEVMAddress {

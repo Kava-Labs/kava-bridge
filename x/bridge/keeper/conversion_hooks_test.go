@@ -45,11 +45,7 @@ func (suite *ConversionHooksTestSuite) SetupTest() {
 	suite.Require().True(found, "bridge pair must exist after bridge")
 
 	// Cannot be set in genesis since we need to deploy the erc20 contract and get internal addr
-	suite.conversionPair = types.NewConversionPair(bridgePair.GetInternalAddress(), "erc20/weth")
-	params := suite.App.BridgeKeeper.GetParams(suite.Ctx)
-	params.EnabledConversionPairs = append(params.EnabledConversionPairs, suite.conversionPair)
-
-	suite.App.BridgeKeeper.SetParams(suite.Ctx, params)
+	suite.conversionPair = types.NewConversionPair(bridgePair.GetInternalAddress(), "erc20/usdc")
 
 	// Create a bridge pair that is not enabled for conversion, does not need
 	// to be enabled as a bridge pair, just that it is deployed to EVM.

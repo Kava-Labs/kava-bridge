@@ -139,7 +139,7 @@ func TestNewERC20BridgePairs_Valid(t *testing.T) {
 			testutil.MustNewInternalEVMAddressFromString("0x000000000000000000000000000000000000000A"),
 		),
 		types.NewERC20BridgePair(
-			testutil.MustNewExternalEVMAddressFromString("0x0000000000000000000000000000000000000001"),
+			testutil.MustNewExternalEVMAddressFromString("0x0000000000000000000000000000000000000002"),
 			testutil.MustNewInternalEVMAddressFromString("0x000000000000000000000000000000000000000B"),
 		),
 	)
@@ -155,13 +155,48 @@ func TestNewERC20BridgePairs_BasicInvalid(t *testing.T) {
 			testutil.MustNewInternalEVMAddressFromString("0x000000000000000000000000000000000000000A"),
 		),
 		types.NewERC20BridgePair(
-			testutil.MustNewExternalEVMAddressFromString("0x0000000000000000000000000000000000000001"),
+			testutil.MustNewExternalEVMAddressFromString("0x0000000000000000000000000000000000000002"),
 			testutil.MustNewInternalEVMAddressFromString("0x0000000000000000000000000000000000000000"),
 		),
 	)
 
 	err := pairs.Validate()
 	require.Error(t, err)
+	require.Equal(t, "internal address cannot be zero value 0x0000000000000000000000000000000000000000", err.Error())
+}
+
+func TestNewERC20BridgePairs_DuplicateInternal(t *testing.T) {
+	pairs := types.NewERC20BridgePairs(
+		types.NewERC20BridgePair(
+			testutil.MustNewExternalEVMAddressFromString("0x0000000000000000000000000000000000000001"),
+			testutil.MustNewInternalEVMAddressFromString("0x000000000000000000000000000000000000000A"),
+		),
+		types.NewERC20BridgePair(
+			testutil.MustNewExternalEVMAddressFromString("0x0000000000000000000000000000000000000002"),
+			testutil.MustNewInternalEVMAddressFromString("0x000000000000000000000000000000000000000A"),
+		),
+	)
+
+	err := pairs.Validate()
+	require.Error(t, err)
+	require.Equal(t, "found duplicate enabled bridge pair internal address 0x000000000000000000000000000000000000000A", err.Error())
+}
+
+func TestNewERC20BridgePairs_DuplicateExternal(t *testing.T) {
+	pairs := types.NewERC20BridgePairs(
+		types.NewERC20BridgePair(
+			testutil.MustNewExternalEVMAddressFromString("0x0000000000000000000000000000000000000001"),
+			testutil.MustNewInternalEVMAddressFromString("0x000000000000000000000000000000000000000A"),
+		),
+		types.NewERC20BridgePair(
+			testutil.MustNewExternalEVMAddressFromString("0x0000000000000000000000000000000000000001"),
+			testutil.MustNewInternalEVMAddressFromString("0x000000000000000000000000000000000000000B"),
+		),
+	)
+
+	err := pairs.Validate()
+	require.Error(t, err)
+	require.Equal(t, "found duplicate enabled bridge pair external address 0x0000000000000000000000000000000000000001", err.Error())
 }
 
 func TestGetID(t *testing.T) {

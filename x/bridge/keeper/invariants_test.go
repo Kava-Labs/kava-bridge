@@ -99,7 +99,7 @@ func (suite *InvariantTestSuite) TestBackedCoinsInvariant() {
 	// break invariant creating more sdk.Coin than module account ERC20 tokens
 	err := suite.BankKeeper.MintCoins(
 		suite.Ctx, types.ModuleName,
-		sdk.NewCoins(sdk.NewCoin("usdc", sdk.NewInt(1001))),
+		sdk.NewCoins(sdk.NewCoin("erc20/usdc", sdk.NewInt(1001))),
 	)
 	suite.Require().NoError(err)
 

@@ -144,7 +144,6 @@ func (suite *ConversionTestSuite) TestConvertCoinToERC20() {
 		contractAddr,
 		"erc20/usdc",
 	)
-	suite.AddEnabledConversionPair(pair)
 
 	amount := big.NewInt(100)
 	originAcc := sdk.AccAddress(suite.Key1.PubKey().Address().Bytes())
@@ -220,7 +219,6 @@ func (suite *ConversionTestSuite) TestConvertCoinToERC20_InsufficientBalance() {
 		contractAddr,
 		"erc20/usdc",
 	)
-	suite.AddEnabledConversionPair(pair)
 
 	amount := big.NewInt(100)
 	originAcc := sdk.AccAddress(suite.Key1.PubKey().Address().Bytes())
@@ -238,11 +236,13 @@ func (suite *ConversionTestSuite) TestConvertCoinToERC20_InsufficientBalance() {
 }
 
 func (suite *ConversionTestSuite) TestConvertCoinToERC20_NotEnabled() {
+	_ = suite.DeployERC20()
+	// First deploy is already in params, second is new address
 	contractAddr := suite.DeployERC20()
 
 	pair := types.NewConversionPair(
 		contractAddr,
-		"erc20/usdc",
+		"erc20/notenabled",
 	)
 
 	amount := big.NewInt(100)
@@ -257,5 +257,5 @@ func (suite *ConversionTestSuite) TestConvertCoinToERC20_NotEnabled() {
 	)
 
 	suite.Require().Error(err)
-	suite.Require().Equal("erc20/usdc: ERC20 token not enabled to convert to sdk.Coin", err.Error())
+	suite.Require().Equal("erc20/notenabled: ERC20 token not enabled to convert to sdk.Coin", err.Error())
 }
