@@ -27,6 +27,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
@@ -50,6 +51,7 @@ type Suite struct {
 	App            app.TestApp
 	Address        common.Address
 	Key1           *ethsecp256k1.PrivKey
+	Key1Addr       types.InternalEVMAddress
 	Key2           *ethsecp256k1.PrivKey
 	ConsAddress    sdk.ConsAddress
 	RelayerAddress sdk.AccAddress
@@ -57,11 +59,17 @@ type Suite struct {
 
 	QueryClientEvm    evmtypes.QueryClient
 	QueryClientBridge types.QueryClient
+
+	BankKeeper bankkeeper.Keeper
+	Keeper     keeper.Keeper
 }
 
 func (suite *Suite) SetupTest() {
 	suite.App = app.NewTestApp()
 	cdc := suite.App.AppCodec()
+
+	suite.BankKeeper = suite.App.BankKeeper
+	suite.Keeper = suite.App.BridgeKeeper
 
 	// consensus key
 	consPriv, err := ethsecp256k1.GenerateKey()
@@ -77,6 +85,7 @@ func (suite *Suite) SetupTest() {
 	// test user keys that have no minting permissions
 	suite.Key1, err = ethsecp256k1.GenerateKey()
 	suite.Require().NoError(err)
+	suite.Key1Addr = types.NewInternalEVMAddress(common.BytesToAddress(suite.Key1.PubKey().Address()))
 
 	suite.Key2, err = ethsecp256k1.GenerateKey()
 	suite.Require().NoError(err)
@@ -118,7 +127,8 @@ func (suite *Suite) SetupTest() {
 			suite.RelayerAddress,
 			types.NewConversionPairs(
 				types.NewConversionPair(
-					MustNewInternalEVMAddressFromString("0x000000000000000000000000000000000000000B"),
+					// First contract bridge module deploys
+					MustNewInternalEVMAddressFromString("0x404F9466d758eA33eA84CeBE9E444b06533b369e"),
 					"usdc",
 				),
 			),
