@@ -71,8 +71,8 @@ jq '.app_state.bank.supply = []' $DATA/config/genesis.json | sponge $DATA/config
 # Set relayer to devnet relayer address
 jq '.app_state.bridge.params.relayer = "kava15tmj37vh7ch504px9fcfglmvx6y9m70646ev8t"' $DATA/config/genesis.json | sponge $DATA/config/genesis.json
 
-# Set enabled erc20 tokens to match ropsten testnet
-jq '.app_state.bridge.params.enabled_erc20_tokens = [{address: "0xc778417e063141139fce010982780140aa0cd5ab", name: "Wrapped ETH", symbol: "WETH", decimals: 18},{address: "0x07865c6e87b9f70255377e024ace6630c1eaa37f", name: "USDC", symbol: "USDC", decimals: 6}]' $DATA/config/genesis.json | sponge $DATA/config/genesis.json
+# Set enabled erc20 tokens to match local geth testnet
+jq '.app_state.bridge.params.enabled_erc20_tokens = [{address: "0x6098c27D41ec6dc280c2200A737D443b0AaA2E8F", name: "Wrapped ETH", symbol: "WETH", decimals: 18},{address: "0x60D5BE29a0ceb5888F15035d8CcdeACCD5Fd837F", name: "USDC", symbol: "USDC", decimals: 6}]' $DATA/config/genesis.json | sponge $DATA/config/genesis.json
 
 # Set enabled conversion pairs - weth address is the first contract bridge module
 # deploys
