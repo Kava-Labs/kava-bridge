@@ -198,7 +198,7 @@ func getCmdConvertERC20ToCoin() *cobra.Command {
 				return err
 			}
 
-			receiver, err := ParseAddrFromHexOrBech32(args[1])
+			receiver, err := ParseAddrFromHexOrBech32(args[0])
 			if err != nil {
 				return err
 			}
