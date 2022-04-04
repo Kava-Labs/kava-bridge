@@ -24,7 +24,7 @@ func GenerateOrBroadcastTx(clientCtx client.Context, signingTx signing.Tx) error
 		}
 	}
 
-	if err := CheckConfirm(clientCtx, signingTx); err != nil {
+	if err := ConfirmTx(clientCtx, signingTx); err != nil {
 		return err
 	}
 
@@ -52,9 +52,9 @@ func PrintTx(clientCtx client.Context, signingTx signing.Tx) error {
 	return clientCtx.PrintString(fmt.Sprintf("%s\n", json))
 }
 
-// CheckConfirm outputs the transaction to be signed and requests confirmation
+// ConfirmTx outputs the transaction to be signed and requests confirmation
 // if the SkipConfirm flag is not enabled.
-func CheckConfirm(clientCtx client.Context, signingTx signing.Tx) error {
+func ConfirmTx(clientCtx client.Context, signingTx signing.Tx) error {
 	if clientCtx.SkipConfirm {
 		return nil
 	}
