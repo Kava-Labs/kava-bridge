@@ -42,6 +42,10 @@ func (s queryServer) ERC20BridgePairs(
 	stdCtx context.Context,
 	req *types.QueryERC20BridgePairsRequest,
 ) (*types.QueryERC20BridgePairsResponse, error) {
+	if req == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "empty request")
+	}
+
 	ctx := sdk.UnwrapSDKContext(stdCtx)
 
 	var bridgePairs types.ERC20BridgePairs
@@ -60,6 +64,10 @@ func (s queryServer) ERC20BridgePair(
 	stdCtx context.Context,
 	req *types.QueryERC20BridgePairRequest,
 ) (*types.QueryERC20BridgePairResponse, error) {
+	if req == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "empty request")
+	}
+
 	ctx := sdk.UnwrapSDKContext(stdCtx)
 
 	if !common.IsHexAddress(req.Address) {
@@ -94,6 +102,10 @@ func (s queryServer) ConversionPairs(
 	stdCtx context.Context,
 	req *types.QueryConversionPairsRequest,
 ) (*types.QueryConversionPairsResponse, error) {
+	if req == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "empty request")
+	}
+
 	ctx := sdk.UnwrapSDKContext(stdCtx)
 	params := s.keeper.GetParams(ctx)
 
@@ -107,6 +119,10 @@ func (s queryServer) ConversionPair(
 	stdCtx context.Context,
 	req *types.QueryConversionPairRequest,
 ) (*types.QueryConversionPairResponse, error) {
+	if req == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "empty request")
+	}
+
 	ctx := sdk.UnwrapSDKContext(stdCtx)
 
 	if !common.IsHexAddress(req.AddressOrDenom) {
