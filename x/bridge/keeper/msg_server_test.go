@@ -216,7 +216,6 @@ func (suite *MsgServerSuite) TestConvertCoinToERC20() {
 		contractAddr,
 		"erc20/usdc",
 	)
-	suite.AddEnabledConversionPair(pair)
 
 	// Module account should have starting balance
 	pairStartingBal := big.NewInt(10000)

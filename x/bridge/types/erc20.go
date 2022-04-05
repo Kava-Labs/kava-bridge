@@ -16,10 +16,31 @@ func NewERC20BridgePairs(pairs ...ERC20BridgePair) ERC20BridgePairs {
 }
 
 func (pairs ERC20BridgePairs) Validate() error {
+	// Check for duplicates for both internal/external addrs
+	internalAddrs := map[string]bool{}
+	externalAddrs := map[string]bool{}
+
 	for _, pair := range pairs {
 		if err := pair.Validate(); err != nil {
 			return err
 		}
+
+		if internalAddrs[pair.GetInternalAddress().String()] {
+			return fmt.Errorf(
+				"found duplicate enabled bridge pair internal address %s",
+				pair.GetInternalAddress().String(),
+			)
+		}
+
+		if externalAddrs[pair.GetExternalAddress().String()] {
+			return fmt.Errorf(
+				"found duplicate enabled bridge pair external address %s",
+				pair.GetExternalAddress().String(),
+			)
+		}
+
+		internalAddrs[pair.GetInternalAddress().String()] = true
+		externalAddrs[pair.GetExternalAddress().String()] = true
 	}
 
 	return nil
