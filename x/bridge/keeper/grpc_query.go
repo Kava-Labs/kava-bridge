@@ -3,6 +3,7 @@ package keeper
 import (
 	"bytes"
 	"context"
+	"strings"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -86,4 +87,47 @@ func (s queryServer) ERC20BridgePair(
 	return &types.QueryERC20BridgePairResponse{
 		ERC20BridgePair: bridgePair,
 	}, nil
+}
+
+// ConversionPairs queries for all conversion pairs.
+func (s queryServer) ConversionPairs(
+	stdCtx context.Context,
+	req *types.QueryConversionPairsRequest,
+) (*types.QueryConversionPairsResponse, error) {
+	ctx := sdk.UnwrapSDKContext(stdCtx)
+	params := s.keeper.GetParams(ctx)
+
+	return &types.QueryConversionPairsResponse{
+		ConversionPairs: params.EnabledConversionPairs,
+	}, nil
+}
+
+// ConversionPair queries for a conversion pair with an ERC20 address or sdk.Coin denom.
+func (s queryServer) ConversionPair(
+	stdCtx context.Context,
+	req *types.QueryConversionPairRequest,
+) (*types.QueryConversionPairResponse, error) {
+	ctx := sdk.UnwrapSDKContext(stdCtx)
+
+	if !common.IsHexAddress(req.AddressOrDenom) {
+		// If not hex addr, try as denom, if both invalid addr and invalid denom
+		// then return err
+		if err := sdk.ValidateDenom(req.AddressOrDenom); err != nil {
+			return nil, status.Error(codes.InvalidArgument, "not a valid hex address or denom")
+		}
+	}
+	// Not valid if request is a denom
+	addrBytes := common.HexToAddress(req.AddressOrDenom)
+
+	params := s.keeper.GetParams(ctx)
+	for _, pair := range params.EnabledConversionPairs {
+		// Match either address bytes or denom string
+		if bytes.Equal(pair.KavaERC20Address, addrBytes.Bytes()) || pair.Denom == strings.TrimSpace(req.AddressOrDenom) {
+			return &types.QueryConversionPairResponse{
+				ConversionPair: pair,
+			}, nil
+		}
+	}
+
+	return nil, status.Error(codes.NotFound, "could not find bridge pair with provided address or denom")
 }

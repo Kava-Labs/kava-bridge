@@ -16,6 +16,10 @@
     - [Params](#bridge.v1beta1.Params)
   
 - [bridge/v1beta1/query.proto](#bridge/v1beta1/query.proto)
+    - [QueryConversionPairRequest](#bridge.v1beta1.QueryConversionPairRequest)
+    - [QueryConversionPairResponse](#bridge.v1beta1.QueryConversionPairResponse)
+    - [QueryConversionPairsRequest](#bridge.v1beta1.QueryConversionPairsRequest)
+    - [QueryConversionPairsResponse](#bridge.v1beta1.QueryConversionPairsResponse)
     - [QueryERC20BridgePairRequest](#bridge.v1beta1.QueryERC20BridgePairRequest)
     - [QueryERC20BridgePairResponse](#bridge.v1beta1.QueryERC20BridgePairResponse)
     - [QueryERC20BridgePairsRequest](#bridge.v1beta1.QueryERC20BridgePairsRequest)
@@ -177,6 +181,61 @@ Params defines the bridge module params
 
 
 
+<a name="bridge.v1beta1.QueryConversionPairRequest"></a>
+
+### QueryConversionPairRequest
+QueryConversionPairRequest defines the request type for querying a x/bridge conversion pair.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `address_or_denom` | [string](#string) |  | AddressOrDenom defines the ERC20 address or the sdk.Coin denom of the pair to search for. |
+
+
+
+
+
+
+<a name="bridge.v1beta1.QueryConversionPairResponse"></a>
+
+### QueryConversionPairResponse
+QueryConversionPairsResponse defines the response type for querying a x/bridge conversion pair.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `conversion_pair` | [ConversionPair](#bridge.v1beta1.ConversionPair) |  | ConversionPair defines the queried conversion pairs. |
+
+
+
+
+
+
+<a name="bridge.v1beta1.QueryConversionPairsRequest"></a>
+
+### QueryConversionPairsRequest
+QueryConversionPairsRequest defines the request type for querying x/bridge conversion pairs.
+
+
+
+
+
+
+<a name="bridge.v1beta1.QueryConversionPairsResponse"></a>
+
+### QueryConversionPairsResponse
+QueryConversionPairsResponse defines the response type for querying x/bridge conversion pairs.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `conversion_pairs` | [ConversionPair](#bridge.v1beta1.ConversionPair) | repeated | ConversionPairs defines the queried conversion pairs. |
+
+
+
+
+
+
 <a name="bridge.v1beta1.QueryERC20BridgePairRequest"></a>
 
 ### QueryERC20BridgePairRequest
@@ -200,7 +259,7 @@ QueryERC20BridgePairRequest defines the response type for querying x/bridge ERC2
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `erc20_bridge_pair` | [ERC20BridgePair](#bridge.v1beta1.ERC20BridgePair) |  | erc20_bridge_pairs defines all of the currently bridged erc20 tokens. |
+| `erc20_bridge_pair` | [ERC20BridgePair](#bridge.v1beta1.ERC20BridgePair) |  | ERC20BridgePair defines the queried bridged erc20 pair. |
 
 
 
@@ -225,7 +284,7 @@ QueryERC20BridgePairsRequest defines the response type for querying x/bridge ERC
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `erc20_bridge_pairs` | [ERC20BridgePair](#bridge.v1beta1.ERC20BridgePair) | repeated | erc20_bridge_pairs defines all of the currently bridged erc20 tokens. |
+| `erc20_bridge_pairs` | [ERC20BridgePair](#bridge.v1beta1.ERC20BridgePair) | repeated | ERC20BridgePairs defines all of the currently bridged erc20 tokens. |
 
 
 
@@ -271,8 +330,10 @@ Query defines the gRPC querier service for bridge module
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
 | `Params` | [QueryParamsRequest](#bridge.v1beta1.QueryParamsRequest) | [QueryParamsResponse](#bridge.v1beta1.QueryParamsResponse) | Params queries all parameters of the bridge module. | GET|/kava/bridge/v1beta1/params|
-| `ERC20BridgePairs` | [QueryERC20BridgePairsRequest](#bridge.v1beta1.QueryERC20BridgePairsRequest) | [QueryERC20BridgePairsResponse](#bridge.v1beta1.QueryERC20BridgePairsResponse) | ERC20BridgePairs queries the bridge address pairs | GET|/kava/bridge/v1beta1/bridge-erc20-pairs|
+| `ERC20BridgePairs` | [QueryERC20BridgePairsRequest](#bridge.v1beta1.QueryERC20BridgePairsRequest) | [QueryERC20BridgePairsResponse](#bridge.v1beta1.QueryERC20BridgePairsResponse) | ERC20BridgePairs queries the bridge address pairs. | GET|/kava/bridge/v1beta1/bridge-erc20-pairs|
 | `ERC20BridgePair` | [QueryERC20BridgePairRequest](#bridge.v1beta1.QueryERC20BridgePairRequest) | [QueryERC20BridgePairResponse](#bridge.v1beta1.QueryERC20BridgePairResponse) | ERC20BridgePair queries a bridge address pair with either internal or external address. | GET|/kava/bridge/v1beta1/bridge-erc20-pairs/{address}|
+| `ConversionPairs` | [QueryConversionPairsRequest](#bridge.v1beta1.QueryConversionPairsRequest) | [QueryConversionPairsResponse](#bridge.v1beta1.QueryConversionPairsResponse) | ConversionPairs queries the ERC20/sdk.Coin conversion pairs. | GET|/kava/bridge/v1beta1/conversion-pairs|
+| `ConversionPair` | [QueryConversionPairRequest](#bridge.v1beta1.QueryConversionPairRequest) | [QueryConversionPairResponse](#bridge.v1beta1.QueryConversionPairResponse) | ConversionPair queries a conversion pair with either the ERC20 address or sdk.Coin denom. | GET|/kava/bridge/v1beta1/conversion-pairs/{address_or_denom}|
 
  <!-- end services -->
 
