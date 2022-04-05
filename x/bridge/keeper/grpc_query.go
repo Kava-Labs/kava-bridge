@@ -63,7 +63,7 @@ func (s queryServer) ERC20BridgePair(
 	ctx := sdk.UnwrapSDKContext(stdCtx)
 
 	if !common.IsHexAddress(req.Address) {
-		return nil, status.Error(codes.InvalidArgument, "not a valid hex address")
+		return nil, status.Error(codes.InvalidArgument, "invalid hex address")
 	}
 	addrBytes := common.HexToAddress(req.Address)
 
@@ -81,7 +81,7 @@ func (s queryServer) ERC20BridgePair(
 	})
 
 	if !found {
-		return nil, status.Error(codes.NotFound, "could not find bridge pair with provided address")
+		return nil, status.Error(codes.NotFound, "could not find an ERC20 bridge pair with the provided address")
 	}
 
 	return &types.QueryERC20BridgePairResponse{
@@ -110,10 +110,10 @@ func (s queryServer) ConversionPair(
 	ctx := sdk.UnwrapSDKContext(stdCtx)
 
 	if !common.IsHexAddress(req.AddressOrDenom) {
-		// If not hex addr, try as denom, if both invalid addr and invalid denom
-		// then return err
+		// If not hex addr, try as denom
+		// If both addr and denom are invalid then return err
 		if err := sdk.ValidateDenom(req.AddressOrDenom); err != nil {
-			return nil, status.Error(codes.InvalidArgument, "not a valid hex address or denom")
+			return nil, status.Error(codes.InvalidArgument, "invalid hex address or denom")
 		}
 	}
 	// Not valid if request is a denom

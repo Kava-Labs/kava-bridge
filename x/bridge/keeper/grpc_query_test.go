@@ -102,3 +102,180 @@ func (suite *GrpcQueryTestSuite) TestQueryERC20BridgePairs() {
 		suite.Require().Containsf(queriedIntAddrs, addr, "queried pairs should contain new internal addr %v", addr)
 	}
 }
+
+func (suite *GrpcQueryTestSuite) TestQueryERC20BridgePair() {
+	type errArgs struct {
+		expectPass bool
+		contains   string
+	}
+
+	tests := []struct {
+		name        string
+		giveRequest types.QueryERC20BridgePairRequest
+		wantRes     types.QueryERC20BridgePairResponse
+		errArgs     errArgs
+	}{
+		{
+			"valid - external address",
+			types.QueryERC20BridgePairRequest{Address: "0x0000000000000000000000000000000000000001"},
+			types.QueryERC20BridgePairResponse{
+				ERC20BridgePair: types.NewERC20BridgePair(
+					testutil.MustNewExternalEVMAddressFromString("0x0000000000000000000000000000000000000001"),
+					testutil.MustNewInternalEVMAddressFromString("0x000000000000000000000000000000000000000A"),
+				),
+			},
+			errArgs{
+				expectPass: true,
+			},
+		},
+		{
+			"valid - internal address",
+			types.QueryERC20BridgePairRequest{Address: "0x000000000000000000000000000000000000000A"},
+			types.QueryERC20BridgePairResponse{
+				ERC20BridgePair: types.NewERC20BridgePair(
+					testutil.MustNewExternalEVMAddressFromString("0x0000000000000000000000000000000000000001"),
+					testutil.MustNewInternalEVMAddressFromString("0x000000000000000000000000000000000000000A"),
+				),
+			},
+			errArgs{
+				expectPass: true,
+			},
+		},
+		{
+			"not found",
+			types.QueryERC20BridgePairRequest{Address: "0x0000000000000000000000000000000000000009"},
+			types.QueryERC20BridgePairResponse{},
+			errArgs{
+				expectPass: false,
+				contains:   "could not find an ERC20 bridge pair with the provided address",
+			},
+		},
+		{
+			"invalid address",
+			types.QueryERC20BridgePairRequest{Address: "hi this is invalid"},
+			types.QueryERC20BridgePairResponse{},
+			errArgs{
+				expectPass: false,
+				contains:   "invalid hex address",
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		suite.Run(tc.name, func() {
+			res, err := suite.QueryClientBridge.ERC20BridgePair(
+				context.Background(),
+				&tc.giveRequest,
+			)
+
+			if tc.errArgs.expectPass {
+				suite.Require().NoError(err)
+				suite.Require().Equal(tc.wantRes, *res)
+			} else {
+				suite.Require().Error(err)
+				suite.Require().Contains(err.Error(), tc.errArgs.contains)
+			}
+		})
+	}
+}
+
+func (suite *GrpcQueryTestSuite) TestQueryConversionPairs() {
+	pairs, err := suite.QueryClientBridge.ConversionPairs(
+		context.Background(),
+		&types.QueryConversionPairsRequest{},
+	)
+	suite.Require().NoError(err)
+
+	params, err := suite.QueryClientBridge.Params(
+		context.Background(),
+		&types.QueryParamsRequest{},
+	)
+	suite.Require().NoError(err)
+
+	suite.Require().Equal(params.Params.EnabledConversionPairs, pairs.ConversionPairs)
+}
+
+func (suite *GrpcQueryTestSuite) TestQueryConversionPair() {
+	type errArgs struct {
+		expectPass bool
+		contains   string
+	}
+
+	tests := []struct {
+		name        string
+		giveRequest types.QueryConversionPairRequest
+		wantRes     types.QueryConversionPairResponse
+		errArgs     errArgs
+	}{
+		{
+			"valid - address",
+			types.QueryConversionPairRequest{AddressOrDenom: "0x404F9466d758eA33eA84CeBE9E444b06533b369e"},
+			types.QueryConversionPairResponse{
+				ConversionPair: types.NewConversionPair(
+					testutil.MustNewInternalEVMAddressFromString("0x404F9466d758eA33eA84CeBE9E444b06533b369e"),
+					"erc20/usdc",
+				),
+			},
+			errArgs{
+				expectPass: true,
+			},
+		},
+		{
+			"valid - denom",
+			types.QueryConversionPairRequest{AddressOrDenom: "erc20/usdc"},
+			types.QueryConversionPairResponse{
+				ConversionPair: types.NewConversionPair(
+					testutil.MustNewInternalEVMAddressFromString("0x404F9466d758eA33eA84CeBE9E444b06533b369e"),
+					"erc20/usdc",
+				),
+			},
+			errArgs{
+				expectPass: true,
+			},
+		},
+		{
+			"valid but not found",
+			types.QueryConversionPairRequest{AddressOrDenom: "erc20/sdf"},
+			types.QueryConversionPairResponse{},
+			errArgs{
+				expectPass: false,
+				contains:   "could not find bridge pair with provided address or denom",
+			},
+		},
+		{
+			"invalid address",
+			types.QueryConversionPairRequest{AddressOrDenom: "0x4"},
+			types.QueryConversionPairResponse{},
+			errArgs{
+				expectPass: false,
+				contains:   "invalid hex address or denom",
+			},
+		},
+		{
+			"invalid denom",
+			types.QueryConversionPairRequest{AddressOrDenom: "this is not a valid denom"},
+			types.QueryConversionPairResponse{},
+			errArgs{
+				expectPass: false,
+				contains:   "invalid hex address or denom",
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		suite.Run(tc.name, func() {
+			res, err := suite.QueryClientBridge.ConversionPair(
+				context.Background(),
+				&tc.giveRequest,
+			)
+
+			if tc.errArgs.expectPass {
+				suite.Require().NoError(err)
+				suite.Require().Equal(tc.wantRes, *res)
+			} else {
+				suite.Require().Error(err)
+				suite.Require().Contains(err.Error(), tc.errArgs.contains)
+			}
+		})
+	}
+}

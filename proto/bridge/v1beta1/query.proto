@@ -82,7 +82,8 @@ message QueryConversionPairsRequest {}
 // QueryConversionPairsResponse defines the response type for querying x/bridge conversion pairs.
 message QueryConversionPairsResponse {
   // ConversionPairs defines the queried conversion pairs.
-  repeated ConversionPair conversion_pairs = 1 [(gogoproto.nullable) = false];
+  repeated ConversionPair conversion_pairs = 1
+      [(gogoproto.nullable) = false, (gogoproto.castrepeated) = "ConversionPairs"];
 }
 
 // QueryConversionPairRequest defines the request type for querying a x/bridge conversion pair.
