@@ -151,7 +151,7 @@ var xxx_messageInfo_QueryERC20BridgePairsRequest proto.InternalMessageInfo
 // QueryERC20BridgePairsRequest defines the response type for querying x/bridge ERC20 pairs.
 type QueryERC20BridgePairsResponse struct {
 	// erc20_bridge_pairs defines all of the currently bridged erc20 tokens.
-	ERC20BridgePairs ERC20BridgePairs `protobuf:"bytes,2,rep,name=erc20_bridge_pairs,json=erc20BridgePairs,proto3,castrepeated=ERC20BridgePairs" json:"erc20_bridge_pairs"`
+	ERC20BridgePairs ERC20BridgePairs `protobuf:"bytes,1,rep,name=erc20_bridge_pairs,json=erc20BridgePairs,proto3,castrepeated=ERC20BridgePairs" json:"erc20_bridge_pairs"`
 }
 
 func (m *QueryERC20BridgePairsResponse) Reset()         { *m = QueryERC20BridgePairsResponse{} }
@@ -194,43 +194,144 @@ func (m *QueryERC20BridgePairsResponse) GetERC20BridgePairs() ERC20BridgePairs {
 	return nil
 }
 
+// QueryERC20BridgePairRequest defines the request type for querying x/bridge ERC20 pair.
+type QueryERC20BridgePairRequest struct {
+	// Address defines the internal or external address to query for. This is a
+	// string and not bytes as bytes in the query must be base64 encoded which is
+	// not ideal for addresses where we prefer hex encoding.
+	Address string `protobuf:"bytes,1,opt,name=address,proto3" json:"address,omitempty"`
+}
+
+func (m *QueryERC20BridgePairRequest) Reset()         { *m = QueryERC20BridgePairRequest{} }
+func (m *QueryERC20BridgePairRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryERC20BridgePairRequest) ProtoMessage()    {}
+func (*QueryERC20BridgePairRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_5d4272afc8643d4d, []int{4}
+}
+func (m *QueryERC20BridgePairRequest) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryERC20BridgePairRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryERC20BridgePairRequest.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryERC20BridgePairRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryERC20BridgePairRequest.Merge(m, src)
+}
+func (m *QueryERC20BridgePairRequest) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryERC20BridgePairRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryERC20BridgePairRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryERC20BridgePairRequest proto.InternalMessageInfo
+
+func (m *QueryERC20BridgePairRequest) GetAddress() string {
+	if m != nil {
+		return m.Address
+	}
+	return ""
+}
+
+// QueryERC20BridgePairRequest defines the response type for querying x/bridge ERC20 pair.
+type QueryERC20BridgePairResponse struct {
+	// erc20_bridge_pairs defines all of the currently bridged erc20 tokens.
+	ERC20BridgePair ERC20BridgePair `protobuf:"bytes,1,opt,name=erc20_bridge_pair,json=erc20BridgePair,proto3" json:"erc20_bridge_pair"`
+}
+
+func (m *QueryERC20BridgePairResponse) Reset()         { *m = QueryERC20BridgePairResponse{} }
+func (m *QueryERC20BridgePairResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryERC20BridgePairResponse) ProtoMessage()    {}
+func (*QueryERC20BridgePairResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_5d4272afc8643d4d, []int{5}
+}
+func (m *QueryERC20BridgePairResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryERC20BridgePairResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryERC20BridgePairResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryERC20BridgePairResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryERC20BridgePairResponse.Merge(m, src)
+}
+func (m *QueryERC20BridgePairResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryERC20BridgePairResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryERC20BridgePairResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryERC20BridgePairResponse proto.InternalMessageInfo
+
+func (m *QueryERC20BridgePairResponse) GetERC20BridgePair() ERC20BridgePair {
+	if m != nil {
+		return m.ERC20BridgePair
+	}
+	return ERC20BridgePair{}
+}
+
 func init() {
 	proto.RegisterType((*QueryParamsRequest)(nil), "bridge.v1beta1.QueryParamsRequest")
 	proto.RegisterType((*QueryParamsResponse)(nil), "bridge.v1beta1.QueryParamsResponse")
 	proto.RegisterType((*QueryERC20BridgePairsRequest)(nil), "bridge.v1beta1.QueryERC20BridgePairsRequest")
 	proto.RegisterType((*QueryERC20BridgePairsResponse)(nil), "bridge.v1beta1.QueryERC20BridgePairsResponse")
+	proto.RegisterType((*QueryERC20BridgePairRequest)(nil), "bridge.v1beta1.QueryERC20BridgePairRequest")
+	proto.RegisterType((*QueryERC20BridgePairResponse)(nil), "bridge.v1beta1.QueryERC20BridgePairResponse")
 }
 
 func init() { proto.RegisterFile("bridge/v1beta1/query.proto", fileDescriptor_5d4272afc8643d4d) }
 
 var fileDescriptor_5d4272afc8643d4d = []byte{
-	// 409 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x52, 0x41, 0x8f, 0xd2, 0x40,
-	0x18, 0xed, 0xa0, 0x72, 0x18, 0x12, 0x43, 0x46, 0x62, 0x48, 0x85, 0x81, 0x94, 0x83, 0x98, 0xd0,
-	0x0e, 0x54, 0x7f, 0x41, 0x8d, 0x27, 0x2f, 0xd0, 0xa3, 0x17, 0x32, 0xc5, 0x49, 0x6d, 0x84, 0x4e,
-	0xe9, 0x14, 0x22, 0xf1, 0xe6, 0x2f, 0x30, 0xf1, 0xea, 0xc1, 0x78, 0x32, 0xfe, 0x12, 0x8e, 0x24,
-	0x5e, 0x3c, 0x21, 0x96, 0xfd, 0x21, 0x9b, 0xce, 0x94, 0xcd, 0x52, 0x60, 0xb3, 0xb7, 0xe9, 0xf7,
-	0xde, 0xf7, 0xde, 0x9b, 0x37, 0x85, 0xba, 0x17, 0x07, 0xef, 0x7d, 0x46, 0x96, 0x03, 0x8f, 0x25,
-	0x74, 0x40, 0xe6, 0x0b, 0x16, 0xaf, 0xac, 0x28, 0xe6, 0x09, 0x47, 0x8f, 0x15, 0x66, 0xe5, 0x98,
-	0x5e, 0xe4, 0xb2, 0x78, 0x62, 0xf7, 0x15, 0x57, 0x6f, 0x14, 0x30, 0x9f, 0x85, 0x4c, 0x04, 0x22,
-	0x47, 0x6b, 0x3e, 0xf7, 0xb9, 0x3c, 0x92, 0xec, 0x74, 0xd8, 0xf1, 0x39, 0xf7, 0xa7, 0x8c, 0xd0,
-	0x28, 0x20, 0x34, 0x0c, 0x79, 0x42, 0x93, 0x80, 0x87, 0xf9, 0x8e, 0x51, 0x83, 0x68, 0x94, 0x85,
-	0x19, 0xd2, 0x98, 0xce, 0x84, 0xcb, 0xe6, 0x0b, 0x26, 0x12, 0xe3, 0x2d, 0x7c, 0x72, 0x34, 0x15,
-	0x11, 0x0f, 0x05, 0x43, 0xaf, 0x60, 0x39, 0x92, 0x93, 0x3a, 0x68, 0x83, 0x6e, 0xc5, 0x7e, 0x6a,
-	0x1d, 0x67, 0xb7, 0x14, 0xdf, 0x79, 0xb8, 0xde, 0xb6, 0x34, 0x37, 0xe7, 0x1a, 0x18, 0x36, 0xa4,
-	0xd8, 0x1b, 0xf7, 0xb5, 0xdd, 0x77, 0xe4, 0xc2, 0x90, 0x06, 0xf1, 0x8d, 0xd9, 0x77, 0x00, 0x9b,
-	0x17, 0x08, 0xb9, 0xef, 0x67, 0x88, 0x64, 0x0b, 0x63, 0x65, 0x37, 0x8e, 0x32, 0xb4, 0x5e, 0x6a,
-	0x3f, 0xe8, 0x56, 0xec, 0x56, 0x31, 0x43, 0x41, 0xc5, 0xe9, 0x65, 0x61, 0xd2, 0x6d, 0xab, 0x5a,
-	0x94, 0xff, 0xfd, 0xef, 0x74, 0xe6, 0x56, 0xa5, 0xd1, 0xad, 0x89, 0xfd, 0xb3, 0x04, 0x1f, 0xc9,
-	0x78, 0x68, 0x09, 0xcb, 0xea, 0x82, 0xc8, 0x28, 0x9a, 0x9e, 0x76, 0xa8, 0x77, 0xee, 0xe4, 0xa8,
-	0x9b, 0x19, 0x9d, 0x2f, 0x7f, 0xae, 0xbe, 0x95, 0x9a, 0xe8, 0x19, 0xf9, 0x48, 0x97, 0x94, 0x14,
-	0x9e, 0x57, 0x15, 0x88, 0x7e, 0x00, 0x78, 0x12, 0x14, 0xf5, 0xce, 0xca, 0x5f, 0xe8, 0x58, 0x37,
-	0xef, 0xc9, 0xce, 0x63, 0x11, 0x19, 0xeb, 0x05, 0x7a, 0x7e, 0x36, 0x96, 0xfa, 0x34, 0x65, 0x53,
-	0xa6, 0x7c, 0x0b, 0x67, 0xb4, 0xfb, 0x8f, 0xc1, 0xaf, 0x14, 0x83, 0x75, 0x8a, 0xc1, 0x26, 0xc5,
-	0x60, 0x97, 0x62, 0xf0, 0x75, 0x8f, 0xb5, 0xcd, 0x1e, 0x6b, 0x7f, 0xf7, 0x58, 0x7b, 0x47, 0xfc,
-	0x20, 0xf9, 0xb0, 0xf0, 0xac, 0x09, 0x9f, 0x49, 0x51, 0x73, 0x4a, 0x3d, 0xa1, 0x4e, 0xb9, 0xfc,
-	0xa7, 0x83, 0x4f, 0xb2, 0x8a, 0x98, 0xf0, 0xca, 0xf2, 0x07, 0x7d, 0x79, 0x1d, 0x00, 0x00, 0xff,
-	0xff, 0x5e, 0xa6, 0x6e, 0x61, 0x3c, 0x03, 0x00, 0x00,
+	// 493 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x94, 0x31, 0x6f, 0xd4, 0x30,
+	0x14, 0xc7, 0xcf, 0x14, 0x0e, 0xe1, 0x4a, 0xb4, 0x98, 0x0a, 0x4e, 0x69, 0xeb, 0xab, 0xd2, 0x81,
+	0x22, 0xee, 0xe2, 0x5e, 0x8a, 0x84, 0x58, 0x83, 0x98, 0x58, 0xda, 0x8c, 0x2c, 0x95, 0xd3, 0x58,
+	0x21, 0xa2, 0x8d, 0xd3, 0x38, 0x77, 0xa2, 0xaa, 0x58, 0x10, 0x1f, 0x00, 0x89, 0x95, 0x81, 0x0d,
+	0xc4, 0x27, 0xe9, 0xc0, 0x50, 0x89, 0x85, 0xa9, 0x94, 0x1c, 0x1f, 0x04, 0xc5, 0x76, 0x2a, 0xea,
+	0xe4, 0x68, 0x36, 0xfb, 0xbd, 0xbf, 0xdf, 0xfb, 0xfd, 0x5f, 0x9e, 0x02, 0xad, 0x20, 0x8b, 0xc3,
+	0x88, 0x91, 0xc9, 0x28, 0x60, 0x39, 0x1d, 0x91, 0xc3, 0x31, 0xcb, 0x8e, 0x9c, 0x34, 0xe3, 0x39,
+	0x47, 0xb7, 0x55, 0xce, 0xd1, 0x39, 0xcb, 0xd4, 0xb2, 0x6c, 0xcf, 0xdd, 0x54, 0x5a, 0x6b, 0xc5,
+	0xc8, 0x45, 0x2c, 0x61, 0x22, 0x16, 0x3a, 0xbb, 0x14, 0xf1, 0x88, 0xcb, 0x23, 0x29, 0x4f, 0xd5,
+	0x9b, 0x88, 0xf3, 0x68, 0x9f, 0x11, 0x9a, 0xc6, 0x84, 0x26, 0x09, 0xcf, 0x69, 0x1e, 0xf3, 0x44,
+	0xbf, 0xb1, 0x97, 0x20, 0xda, 0x29, 0x61, 0xb6, 0x69, 0x46, 0x0f, 0x84, 0xcf, 0x0e, 0xc7, 0x4c,
+	0xe4, 0xf6, 0x0b, 0x78, 0xf7, 0x52, 0x54, 0xa4, 0x3c, 0x11, 0x0c, 0x3d, 0x86, 0xdd, 0x54, 0x46,
+	0x7a, 0x60, 0x0d, 0x6c, 0xcc, 0xbb, 0xf7, 0x9c, 0xcb, 0xec, 0x8e, 0xd2, 0x7b, 0xd7, 0x4f, 0xce,
+	0xfa, 0x1d, 0x5f, 0x6b, 0x6d, 0x0c, 0x57, 0x64, 0xb1, 0xe7, 0xfe, 0x33, 0x77, 0xd3, 0x93, 0x0f,
+	0xb6, 0x69, 0x9c, 0x5d, 0x34, 0xfb, 0x04, 0xe0, 0xea, 0x0c, 0x81, 0xee, 0x7b, 0x0c, 0x91, 0x9c,
+	0xc2, 0xae, 0x6a, 0xb7, 0x9b, 0x96, 0xd9, 0x1e, 0x58, 0x9b, 0xdb, 0x98, 0x77, 0xfb, 0x26, 0x83,
+	0x51, 0xc5, 0x1b, 0x94, 0x30, 0xc5, 0x59, 0x7f, 0xd1, 0x2c, 0xff, 0xed, 0x57, 0x3d, 0xe6, 0x2f,
+	0xca, 0x46, 0xff, 0x44, 0xec, 0x27, 0x70, 0xb9, 0x89, 0x4e, 0xd3, 0xa3, 0x1e, 0xbc, 0x49, 0xc3,
+	0x30, 0x63, 0x42, 0x0d, 0xe5, 0x96, 0x5f, 0x5d, 0xed, 0xf7, 0xa0, 0xd9, 0xf8, 0x85, 0xad, 0x10,
+	0xde, 0xa9, 0xd9, 0xd2, 0x93, 0xbd, 0xd2, 0xd5, 0x7d, 0xed, 0x6a, 0xc1, 0x2c, 0xbe, 0x60, 0x18,
+	0x70, 0xbf, 0xcf, 0xc1, 0x1b, 0x12, 0x03, 0x4d, 0x60, 0x57, 0x7d, 0x20, 0x64, 0x9b, 0xe5, 0xeb,
+	0x3b, 0x60, 0xad, 0xff, 0x57, 0xa3, 0x2c, 0xd8, 0xeb, 0xef, 0x7e, 0xfc, 0xf9, 0x78, 0x6d, 0x15,
+	0x2d, 0x93, 0xd7, 0x74, 0x42, 0x89, 0xb1, 0x9e, 0x6a, 0x01, 0xd0, 0x67, 0x00, 0x6b, 0x83, 0x46,
+	0x83, 0xc6, 0xf2, 0x33, 0x76, 0xc4, 0x1a, 0xb6, 0x54, 0x6b, 0x2c, 0x22, 0xb1, 0x1e, 0xa2, 0x07,
+	0x8d, 0x58, 0xea, 0x3a, 0x94, 0x83, 0x1a, 0xca, 0x5d, 0x42, 0x5f, 0x00, 0x34, 0x27, 0x89, 0x1e,
+	0xb5, 0xe9, 0x59, 0x01, 0x0e, 0xda, 0x89, 0x35, 0xdf, 0x53, 0xc9, 0xb7, 0x85, 0x46, 0x2d, 0xf9,
+	0xc8, 0xb1, 0x5e, 0xaa, 0xb7, 0xde, 0xce, 0xf9, 0x6f, 0x0c, 0xbe, 0x16, 0x18, 0x9c, 0x14, 0x18,
+	0x9c, 0x16, 0x18, 0x9c, 0x17, 0x18, 0x7c, 0x98, 0xe2, 0xce, 0xe9, 0x14, 0x77, 0x7e, 0x4e, 0x71,
+	0xe7, 0x25, 0x89, 0xe2, 0xfc, 0xd5, 0x38, 0x70, 0xf6, 0xf8, 0x81, 0x2c, 0x3f, 0xdc, 0xa7, 0x81,
+	0x50, 0x27, 0xdd, 0xe8, 0x4d, 0xd5, 0x31, 0x3f, 0x4a, 0x99, 0x08, 0xba, 0xf2, 0x57, 0xb0, 0xf5,
+	0x37, 0x00, 0x00, 0xff, 0xff, 0x27, 0xa6, 0xa5, 0x37, 0xa6, 0x04, 0x00, 0x00,
 }
 
 func (this *QueryParamsRequest) VerboseEqual(that interface{}) error {
@@ -447,6 +548,114 @@ func (this *QueryERC20BridgePairsResponse) Equal(that interface{}) bool {
 	}
 	return true
 }
+func (this *QueryERC20BridgePairRequest) VerboseEqual(that interface{}) error {
+	if that == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that == nil && this != nil")
+	}
+
+	that1, ok := that.(*QueryERC20BridgePairRequest)
+	if !ok {
+		that2, ok := that.(QueryERC20BridgePairRequest)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *QueryERC20BridgePairRequest")
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that is type *QueryERC20BridgePairRequest but is nil && this != nil")
+	} else if this == nil {
+		return fmt.Errorf("that is type *QueryERC20BridgePairRequest but is not nil && this == nil")
+	}
+	if this.Address != that1.Address {
+		return fmt.Errorf("Address this(%v) Not Equal that(%v)", this.Address, that1.Address)
+	}
+	return nil
+}
+func (this *QueryERC20BridgePairRequest) Equal(that interface{}) bool {
+	if that == nil {
+		return this == nil
+	}
+
+	that1, ok := that.(*QueryERC20BridgePairRequest)
+	if !ok {
+		that2, ok := that.(QueryERC20BridgePairRequest)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		return this == nil
+	} else if this == nil {
+		return false
+	}
+	if this.Address != that1.Address {
+		return false
+	}
+	return true
+}
+func (this *QueryERC20BridgePairResponse) VerboseEqual(that interface{}) error {
+	if that == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that == nil && this != nil")
+	}
+
+	that1, ok := that.(*QueryERC20BridgePairResponse)
+	if !ok {
+		that2, ok := that.(QueryERC20BridgePairResponse)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *QueryERC20BridgePairResponse")
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that is type *QueryERC20BridgePairResponse but is nil && this != nil")
+	} else if this == nil {
+		return fmt.Errorf("that is type *QueryERC20BridgePairResponse but is not nil && this == nil")
+	}
+	if !this.ERC20BridgePair.Equal(&that1.ERC20BridgePair) {
+		return fmt.Errorf("ERC20BridgePair this(%v) Not Equal that(%v)", this.ERC20BridgePair, that1.ERC20BridgePair)
+	}
+	return nil
+}
+func (this *QueryERC20BridgePairResponse) Equal(that interface{}) bool {
+	if that == nil {
+		return this == nil
+	}
+
+	that1, ok := that.(*QueryERC20BridgePairResponse)
+	if !ok {
+		that2, ok := that.(QueryERC20BridgePairResponse)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		return this == nil
+	} else if this == nil {
+		return false
+	}
+	if !this.ERC20BridgePair.Equal(&that1.ERC20BridgePair) {
+		return false
+	}
+	return true
+}
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ context.Context
@@ -464,6 +673,9 @@ type QueryClient interface {
 	Params(ctx context.Context, in *QueryParamsRequest, opts ...grpc.CallOption) (*QueryParamsResponse, error)
 	// ERC20BridgePairs queries the bridge address pairs
 	ERC20BridgePairs(ctx context.Context, in *QueryERC20BridgePairsRequest, opts ...grpc.CallOption) (*QueryERC20BridgePairsResponse, error)
+	// ERC20BridgePair queries a bridge address pair with either internal or
+	// external address.
+	ERC20BridgePair(ctx context.Context, in *QueryERC20BridgePairRequest, opts ...grpc.CallOption) (*QueryERC20BridgePairResponse, error)
 }
 
 type queryClient struct {
@@ -492,12 +704,24 @@ func (c *queryClient) ERC20BridgePairs(ctx context.Context, in *QueryERC20Bridge
 	return out, nil
 }
 
+func (c *queryClient) ERC20BridgePair(ctx context.Context, in *QueryERC20BridgePairRequest, opts ...grpc.CallOption) (*QueryERC20BridgePairResponse, error) {
+	out := new(QueryERC20BridgePairResponse)
+	err := c.cc.Invoke(ctx, "/bridge.v1beta1.Query/ERC20BridgePair", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // QueryServer is the server API for Query service.
 type QueryServer interface {
 	// Params queries all parameters of the bridge module.
 	Params(context.Context, *QueryParamsRequest) (*QueryParamsResponse, error)
 	// ERC20BridgePairs queries the bridge address pairs
 	ERC20BridgePairs(context.Context, *QueryERC20BridgePairsRequest) (*QueryERC20BridgePairsResponse, error)
+	// ERC20BridgePair queries a bridge address pair with either internal or
+	// external address.
+	ERC20BridgePair(context.Context, *QueryERC20BridgePairRequest) (*QueryERC20BridgePairResponse, error)
 }
 
 // UnimplementedQueryServer can be embedded to have forward compatible implementations.
@@ -509,6 +733,9 @@ func (*UnimplementedQueryServer) Params(ctx context.Context, req *QueryParamsReq
 }
 func (*UnimplementedQueryServer) ERC20BridgePairs(ctx context.Context, req *QueryERC20BridgePairsRequest) (*QueryERC20BridgePairsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ERC20BridgePairs not implemented")
+}
+func (*UnimplementedQueryServer) ERC20BridgePair(ctx context.Context, req *QueryERC20BridgePairRequest) (*QueryERC20BridgePairResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ERC20BridgePair not implemented")
 }
 
 func RegisterQueryServer(s grpc1.Server, srv QueryServer) {
@@ -551,6 +778,24 @@ func _Query_ERC20BridgePairs_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Query_ERC20BridgePair_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryERC20BridgePairRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).ERC20BridgePair(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/bridge.v1beta1.Query/ERC20BridgePair",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).ERC20BridgePair(ctx, req.(*QueryERC20BridgePairRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _Query_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "bridge.v1beta1.Query",
 	HandlerType: (*QueryServer)(nil),
@@ -562,6 +807,10 @@ var _Query_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ERC20BridgePairs",
 			Handler:    _Query_ERC20BridgePairs_Handler,
+		},
+		{
+			MethodName: "ERC20BridgePair",
+			Handler:    _Query_ERC20BridgePair_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -678,9 +927,72 @@ func (m *QueryERC20BridgePairsResponse) MarshalToSizedBuffer(dAtA []byte) (int, 
 				i = encodeVarintQuery(dAtA, i, uint64(size))
 			}
 			i--
-			dAtA[i] = 0x12
+			dAtA[i] = 0xa
 		}
 	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryERC20BridgePairRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryERC20BridgePairRequest) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryERC20BridgePairRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Address) > 0 {
+		i -= len(m.Address)
+		copy(dAtA[i:], m.Address)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.Address)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryERC20BridgePairResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryERC20BridgePairResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryERC20BridgePairResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	{
+		size, err := m.ERC20BridgePair.MarshalToSizedBuffer(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = encodeVarintQuery(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0xa
 	return len(dAtA) - i, nil
 }
 
@@ -736,6 +1048,30 @@ func (m *QueryERC20BridgePairsResponse) Size() (n int) {
 			n += 1 + l + sovQuery(uint64(l))
 		}
 	}
+	return n
+}
+
+func (m *QueryERC20BridgePairRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Address)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	return n
+}
+
+func (m *QueryERC20BridgePairResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = m.ERC20BridgePair.Size()
+	n += 1 + l + sovQuery(uint64(l))
 	return n
 }
 
@@ -957,7 +1293,7 @@ func (m *QueryERC20BridgePairsResponse) Unmarshal(dAtA []byte) error {
 			return fmt.Errorf("proto: QueryERC20BridgePairsResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
-		case 2:
+		case 1:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field ERC20BridgePairs", wireType)
 			}
@@ -988,6 +1324,171 @@ func (m *QueryERC20BridgePairsResponse) Unmarshal(dAtA []byte) error {
 			}
 			m.ERC20BridgePairs = append(m.ERC20BridgePairs, ERC20BridgePair{})
 			if err := m.ERC20BridgePairs[len(m.ERC20BridgePairs)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryERC20BridgePairRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryERC20BridgePairRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryERC20BridgePairRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Address", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Address = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryERC20BridgePairResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryERC20BridgePairResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryERC20BridgePairResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ERC20BridgePair", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.ERC20BridgePair.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex

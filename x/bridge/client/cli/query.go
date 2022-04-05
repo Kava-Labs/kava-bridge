@@ -85,3 +85,30 @@ func QueryERC20BridgePairsCmd() *cobra.Command {
 		},
 	}
 }
+
+// QueryERC20BridgePairsCmd queries the bridge module bridged ERC20 pairs
+func QueryERC20BalanceOfCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:     "erc20-balance [address]",
+		Short:   "get the balance of a ERC20 token",
+		Example: "bridge erc20-balance ",
+		Args:    cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+			queryClient := types.NewQueryClient(clientCtx)
+
+			res, err := queryClient.ERC20BridgePairs(
+				context.Background(),
+				&types.QueryERC20BridgePairsRequest{},
+			)
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+}
