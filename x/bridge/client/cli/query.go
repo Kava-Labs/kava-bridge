@@ -2,15 +2,21 @@ package cli
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"math/big"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/spf13/cobra"
+	"github.com/tharsis/ethermint/server/config"
+	evmtypes "github.com/tharsis/ethermint/x/evm/types"
 
+	"github.com/kava-labs/kava-bridge/contract"
 	"github.com/kava-labs/kava-bridge/x/bridge/types"
 )
 
@@ -31,6 +37,7 @@ func GetQueryCmd() *cobra.Command {
 		QueryERC20BridgePairCmd(),
 		QueryConversionPairsCmd(),
 		QueryConversionPairCmd(),
+		QueryERC20BalanceOfCmd(),
 	}
 
 	for _, cmd := range cmds {
@@ -213,24 +220,81 @@ func QueryConversionPairCmd() *cobra.Command {
 // QueryERC20BridgePairsCmd queries the bridge module bridged ERC20 pairs
 func QueryERC20BalanceOfCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:   "erc20-balance [address]",
+		Use:   "erc20-balance [contract address] [account address]",
 		Short: "Query the balance of a ERC20 token",
 		Example: fmt.Sprintf(
-			"%[1]s q %[2]s erc20-balance 0x404F9466d758eA33eA84CeBE9E444b06533b369e",
+			"%[1]s q %[2]s erc20-balance 0x404F9466d758eA33eA84CeBE9E444b06533b369e 0x7Bbf300890857b8c241b219C6a489431669b3aFA",
 			version.AppName, types.ModuleName,
 		),
-		Args: cobra.NoArgs,
+		Args: cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			// TODO:
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+			evmQueryClient := evmtypes.NewQueryClient(clientCtx)
 
-			// clientCtx, err := client.GetClientQueryContext(cmd)
-			// if err != nil {
-			// 	return err
-			// }
-			// queryClient := types.NewQueryClient(clientCtx)
+			if !common.IsHexAddress(args[0]) {
+				return fmt.Errorf("invalid contract address: %v", args[0])
+			}
 
-			// return clientCtx.PrintProto(res)
-			return nil
+			if !common.IsHexAddress(args[1]) {
+				return fmt.Errorf("invalid account address: %v", args[0])
+			}
+
+			contractAddr := common.HexToAddress(args[0])
+			accountAddr := common.HexToAddress(args[1])
+
+			data, err := contract.ERC20MintableBurnableContract.ABI.Pack(
+				"balanceOf",
+				accountAddr,
+			)
+			if err != nil {
+				return fmt.Errorf("failed to pack balanceOf data: %w", err)
+			}
+
+			transactionArgs := evmtypes.TransactionArgs{
+				To:   &contractAddr,
+				Data: (*hexutil.Bytes)(&data),
+			}
+
+			ethCalArgs, err := json.Marshal(transactionArgs)
+			if err != nil {
+				return err
+			}
+
+			res, err := evmQueryClient.EthCall(context.Background(), &evmtypes.EthCallRequest{
+				Args:   ethCalArgs,
+				GasCap: uint64(config.DefaultGasCap),
+			})
+			if err != nil {
+				return err
+			}
+
+			if res.Failed() {
+				// No revert handling, not making a tx
+				return fmt.Errorf(res.VmError)
+			}
+
+			anyOutput, err := contract.ERC20MintableBurnableContract.ABI.Unpack("balanceOf", res.Ret)
+			if err != nil {
+				return fmt.Errorf(
+					"failed to unpack method %v response: %w",
+					"balanceOf",
+					err,
+				)
+			}
+
+			bal, ok := anyOutput[0].(*big.Int)
+			if !ok {
+				return fmt.Errorf(
+					"invalid ERC20 return type %T, expected %T",
+					anyOutput[0],
+					&big.Int{},
+				)
+			}
+
+			return clientCtx.PrintString(fmt.Sprintf("%v\n", bal))
 		},
 	}
 }
