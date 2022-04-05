@@ -234,6 +234,7 @@ func (suite *EVMHooksTestSuite) TestERC20Withdraw_EmitsEvent() {
 		sdk.NewEvent(
 			types.EventTypeBridgeKavaToEthereum,
 			sdk.NewAttribute(types.AttributeKeyEthereumERC20Address, suite.pair.GetExternalAddress().String()),
+			sdk.NewAttribute(types.AttributeKeyKavaERC20Address, suite.pair.GetInternalAddress().String()),
 			sdk.NewAttribute(types.AttributeKeyReceiver, withdrawToAddr.String()),
 			sdk.NewAttribute(types.AttributeKeyAmount, withdrawAmount.String()),
 			sdk.NewAttribute(types.AttributeKeySequence, "1"),
@@ -247,6 +248,7 @@ func (suite *EVMHooksTestSuite) TestERC20Withdraw_EmitsEvent() {
 		sdk.NewEvent(
 			types.EventTypeBridgeKavaToEthereum,
 			sdk.NewAttribute(types.AttributeKeyEthereumERC20Address, suite.pair.GetExternalAddress().String()),
+			sdk.NewAttribute(types.AttributeKeyKavaERC20Address, suite.pair.GetInternalAddress().String()),
 			sdk.NewAttribute(types.AttributeKeyReceiver, withdrawToAddr.String()),
 			sdk.NewAttribute(types.AttributeKeyAmount, withdrawAmount.String()),
 			sdk.NewAttribute(types.AttributeKeySequence, "2"),

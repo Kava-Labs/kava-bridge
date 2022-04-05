@@ -2,8 +2,10 @@ package cli
 
 import (
 	"fmt"
+	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
+
 	"github.com/spf13/cobra"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -12,6 +14,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/version"
 
+	"github.com/kava-labs/kava-bridge/contract"
 	"github.com/kava-labs/kava-bridge/x/bridge/types"
 )
 
@@ -28,6 +31,8 @@ func GetTxCmd() *cobra.Command {
 	cmds := []*cobra.Command{
 		getCmdMsgBridgeEthereumToKava(),
 		getCmdMsgConvertCoinToERC20(),
+		getCmdBridgeKavaToEthereum(),
+		getCmdConvertERC20ToCoin(),
 	}
 
 	for _, cmd := range cmds {
@@ -42,7 +47,7 @@ func GetTxCmd() *cobra.Command {
 func getCmdMsgBridgeEthereumToKava() *cobra.Command {
 	return &cobra.Command{
 		Use:   "bridge-eth-to-kava [token] [receiver] [amount] [sequence]",
-		Short: "mints erc20 tokens locked on ethereum to kava eth co-chain",
+		Short: "mints ERC20 tokens locked on Ethereum to Kava EVM co-chain",
 		Example: fmt.Sprintf(
 			`%s tx %s bridge-eth-to-kava 0xc778417e063141139fce010982780140aa0cd5ab 0x6B1088f788b412Ad1280F95240d56B886A64bc05 1000000000000000 1 --from <key>`,
 			version.AppName, types.ModuleName,
@@ -74,6 +79,64 @@ func getCmdMsgBridgeEthereumToKava() *cobra.Command {
 			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
+		},
+	}
+}
+
+func getCmdBridgeKavaToEthereum() *cobra.Command {
+	return &cobra.Command{
+		Use:   "bridge-kava-to-eth [Ethereum receiver address] [Kava ERC20 address] [amount]",
+		Short: "burns ERC20 tokens on Kava EVM co-chain and unlocks on Ethereum",
+		Example: fmt.Sprintf(
+			`%s tx %s bridge-kava-to-eth 0x21E360e198Cde35740e88572B59f2CAdE421E6b1 0x8223259205A3E31C54469fCbfc9F7Cf83D515ff6 1000000000000000 --from <key>`,
+			version.AppName, types.ModuleName,
+		),
+		Args: cobra.ExactArgs(3),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			if err := CanSignEthTx(clientCtx); err != nil {
+				return err
+			}
+
+			if !common.IsHexAddress(args[0]) {
+				return fmt.Errorf("receiver '%s' is an invalid hex address", args[1])
+			}
+			receiver := common.HexToAddress(args[0])
+
+			if !common.IsHexAddress(args[1]) {
+				return fmt.Errorf("contract address '%s' is an invalid hex address", args[0])
+			}
+			contractAddr := common.HexToAddress(args[1])
+
+			amount, ok := new(big.Int).SetString(args[2], 10)
+			if !ok {
+				return fmt.Errorf("amount '%s' is invalid", args[2])
+			}
+
+			data, err := PackContractCallData(
+				contract.ERC20MintableBurnableContract.ABI,
+				"withdraw",
+				receiver,
+				amount,
+			)
+			if err != nil {
+				return err
+			}
+
+			ethTx, err := CreateEthCallContractTx(
+				clientCtx,
+				&contractAddr,
+				data,
+			)
+			if err != nil {
+				return err
+			}
+
+			return GenerateOrBroadcastTx(clientCtx, ethTx)
 		},
 	}
 }
@@ -110,6 +173,67 @@ func getCmdMsgConvertCoinToERC20() *cobra.Command {
 			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
+		},
+	}
+}
+
+func getCmdConvertERC20ToCoin() *cobra.Command {
+	return &cobra.Command{
+		Use:   "convert-erc20-to-coin [Kava receiver address] [Kava ERC20 address or Denom] [amount]",
+		Short: "burns ERC20 tokens on Kava EVM co-chain and unlocks on Ethereum",
+		Example: fmt.Sprintf(`
+%[1]s tx %[2]s convert-erc20-to-coin 0x8223259205A3E31C54469fCbfc9F7Cf83D515ff6 0x21E360e198Cde35740e88572B59f2CAdE421E6b1 1000000000000000 --from <key>
+%[1]s tx %[2]s convert-erc20-to-coin kava10wlnqzyss4accfqmyxwx5jy5x9nfkwh6qm7n4t erc20/weth 1000000000000000 --from <key>
+`,
+			version.AppName, types.ModuleName,
+		),
+		Args: cobra.ExactArgs(3),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			if err := CanSignEthTx(clientCtx); err != nil {
+				return err
+			}
+
+			receiver, err := ParseAddrFromHexOrBech32(args[0])
+			if err != nil {
+				return err
+			}
+
+			queryClient := types.NewQueryClient(clientCtx)
+			contractAddr, err := ParseOrQueryConversionPairAddress(queryClient, args[1])
+			if err != nil {
+				return err
+			}
+
+			amount, ok := new(big.Int).SetString(args[2], 10)
+			if !ok {
+				return fmt.Errorf("amount '%s' is invalid", args[2])
+			}
+
+			data, err := PackContractCallData(
+				contract.ERC20MintableBurnableContract.ABI,
+				"convertToCoin",
+				receiver,
+				amount,
+			)
+			if err != nil {
+				return err
+			}
+
+			ethTx, err := CreateEthCallContractTx(
+				clientCtx,
+				&contractAddr,
+				data,
+			)
+			if err != nil {
+				return err
+			}
+
+			return GenerateOrBroadcastTx(clientCtx, ethTx)
 		},
 	}
 }

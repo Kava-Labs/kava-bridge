@@ -20,6 +20,7 @@ const (
 
 	// Event Attributes - Bridge
 	AttributeKeyEthereumERC20Address = "ethereum_erc20_address"
+	AttributeKeyKavaERC20Address     = "kava_erc20_address"
 	AttributeKeyRelayer              = "relayer"
 	AttributeKeySequence             = "sequence"
 
