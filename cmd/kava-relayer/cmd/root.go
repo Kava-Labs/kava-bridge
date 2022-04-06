@@ -7,6 +7,8 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+
+	"github.com/kava-labs/kava-bridge/cmd/kava-relayer/cmd/network"
 )
 
 var (
@@ -39,6 +41,7 @@ func NewRootCmd() (*cobra.Command, error) {
 	rootCmd.PersistentFlags().StringVar(&appDir, "home", defaultAppDir, "Directory for config and data")
 
 	rootCmd.AddCommand(newStartCmd())
+	rootCmd.AddCommand(network.GetNetworkCmd())
 
 	return rootCmd, nil
 }
