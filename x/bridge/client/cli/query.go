@@ -219,7 +219,7 @@ func QueryConversionPairCmd() *cobra.Command {
 func QueryERC20BalanceOfCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "erc20-balance [contract address] [account address]",
-		Short: "Query the balance of a ERC20 token",
+		Short: "Query the balance of an ERC20 token",
 		Example: fmt.Sprintf(
 			"%[1]s q %[2]s erc20-balance 0x404F9466d758eA33eA84CeBE9E444b06533b369e 0x7Bbf300890857b8c241b219C6a489431669b3aFA",
 			version.AppName, types.ModuleName,
