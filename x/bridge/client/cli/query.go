@@ -2,7 +2,6 @@ package cli
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"math/big"
 
@@ -11,12 +10,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/spf13/cobra"
-	"github.com/tharsis/ethermint/server/config"
-	evmtypes "github.com/tharsis/ethermint/x/evm/types"
 
-	"github.com/kava-labs/kava-bridge/contract"
 	"github.com/kava-labs/kava-bridge/x/bridge/types"
 )
 
@@ -38,6 +33,8 @@ func GetQueryCmd() *cobra.Command {
 		QueryConversionPairsCmd(),
 		QueryConversionPairCmd(),
 		QueryERC20BalanceOfCmd(),
+		QueryERC20TotalSupplyCmd(),
+		QueryERC20MetadataCmd(),
 	}
 
 	for _, cmd := range cmds {
@@ -217,7 +214,8 @@ func QueryConversionPairCmd() *cobra.Command {
 // -----------------------------------------------------------------------------
 // ERC20 queries
 
-// QueryERC20BridgePairsCmd queries the bridge module bridged ERC20 pairs
+// QueryERC20BalanceOfCmd queries the balance of an ERC20 contract for a given
+// account.
 func QueryERC20BalanceOfCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "erc20-balance [contract address] [account address]",
@@ -232,7 +230,6 @@ func QueryERC20BalanceOfCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			evmQueryClient := evmtypes.NewQueryClient(clientCtx)
 
 			if !common.IsHexAddress(args[0]) {
 				return fmt.Errorf("invalid contract address: %v", args[0])
@@ -245,56 +242,117 @@ func QueryERC20BalanceOfCmd() *cobra.Command {
 			contractAddr := common.HexToAddress(args[0])
 			accountAddr := common.HexToAddress(args[1])
 
-			data, err := contract.ERC20MintableBurnableContract.ABI.Pack(
-				"balanceOf",
-				accountAddr,
-			)
-			if err != nil {
-				return fmt.Errorf("failed to pack balanceOf data: %w", err)
-			}
-
-			transactionArgs := evmtypes.TransactionArgs{
-				To:   &contractAddr,
-				Data: (*hexutil.Bytes)(&data),
-			}
-
-			ethCalArgs, err := json.Marshal(transactionArgs)
+			anyOutput, err := ERC20Query(clientCtx, contractAddr, "balanceOf", accountAddr)
 			if err != nil {
 				return err
-			}
-
-			res, err := evmQueryClient.EthCall(context.Background(), &evmtypes.EthCallRequest{
-				Args:   ethCalArgs,
-				GasCap: uint64(config.DefaultGasCap),
-			})
-			if err != nil {
-				return err
-			}
-
-			if res.Failed() {
-				// No revert handling, not making a tx
-				return fmt.Errorf(res.VmError)
-			}
-
-			anyOutput, err := contract.ERC20MintableBurnableContract.ABI.Unpack("balanceOf", res.Ret)
-			if err != nil {
-				return fmt.Errorf(
-					"failed to unpack method %v response: %w",
-					"balanceOf",
-					err,
-				)
 			}
 
 			bal, ok := anyOutput[0].(*big.Int)
 			if !ok {
-				return fmt.Errorf(
-					"invalid ERC20 return type %T, expected %T",
-					anyOutput[0],
-					&big.Int{},
-				)
+				return fmt.Errorf("invalid type %T, expected %T", anyOutput[0], bal)
 			}
 
 			return clientCtx.PrintString(fmt.Sprintf("%v\n", bal))
+		},
+	}
+}
+
+// QueryERC20TotalSupplyCmd queries the total supply of an ERC20 contract.
+func QueryERC20TotalSupplyCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "erc20-totalsupply [contract address]",
+		Short: "Query the total supply of a ERC20 token",
+		Example: fmt.Sprintf(
+			"%[1]s q %[2]s erc20-totalsupply 0x404F9466d758eA33eA84CeBE9E444b06533b369e",
+			version.AppName, types.ModuleName,
+		),
+		Args: cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			if !common.IsHexAddress(args[0]) {
+				return fmt.Errorf("invalid contract address: %v", args[0])
+			}
+
+			contractAddr := common.HexToAddress(args[0])
+
+			anyOutput, err := ERC20Query(clientCtx, contractAddr, "totalSupply")
+			if err != nil {
+				return err
+			}
+
+			supply, ok := anyOutput[0].(*big.Int)
+			if !ok {
+				return fmt.Errorf("invalid type %T, expected %T", anyOutput[0], supply)
+			}
+
+			return clientCtx.PrintString(fmt.Sprintf("%v\n", supply))
+		},
+	}
+}
+
+// QueryERC20MetadataCmd queries the metadata of a ERC20 contract.
+func QueryERC20MetadataCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "erc20-metadata [contract address]",
+		Short: "Query the metadata of a ERC20 token (name, symbol, decimals)",
+		Example: fmt.Sprintf(
+			"%[1]s q %[2]s erc20-metadata 0x404F9466d758eA33eA84CeBE9E444b06533b369e",
+			version.AppName, types.ModuleName,
+		),
+		Args: cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			if !common.IsHexAddress(args[0]) {
+				return fmt.Errorf("invalid contract address: %v", args[0])
+			}
+
+			contractAddr := common.HexToAddress(args[0])
+
+			nameRes, err := ERC20Query(clientCtx, contractAddr, "name")
+			if err != nil {
+				return err
+			}
+
+			symbolRes, err := ERC20Query(clientCtx, contractAddr, "symbol")
+			if err != nil {
+				return err
+			}
+
+			decimalsRes, err := ERC20Query(clientCtx, contractAddr, "decimals")
+			if err != nil {
+				return err
+			}
+
+			name, ok := nameRes[0].(string)
+			if !ok {
+				return fmt.Errorf("invalid type %T, expected %T", nameRes[0], name)
+			}
+
+			symbol, ok := symbolRes[0].(string)
+			if !ok {
+				return fmt.Errorf("invalid type %T, expected %T", symbolRes[0], symbol)
+			}
+
+			decimals, ok := decimalsRes[0].(uint8)
+			if !ok {
+				return fmt.Errorf("invalid type %T, expected %T", decimalsRes[0], decimals)
+			}
+
+			return clientCtx.PrintString(
+				fmt.Sprintf("Name: %v\nSymbol: %v\nDecimals: %v\n",
+					name,
+					symbol,
+					decimals,
+				),
+			)
 		},
 	}
 }
