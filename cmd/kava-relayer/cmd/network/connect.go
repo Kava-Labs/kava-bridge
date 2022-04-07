@@ -56,7 +56,7 @@ func newConnectCmd() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().Uint16(p2pFlagPort, 0, "Host port to listen on")
+	cmd.Flags().Uint16(p2pFlagPort, 0, "Host port to listen on (required)")
 	cmd.Flags().String(p2pFlagPrivateKeyPath, "", "Path to the peer private key (required)")
 	cmd.Flags().String(p2pFlagSharedKeyPath, "", "Path to the shared private network key (required)")
 
