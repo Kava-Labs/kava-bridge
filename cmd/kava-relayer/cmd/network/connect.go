@@ -4,11 +4,14 @@ import (
 	"fmt"
 	"os"
 
+	logging "github.com/ipfs/go-log/v2"
 	"github.com/kava-labs/kava-bridge/relayer/p2p"
 	"github.com/multiformats/go-multibase"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
+
+var log = logging.Logger("connect")
 
 func newConnectCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -51,8 +54,14 @@ func newConnectCmd() *cobra.Command {
 				return err
 			}
 
+			multiAddr, err := node.GetMultiAddress()
+			if err != nil {
+				return err
+			}
+			log.Info("host multiaddress: ", multiAddr)
+
 			// TODO: Do something with the node
-			return node.Close()
+			return node.Host.Close()
 		},
 	}
 
