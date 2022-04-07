@@ -1,7 +1,7 @@
 package network
 
 import (
-	"github.com/kava-labs/kava-bridge/cmd/kava-relayer/p2p"
+	"github.com/kava-labs/kava-bridge/relayer/p2p"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )

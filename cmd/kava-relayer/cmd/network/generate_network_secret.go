@@ -4,7 +4,7 @@ import (
 	"crypto/rand"
 	"fmt"
 
-	"github.com/kava-labs/kava-bridge/cmd/kava-relayer/p2p"
+	"github.com/kava-labs/kava-bridge/relayer/p2p"
 	"github.com/multiformats/go-multibase"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
