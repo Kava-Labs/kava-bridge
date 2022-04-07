@@ -1,7 +1,11 @@
 package network
 
 import (
+	"fmt"
+	"os"
+
 	"github.com/kava-labs/kava-bridge/relayer/p2p"
+	"github.com/multiformats/go-multibase"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -14,10 +18,32 @@ func newConnectCmd() *cobra.Command {
 			err := viper.BindPFlags(cmd.Flags())
 			cobra.CheckErr(err)
 
-			port := viper.GetUint("p2p.port")
+			port := viper.GetUint(p2pFlagPort)
+			pkPath := viper.GetString(p2pFlagPrivateKeyPath)
+			privateSharedKeyPath := viper.GetString(p2pFlagSharedKeyPath)
+
+			privKeyData, err := os.ReadFile(pkPath)
+			if err != nil {
+				return fmt.Errorf("could not read private key file: %w", err)
+			}
+			privKey, err := p2p.UnmarshalPrivateKey(privKeyData)
+			if err != nil {
+				return err
+			}
+
+			pskData, err := os.ReadFile(privateSharedKeyPath)
+			if err != nil {
+				return fmt.Errorf("could not read pre-shared key: %w", err)
+			}
+			_, psk, err := multibase.Decode(string(pskData))
+			if err != nil {
+				return err
+			}
 
 			options := p2p.NodeOptions{
-				Port: uint16(port),
+				Port:              uint16(port),
+				NodePrivateKey:    privKey,
+				NetworkPrivateKey: psk,
 			}
 
 			node, err := p2p.NewNode(options)
@@ -25,9 +51,8 @@ func newConnectCmd() *cobra.Command {
 				return err
 			}
 
-			node.Close()
-
-			return nil
+			// TODO: Do something with the node
+			return node.Close()
 		},
 	}
 

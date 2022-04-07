@@ -12,7 +12,7 @@ const (
 	PrivateKeyLengthBytes          = 32
 )
 
-func UnmarshalKey(data []byte) (crypto.PrivKey, error) {
+func UnmarshalPrivateKey(data []byte) (crypto.PrivKey, error) {
 	privKey, err := crypto.UnmarshalPrivateKey(data)
 	if err != nil {
 		return nil, fmt.Errorf("could not decode private key: %w", err)
