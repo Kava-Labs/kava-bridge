@@ -60,9 +60,10 @@ func newConnectCmd() *cobra.Command {
 	cmd.Flags().String(p2pFlagPrivateKeyPath, "", "Path to the peer private key (required)")
 	cmd.Flags().String(p2pFlagSharedKeyPath, "", "Path to the shared private network key (required)")
 
-	cmd.MarkFlagRequired(p2pFlagPort)
-	cmd.MarkFlagRequired(p2pFlagPrivateKeyPath)
-	cmd.MarkFlagRequired(p2pFlagSharedKeyPath)
+	// Ignore errors, if flags do not exist
+	_ = cmd.MarkFlagRequired(p2pFlagPort)
+	_ = cmd.MarkFlagRequired(p2pFlagPrivateKeyPath)
+	_ = cmd.MarkFlagRequired(p2pFlagSharedKeyPath)
 
 	return cmd
 }
