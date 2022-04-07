@@ -56,7 +56,21 @@ subject to change.
 make install
 ```
 
-Installs `kava-bridge` to `$GOPATH/bin`
+Installs `kava-bridge` and `kava-relayer` to `$GOPATH/bin`
+
+### Relayer Usage
+
+```bash
+kava-relayer network generate-network-secret
+kava-relayer network generate-node-key
+kava-relayer network show-node-id
+
+# Connect to p2p network
+kava-relayer network connect
+
+# Start single signer relayer without P2P network
+kava-relayer start 
+```
 
 ### Test
 
