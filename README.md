@@ -65,8 +65,11 @@ kava-relayer network generate-network-secret
 kava-relayer network generate-node-key
 kava-relayer network show-node-id
 
-# connects to network
+# Connect to p2p network
 kava-relayer network connect
+
+# Start single signer relayer without P2P network
+kava-relayer start 
 ```
 
 ### Test
