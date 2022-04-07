@@ -1,6 +1,8 @@
 package network
 
 import (
+	"fmt"
+
 	"github.com/kava-labs/kava-bridge/cmd/kava-relayer/p2p"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -14,17 +16,21 @@ func newShowNodeIdCmd() *cobra.Command {
 			err := viper.BindPFlags(cmd.Flags())
 			cobra.CheckErr(err)
 
-			opts := p2p.ParseOptions()
-			node, err := p2p.NewNode(opts...)
+			pkPath := viper.GetString(p2pFlagPrivateKeyPath)
+
+			peerID, err := p2p.GetNodeID(pkPath)
 			if err != nil {
 				return err
 			}
 
-			node.Close()
+			fmt.Println(peerID)
 
 			return nil
 		},
 	}
+
+	cmd.Flags().String(p2pFlagPrivateKeyPath, "", "Path to the peer private key (required)")
+	cmd.MarkFlagRequired(p2pFlagPrivateKeyPath)
 
 	return cmd
 }

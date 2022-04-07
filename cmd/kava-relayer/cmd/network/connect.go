@@ -6,13 +6,6 @@ import (
 	"github.com/spf13/viper"
 )
 
-const (
-	p2pFlagPrefix         = "p2p."
-	p2pFlagPort           = p2pFlagPrefix + "port"
-	p2pFlagPrivateKeyPath = p2pFlagPrefix + "private-key-path"
-	p2pFlagSharedKeyPath  = p2pFlagPrefix + "shared-key-path"
-)
-
 func newConnectCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "connect",
@@ -21,8 +14,13 @@ func newConnectCmd() *cobra.Command {
 			err := viper.BindPFlags(cmd.Flags())
 			cobra.CheckErr(err)
 
-			opts := p2p.ParseOptions()
-			node, err := p2p.NewNode(opts...)
+			port := viper.GetUint("p2p.port")
+
+			options := p2p.NodeOptions{
+				Port: uint16(port),
+			}
+
+			node, err := p2p.NewNode(options)
 			if err != nil {
 				return err
 			}
