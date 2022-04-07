@@ -58,7 +58,7 @@ make install
 
 Installs `kava-bridge` and `kava-relayer` to `$GOPATH/bin`
 
-### Usage
+### Relayer Usage
 
 ```bash
 kava-relayer network generate-network-secret
