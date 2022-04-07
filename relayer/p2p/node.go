@@ -8,6 +8,7 @@ import (
 	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p-core/host"
 	"github.com/libp2p/go-libp2p-core/network"
+	peerstore "github.com/libp2p/go-libp2p-core/peer"
 	"github.com/libp2p/go-libp2p-core/pnet"
 	"github.com/libp2p/go-libp2p-core/protocol"
 	noise "github.com/libp2p/go-libp2p-noise"
@@ -47,15 +48,12 @@ func NewNode(options NodeOptions) (*Node, error) {
 	}, nil
 }
 
-func (n Node) GetMultiAddress() (ma.Multiaddr, error) {
-	hostAddr, err := ma.NewMultiaddr(fmt.Sprintf("/ipfs/%s", n.Host.ID().Pretty()))
-	if err != nil {
-		return nil, err
+func (n Node) GetMultiAddress() ([]ma.Multiaddr, error) {
+	peerInfo := peerstore.AddrInfo{
+		ID:    n.Host.ID(),
+		Addrs: n.Host.Addrs(),
 	}
-
-	addr := n.Host.Addrs()[0]
-
-	return addr.Encapsulate(hostAddr), nil
+	return peerstore.AddrInfoToP2pAddrs(&peerInfo)
 }
 
 func handleStream(stream network.Stream) {
