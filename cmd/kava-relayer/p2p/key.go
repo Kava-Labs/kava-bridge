@@ -7,7 +7,12 @@ import (
 	crypto_pb "github.com/libp2p/go-libp2p-core/crypto/pb"
 )
 
-func unmarshalKey(data []byte) (crypto.PrivKey, error) {
+const (
+	PreSharedNetworkKeyLengthBytes = 32
+	PrivateKeyLengthBytes          = 32
+)
+
+func UnmarshalKey(data []byte) (crypto.PrivKey, error) {
 	privKey, err := crypto.UnmarshalPrivateKey(data)
 	if err != nil {
 		return nil, fmt.Errorf("could not decode private key: %w", err)
@@ -19,7 +24,7 @@ func unmarshalKey(data []byte) (crypto.PrivKey, error) {
 
 	rawKey, err := privKey.Raw()
 	if err != nil {
-		return nil, fmt.Errorf("error decoding private key", err)
+		return nil, fmt.Errorf("error decoding private key: %w", err)
 	}
 
 	if len(rawKey) != PrivateKeyLengthBytes {

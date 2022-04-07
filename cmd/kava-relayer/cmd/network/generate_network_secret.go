@@ -4,13 +4,10 @@ import (
 	"crypto/rand"
 	"fmt"
 
+	"github.com/kava-labs/kava-bridge/cmd/kava-relayer/p2p"
 	"github.com/multiformats/go-multibase"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-)
-
-const (
-	PreSharedNetworkKeyLengthBytes = 32
 )
 
 func newGenerateNetworkSecretCmd() *cobra.Command {
@@ -21,7 +18,7 @@ func newGenerateNetworkSecretCmd() *cobra.Command {
 			err := viper.BindPFlags(cmd.Flags())
 			cobra.CheckErr(err)
 
-			b := make([]byte, PreSharedNetworkKeyLengthBytes)
+			b := make([]byte, p2p.PreSharedNetworkKeyLengthBytes)
 
 			_, err = rand.Read(b)
 			if err != nil {
