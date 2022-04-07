@@ -30,7 +30,7 @@ func newShowNodeIdCmd() *cobra.Command {
 	}
 
 	cmd.Flags().String(p2pFlagPrivateKeyPath, "", "Path to the peer private key (required)")
-	cmd.MarkFlagRequired(p2pFlagPrivateKeyPath)
+	_ = cmd.MarkFlagRequired(p2pFlagPrivateKeyPath)
 
 	return cmd
 }
