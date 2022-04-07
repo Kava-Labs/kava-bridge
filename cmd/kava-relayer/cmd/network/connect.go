@@ -31,11 +31,11 @@ func newConnectCmd() *cobra.Command {
 				return err
 			}
 
-			pskData, err := os.ReadFile(privateSharedKeyPath)
+			privSharedKeyData, err := os.ReadFile(privateSharedKeyPath)
 			if err != nil {
 				return fmt.Errorf("could not read pre-shared key: %w", err)
 			}
-			_, psk, err := multibase.Decode(string(pskData))
+			_, privSharedKey, err := multibase.Decode(string(privSharedKeyData))
 			if err != nil {
 				return err
 			}
@@ -43,7 +43,7 @@ func newConnectCmd() *cobra.Command {
 			options := p2p.NodeOptions{
 				Port:              uint16(port),
 				NodePrivateKey:    privKey,
-				NetworkPrivateKey: psk,
+				NetworkPrivateKey: privSharedKey,
 			}
 
 			node, err := p2p.NewNode(options)
@@ -60,7 +60,7 @@ func newConnectCmd() *cobra.Command {
 	cmd.Flags().String(p2pFlagPrivateKeyPath, "", "Path to the peer private key (required)")
 	cmd.Flags().String(p2pFlagSharedKeyPath, "", "Path to the shared private network key (required)")
 
-	// Ignore errors, if flags do not exist
+	// Ignore errors, err only if flags do not exist
 	_ = cmd.MarkFlagRequired(p2pFlagPort)
 	_ = cmd.MarkFlagRequired(p2pFlagPrivateKeyPath)
 	_ = cmd.MarkFlagRequired(p2pFlagSharedKeyPath)
