@@ -7,6 +7,7 @@ import (
 	"github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/libp2p/go-libp2p-core/host"
 	"github.com/libp2p/go-libp2p-core/pnet"
+	noise "github.com/libp2p/go-libp2p-noise"
 	"github.com/libp2p/go-tcp-transport"
 )
 
@@ -23,7 +24,10 @@ func NewNode(options NodeOptions) (host.Host, error) {
 		libp2p.PrivateNetwork(options.NetworkPrivateKey),
 		libp2p.Identity(options.NodePrivateKey),
 		libp2p.DisableRelay(),
+		libp2p.Security(noise.ID, noise.New),
 	}
+
+	pnet.ForcePrivateNetwork = true
 
 	return libp2p.New(libp2pOpts...)
 }
