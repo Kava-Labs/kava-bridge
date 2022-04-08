@@ -1,7 +1,17 @@
 package p2p
 
-import "github.com/libp2p/go-libp2p-core/peer"
+import (
+	"fmt"
 
-func GetNodeID(pkPath string) (peer.ID, error) {
-	return "", nil
+	"github.com/libp2p/go-libp2p-core/crypto"
+	"github.com/libp2p/go-libp2p-core/peer"
+)
+
+func GetNodeID(privKey crypto.PrivKey) (peer.ID, error) {
+	peerID, err := peer.IDFromPrivateKey(privKey)
+	if err != nil {
+		return "", fmt.Errorf("could not get peer ID: %w", err)
+	}
+
+	return peerID, nil
 }
