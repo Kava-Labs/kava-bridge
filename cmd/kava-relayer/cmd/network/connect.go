@@ -1,11 +1,16 @@
 package network
 
 import (
+	"context"
 	"fmt"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	logging "github.com/ipfs/go-log/v2"
 	"github.com/kava-labs/kava-bridge/relayer/p2p"
+	"github.com/multiformats/go-multiaddr"
 	"github.com/multiformats/go-multibase"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -15,8 +20,9 @@ var log = logging.Logger("connect")
 
 func newConnectCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "connect",
+		Use:   "connect [remote peer multiaddr]",
 		Short: "Connects the relayer to peers",
+		Args:  cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			err := viper.BindPFlags(cmd.Flags())
 			cobra.CheckErr(err)
@@ -60,7 +66,25 @@ func newConnectCmd() *cobra.Command {
 			}
 			log.Info("host multiaddress: ", multiAddr)
 
-			// TODO: Do something with the node
+			if len(args) == 1 {
+				log.Info("connecting to remote peer: ", args[0])
+				ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+				defer cancel()
+
+				peerAddr, err := multiaddr.NewMultiaddr(args[0])
+				if err != nil {
+					return fmt.Errorf("could not parse peer multiaddr: %w", err)
+				}
+
+				if err := node.Connect(ctx, peerAddr); err != nil {
+					return err
+				}
+			}
+
+			ch := make(chan os.Signal, 1)
+			signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM)
+			<-ch
+			log.Info("Received signal, shutting down...")
 			return node.Host.Close()
 		},
 	}

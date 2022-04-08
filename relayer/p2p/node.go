@@ -2,6 +2,7 @@ package p2p
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 
 	logging "github.com/ipfs/go-log/v2"
@@ -12,6 +13,7 @@ import (
 	"github.com/libp2p/go-libp2p-core/pnet"
 	"github.com/libp2p/go-libp2p-core/protocol"
 	noise "github.com/libp2p/go-libp2p-noise"
+	"github.com/libp2p/go-libp2p/p2p/protocol/ping"
 	"github.com/libp2p/go-tcp-transport"
 	ma "github.com/multiformats/go-multiaddr"
 )
@@ -54,6 +56,26 @@ func (n Node) GetMultiAddress() ([]ma.Multiaddr, error) {
 		Addrs: n.Host.Addrs(),
 	}
 	return peer.AddrInfoToP2pAddrs(&peerInfo)
+}
+
+func (n Node) Connect(ctx context.Context, addr ma.Multiaddr) error {
+	peer, err := peer.AddrInfoFromP2pAddr(addr)
+	if err != nil {
+		return err
+	}
+
+	if err := n.Host.Connect(context.Background(), *peer); err != nil {
+		return err
+	}
+
+	res := <-ping.Ping(ctx, n.Host, peer.ID)
+	if res.Error != nil {
+		return fmt.Errorf("failed to ping peer: %w", res.Error)
+	}
+
+	log.Infof("ping took: %s", res.RTT)
+
+	return nil
 }
 
 func handleStream(stream network.Stream) {
