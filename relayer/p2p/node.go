@@ -1,29 +1,29 @@
 package p2p
 
 import (
-	"bufio"
 	"context"
 	"fmt"
+	"time"
 
 	logging "github.com/ipfs/go-log/v2"
+	"github.com/kava-labs/kava-bridge/relayer/p2p/service"
 	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p-core/host"
 	"github.com/libp2p/go-libp2p-core/network"
 	"github.com/libp2p/go-libp2p-core/peer"
+	"github.com/libp2p/go-libp2p-core/peerstore"
 	"github.com/libp2p/go-libp2p-core/pnet"
-	"github.com/libp2p/go-libp2p-core/protocol"
 	noise "github.com/libp2p/go-libp2p-noise"
-	"github.com/libp2p/go-libp2p/p2p/protocol/ping"
 	"github.com/libp2p/go-tcp-transport"
 	ma "github.com/multiformats/go-multiaddr"
 )
 
 var log = logging.Logger("p2p")
 
-const RelayerProtocolID protocol.ID = "/kava-relayer/base/1.0.0"
-
 type Node struct {
-	Host host.Host
+	Host        host.Host
+	EchoService *service.EchoService
+	done        chan bool
 }
 
 func NewNode(options NodeOptions) (*Node, error) {
@@ -43,11 +43,19 @@ func NewNode(options NodeOptions) (*Node, error) {
 		return nil, err
 	}
 
-	host.SetStreamHandler(RelayerProtocolID, handleStream)
+	// Need to be buffered by 1 to not block
+	done := make(chan bool, 1)
 
-	return &Node{
-		Host: host,
-	}, nil
+	node := &Node{
+		Host:        host,
+		EchoService: service.NewEchoService(host, done, 1),
+		done:        done,
+	}
+
+	host.SetStreamHandler(service.ProtocolID, node.EchoService.EchoHandler)
+	registerNotifiees(host)
+
+	return node, nil
 }
 
 func (n Node) GetMultiAddress() ([]ma.Multiaddr, error) {
@@ -55,40 +63,56 @@ func (n Node) GetMultiAddress() ([]ma.Multiaddr, error) {
 		ID:    n.Host.ID(),
 		Addrs: n.Host.Addrs(),
 	}
+
 	return peer.AddrInfoToP2pAddrs(&peerInfo)
 }
 
 func (n Node) Connect(ctx context.Context, addr ma.Multiaddr) error {
-	peer, err := peer.AddrInfoFromP2pAddr(addr)
+	peerAddrInfo, err := peer.AddrInfoFromP2pAddr(addr)
 	if err != nil {
 		return err
 	}
 
-	if err := n.Host.Connect(context.Background(), *peer); err != nil {
+	// TODO: Determine TTL for peer
+	n.Host.Peerstore().AddAddrs(peerAddrInfo.ID, peerAddrInfo.Addrs, peerstore.RecentlyConnectedAddrTTL)
+
+	// Retry connection 10 times to account for peers starting later than others
+	err = retry(10, time.Second*5, func() error {
+		return n.Host.Connect(ctx, *peerAddrInfo)
+	})
+	if err != nil {
 		return err
 	}
 
-	res := <-ping.Ping(ctx, n.Host, peer.ID)
-	if res.Error != nil {
-		return fmt.Errorf("failed to ping peer: %w", res.Error)
+	log.Info("success")
+
+	res, err := n.EchoService.Echo(ctx, peerAddrInfo.ID, "hello world!\n")
+	if err != nil {
+		return err
 	}
 
-	log.Infof("ping took: %s", res.RTT)
+	log.Info("received echo response: ", res)
+
+	log.Info("waiting for all echo requests")
+	<-n.done
 
 	return nil
 }
 
-func handleStream(stream network.Stream) {
-	log.Debug("Received a new stream")
+// Close cleans up and stops the node
+func (n Node) Close() error {
+	return n.Host.Close()
+}
 
-	// Create a buffer stream for non blocking read and write.
-	rw := bufio.NewReadWriter(bufio.NewReader(stream), bufio.NewWriter(stream))
-
-	_, err := rw.WriteString("hi")
-	if err != nil {
-		log.Error("error writing to stream: ", err)
-		stream.Reset()
+func registerNotifiees(host host.Host) {
+	var notifee network.NotifyBundle
+	notifee.ConnectedF = func(net network.Network, conn network.Conn) {
+		log.Info("connected to peer: ", conn.RemotePeer())
 	}
 
-	stream.Close()
+	notifee.DisconnectedF = func(net network.Network, conn network.Conn) {
+		log.Info("disconnected from peer: ", conn.RemotePeer())
+	}
+
+	host.Network().Notify(&notifee)
 }

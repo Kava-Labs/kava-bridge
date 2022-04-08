@@ -1,10 +1,13 @@
 package main_test
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 	"os/exec"
+	"syscall"
 	"testing"
+	"time"
 
 	"github.com/libp2p/go-libp2p-core/crypto"
 	crypto_pb "github.com/libp2p/go-libp2p-core/crypto/pb"
@@ -75,19 +78,60 @@ func TestNodePrivateKeyGeneration(t *testing.T) {
 }
 
 func TestShowNodeID(t *testing.T) {
-	cmd := execRelayer("network", "show-node-id", "--p2p.private-key-path", "test-fixtures/pk.key")
+	cmd := execRelayer("network", "show-node-id", "--p2p.private-key-path", "test-fixtures/pk1.key")
 	out, err := cmd.CombinedOutput()
 	require.NoError(t, err, fmt.Sprintf("expected '%s' to return successful status code", cmd.String()))
 
 	peerID, err := peer.Decode(string(out))
 	require.NoError(t, err)
 
-	pkData, err := os.ReadFile("test-fixtures/pk.key")
+	pkData, err := os.ReadFile("test-fixtures/pk1.key")
 	require.NoError(t, err)
 	privKey, err := crypto.UnmarshalPrivateKey(pkData)
 	require.NoError(t, err)
 
 	assert.True(t, peerID.MatchesPrivateKey(privKey))
+}
+
+func TestConnectPeers(t *testing.T) {
+	peer1 := startPeer(3000, "test-fixtures/pk1.key", "")
+	peer2 := startPeer(3001, "test-fixtures/pk2.key", "")
+
+	peer1Stdout, err := peer1.StderrPipe()
+	require.NoError(t, err, "expected peer 1 to have a stdout pipe")
+
+	err = peer1.Start()
+	require.NoErrorf(t, err, "expected peer 1 (%s) to start successfully", peer1.String())
+
+	err = peer2.Start()
+	require.NoErrorf(t, err, "expected peer 2 (%s) to start successfully", peer2.String())
+
+	go func() {
+		reader := bufio.NewReader(peer1Stdout)
+		line, err := reader.ReadString('\n')
+		for err == nil {
+			t.Log(line)
+			line, err = reader.ReadString('\n')
+		}
+	}()
+
+	time.Sleep(time.Second * 10)
+
+	err = peer1.Process.Signal(syscall.SIGINT)
+	require.NoError(t, err)
+
+	err = peer2.Process.Signal(syscall.SIGINT)
+	require.NoError(t, err)
+}
+
+func startPeer(port uint16, key string, target string) *exec.Cmd {
+	return execRelayer(
+		"network",
+		"connect",
+		"--p2p.port", fmt.Sprintf("%d", port),
+		"--p2p.private-key-path", key,
+		"--p2p.shared-key-path", "test-fixtures/psk.key",
+	)
 }
 
 func execRelayer(args ...string) *exec.Cmd {

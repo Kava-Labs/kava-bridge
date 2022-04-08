@@ -6,7 +6,6 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
 	logging "github.com/ipfs/go-log/v2"
 	"github.com/kava-labs/kava-bridge/relayer/p2p"
@@ -68,24 +67,25 @@ func newConnectCmd() *cobra.Command {
 
 			if len(args) == 1 {
 				log.Info("connecting to remote peer: ", args[0])
-				ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
-				defer cancel()
 
 				peerAddr, err := multiaddr.NewMultiaddr(args[0])
 				if err != nil {
 					return fmt.Errorf("could not parse peer multiaddr: %w", err)
 				}
 
-				if err := node.Connect(ctx, peerAddr); err != nil {
+				if err := node.Connect(context.Background(), peerAddr); err != nil {
 					return err
 				}
+
+				log.Info("Done! exiting...")
+				return node.Close()
 			}
 
 			ch := make(chan os.Signal, 1)
 			signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM)
 			<-ch
 			log.Info("Received signal, shutting down...")
-			return node.Host.Close()
+			return node.Close()
 		},
 	}
 
