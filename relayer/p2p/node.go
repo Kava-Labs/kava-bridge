@@ -77,7 +77,7 @@ func (n Node) Connect(ctx context.Context, addr ma.Multiaddr) error {
 	n.Host.Peerstore().AddAddrs(peerAddrInfo.ID, peerAddrInfo.Addrs, peerstore.RecentlyConnectedAddrTTL)
 
 	// Retry connection 10 times to account for peers starting later than others
-	err = retry(10, time.Second*5, func() error {
+	err = retry(10, time.Second, func() error {
 		return n.Host.Connect(ctx, *peerAddrInfo)
 	})
 	if err != nil {
@@ -94,7 +94,12 @@ func (n Node) Connect(ctx context.Context, addr ma.Multiaddr) error {
 	log.Info("received echo response: ", res)
 
 	log.Info("waiting for all echo requests")
-	<-n.done
+
+	select {
+	case <-n.done:
+	case <-ctx.Done():
+		return ctx.Err()
+	}
 
 	return nil
 }

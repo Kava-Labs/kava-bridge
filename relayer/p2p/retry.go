@@ -10,7 +10,6 @@ func retry(attempts int, sleep time.Duration, f func() error) error {
 	for i := 0; i < attempts; i++ {
 		if i > 0 {
 			time.Sleep(sleep)
-			sleep *= 2
 		}
 		err = f()
 		if err == nil {

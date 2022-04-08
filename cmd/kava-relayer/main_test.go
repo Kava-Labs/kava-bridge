@@ -1,13 +1,10 @@
 package main_test
 
 import (
-	"bufio"
 	"fmt"
 	"os"
 	"os/exec"
-	"syscall"
 	"testing"
-	"time"
 
 	"github.com/libp2p/go-libp2p-core/crypto"
 	crypto_pb "github.com/libp2p/go-libp2p-core/crypto/pb"
@@ -94,33 +91,22 @@ func TestShowNodeID(t *testing.T) {
 }
 
 func TestConnectPeers(t *testing.T) {
-	peer1 := startPeer(3000, "test-fixtures/pk1.key", "")
-	peer2 := startPeer(3001, "test-fixtures/pk2.key", "")
+	peer1 := startPeer(8765, "test-fixtures/pk1.key", "/ip4/127.0.0.1/tcp/8764/p2p/16Uiu2HAkwC5w1fC4xLL3hWjD6PGuk2qzGgsWdXfNeqMi8xDn2AT7")
+	peer2 := startPeer(8764, "test-fixtures/pk2.key", "/ip4/127.0.0.1/tcp/8765/p2p/16Uiu2HAm9z3t15JpqBbPQJ1ZLHm6w1AXD6M2FXdCG3GLoY4iDcD9")
 
-	peer1Stdout, err := peer1.StderrPipe()
-	require.NoError(t, err, "expected peer 1 to have a stdout pipe")
+	peer1.Stderr = os.Stderr
+	peer2.Stderr = os.Stderr
 
-	err = peer1.Start()
+	err := peer1.Start()
 	require.NoErrorf(t, err, "expected peer 1 (%s) to start successfully", peer1.String())
 
 	err = peer2.Start()
 	require.NoErrorf(t, err, "expected peer 2 (%s) to start successfully", peer2.String())
 
-	go func() {
-		reader := bufio.NewReader(peer1Stdout)
-		line, err := reader.ReadString('\n')
-		for err == nil {
-			t.Log(line)
-			line, err = reader.ReadString('\n')
-		}
-	}()
-
-	time.Sleep(time.Second * 10)
-
-	err = peer1.Process.Signal(syscall.SIGINT)
+	err = peer1.Wait()
 	require.NoError(t, err)
 
-	err = peer2.Process.Signal(syscall.SIGINT)
+	err = peer2.Wait()
 	require.NoError(t, err)
 }
 
@@ -128,6 +114,7 @@ func startPeer(port uint16, key string, target string) *exec.Cmd {
 	return execRelayer(
 		"network",
 		"connect",
+		target,
 		"--p2p.port", fmt.Sprintf("%d", port),
 		"--p2p.private-key-path", key,
 		"--p2p.shared-key-path", "test-fixtures/psk.key",

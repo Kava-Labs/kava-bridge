@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	logging "github.com/ipfs/go-log/v2"
 	"github.com/kava-labs/kava-bridge/relayer/p2p"
@@ -73,7 +74,10 @@ func newConnectCmd() *cobra.Command {
 					return fmt.Errorf("could not parse peer multiaddr: %w", err)
 				}
 
-				if err := node.Connect(context.Background(), peerAddr); err != nil {
+				ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+				defer cancel()
+
+				if err := node.Connect(ctx, peerAddr); err != nil {
 					return err
 				}
 
