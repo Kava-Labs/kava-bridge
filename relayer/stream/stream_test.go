@@ -34,16 +34,7 @@ func TestReadWrite(t *testing.T) {
 		},
 		{
 			"empty",
-			&types.Echo{},
-			errArgs{
-				expectPass: true,
-			},
-		},
-		{
-			"longish",
-			&types.Echo{
-				Message: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-			},
+			&prototypes.Empty{},
 			errArgs{
 				expectPass: true,
 			},
