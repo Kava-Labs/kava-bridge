@@ -5,6 +5,8 @@ import (
 	"path"
 	"strings"
 
+	logging "github.com/ipfs/go-log/v2"
+
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
@@ -60,12 +62,13 @@ func initConfig() {
 		}
 	}
 
-	// Set the default log level to info and allow config via viper, default level of go-log is debug
+	// Set the default log level to info, default level of go-log is debug
+	// TODO: Does not support log level per subsystem such as with `GOLOG_LOG_LEVEL`
 	viper.SetDefault("log_level", "info")
 	logLevelStr := viper.GetString("log_level")
 
-	// Set GOLOG_LOG_LEVEL to override the default log level, loggers are not
-	// manually set since this allows for per subsystem log levels
-	err := os.Setenv("GOLOG_LOG_LEVEL", logLevelStr)
+	logLevel, err := logging.LevelFromString(logLevelStr)
 	cobra.CheckErr(err)
+
+	logging.SetAllLoggers(logLevel)
 }
