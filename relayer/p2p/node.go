@@ -50,10 +50,7 @@ func NewNode(options NodeOptions, done chan bool) (*Node, error) {
 		done:        done,
 	}
 
-	log.Infof("require %d echos to exit", options.EchoRequiredPeers)
-
 	service.NewEchoService(host, done, options.EchoRequiredPeers)
-
 	registerNotifiees(host)
 
 	return node, nil
