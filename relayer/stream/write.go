@@ -8,6 +8,8 @@ import (
 	"github.com/gogo/protobuf/proto"
 )
 
+const MAX_MESSAGE_SIZE = 1024 * 1024
+
 func WriteProtoMessage(w io.Writer, msg proto.Message) error {
 	writer := protoio.NewUint32DelimitedWriter(w, binary.BigEndian)
 
@@ -15,7 +17,7 @@ func WriteProtoMessage(w io.Writer, msg proto.Message) error {
 }
 
 func ReadProtoMessage(r io.Reader, msg proto.Message) error {
-	writer := protoio.NewUint32DelimitedReader(r, binary.BigEndian, 1024*1024)
+	writer := protoio.NewUint32DelimitedReader(r, binary.BigEndian, MAX_MESSAGE_SIZE)
 
 	return writer.ReadMsg(msg)
 }
