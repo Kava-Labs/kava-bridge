@@ -16,7 +16,7 @@ func retry(attempts int, sleep time.Duration, f func() error) error {
 			return nil
 		}
 
-		log.Debug("retry", "attempt", i, "error", err)
+		log.Debugw("retry", "attempt", i, "error", err)
 	}
 
 	return fmt.Errorf("failed after %d attempts: %w", attempts, err)

@@ -89,7 +89,7 @@ func doEcho(s network.Stream) error {
 		return err
 	}
 
-	log.Debug("read: %s", str)
+	log.Debugf("read: %s", str)
 	_, err = s.Write([]byte(str))
 	return err
 }
