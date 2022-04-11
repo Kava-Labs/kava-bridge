@@ -50,6 +50,10 @@ func NewNode(options NodeOptions, done chan bool) (*Node, error) {
 		done:        done,
 	}
 
+	log.Infof("require %d echos to exit", options.EchoRequiredPeers)
+
+	service.NewEchoService(host, done, options.EchoRequiredPeers)
+
 	registerNotifiees(host)
 
 	return node, nil
@@ -66,6 +70,11 @@ func (n Node) GetMultiAddress() ([]ma.Multiaddr, error) {
 
 func (n Node) ConnectToPeers(ctx context.Context, peerAddrInfos []*peer.AddrInfo) error {
 	for _, peer := range peerAddrInfos {
+		// Ignore self
+		if n.Host.ID() == peer.ID {
+			continue
+		}
+
 		// TODO: Determine TTL for peer
 		n.Host.Peerstore().AddAddrs(peer.ID, peer.Addrs, peerstore.RecentlyConnectedAddrTTL)
 
