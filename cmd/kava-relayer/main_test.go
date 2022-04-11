@@ -91,42 +91,30 @@ func TestShowNodeID(t *testing.T) {
 }
 
 func TestConnectPeers(t *testing.T) {
-	peer1 := startPeer(
-		8765,
-		"test-fixtures/pk1.key",
-		"/ip4/127.0.0.1/tcp/8764/p2p/16Uiu2HAkwC5w1fC4xLL3hWjD6PGuk2qzGgsWdXfNeqMi8xDn2AT7",
-	)
-	peer2 := startPeer(
-		8764,
-		"test-fixtures/pk2.key",
-		"/ip4/127.0.0.1/tcp/8765/p2p/16Uiu2HAm9z3t15JpqBbPQJ1ZLHm6w1AXD6M2FXdCG3GLoY4iDcD9",
-	)
+	var peers []*TestPeer
+	var peerAddrs []string
 
-	peer1.Stderr = os.Stderr
-	peer2.Stderr = os.Stderr
+	// Start at 1 for pk1.key
+	for i := 1; i <= 5; i++ {
+		peer := NewTestPeer(i)
+		peers = append(peers, peer)
+		peerAddrs = append(peerAddrs, peer.GetMultiAddr())
+	}
 
-	err := peer1.Start()
-	require.NoErrorf(t, err, "expected peer 1 (%s) to start successfully", peer1.String())
+	for i, peer := range peers {
+		// Remove current peer id from peerAddrs. Need to copy to not modify original slice.
+		peerAddrsWithoutSelf := make([]string, len(peerAddrs))
+		copy(peerAddrsWithoutSelf, peerAddrs)
+		peerAddrsWithoutSelf = append(peerAddrsWithoutSelf[:i], peerAddrsWithoutSelf[i+1:]...)
 
-	err = peer2.Start()
-	require.NoErrorf(t, err, "expected peer 2 (%s) to start successfully", peer2.String())
+		err := peer.Start(peerAddrsWithoutSelf)
+		require.NoErrorf(t, err, "expected peer %d (%s) to start successfully", i, peer.cmd.String())
+	}
 
-	err = peer1.Wait()
-	require.NoError(t, err)
-
-	err = peer2.Wait()
-	require.NoError(t, err)
-}
-
-func startPeer(port uint16, key string, targets string) *exec.Cmd {
-	return execRelayer(
-		"network",
-		"connect",
-		"--p2p.peer-multiaddrs", targets,
-		"--p2p.port", fmt.Sprintf("%d", port),
-		"--p2p.private-key-path", key,
-		"--p2p.shared-key-path", "test-fixtures/psk.key",
-	)
+	for i, peer := range peers {
+		err := peer.Wait()
+		require.NoErrorf(t, err, "expected peer %d (%s) to return with exit code 0", i, peer.cmd.String())
+	}
 }
 
 func execRelayer(args ...string) *exec.Cmd {

@@ -74,7 +74,7 @@ func newConnectCmd() *cobra.Command {
 			}
 
 			log.Info("host multiaddress: ", multiAddr)
-			log.Info("connecting to remote peers: ", peerAddrInfos)
+			log.Infof("connecting to %d remote peers: ", len(peerAddrInfos), peerAddrInfos)
 
 			ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 			defer cancel()
@@ -95,6 +95,8 @@ func newConnectCmd() *cobra.Command {
 		},
 	}
 
+	// Port is randomized if set to 0, but we don't want ports to change every
+	// time the relayer is run.
 	cmd.Flags().Uint16(p2pFlagPort, 0, "Host port to listen on (required)")
 	cmd.Flags().String(p2pFlagPrivateKeyPath, "", "Path to the peer private key (required)")
 	cmd.Flags().String(p2pFlagSharedKeyPath, "", "Path to the shared private network key (required)")
