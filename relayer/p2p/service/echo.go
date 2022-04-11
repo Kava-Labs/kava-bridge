@@ -48,7 +48,11 @@ func (es *EchoService) onEchoRequest(s network.Stream) {
 
 	if err := doEcho(s); err != nil {
 		log.Error(err)
-		s.Reset()
+
+		// Close both ends of stream, log to debug instead of error as it's not
+		// an important err
+		err = s.Reset()
+		log.Debugf("error closing stream: %s", err)
 	} else {
 		s.Close()
 	}
