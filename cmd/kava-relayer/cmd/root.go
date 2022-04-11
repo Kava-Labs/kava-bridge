@@ -59,4 +59,13 @@ func initConfig() {
 			cobra.CheckErr(err)
 		}
 	}
+
+	// Set the default log level to info and allow config via viper, default level of go-log is debug
+	viper.SetDefault("log_level", "info")
+	logLevelStr := viper.GetString("log_level")
+
+	// Set GOLOG_LOG_LEVEL to override the default log level, loggers are not
+	// manually set since this allows for per subsystem log levels
+	err := os.Setenv("GOLOG_LOG_LEVEL", logLevelStr)
+	cobra.CheckErr(err)
 }
