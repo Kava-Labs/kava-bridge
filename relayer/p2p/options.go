@@ -9,4 +9,5 @@ type NodeOptions struct {
 	Port              uint16
 	NetworkPrivateKey pnet.PSK
 	NodePrivateKey    crypto.PrivKey
+	EchoRequiredPeers int
 }

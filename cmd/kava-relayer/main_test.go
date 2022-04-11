@@ -91,8 +91,16 @@ func TestShowNodeID(t *testing.T) {
 }
 
 func TestConnectPeers(t *testing.T) {
-	peer1 := startPeer(8765, "test-fixtures/pk1.key", "/ip4/127.0.0.1/tcp/8764/p2p/16Uiu2HAkwC5w1fC4xLL3hWjD6PGuk2qzGgsWdXfNeqMi8xDn2AT7")
-	peer2 := startPeer(8764, "test-fixtures/pk2.key", "/ip4/127.0.0.1/tcp/8765/p2p/16Uiu2HAm9z3t15JpqBbPQJ1ZLHm6w1AXD6M2FXdCG3GLoY4iDcD9")
+	peer1 := startPeer(
+		8765,
+		"test-fixtures/pk1.key",
+		"/ip4/127.0.0.1/tcp/8764/p2p/16Uiu2HAkwC5w1fC4xLL3hWjD6PGuk2qzGgsWdXfNeqMi8xDn2AT7",
+	)
+	peer2 := startPeer(
+		8764,
+		"test-fixtures/pk2.key",
+		"/ip4/127.0.0.1/tcp/8765/p2p/16Uiu2HAm9z3t15JpqBbPQJ1ZLHm6w1AXD6M2FXdCG3GLoY4iDcD9",
+	)
 
 	peer1.Stderr = os.Stderr
 	peer2.Stderr = os.Stderr
@@ -110,11 +118,11 @@ func TestConnectPeers(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func startPeer(port uint16, key string, target string) *exec.Cmd {
+func startPeer(port uint16, key string, targets string) *exec.Cmd {
 	return execRelayer(
 		"network",
 		"connect",
-		target,
+		"--p2p.peer-multiaddrs", targets,
 		"--p2p.port", fmt.Sprintf("%d", port),
 		"--p2p.private-key-path", key,
 		"--p2p.shared-key-path", "test-fixtures/psk.key",

@@ -42,9 +42,8 @@ func NewEchoService(h host.Host, done chan bool, minPeers int) *EchoService {
 }
 
 func (es *EchoService) onEchoRequest(s network.Stream) {
-	log.Info("listener received new echo stream", "peerID", s.Conn().RemotePeer())
+	log.Debugw("listener received new echo stream", "peerID", s.Conn().RemotePeer())
 	es.peers[s.Conn().RemotePeer()] = true
-	log.Info(es.peers)
 
 	if err := doEcho(s); err != nil {
 		log.Error(err)

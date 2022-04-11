@@ -46,7 +46,7 @@ func NewNode(options NodeOptions, done chan bool) (*Node, error) {
 	node := &Node{
 		Host: host,
 		// Sets stream handler
-		EchoService: service.NewEchoService(host, done, 1),
+		EchoService: service.NewEchoService(host, done, options.EchoRequiredPeers),
 		done:        done,
 	}
 
@@ -64,31 +64,42 @@ func (n Node) GetMultiAddress() ([]ma.Multiaddr, error) {
 	return peer.AddrInfoToP2pAddrs(&peerInfo)
 }
 
-func (n Node) Connect(ctx context.Context, addr ma.Multiaddr) error {
-	peerAddrInfo, err := peer.AddrInfoFromP2pAddr(addr)
-	if err != nil {
-		return err
+func (n Node) ConnectToPeers(ctx context.Context, peerAddrInfos []*peer.AddrInfo) error {
+	for _, peer := range peerAddrInfos {
+		// TODO: Determine TTL for peer
+		n.Host.Peerstore().AddAddrs(peer.ID, peer.Addrs, peerstore.RecentlyConnectedAddrTTL)
+
+		// Retry connection 10 times to account for peers starting later than others.
+		// This is not entirely necessary as using a service will also connect
+		// to the node, but connecting prior to making requests ensures that
+		// this node can connect to the peer.
+		err := retry(10, time.Second, func() error {
+			return n.Host.Connect(ctx, *peer)
+		})
+		if err != nil {
+			return err
+		}
 	}
 
-	// TODO: Determine TTL for peer
-	n.Host.Peerstore().AddAddrs(peerAddrInfo.ID, peerAddrInfo.Addrs, peerstore.RecentlyConnectedAddrTTL)
+	return nil
+}
 
-	// Retry connection 10 times to account for peers starting later than others
-	err = retry(10, time.Second, func() error {
-		return n.Host.Connect(ctx, *peerAddrInfo)
-	})
-	if err != nil {
-		return err
+func (n Node) EchoPeers(ctx context.Context) error {
+	log.Debugf("sending echo to %d peers", len(n.Host.Peerstore().Peers())-1)
+
+	for _, peerID := range n.Host.Peerstore().Peers() {
+		// Skip self
+		if n.Host.ID() == peerID {
+			continue
+		}
+
+		res, err := n.EchoService.Echo(ctx, peerID, "hello world!\n")
+		if err != nil {
+			return err
+		}
+
+		log.Info("received echo response: ", res)
 	}
-
-	log.Info("success")
-
-	res, err := n.EchoService.Echo(ctx, peerAddrInfo.ID, "hello world!\n")
-	if err != nil {
-		return err
-	}
-
-	log.Info("received echo response: ", res)
 
 	return nil
 }

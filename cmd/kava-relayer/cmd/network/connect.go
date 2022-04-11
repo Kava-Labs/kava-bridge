@@ -4,13 +4,10 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"os/signal"
-	"syscall"
 	"time"
 
 	logging "github.com/ipfs/go-log/v2"
 	"github.com/kava-labs/kava-bridge/relayer/p2p"
-	"github.com/multiformats/go-multiaddr"
 	"github.com/multiformats/go-multibase"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -20,9 +17,9 @@ var log = logging.Logger("connect")
 
 func newConnectCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "connect [remote peer multiaddr]",
+		Use:   "connect",
 		Short: "Connects the relayer to peers",
-		Args:  cobra.MaximumNArgs(1),
+		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			err := viper.BindPFlags(cmd.Flags())
 			cobra.CheckErr(err)
@@ -30,6 +27,7 @@ func newConnectCmd() *cobra.Command {
 			port := viper.GetUint(p2pFlagPort)
 			pkPath := viper.GetString(p2pFlagPrivateKeyPath)
 			privateSharedKeyPath := viper.GetString(p2pFlagSharedKeyPath)
+			peerAddrStrings := viper.GetStringSlice(p2pFlagPeerMultiAddrs)
 
 			privKeyData, err := os.ReadFile(pkPath)
 			if err != nil {
@@ -49,10 +47,17 @@ func newConnectCmd() *cobra.Command {
 				return err
 			}
 
+			peerAddrInfos, err := p2p.ParseMultiAddrSlice(peerAddrStrings)
+			if err != nil {
+				return err
+			}
+
 			options := p2p.NodeOptions{
 				Port:              uint16(port),
 				NodePrivateKey:    privKey,
 				NetworkPrivateKey: privSharedKey,
+				// Require response from all peers
+				EchoRequiredPeers: len(peerAddrInfos),
 			}
 
 			// Need to be buffered by 1 to not block
@@ -67,34 +72,25 @@ func newConnectCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
+
 			log.Info("host multiaddress: ", multiAddr)
+			log.Info("connecting to remote peers: ", peerAddrInfos)
 
-			if len(args) == 1 {
-				log.Info("connecting to remote peer: ", args[0])
+			ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+			defer cancel()
 
-				peerAddr, err := multiaddr.NewMultiaddr(args[0])
-				if err != nil {
-					return fmt.Errorf("could not parse peer multiaddr: %w", err)
-				}
-
-				ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
-				defer cancel()
-
-				if err := node.Connect(ctx, peerAddr); err != nil {
-					return err
-				}
-
-				log.Info("waiting for all echo requests")
-
-				<-done
-				log.Info("Done! exiting...")
-				return node.Close()
+			if err := node.ConnectToPeers(ctx, peerAddrInfos); err != nil {
+				return err
 			}
 
-			ch := make(chan os.Signal, 1)
-			signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM)
-			<-ch
-			log.Info("Received signal, shutting down...")
+			if err := node.EchoPeers(ctx); err != nil {
+				return err
+			}
+
+			log.Info("waiting for all echo requests")
+
+			<-done
+			log.Info("Done! exiting...")
 			return node.Close()
 		},
 	}
@@ -102,11 +98,13 @@ func newConnectCmd() *cobra.Command {
 	cmd.Flags().Uint16(p2pFlagPort, 0, "Host port to listen on (required)")
 	cmd.Flags().String(p2pFlagPrivateKeyPath, "", "Path to the peer private key (required)")
 	cmd.Flags().String(p2pFlagSharedKeyPath, "", "Path to the shared private network key (required)")
+	cmd.Flags().StringSlice(p2pFlagPeerMultiAddrs, []string{}, "List of peer multiaddrs (required)")
 
 	// Ignore errors, err only if flags do not exist
 	_ = cmd.MarkFlagRequired(p2pFlagPort)
 	_ = cmd.MarkFlagRequired(p2pFlagPrivateKeyPath)
 	_ = cmd.MarkFlagRequired(p2pFlagSharedKeyPath)
+	_ = cmd.MarkFlagRequired(p2pFlagPeerMultiAddrs)
 
 	return cmd
 }
