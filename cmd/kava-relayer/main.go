@@ -16,9 +16,10 @@ func main() {
 		os.Exit(1)
 	}
 
-	// TODO: Default logger is debug level, we want to have info default but also
-	// allow changing via GOLOG_LOG_LEVEL env var.
-	logging.SetAllLoggers(logging.LevelInfo)
+	// Set the default log level to info, default level of go-log is debug
+	if _, present := os.LookupEnv("GOLOG_LOG_LEVEL"); !present {
+		logging.SetAllLoggers(logging.LevelInfo)
+	}
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
