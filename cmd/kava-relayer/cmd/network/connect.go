@@ -55,7 +55,10 @@ func newConnectCmd() *cobra.Command {
 				NetworkPrivateKey: privSharedKey,
 			}
 
-			node, err := p2p.NewNode(options)
+			// Need to be buffered by 1 to not block
+			done := make(chan bool, 1)
+
+			node, err := p2p.NewNode(options, done)
 			if err != nil {
 				return err
 			}
@@ -81,6 +84,9 @@ func newConnectCmd() *cobra.Command {
 					return err
 				}
 
+				log.Info("waiting for all echo requests")
+
+				<-done
 				log.Info("Done! exiting...")
 				return node.Close()
 			}

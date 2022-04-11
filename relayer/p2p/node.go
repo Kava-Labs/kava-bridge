@@ -26,7 +26,7 @@ type Node struct {
 	done        chan bool
 }
 
-func NewNode(options NodeOptions) (*Node, error) {
+func NewNode(options NodeOptions, done chan bool) (*Node, error) {
 	libp2pOpts := []libp2p.Option{
 		libp2p.ListenAddrStrings(fmt.Sprintf("/ip4/0.0.0.0/tcp/%d", options.Port)),
 		libp2p.Transport(tcp.NewTCPTransport),
@@ -42,9 +42,6 @@ func NewNode(options NodeOptions) (*Node, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	// Need to be buffered by 1 to not block
-	done := make(chan bool, 1)
 
 	node := &Node{
 		Host: host,
@@ -92,14 +89,6 @@ func (n Node) Connect(ctx context.Context, addr ma.Multiaddr) error {
 	}
 
 	log.Info("received echo response: ", res)
-
-	log.Info("waiting for all echo requests")
-
-	select {
-	case <-n.done:
-	case <-ctx.Done():
-		return ctx.Err()
-	}
 
 	return nil
 }
