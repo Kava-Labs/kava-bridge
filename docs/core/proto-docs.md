@@ -37,6 +37,9 @@
   
     - [Msg](#bridge.v1beta1.Msg)
   
+- [relayer/v1beta1/message.proto](#relayer/v1beta1/message.proto)
+    - [MessageData](#relayer.v1beta1.MessageData)
+  
 - [Scalar Value Types](#scalar-value-types)
 
 
@@ -419,6 +422,37 @@ Msg defines the bridge Msg service.
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
 | `BridgeEthereumToKava` | [MsgBridgeEthereumToKava](#bridge.v1beta1.MsgBridgeEthereumToKava) | [MsgBridgeEthereumToKavaResponse](#bridge.v1beta1.MsgBridgeEthereumToKavaResponse) | BridgeEthereumToKava defines a method for bridging ERC20 tokens from Ethereum to Kava. | |
 | `ConvertCoinToERC20` | [MsgConvertCoinToERC20](#bridge.v1beta1.MsgConvertCoinToERC20) | [MsgConvertCoinToERC20Response](#bridge.v1beta1.MsgConvertCoinToERC20Response) | ConvertCoinToERC20 defines a method for converting sdk.Coin to Kava ERC20. | |
+
+ <!-- end services -->
+
+
+
+<a name="relayer/v1beta1/message.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## relayer/v1beta1/message.proto
+
+
+
+<a name="relayer.v1beta1.MessageData"></a>
+
+### MessageData
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `payload` | [google.protobuf.Any](#google.protobuf.Any) |  |  |
+
+
+
+
+
+ <!-- end messages -->
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
 
  <!-- end services -->
 
