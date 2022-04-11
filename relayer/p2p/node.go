@@ -47,12 +47,12 @@ func NewNode(options NodeOptions) (*Node, error) {
 	done := make(chan bool, 1)
 
 	node := &Node{
-		Host:        host,
+		Host: host,
+		// Sets stream handler
 		EchoService: service.NewEchoService(host, done, 1),
 		done:        done,
 	}
 
-	host.SetStreamHandler(service.ProtocolID, node.EchoService.EchoHandler)
 	registerNotifiees(host)
 
 	return node, nil

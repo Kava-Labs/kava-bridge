@@ -37,11 +37,11 @@ func NewEchoService(h host.Host, done chan bool, minPeers int) *EchoService {
 
 	// Labled as (Thread-safe), but double check if we need to use a sync.Mutex
 	// in EchoService for state modifications in EchoHandler
-	h.SetStreamHandler(ProtocolID, es.EchoHandler)
+	h.SetStreamHandler(ProtocolID, es.onEchoRequest)
 	return es
 }
 
-func (es *EchoService) EchoHandler(s network.Stream) {
+func (es *EchoService) onEchoRequest(s network.Stream) {
 	log.Info("listener received new echo stream", "peerID", s.Conn().RemotePeer())
 	es.peers[s.Conn().RemotePeer()] = true
 	log.Info(es.peers)
