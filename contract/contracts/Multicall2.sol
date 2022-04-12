@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Derived from https://github.com/makerdao/multicall/blob/master/src/Multicall2.sol
 
-pragma solidity ^0.8.0 ;
+pragma solidity ^0.8.0;
 pragma experimental ABIEncoderV2;
 
 /// @title Multicall2 - Aggregate results from multiple read-only function calls
