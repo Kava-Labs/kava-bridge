@@ -65,16 +65,12 @@ func TestReadWrite(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			any, err := prototypes.MarshalAny(tc.payload)
+			msg, err := types.NewMessageData(tc.payload)
 			require.NoError(t, err)
-
-			msg := &types.MessageData{
-				Payload: any,
-			}
 
 			// Write/read from buffer
 			var buf bytes.Buffer
-			err = stream.WriteProtoMessage(&buf, msg)
+			err = stream.WriteProtoMessage(&buf, &msg)
 			require.NoError(t, err)
 
 			var msgRes types.MessageData
@@ -85,7 +81,7 @@ func TestReadWrite(t *testing.T) {
 
 				// Unpack response
 				var unpacked prototypes.DynamicAny
-				err = prototypes.UnmarshalAny(msgRes.Payload, &unpacked)
+				err = msgRes.UnpackPayload(&unpacked)
 				require.NoError(t, err)
 
 				require.Equal(t, tc.payload, unpacked.Message, "unpacked message should match original")
