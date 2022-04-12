@@ -2,6 +2,7 @@ package stream_test
 
 import (
 	"bytes"
+	"encoding/binary"
 	"io"
 	"testing"
 
@@ -94,4 +95,33 @@ func TestReadWrite(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestRead_ExceedSize(t *testing.T) {
+	var buf bytes.Buffer
+
+	// Max u32
+	buf.Write([]byte{255, 255, 255, 255})
+
+	var msgRes types.MessageData
+	err := stream.ReadProtoMessage(&buf, &msgRes)
+
+	require.Error(t, err)
+	require.ErrorIs(t, io.ErrShortBuffer, err)
+}
+
+func TestRead_MaxSizeEmptyData(t *testing.T) {
+	var buf bytes.Buffer
+	maxSize := stream.MAX_MESSAGE_SIZE
+
+	b := make([]byte, 4)
+	binary.BigEndian.PutUint32(b, uint32(maxSize))
+
+	buf.Write(b)
+
+	var msgRes types.MessageData
+	err := stream.ReadProtoMessage(&buf, &msgRes)
+
+	require.Error(t, err)
+	require.ErrorIs(t, io.EOF, err)
 }
