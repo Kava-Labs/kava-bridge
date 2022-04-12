@@ -11,7 +11,7 @@ Each message contains the following data:
 * Payload, protobuf Any data
 * Signature of peer that initiated broadcast
 * Initiating peer ID
-* Unique ID (UUID or random 32 bytes?)
+* Unique ID (UUID or random 32 bytes?, may not be necessary with sequence)
 * Sequence
 * Created timestamp to keep track of TTL / deadline to expire
 
@@ -26,6 +26,10 @@ Peer A wants to broadcast x.
 2. Every other peer re-sends x to everyone else including peer A.
 3. Every peer checks that they received the same values.
 4. If any inconsistent values, abort. Otherwise, x is output.
+
+**Note:** This requires *all* nodes to receive the same message and does not
+cover cases such as an offline node or a malicious node not responding as a
+DoS.
 
 ```go
 var (
@@ -95,6 +99,9 @@ func main() {
         }
 
         // Received a message from all other peers AND they all match
+
+        // TODO: Handle DoS or offline nodes, e.g only require m of n? but we 
+        // cannot tell between offline nodes, malicious nodes, or just transport issues.
         if len(peerMsgs) == len(peerList) {
             confirmedMessages <- msg
         }
