@@ -15,8 +15,8 @@ Each message contains the following data:
 * Sequence
 * Created timestamp to keep track of TTL / deadline to expire
 
-Initiating peer pubkey is *not* included in the payload, each node can fetch it
-directly with the peer ID to verify the message directly.
+Initiating peer pubkey is *not* included in the message as each node can fetch
+it directly with the peer ID to verify the message.
 
 ## Algorithm
 
@@ -107,4 +107,4 @@ func main() {
         }
     }
 }
-```
+
