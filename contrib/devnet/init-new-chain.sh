@@ -80,7 +80,7 @@ jq '.app_state.bridge.params.enabled_erc20_tokens = [
         decimals: 18
     },
     {
-        address: "0x60D5BE29a0ceb5888F15035d8CcdeACCD5Fd837F",
+        address: "0x4Fb48E68842bb59f07569c623ACa5826b600F8F7",
         name: "USDC",
         symbol: "USDC",
         decimals: 6
