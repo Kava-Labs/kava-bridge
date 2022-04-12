@@ -458,7 +458,7 @@ Msg defines the bridge Msg service.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `payload` | [google.protobuf.Any](#google.protobuf.Any) |  |  |
+| `payload` | [google.protobuf.Any](#google.protobuf.Any) |  | Customtype workaround for not having to use a separate protocgen.sh script |
 
 
 

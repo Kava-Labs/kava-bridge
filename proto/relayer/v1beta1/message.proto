@@ -4,7 +4,7 @@ package relayer.v1beta1;
 import "gogoproto/gogo.proto";
 import "google/protobuf/any.proto";
 
-option go_package = "github.com/kava-labs/kava-bridge/relayer/stream/types";
+option go_package = "github.com/kava-labs/kava-bridge/relayer/types";
 
 message MessageData {
   // Customtype workaround for not having to use a separate protocgen.sh script

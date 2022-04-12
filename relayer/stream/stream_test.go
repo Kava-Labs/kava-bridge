@@ -9,7 +9,7 @@ import (
 	"github.com/gogo/protobuf/proto"
 	prototypes "github.com/gogo/protobuf/types"
 	"github.com/kava-labs/kava-bridge/relayer/stream"
-	"github.com/kava-labs/kava-bridge/relayer/stream/types"
+	"github.com/kava-labs/kava-bridge/relayer/types"
 	"github.com/stretchr/testify/require"
 )
 
