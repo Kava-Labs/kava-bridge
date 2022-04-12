@@ -1,6 +1,12 @@
 import { BigNumberish } from "ethers";
 import { ethers } from "hardhat";
-import { Bridge, ERC20MintableBurnable, WETH9 } from "../typechain-types";
+import {
+  Bridge,
+  ERC20MintableBurnable,
+  WETH9,
+  Multicall,
+  Multicall2,
+} from "../typechain-types";
 
 const testUserAddress = "0x7Bbf300890857b8c241b219C6a489431669b3aFA";
 const testRelayerAddress = "0xa2F728F997f62F47D4262a70947F6c36885dF9fa";
@@ -60,6 +66,12 @@ export async function main(): Promise<void> {
     await erc20USDC.name(),
     erc20USDC.address
   );
+
+  const multicall = await deployMulticall();
+  console.log("Multicall deployed:\n\tAddress: %s", multicall.address);
+
+  const multicall2 = await deployMulticall2();
+  console.log("Multicall2 deployed:\n\tAddress: %s", multicall2.address);
 
   console.log("Completed contracts deployment");
 
@@ -127,6 +139,24 @@ export async function deployERC20WithAmounts(
   }
 
   return erc20;
+}
+
+export async function deployMulticall(): Promise<Multicall> {
+  const multicallFactory = await ethers.getContractFactory("Multicall");
+  const multicall = await multicallFactory.deploy();
+
+  await multicall.deployed();
+
+  return multicall;
+}
+
+export async function deployMulticall2(): Promise<Multicall2> {
+  const multicall2Factory = await ethers.getContractFactory("Multicall2");
+  const multicall2 = await multicall2Factory.deploy();
+
+  await multicall2.deployed();
+
+  return multicall2;
 }
 
 // Only run main() when the script is run directly

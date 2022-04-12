@@ -47,8 +47,10 @@ subject to change.
 * WETH Address: `0x6098c27D41ec6dc280c2200A737D443b0AaA2E8F`
 * ERC20 Tokens (mintable by signer, see [`ERC20MintableBurnable.sol`]):
   * `MEOW` Address (18 decimals): `0x8223259205A3E31C54469fCbfc9F7Cf83D515ff6`
-  * `USDC` Address (6 decimals): `0x60D5BE29a0ceb5888F15035d8CcdeACCD5Fd837F`
+  * `USDC` Address (6 decimals): `0x4Fb48E68842bb59f07569c623ACa5826b600F8F7`
 * Test User Address: `0x7Bbf300890857b8c241b219C6a489431669b3aFA`
+* Multicall Address: `0xB94efB606287D37732Fe871BDdD015c5E7Ab2e76`
+* Multicall2 Address: `0x77C3c07d77a5E99Fffdc2635CcdB66b16e3a1Bed`
 
 ### Install
 

@@ -14,6 +14,8 @@ export type { ERC20ReturnFalseMock } from "./ERC20ReturnFalseMock";
 export type { ERC20ReturnTrueMock } from "./ERC20ReturnTrueMock";
 export type { SequenceMock } from "./SequenceMock";
 export type { Withdrawer } from "./Withdrawer";
+export type { Multicall } from "./Multicall";
+export type { Multicall2 } from "./Multicall2";
 export type { WETH9 } from "./WETH9";
 export type { WKAVA } from "./WKAVA";
 
@@ -30,5 +32,7 @@ export { ERC20ReturnFalseMock__factory } from "./factories/ERC20ReturnFalseMock_
 export { ERC20ReturnTrueMock__factory } from "./factories/ERC20ReturnTrueMock__factory";
 export { SequenceMock__factory } from "./factories/SequenceMock__factory";
 export { Withdrawer__factory } from "./factories/Withdrawer__factory";
+export { Multicall__factory } from "./factories/Multicall__factory";
+export { Multicall2__factory } from "./factories/Multicall2__factory";
 export { WETH9__factory } from "./factories/WETH9__factory";
 export { WKAVA__factory } from "./factories/WKAVA__factory";
