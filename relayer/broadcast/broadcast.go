@@ -32,12 +32,13 @@ type Broadcaster struct {
 	outboundStreams     map[peer.ID]network.Stream
 
 	// Map of peers
-	peersLock sync.Mutex
+	peersLock sync.RWMutex
 	peers     map[peer.ID]struct{}
 
+	// Notifications of new peers
 	newPeers chan peer.ID
 
-	// Incoming messages from other peers
+	// Incoming messages from other peers (NOT verified)
 	incoming chan *types.MessageData
 
 	// Messages to send to all other peers
@@ -54,7 +55,7 @@ func NewBroadcaster(ctx context.Context, host host.Host) *Broadcaster {
 		inboundStreams:      make(map[peer.ID]network.Stream),
 		outboundStreamsLock: sync.Mutex{},
 		outboundStreams:     make(map[peer.ID]network.Stream),
-		peersLock:           sync.Mutex{},
+		peersLock:           sync.RWMutex{},
 		peers:               make(map[peer.ID]struct{}),
 		newPeers:            make(chan peer.ID),
 		incoming:            make(chan *types.MessageData),
@@ -73,8 +74,10 @@ func NewBroadcaster(ctx context.Context, host host.Host) *Broadcaster {
 	return b
 }
 
+// GetPeerCount returns the number of peers connected to the broadcaster.
 func (b *Broadcaster) GetPeerCount() int {
-	// TODO: Might need RwLock
+	b.peersLock.RLock()
+	defer b.peersLock.RUnlock()
 
 	return len(b.peers)
 }
@@ -102,8 +105,8 @@ func (b *Broadcaster) handleNewPeers(ctx context.Context) {
 	}
 }
 
+// SendProtoMessage sends a proto message to all connected peers.
 func (b *Broadcaster) SendProtoMessage(
-	s network.Stream,
 	pb proto.Message,
 ) error {
 	msg, err := types.NewMessageData(pb)
@@ -111,7 +114,14 @@ func (b *Broadcaster) SendProtoMessage(
 		return err
 	}
 
-	return stream.NewProtoMessageWriter(s).WriteMsg(&msg)
+	// TODO: Make concurrent
+	for _, ch := range b.outboundStreams {
+		if err := stream.NewProtoMessageWriter(ch).WriteMsg(&msg); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // handleNewPeer opens a new stream with a newly connected peer.
@@ -134,6 +144,7 @@ func (b *Broadcaster) handleNewPeer(ctx context.Context, pid peer.ID) {
 	b.peersLock.Unlock()
 }
 
+// handleNewStream handles a new incoming stream, initiated when a peer is connected.
 func (b *Broadcaster) handleNewStream(s network.Stream) {
 	log.Debugf("incoming stream from peer: %s", s.Conn().RemotePeer())
 	peer := s.Conn().RemotePeer()

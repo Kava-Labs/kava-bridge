@@ -27,6 +27,7 @@ func TestBroadcast_Connect(t *testing.T) {
 	time.Sleep(time.Second)
 
 	for _, broadcaster := range broadcasters {
+		// Peer count does not include self
 		assert.Equal(t, count-1, broadcaster.GetPeerCount())
 	}
 
