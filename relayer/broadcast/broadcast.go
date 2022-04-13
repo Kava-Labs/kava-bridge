@@ -22,7 +22,7 @@ const (
 	ServiceName = "kava-relayer.broadcast"
 )
 
-type Broadcast struct {
+type Broadcaster struct {
 	host host.Host
 
 	inboundStreamsLock sync.Mutex
@@ -46,8 +46,9 @@ type Broadcast struct {
 	ctx context.Context
 }
 
-func NewBroadcast(ctx context.Context, host host.Host) *Broadcast {
-	b := &Broadcast{
+// NewBroadcaster returns a new Broadcaster
+func NewBroadcaster(ctx context.Context, host host.Host) *Broadcaster {
+	b := &Broadcaster{
 		host:                host,
 		inboundStreamsLock:  sync.Mutex{},
 		inboundStreams:      make(map[peer.ID]network.Stream),
@@ -72,13 +73,13 @@ func NewBroadcast(ctx context.Context, host host.Host) *Broadcast {
 	return b
 }
 
-func (b *Broadcast) GetPeerCount() int {
+func (b *Broadcaster) GetPeerCount() int {
 	// TODO: Might need RwLock
 
 	return len(b.peers)
 }
 
-func (b *Broadcast) handleNewPeers(ctx context.Context) {
+func (b *Broadcaster) handleNewPeers(ctx context.Context) {
 	defer func() {
 		// Clean up go routines.
 		for _, ch := range b.inboundStreams {
@@ -101,7 +102,7 @@ func (b *Broadcast) handleNewPeers(ctx context.Context) {
 	}
 }
 
-func (b *Broadcast) SendProtoMessage(
+func (b *Broadcaster) SendProtoMessage(
 	s network.Stream,
 	pb proto.Message,
 ) error {
@@ -114,7 +115,7 @@ func (b *Broadcast) SendProtoMessage(
 }
 
 // handleNewPeer opens a new stream with a newly connected peer.
-func (b *Broadcast) handleNewPeer(ctx context.Context, pid peer.ID) {
+func (b *Broadcaster) handleNewPeer(ctx context.Context, pid peer.ID) {
 	s, err := b.host.NewStream(b.ctx, pid, ProtocolID)
 	if err != nil {
 		log.Errorf("failed to open new stream to peer: ", err, pid)
@@ -133,7 +134,7 @@ func (b *Broadcast) handleNewPeer(ctx context.Context, pid peer.ID) {
 	b.peersLock.Unlock()
 }
 
-func (b *Broadcast) handleNewStream(s network.Stream) {
+func (b *Broadcaster) handleNewStream(s network.Stream) {
 	log.Debugf("incoming stream from peer: %s", s.Conn().RemotePeer())
 	peer := s.Conn().RemotePeer()
 
