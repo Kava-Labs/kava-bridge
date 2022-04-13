@@ -5,19 +5,17 @@ import (
 	"io"
 
 	protoio "github.com/gogo/protobuf/io"
-	"github.com/gogo/protobuf/proto"
 )
 
 const MAX_MESSAGE_SIZE = 1024 * 1024
 
-// WriteProtoMessage writes a proto message to a stream.
-func WriteProtoMessage(w io.Writer, msg proto.Message) error {
-	return protoio.NewUint32DelimitedWriter(w, binary.BigEndian).WriteMsg(msg)
+// NewProtoMessageWriter returns a new writer for writing proto messages.
+func NewProtoMessageWriter(w io.Writer) protoio.WriteCloser {
+	return protoio.NewUint32DelimitedWriter(w, binary.BigEndian)
 }
 
-// ReadProtoMessage reads a proto message from a stream with a max size of 1MB.
-func ReadProtoMessage(r io.Reader, msg proto.Message) error {
+// NewProtoMessageReader returns a new reader for reading proto messages.
+func NewProtoMessageReader(r io.Reader) protoio.ReadCloser {
 	return protoio.
-		NewUint32DelimitedReader(r, binary.BigEndian, MAX_MESSAGE_SIZE).
-		ReadMsg(msg)
+		NewUint32DelimitedReader(r, binary.BigEndian, MAX_MESSAGE_SIZE)
 }
