@@ -38,7 +38,8 @@
     - [Msg](#bridge.v1beta1.Msg)
   
 - [relayer/v1beta1/message.proto](#relayer/v1beta1/message.proto)
-    - [Echo](#relayer.v1beta1.Echo)
+    - [EchoRequest](#relayer.v1beta1.EchoRequest)
+    - [EchoResponse](#relayer.v1beta1.EchoResponse)
     - [MessageData](#relayer.v1beta1.MessageData)
   
 - [Scalar Value Types](#scalar-value-types)
@@ -435,9 +436,24 @@ Msg defines the bridge Msg service.
 
 
 
-<a name="relayer.v1beta1.Echo"></a>
+<a name="relayer.v1beta1.EchoRequest"></a>
 
-### Echo
+### EchoRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `message` | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="relayer.v1beta1.EchoResponse"></a>
+
+### EchoResponse
 
 
 

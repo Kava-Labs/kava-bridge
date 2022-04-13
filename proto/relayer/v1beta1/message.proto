@@ -11,6 +11,10 @@ message MessageData {
   google.protobuf.Any payload = 1 [(gogoproto.customtype) = "github.com/gogo/protobuf/types.Any"];
 }
 
-message Echo {
+message EchoRequest {
+  string message = 1;
+}
+
+message EchoResponse {
   string message = 1;
 }

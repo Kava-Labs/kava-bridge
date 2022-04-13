@@ -1,13 +1,14 @@
 package service
 
 import (
-	"bufio"
 	"bytes"
 	"context"
 	"fmt"
 	"io/ioutil"
 
 	logging "github.com/ipfs/go-log/v2"
+	"github.com/kava-labs/kava-bridge/relayer/stream"
+	"github.com/kava-labs/kava-bridge/relayer/types"
 	"github.com/libp2p/go-libp2p-core/host"
 	"github.com/libp2p/go-libp2p-core/network"
 	"github.com/libp2p/go-libp2p-core/peer"
@@ -86,9 +87,8 @@ func (es *EchoService) Echo(ctx context.Context, peerID peer.ID, payload string)
 
 // doEcho reads a line of data a stream and writes it back
 func doEcho(s network.Stream) error {
-	buf := bufio.NewReader(s)
-	str, err := buf.ReadString('\n')
-	if err != nil {
+	var req types.EchoRequest
+	if err := stream.ReadProtoMessage(s, &req); err != nil {
 		return err
 	}
 
