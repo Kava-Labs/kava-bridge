@@ -94,9 +94,12 @@ func TestConnectPeers(t *testing.T) {
 	var peers []*TestPeer
 	var peerAddrs []string
 
+	ports, err := GetFreePorts(5)
+	require.NoError(t, err)
+
 	// Start at 1 for pk1.key
 	for i := 1; i <= 5; i++ {
-		peer := NewTestPeer(i)
+		peer := NewTestPeer(i, ports[i-1])
 		peers = append(peers, peer)
 		peerAddrs = append(peerAddrs, peer.GetMultiAddr())
 	}

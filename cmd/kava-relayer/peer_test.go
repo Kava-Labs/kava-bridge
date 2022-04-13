@@ -2,6 +2,7 @@ package main_test
 
 import (
 	"fmt"
+	"net"
 	"os"
 	"os/exec"
 	"strings"
@@ -9,19 +10,17 @@ import (
 	"github.com/libp2p/go-libp2p-core/peer"
 )
 
-const START_PORT = 9000
-
 type TestPeer struct {
-	port       uint16
+	port       int
 	keyPath    string
 	peerNumber int
 
 	cmd *exec.Cmd
 }
 
-func NewTestPeer(peerNumber int) *TestPeer {
+func NewTestPeer(peerNumber int, port int) *TestPeer {
 	return &TestPeer{
-		port:       START_PORT + uint16(peerNumber),
+		port:       port,
 		peerNumber: peerNumber,
 		keyPath:    fmt.Sprintf("test-fixtures/pk%d.key", peerNumber),
 		cmd:        nil,
@@ -68,7 +67,7 @@ func (p *TestPeer) GetMultiAddr() string {
 	return fmt.Sprintf("/ip4/0.0.0.0/tcp/%d/p2p/%s", p.port, id)
 }
 
-func startPeer(port uint16, keyPath string, targets string) *exec.Cmd {
+func startPeer(port int, keyPath string, targets string) *exec.Cmd {
 	return execRelayer(
 		"network",
 		"connect",
@@ -78,4 +77,23 @@ func startPeer(port uint16, keyPath string, targets string) *exec.Cmd {
 		"--p2p.shared-key-path", "test-fixtures/psk.key",
 		"--log_level", "debug",
 	)
+}
+
+// GetFreePort asks the kernel for free open ports that are ready to use.
+func GetFreePorts(count int) ([]int, error) {
+	var ports []int
+	for i := 0; i < count; i++ {
+		addr, err := net.ResolveTCPAddr("tcp", "localhost:0")
+		if err != nil {
+			return nil, err
+		}
+
+		l, err := net.ListenTCP("tcp", addr)
+		if err != nil {
+			return nil, err
+		}
+		defer l.Close()
+		ports = append(ports, l.Addr().(*net.TCPAddr).Port)
+	}
+	return ports, nil
 }
