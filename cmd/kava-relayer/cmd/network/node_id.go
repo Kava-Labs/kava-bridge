@@ -2,6 +2,7 @@ package network
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/kava-labs/kava-bridge/relayer/p2p"
 	"github.com/spf13/cobra"
@@ -18,12 +19,21 @@ func newShowNodeIdCmd() *cobra.Command {
 
 			pkPath := viper.GetString(p2pFlagPrivateKeyPath)
 
-			peerID, err := p2p.GetNodeID(pkPath)
+			privKeyData, err := os.ReadFile(pkPath)
+			if err != nil {
+				return fmt.Errorf("could not read private key file: %w", err)
+			}
+			privKey, err := p2p.UnmarshalPrivateKey(privKeyData)
 			if err != nil {
 				return err
 			}
 
-			fmt.Println(peerID)
+			peerID, err := p2p.GetNodeID(privKey)
+			if err != nil {
+				return err
+			}
+
+			fmt.Print(peerID.String())
 
 			return nil
 		},

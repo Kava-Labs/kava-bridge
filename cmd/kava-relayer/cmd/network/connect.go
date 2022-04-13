@@ -1,19 +1,28 @@
 package network
 
 import (
+	"context"
 	"fmt"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
+	logging "github.com/ipfs/go-log/v2"
 	"github.com/kava-labs/kava-bridge/relayer/p2p"
+	"github.com/multiformats/go-multiaddr"
 	"github.com/multiformats/go-multibase"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
+var log = logging.Logger("connect")
+
 func newConnectCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "connect",
+		Use:   "connect [remote peer multiaddr]",
 		Short: "Connects the relayer to peers",
+		Args:  cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			err := viper.BindPFlags(cmd.Flags())
 			cobra.CheckErr(err)
@@ -46,12 +55,46 @@ func newConnectCmd() *cobra.Command {
 				NetworkPrivateKey: privSharedKey,
 			}
 
-			node, err := p2p.NewNode(options)
+			// Need to be buffered by 1 to not block
+			done := make(chan bool, 1)
+
+			node, err := p2p.NewNode(options, done)
 			if err != nil {
 				return err
 			}
 
-			// TODO: Do something with the node
+			multiAddr, err := node.GetMultiAddress()
+			if err != nil {
+				return err
+			}
+			log.Info("host multiaddress: ", multiAddr)
+
+			if len(args) == 1 {
+				log.Info("connecting to remote peer: ", args[0])
+
+				peerAddr, err := multiaddr.NewMultiaddr(args[0])
+				if err != nil {
+					return fmt.Errorf("could not parse peer multiaddr: %w", err)
+				}
+
+				ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+				defer cancel()
+
+				if err := node.Connect(ctx, peerAddr); err != nil {
+					return err
+				}
+
+				log.Info("waiting for all echo requests")
+
+				<-done
+				log.Info("Done! exiting...")
+				return node.Close()
+			}
+
+			ch := make(chan os.Signal, 1)
+			signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM)
+			<-ch
+			log.Info("Received signal, shutting down...")
 			return node.Close()
 		},
 	}
