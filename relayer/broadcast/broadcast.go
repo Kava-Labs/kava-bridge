@@ -55,6 +55,7 @@ func NewBroadcast(ctx context.Context, host host.Host) *Broadcast {
 		outboundStreams:     make(map[peer.ID]network.Stream),
 		peersLock:           sync.Mutex{},
 		peers:               make(map[peer.ID]struct{}),
+		newPeers:            make(chan peer.ID),
 		incoming:            make(chan *types.MessageData),
 		outgoing:            make(chan *types.MessageData),
 		ctx:                 ctx,
@@ -69,6 +70,12 @@ func NewBroadcast(ctx context.Context, host host.Host) *Broadcast {
 	go b.handleNewPeers(ctx)
 
 	return b
+}
+
+func (b *Broadcast) GetPeerCount() int {
+	// TODO: Might need RwLock
+
+	return len(b.peers)
 }
 
 func (b *Broadcast) handleNewPeers(ctx context.Context) {
@@ -115,12 +122,19 @@ func (b *Broadcast) handleNewPeer(ctx context.Context, pid peer.ID) {
 		return
 	}
 
+	log.Debugf("opened new stream to peer: %s", pid)
+
 	b.outboundStreamsLock.Lock()
 	b.outboundStreams[pid] = s
 	b.outboundStreamsLock.Unlock()
+
+	b.peersLock.Lock()
+	b.peers[pid] = struct{}{}
+	b.peersLock.Unlock()
 }
 
 func (b *Broadcast) handleNewStream(s network.Stream) {
+	log.Debugf("incoming stream from peer: %s", s.Conn().RemotePeer())
 	peer := s.Conn().RemotePeer()
 
 	b.inboundStreamsLock.Lock()
@@ -144,6 +158,7 @@ func (b *Broadcast) handleNewStream(s network.Stream) {
 		b.inboundStreamsLock.Unlock()
 	}()
 
+	log.Debugf("starting stream processor for peer: %s", s.Conn().RemotePeer())
 	// Iterate over all messages, unmarshalling all as types.MessageData
 	r := stream.NewProtoMessageReader(s)
 	for {
