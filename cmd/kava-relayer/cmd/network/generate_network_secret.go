@@ -30,7 +30,7 @@ func newGenerateNetworkSecretCmd() *cobra.Command {
 				return fmt.Errorf("could not encode random bytes: %w", err)
 			}
 
-			fmt.Println(s)
+			fmt.Print(s)
 
 			return nil
 		},
