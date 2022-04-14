@@ -3,6 +3,7 @@ package broadcast
 import (
 	"fmt"
 
+	"github.com/kava-labs/kava-bridge/relayer/types"
 	"github.com/libp2p/go-libp2p-core/peer"
 )
 
@@ -26,6 +27,16 @@ func (g *PeerMessageGroup) Add(msg *MessageWithPeerMetadata) bool {
 	g.Messages[msg.PeerID] = msg
 
 	return found
+}
+
+// GetMessageData returns the underlying MessageData for the group. This should
+// be called *after* Validate() has been called and confirmed to have no errors.
+func (g *PeerMessageGroup) GetMessageData() *types.MessageData {
+	for _, msg := range g.Messages {
+		return &msg.Message
+	}
+
+	return nil
 }
 
 // Len returns the number of messages in the group.

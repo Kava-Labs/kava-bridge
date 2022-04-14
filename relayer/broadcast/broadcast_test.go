@@ -37,11 +37,16 @@ func TestBroadcast_Connect(t *testing.T) {
 }
 
 type TestHandler struct {
-	count int
+	rawCount   int
+	validCount int
 }
 
 func (h *TestHandler) HandleRawMessage(msg *broadcast.MessageWithPeerMetadata) {
-	h.count += 1
+	h.rawCount += 1
+}
+
+func (h *TestHandler) HandleValidatedMessage(msg *types.MessageData) {
+	h.validCount += 1
 }
 
 func TestBroadcast_Responses(t *testing.T) {
@@ -53,7 +58,8 @@ func TestBroadcast_Responses(t *testing.T) {
 	hosts := testutil.CreateHosts(t, ctx, count)
 
 	handler := &TestHandler{
-		count: 0,
+		rawCount:   0,
+		validCount: 0,
 	}
 
 	broadcasters := CreateBroadcasters(t, ctx, hosts, broadcast.WithHandler(handler))
@@ -74,7 +80,7 @@ func TestBroadcast_Responses(t *testing.T) {
 		assert.Equal(t, count-1, broadcaster.GetPeerCount())
 	}
 
-	require.Equal(t, count-1, handler.count)
+	require.Equal(t, count-1, handler.rawCount)
 
 	cancel()
 }

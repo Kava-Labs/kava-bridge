@@ -44,6 +44,10 @@ type Broadcaster struct {
 	// duplicate messages from different peers to be validated.
 	incomingRawMessages chan *MessageWithPeerMetadata
 
+	// Messages that all peers have confirmed to have received. Does not contain
+	// any peer specific data as it does not originate from any specific peer.
+	incomingValidatedMessages chan *types.MessageData
+
 	// Messages that have been received but have not been validated to be same
 	// from all peers.
 	pendingMessagesLock sync.Mutex
@@ -66,20 +70,21 @@ func NewBroadcaster(
 	options ...BroadcasterOption,
 ) (*Broadcaster, error) {
 	b := &Broadcaster{
-		host:                host,
-		inboundStreamsLock:  sync.Mutex{},
-		inboundStreams:      make(map[peer.ID]network.Stream),
-		outboundStreamsLock: sync.Mutex{},
-		outboundStreams:     make(map[peer.ID]network.Stream),
-		peersLock:           sync.RWMutex{},
-		peers:               make(map[peer.ID]struct{}),
-		newPeers:            make(chan peer.ID),
-		incomingRawMessages: make(chan *MessageWithPeerMetadata),
-		pendingMessagesLock: sync.Mutex{},
-		pendingMessages:     make(map[string]*PeerMessageGroup),
-		outgoing:            make(chan *types.MessageData),
-		handler:             &NoOpBroadcastHandler{},
-		ctx:                 ctx,
+		host:                      host,
+		inboundStreamsLock:        sync.Mutex{},
+		inboundStreams:            make(map[peer.ID]network.Stream),
+		outboundStreamsLock:       sync.Mutex{},
+		outboundStreams:           make(map[peer.ID]network.Stream),
+		peersLock:                 sync.RWMutex{},
+		peers:                     make(map[peer.ID]struct{}),
+		newPeers:                  make(chan peer.ID),
+		incomingRawMessages:       make(chan *MessageWithPeerMetadata),
+		incomingValidatedMessages: make(chan *types.MessageData),
+		pendingMessagesLock:       sync.Mutex{},
+		pendingMessages:           make(map[string]*PeerMessageGroup),
+		outgoing:                  make(chan *types.MessageData),
+		handler:                   &NoOpBroadcastHandler{},
+		ctx:                       ctx,
 	}
 
 	for _, opt := range options {
@@ -100,7 +105,8 @@ func NewBroadcaster(
 	return b, nil
 }
 
-// GetPeerCount returns the number of peers connected to the broadcaster.
+// GetPeerCount returns the number of peers connected to the broadcaster. This
+// does not include the current peer.
 func (b *Broadcaster) GetPeerCount() int {
 	b.peersLock.RLock()
 	defer b.peersLock.RUnlock()
@@ -127,8 +133,10 @@ func (b *Broadcaster) processLoop(ctx context.Context) {
 		select {
 		case newPeerID := <-b.newPeers:
 			b.handleNewPeer(ctx, newPeerID)
-		case newMsg := <-b.incomingRawMessages:
-			b.handleIncomingRawMsg(newMsg)
+		case newRawMsg := <-b.incomingRawMessages:
+			b.handleIncomingRawMsg(newRawMsg)
+		case newValidatedMsg := <-b.incomingValidatedMessages:
+			b.handleIncomingValidatedMsg(newValidatedMsg)
 		case <-ctx.Done():
 			log.Info("broadcast handler loop shutting down")
 			return
@@ -175,7 +183,6 @@ func (b *Broadcaster) handleIncomingRawMsg(msg *MessageWithPeerMetadata) {
 	go b.handler.HandleRawMessage(msg)
 
 	// Actually check all messages from all peers for validity.
-
 	b.pendingMessagesLock.Lock()
 	defer b.pendingMessagesLock.Unlock()
 
@@ -186,6 +193,30 @@ func (b *Broadcaster) handleIncomingRawMsg(msg *MessageWithPeerMetadata) {
 
 	peerMsgGroup.Add(msg)
 	b.pendingMessages[msg.Message.ID] = peerMsgGroup
+
+	if err := peerMsgGroup.Validate(); err != nil {
+		log.Errorf("broadcast message validation failed: %s", err)
+
+		// TODO: Reject additional messages for the same message ID? Or prune
+		// them along with the expired messages
+		delete(b.pendingMessages, msg.Message.ID)
+
+		return
+	}
+
+	if peerMsgGroup.Len() == b.GetPeerCount() {
+		// All peers have responded with the same message, send it to the valid
+		// message channel to be handled.
+		b.incomingValidatedMessages <- peerMsgGroup.GetMessageData()
+
+		// Remove from pending messages
+		delete(b.pendingMessages, msg.Message.ID)
+	}
+}
+
+func (b *Broadcaster) handleIncomingValidatedMsg(msg *types.MessageData) {
+	log.Info("received validated message: %v", msg.String())
+	go b.handler.HandleValidatedMessage(msg)
 }
 
 // -----------------------------------------------------------------------------
