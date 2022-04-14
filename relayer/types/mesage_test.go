@@ -28,7 +28,7 @@ func TestMarshalUnmarshalPayload(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			msg, err := types.NewMessageData(tc.payload)
+			msg, err := types.NewMessageData("some id", tc.payload)
 			require.NoError(t, err)
 
 			var unpacked prototypes.DynamicAny

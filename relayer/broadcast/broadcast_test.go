@@ -2,6 +2,7 @@ package broadcast_test
 
 import (
 	"context"
+	"sync"
 	"testing"
 	"time"
 
@@ -37,15 +38,23 @@ func TestBroadcast_Connect(t *testing.T) {
 }
 
 type TestHandler struct {
+	mu sync.Mutex
+
 	rawCount   int
 	validCount int
 }
 
 func (h *TestHandler) HandleRawMessage(msg *broadcast.MessageWithPeerMetadata) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+
 	h.rawCount += 1
 }
 
 func (h *TestHandler) HandleValidatedMessage(msg *types.MessageData) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+
 	h.validCount += 1
 }
 
@@ -53,9 +62,14 @@ func TestBroadcast_Responses(t *testing.T) {
 	logging.SetAllLoggers(logging.LevelDebug)
 
 	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
 
 	count := 5
 	hosts := testutil.CreateHosts(t, ctx, count)
+
+	for i, h := range hosts {
+		t.Logf("peer index %v id: %v", i, h.ID())
+	}
 
 	handler := &TestHandler{
 		rawCount:   0,
@@ -68,21 +82,23 @@ func TestBroadcast_Responses(t *testing.T) {
 
 	time.Sleep(time.Second)
 
-	err := broadcasters[0].SendProtoMessage(&types.HelloRequest{
+	err := broadcasters[0].BroadcastMessage("1234 message id", &types.HelloRequest{
 		Message: "hello world",
 	})
 	require.NoError(t, err)
 
-	time.Sleep(time.Second * 5)
+	time.Sleep(time.Second * 10)
 
 	for _, broadcaster := range broadcasters {
 		// Peer count does not include self
 		assert.Equal(t, count-1, broadcaster.GetPeerCount())
 	}
 
-	require.Equal(t, count-1, handler.rawCount)
-
-	cancel()
+	// A -> B, C, D, E (4) // initial receive
+	// B, C, D, E rebroadcast to all other nodes (4 * 4)
+	// 4 initial + 16 re-broadcast = 20
+	assert.Equal(t, 20, handler.rawCount, "raw message count should be 20")
+	assert.Equal(t, count, handler.validCount, "each peer should get a validated message")
 }
 
 func CreateBroadcasters(

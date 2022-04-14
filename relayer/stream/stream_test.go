@@ -65,7 +65,7 @@ func TestReadWrite(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			msg, err := types.NewMessageData(tc.payload)
+			msg, err := types.NewMessageData("id", tc.payload)
 			require.NoError(t, err)
 
 			// Write/read from buffer

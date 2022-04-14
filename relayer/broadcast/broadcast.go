@@ -2,6 +2,7 @@ package broadcast
 
 import (
 	"context"
+	"fmt"
 	"sync"
 
 	"github.com/gogo/protobuf/proto"
@@ -79,7 +80,7 @@ func NewBroadcaster(
 		peers:                     make(map[peer.ID]struct{}),
 		newPeers:                  make(chan peer.ID),
 		incomingRawMessages:       make(chan *MessageWithPeerMetadata),
-		incomingValidatedMessages: make(chan *types.MessageData),
+		incomingValidatedMessages: make(chan *types.MessageData, 1),
 		pendingMessagesLock:       sync.Mutex{},
 		pendingMessages:           make(map[string]*PeerMessageGroup),
 		outgoing:                  make(chan *types.MessageData),
@@ -147,17 +148,41 @@ func (b *Broadcaster) processLoop(ctx context.Context) {
 // -----------------------------------------------------------------------------
 // Peer messages handling
 
-// SendProtoMessage sends a proto message to all connected peers.
-func (b *Broadcaster) SendProtoMessage(
+// BroadcastMessage marshals the proto.Message as Any, wraps it in MessageData,
+// and it to all connected peers.
+func (b *Broadcaster) BroadcastMessage(
+	messageID string,
 	pb proto.Message,
 ) error {
 	// Wrap the proto message in the MessageData type.
-	msg, err := types.NewMessageData(pb)
+	msg, err := types.NewMessageData(messageID, pb)
 	if err != nil {
 		return err
 	}
 
-	log.Debugf("broadcast sending proto message: %s", msg.String())
+	// Add the message to the pending messages map to keep track of responses
+	// and to prevent re-broadcasting.
+	b.pendingMessagesLock.Lock()
+	// Could manually lock before broadcastRawMessage
+	defer b.pendingMessagesLock.Unlock()
+
+	_, found := b.pendingMessages[msg.ID]
+	if found {
+		return fmt.Errorf("cannot broadcast message that is already pending: %v", msg.ID)
+	}
+	b.pendingMessages[msg.ID] = NewPeerMessageGroup()
+
+	if err := msg.Validate(); err != nil {
+		return fmt.Errorf("invalid message: %w", err)
+	}
+
+	return b.broadcastRawMessage(&msg)
+}
+
+// broadcastRawMessage sends a proto message to all connected peers without any
+// marshalling or wrapping.
+func (b *Broadcaster) broadcastRawMessage(pb proto.Message) error {
+	log.Debugf("broadcast sending raw proto message: %s", pb.String())
 
 	b.outboundStreamsLock.Lock()
 	defer b.outboundStreamsLock.Unlock()
@@ -168,7 +193,7 @@ func (b *Broadcaster) SendProtoMessage(
 
 		// NewUint32DelimitedWriter has an internal buffer, bufio.NewWriter()
 		// should not be necessary.
-		if err := stream.NewProtoMessageWriter(ch).WriteMsg(&msg); err != nil {
+		if err := stream.NewProtoMessageWriter(ch).WriteMsg(pb); err != nil {
 			return err
 		}
 	}
@@ -179,7 +204,8 @@ func (b *Broadcaster) SendProtoMessage(
 // handleIncomingRawMsg handles all raw messages from other peers. This is
 // before messages are verified to be received from all peers.
 func (b *Broadcaster) handleIncomingRawMsg(msg *MessageWithPeerMetadata) {
-	// This just dumps all incoming messages to the handler.
+	// This just dumps all incoming messages to the handler for logging or
+	// testing purposes.
 	go b.handler.HandleRawMessage(msg)
 
 	// Check existing pending messages from other peers for the same message ID
@@ -187,9 +213,22 @@ func (b *Broadcaster) handleIncomingRawMsg(msg *MessageWithPeerMetadata) {
 	defer b.pendingMessagesLock.Unlock()
 
 	peerMsgGroup, found := b.pendingMessages[msg.Message.ID]
+	// First time we see this message
 	if !found {
 		log.Debugf("new message ID %s from peer %s, creating new pending group", msg.Message.ID, msg.PeerID)
 		peerMsgGroup = NewPeerMessageGroup()
+
+		// Rebroadcast to all other peers when first time seeing this message.
+		go func() {
+			// Send Payload, NOT the Message, as SendProtoMessage wraps it in a Message.
+			if err := b.broadcastRawMessage(&msg.Message); err != nil {
+				log.DPanic(
+					"error rebroadcasting message %s: %s",
+					msg.Message.ID,
+					err,
+				)
+			}
+		}()
 	}
 
 	if replaced := peerMsgGroup.Add(msg); replaced {
@@ -209,7 +248,8 @@ func (b *Broadcaster) handleIncomingRawMsg(msg *MessageWithPeerMetadata) {
 		"newGroupLength", peerMsgGroup.Len(),
 	)
 
-	// Validate the message group
+	// Validate the message group -- could be done only when we have all messages
+	// from all peers, or each time a message is added.
 	if err := peerMsgGroup.Validate(); err != nil {
 		log.Errorf("broadcast message validation failed: %s", err)
 
@@ -245,7 +285,7 @@ func (b *Broadcaster) handleIncomingRawMsg(msg *MessageWithPeerMetadata) {
 }
 
 func (b *Broadcaster) handleIncomingValidatedMsg(msg *types.MessageData) {
-	log.Info("received validated message: %v", msg.String())
+	log.Infof("received validated message: %v", msg.String())
 
 	go b.handler.HandleValidatedMessage(msg)
 }
@@ -262,7 +302,7 @@ func (b *Broadcaster) handleNewPeer(ctx context.Context, pid peer.ID) {
 		return
 	}
 
-	log.Debugf("opened new stream to peer: %s", pid)
+	log.Debugw("opened new stream to peer", "PeerID", pid)
 
 	b.outboundStreamsLock.Lock()
 	b.outboundStreams[pid] = s
@@ -300,7 +340,8 @@ func (b *Broadcaster) handleNewStream(s network.Stream) {
 		b.inboundStreamsLock.Unlock()
 	}()
 
-	log.Debugf("starting stream processor for peer: %s", s.Conn().RemotePeer())
+	log.Debugf("starting stream reader for peer: %s", s.Conn().RemotePeer())
+
 	// Iterate over all messages, unmarshalling all as types.MessageData
 	r := stream.NewProtoMessageReader(s)
 	for {
