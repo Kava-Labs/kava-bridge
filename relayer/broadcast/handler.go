@@ -1,5 +1,6 @@
 package broadcast
 
+// BroadcastHandler defines the interface for handling broadcast messages.
 type BroadcastHandler interface {
 	HandleRawMessage(msg *MessageWithPeerMetadata)
 }

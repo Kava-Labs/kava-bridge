@@ -22,6 +22,8 @@ const (
 	ServiceName = "kava-relayer.broadcast"
 )
 
+// Broadcaster is a reliable broadcaster to ensure that all connected peers
+// receive the same message.
 type Broadcaster struct {
 	host host.Host
 
@@ -38,9 +40,15 @@ type Broadcaster struct {
 	// Notifications of new peers
 	newPeers chan peer.ID
 
-	// Raw incomingRaw messages from other peers, NOT verified. Will contain
-	// duplicate messages from different peers.
-	incomingRaw chan *MessageWithPeerMetadata
+	// Raw incoming messages from other peers, NOT verified. Will contain
+	// duplicate messages from different peers to be validated.
+	incomingRawMessages chan *MessageWithPeerMetadata
+
+	// Messages that have been received but have not been validated to be same
+	// from all peers.
+	pendingMessagesLock sync.Mutex
+	// TODO: Remove messages after expired.
+	pendingMessages map[string]*PeerMessageGroup
 
 	// Messages to send to all other peers
 	outgoing chan *types.MessageData
@@ -66,7 +74,9 @@ func NewBroadcaster(
 		peersLock:           sync.RWMutex{},
 		peers:               make(map[peer.ID]struct{}),
 		newPeers:            make(chan peer.ID),
-		incomingRaw:         make(chan *MessageWithPeerMetadata),
+		incomingRawMessages: make(chan *MessageWithPeerMetadata),
+		pendingMessagesLock: sync.Mutex{},
+		pendingMessages:     make(map[string]*PeerMessageGroup),
 		outgoing:            make(chan *types.MessageData),
 		handler:             &NoOpBroadcastHandler{},
 		ctx:                 ctx,
@@ -85,7 +95,7 @@ func NewBroadcaster(
 	// Handle new incoming streams
 	host.SetStreamHandler(ProtocolID, b.handleNewStream)
 
-	go b.handleNewPeers(ctx)
+	go b.processLoop(ctx)
 
 	return b, nil
 }
@@ -98,7 +108,8 @@ func (b *Broadcaster) GetPeerCount() int {
 	return len(b.peers)
 }
 
-func (b *Broadcaster) handleNewPeers(ctx context.Context) {
+// processLoop handles incoming channel inputs.
+func (b *Broadcaster) processLoop(ctx context.Context) {
 	defer func() {
 		// Clean up go routines.
 		for _, ch := range b.inboundStreams {
@@ -111,22 +122,28 @@ func (b *Broadcaster) handleNewPeers(ctx context.Context) {
 	}()
 
 	for {
+		// TODO: Are these fine in the same loop? Not handled concurrently.
+
 		select {
 		case newPeerID := <-b.newPeers:
 			b.handleNewPeer(ctx, newPeerID)
-		case newMsg := <-b.incomingRaw:
-			b.handleIncomingMsg(newMsg)
+		case newMsg := <-b.incomingRawMessages:
+			b.handleIncomingRawMsg(newMsg)
 		case <-ctx.Done():
-			log.Info("broadcast new peer handler loop shutting down")
+			log.Info("broadcast handler loop shutting down")
 			return
 		}
 	}
 }
 
+// -----------------------------------------------------------------------------
+// Peer messages handling
+
 // SendProtoMessage sends a proto message to all connected peers.
 func (b *Broadcaster) SendProtoMessage(
 	pb proto.Message,
 ) error {
+	// Wrap the proto message in the MessageData type.
 	msg, err := types.NewMessageData(pb)
 	if err != nil {
 		return err
@@ -151,12 +168,22 @@ func (b *Broadcaster) SendProtoMessage(
 	return nil
 }
 
-func (b *Broadcaster) handleIncomingMsg(r *MessageWithPeerMetadata) {
+// handleIncomingRawMsg handles all raw messages from other peers. This is
+// before messages are verified to be received from all peers.
+func (b *Broadcaster) handleIncomingRawMsg(msg *MessageWithPeerMetadata) {
 	// TODO: Actually check all messages from all peers for validity.
 	// This just dumps all incoming messages to the handler.
 
-	b.handler.HandleRawMessage(r)
+	go b.handler.HandleRawMessage(msg)
+
+	b.pendingMessagesLock.Lock()
+	defer b.pendingMessagesLock.Unlock()
+
+	b.pendingMessages[msg.Message.ID].Add(msg)
 }
+
+// -----------------------------------------------------------------------------
+// Stream handling
 
 // handleNewPeer opens a new stream with a newly connected peer.
 func (b *Broadcaster) handleNewPeer(ctx context.Context, pid peer.ID) {
@@ -218,15 +245,15 @@ func (b *Broadcaster) handleNewStream(s network.Stream) {
 		}
 
 		// Attach additional peer metadata to the message
-		rpc := MessageWithPeerMetadata{
+		peerMsg := MessageWithPeerMetadata{
 			Message: msg,
 			PeerID:  s.Conn().RemotePeer(),
 		}
 
-		log.Debugf("received message from peer: %s", rpc.PeerID)
+		log.Debugf("received message from peer: %s", peerMsg.PeerID)
 
 		select {
-		case b.incomingRaw <- &rpc:
+		case b.incomingRawMessages <- &peerMsg:
 		case <-b.ctx.Done():
 			// Close is useless because the other side isn't reading.
 			_ = s.Reset()
