@@ -1,7 +1,12 @@
 package broadcast
 
-import "context"
-
 type BroadcastHandler interface {
-	HandleRawMessage(ctx context.Context, msg *RPC) error
+	HandleRawMessage(msg *MessageWithPeerMetadata)
 }
+
+// NoOpBroadcastHandler is a BroadcastHandler that does nothing.
+type NoOpBroadcastHandler struct{}
+
+var _ BroadcastHandler = (*NoOpBroadcastHandler)(nil)
+
+func (h *NoOpBroadcastHandler) HandleRawMessage(msg *MessageWithPeerMetadata) {}

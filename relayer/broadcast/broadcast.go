@@ -40,7 +40,7 @@ type Broadcaster struct {
 
 	// Raw incomingRaw messages from other peers, NOT verified. Will contain
 	// duplicate messages from different peers.
-	incomingRaw chan *RPC
+	incomingRaw chan *MessageWithPeerMetadata
 
 	// Messages to send to all other peers
 	outgoing chan *types.MessageData
@@ -52,7 +52,11 @@ type Broadcaster struct {
 }
 
 // NewBroadcaster returns a new Broadcaster
-func NewBroadcaster(ctx context.Context, host host.Host, options ...BroadcasterOption) (*Broadcaster, error) {
+func NewBroadcaster(
+	ctx context.Context,
+	host host.Host,
+	options ...BroadcasterOption,
+) (*Broadcaster, error) {
 	b := &Broadcaster{
 		host:                host,
 		inboundStreamsLock:  sync.Mutex{},
@@ -62,9 +66,9 @@ func NewBroadcaster(ctx context.Context, host host.Host, options ...BroadcasterO
 		peersLock:           sync.RWMutex{},
 		peers:               make(map[peer.ID]struct{}),
 		newPeers:            make(chan peer.ID),
-		incomingRaw:         make(chan *RPC),
+		incomingRaw:         make(chan *MessageWithPeerMetadata),
 		outgoing:            make(chan *types.MessageData),
-		handler:             nil,
+		handler:             &NoOpBroadcastHandler{},
 		ctx:                 ctx,
 	}
 
@@ -128,8 +132,15 @@ func (b *Broadcaster) SendProtoMessage(
 		return err
 	}
 
+	log.Debugf("broadcast sending proto message: %s", msg.String())
+
+	b.outboundStreamsLock.Lock()
+	defer b.outboundStreamsLock.Unlock()
+
 	// TODO: Make concurrent
 	for _, ch := range b.outboundStreams {
+		log.Debugf("sending message to peer: %s", ch.Conn().RemotePeer())
+
 		// NewUint32DelimitedWriter has an internal buffer, bufio.NewWriter()
 		// should not be necessary.
 		if err := stream.NewProtoMessageWriter(ch).WriteMsg(&msg); err != nil {
@@ -140,8 +151,11 @@ func (b *Broadcaster) SendProtoMessage(
 	return nil
 }
 
-func (b *Broadcaster) handleIncomingMsg(r *RPC) {
+func (b *Broadcaster) handleIncomingMsg(r *MessageWithPeerMetadata) {
+	// TODO: Actually check all messages from all peers for validity.
+	// This just dumps all incoming messages to the handler.
 
+	b.handler.HandleRawMessage(r)
 }
 
 // handleNewPeer opens a new stream with a newly connected peer.
@@ -204,10 +218,12 @@ func (b *Broadcaster) handleNewStream(s network.Stream) {
 		}
 
 		// Attach additional peer metadata to the message
-		rpc := RPC{
+		rpc := MessageWithPeerMetadata{
 			Message: msg,
 			PeerID:  s.Conn().RemotePeer(),
 		}
+
+		log.Debugf("received message from peer: %s", rpc.PeerID)
 
 		select {
 		case b.incomingRaw <- &rpc:

@@ -5,7 +5,7 @@ import (
 	"github.com/libp2p/go-libp2p-core/peer"
 )
 
-type RPC struct {
+type MessageWithPeerMetadata struct {
 	Message types.MessageData
 
 	// Not transmitted over wire, added when received.
