@@ -10,6 +10,7 @@ import (
 	"github.com/kava-labs/kava-bridge/relayer/testutil"
 	"github.com/libp2p/go-libp2p-core/host"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestBroadcast_Connect(t *testing.T) {
@@ -42,7 +43,9 @@ func CreateBroadcasters(
 	var out []*broadcast.Broadcaster
 
 	for _, h := range hosts {
-		b := broadcast.NewBroadcaster(ctx, h)
+		b, err := broadcast.NewBroadcaster(ctx, h)
+		require.NoError(t, err)
+
 		out = append(out, b)
 	}
 

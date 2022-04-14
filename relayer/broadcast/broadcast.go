@@ -38,17 +38,21 @@ type Broadcaster struct {
 	// Notifications of new peers
 	newPeers chan peer.ID
 
-	// Incoming messages from other peers (NOT verified)
-	incoming chan *types.MessageData
+	// Raw incomingRaw messages from other peers, NOT verified. Will contain
+	// duplicate messages from different peers.
+	incomingRaw chan *RPC
 
 	// Messages to send to all other peers
 	outgoing chan *types.MessageData
+
+	// External event handler
+	handler BroadcastHandler
 
 	ctx context.Context
 }
 
 // NewBroadcaster returns a new Broadcaster
-func NewBroadcaster(ctx context.Context, host host.Host) *Broadcaster {
+func NewBroadcaster(ctx context.Context, host host.Host, options ...BroadcasterOption) (*Broadcaster, error) {
 	b := &Broadcaster{
 		host:                host,
 		inboundStreamsLock:  sync.Mutex{},
@@ -58,9 +62,17 @@ func NewBroadcaster(ctx context.Context, host host.Host) *Broadcaster {
 		peersLock:           sync.RWMutex{},
 		peers:               make(map[peer.ID]struct{}),
 		newPeers:            make(chan peer.ID),
-		incoming:            make(chan *types.MessageData),
+		incomingRaw:         make(chan *RPC),
 		outgoing:            make(chan *types.MessageData),
+		handler:             nil,
 		ctx:                 ctx,
+	}
+
+	for _, opt := range options {
+		err := opt(b)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	// Register peer notifications
@@ -71,7 +83,7 @@ func NewBroadcaster(ctx context.Context, host host.Host) *Broadcaster {
 
 	go b.handleNewPeers(ctx)
 
-	return b
+	return b, nil
 }
 
 // GetPeerCount returns the number of peers connected to the broadcaster.
@@ -98,6 +110,8 @@ func (b *Broadcaster) handleNewPeers(ctx context.Context) {
 		select {
 		case newPeerID := <-b.newPeers:
 			b.handleNewPeer(ctx, newPeerID)
+		case newMsg := <-b.incomingRaw:
+			b.handleIncomingMsg(newMsg)
 		case <-ctx.Done():
 			log.Info("broadcast new peer handler loop shutting down")
 			return
@@ -116,12 +130,18 @@ func (b *Broadcaster) SendProtoMessage(
 
 	// TODO: Make concurrent
 	for _, ch := range b.outboundStreams {
+		// NewUint32DelimitedWriter has an internal buffer, bufio.NewWriter()
+		// should not be necessary.
 		if err := stream.NewProtoMessageWriter(ch).WriteMsg(&msg); err != nil {
 			return err
 		}
 	}
 
 	return nil
+}
+
+func (b *Broadcaster) handleIncomingMsg(r *RPC) {
+
 }
 
 // handleNewPeer opens a new stream with a newly connected peer.
@@ -149,6 +169,7 @@ func (b *Broadcaster) handleNewStream(s network.Stream) {
 	log.Debugf("incoming stream from peer: %s", s.Conn().RemotePeer())
 	peer := s.Conn().RemotePeer()
 
+	// Ensure only 1 incoming stream from the peer
 	b.inboundStreamsLock.Lock()
 	other, dup := b.inboundStreams[peer]
 	if dup {
@@ -175,21 +196,21 @@ func (b *Broadcaster) handleNewStream(s network.Stream) {
 	r := stream.NewProtoMessageReader(s)
 	for {
 		var msg types.MessageData
-		err := r.ReadMsg(&msg)
-
-		// TODO: Peer information e.g. peer ID can be attached to message here
-		// with a wrapper type. (Not additional fields in types.Message as those
-		// are read from the other peer)
-
-		if err != nil {
+		if err := r.ReadMsg(&msg); err != nil {
 			log.Errorf("error reading stream message from peer %s: %s", s.Conn().RemotePeer(), err)
 			_ = s.Reset()
 
 			return
 		}
 
+		// Attach additional peer metadata to the message
+		rpc := RPC{
+			Message: msg,
+			PeerID:  s.Conn().RemotePeer(),
+		}
+
 		select {
-		case b.incoming <- &msg:
+		case b.incomingRaw <- &rpc:
 		case <-b.ctx.Done():
 			// Close is useless because the other side isn't reading.
 			_ = s.Reset()
