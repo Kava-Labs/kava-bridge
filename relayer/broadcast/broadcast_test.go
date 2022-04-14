@@ -59,6 +59,7 @@ func (h *TestHandler) HandleValidatedMessage(msg *types.MessageData) {
 }
 
 func TestBroadcast_Responses(t *testing.T) {
+	// This is really noisy but useful for... debugging
 	logging.SetAllLoggers(logging.LevelDebug)
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -82,9 +83,13 @@ func TestBroadcast_Responses(t *testing.T) {
 
 	time.Sleep(time.Second)
 
-	err := broadcasters[0].BroadcastMessage("1234 message id", &types.HelloRequest{
-		Message: "hello world",
-	})
+	err := broadcasters[0].BroadcastMessage(
+		context.Background(),
+		"1234 message id",
+		&types.HelloRequest{
+			Message: "hello world",
+		},
+	)
 	require.NoError(t, err)
 
 	time.Sleep(time.Second * 10)
@@ -93,6 +98,9 @@ func TestBroadcast_Responses(t *testing.T) {
 		// Peer count does not include self
 		assert.Equal(t, count-1, broadcaster.GetPeerCount())
 	}
+
+	handler.mu.Lock()
+	defer handler.mu.Unlock()
 
 	// A -> B, C, D, E (4) // initial receive
 	// B, C, D, E rebroadcast to all other nodes (4 * 4)

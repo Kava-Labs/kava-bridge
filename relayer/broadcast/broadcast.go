@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/gogo/protobuf/proto"
+	"golang.org/x/sync/errgroup"
 
 	logging "github.com/ipfs/go-log/v2"
 	"github.com/libp2p/go-libp2p-core/host"
@@ -118,6 +119,9 @@ func (b *Broadcaster) GetPeerCount() int {
 // processLoop handles incoming channel inputs.
 func (b *Broadcaster) processLoop(ctx context.Context) {
 	defer func() {
+		b.inboundStreamsLock.Lock()
+		b.outboundStreamsLock.Lock()
+
 		// Clean up go routines.
 		for _, ch := range b.inboundStreams {
 			ch.Reset()
@@ -126,6 +130,9 @@ func (b *Broadcaster) processLoop(ctx context.Context) {
 		for _, ch := range b.outboundStreams {
 			ch.Reset()
 		}
+
+		b.inboundStreamsLock.Unlock()
+		b.outboundStreamsLock.Unlock()
 	}()
 
 	for {
@@ -151,6 +158,7 @@ func (b *Broadcaster) processLoop(ctx context.Context) {
 // BroadcastMessage marshals the proto.Message as Any, wraps it in MessageData,
 // and it to all connected peers.
 func (b *Broadcaster) BroadcastMessage(
+	ctx context.Context,
 	messageID string,
 	pb proto.Message,
 ) error {
@@ -176,34 +184,46 @@ func (b *Broadcaster) BroadcastMessage(
 		return fmt.Errorf("invalid message: %w", err)
 	}
 
-	return b.broadcastRawMessage(&msg)
+	return b.broadcastRawMessage(ctx, &msg)
 }
 
 // broadcastRawMessage sends a proto message to all connected peers without any
 // marshalling or wrapping.
-func (b *Broadcaster) broadcastRawMessage(pb proto.Message) error {
+func (b *Broadcaster) broadcastRawMessage(
+	ctx context.Context,
+	pb proto.Message,
+) error {
 	log.Debugf("broadcast sending raw proto message: %s", pb.String())
 
 	b.outboundStreamsLock.Lock()
 	defer b.outboundStreamsLock.Unlock()
 
-	// TODO: Make concurrent
-	for _, ch := range b.outboundStreams {
-		log.Debugf("sending message to peer: %s", ch.Conn().RemotePeer())
+	// Run writes to peers in parallel
+	g, _ := errgroup.WithContext(ctx)
 
-		// NewUint32DelimitedWriter has an internal buffer, bufio.NewWriter()
-		// should not be necessary.
-		if err := stream.NewProtoMessageWriter(ch).WriteMsg(pb); err != nil {
-			return err
-		}
+	for _, ch := range b.outboundStreams {
+		func(ch network.Stream) {
+			g.Go(func() error {
+				log.Debugf("sending message to peer: %s", ch.Conn().RemotePeer())
+
+				// NewUint32DelimitedWriter has an internal buffer, bufio.NewWriter()
+				// should not be necessary.
+				return stream.NewProtoMessageWriter(ch).WriteMsg(pb)
+			})
+		}(ch)
 	}
 
-	return nil
+	return g.Wait()
 }
 
 // handleIncomingRawMsg handles all raw messages from other peers. This is
 // before messages are verified to be received from all peers.
 func (b *Broadcaster) handleIncomingRawMsg(msg *MessageWithPeerMetadata) {
+	if err := msg.Message.Validate(); err != nil {
+		log.Errorf("invalid message received from peer: %s", err)
+		return
+	}
+
 	// This just dumps all incoming messages to the handler for logging or
 	// testing purposes.
 	go b.handler.HandleRawMessage(msg)
@@ -221,7 +241,7 @@ func (b *Broadcaster) handleIncomingRawMsg(msg *MessageWithPeerMetadata) {
 		// Rebroadcast to all other peers when first time seeing this message.
 		go func() {
 			// Send Payload, NOT the Message, as SendProtoMessage wraps it in a Message.
-			if err := b.broadcastRawMessage(&msg.Message); err != nil {
+			if err := b.broadcastRawMessage(context.Background(), &msg.Message); err != nil {
 				log.DPanic(
 					"error rebroadcasting message %s: %s",
 					msg.Message.ID,
