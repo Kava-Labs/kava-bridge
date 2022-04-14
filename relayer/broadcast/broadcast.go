@@ -122,13 +122,13 @@ func (b *Broadcaster) processLoop(ctx context.Context) {
 		b.inboundStreamsLock.Lock()
 		b.outboundStreamsLock.Lock()
 
-		// Clean up go routines.
+		// Close all streams, errors not important
 		for _, ch := range b.inboundStreams {
-			ch.Reset()
+			_ = ch.Reset()
 		}
 
 		for _, ch := range b.outboundStreams {
-			ch.Reset()
+			_ = ch.Reset()
 		}
 
 		b.inboundStreamsLock.Unlock()
