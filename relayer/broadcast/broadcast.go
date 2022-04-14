@@ -171,15 +171,21 @@ func (b *Broadcaster) SendProtoMessage(
 // handleIncomingRawMsg handles all raw messages from other peers. This is
 // before messages are verified to be received from all peers.
 func (b *Broadcaster) handleIncomingRawMsg(msg *MessageWithPeerMetadata) {
-	// TODO: Actually check all messages from all peers for validity.
 	// This just dumps all incoming messages to the handler.
-
 	go b.handler.HandleRawMessage(msg)
+
+	// Actually check all messages from all peers for validity.
 
 	b.pendingMessagesLock.Lock()
 	defer b.pendingMessagesLock.Unlock()
 
-	b.pendingMessages[msg.Message.ID].Add(msg)
+	peerMsgGroup, found := b.pendingMessages[msg.Message.ID]
+	if !found {
+		peerMsgGroup = NewPeerMessageGroup()
+	}
+
+	peerMsgGroup.Add(msg)
+	b.pendingMessages[msg.Message.ID] = peerMsgGroup
 }
 
 // -----------------------------------------------------------------------------
