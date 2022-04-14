@@ -16,7 +16,7 @@ func TestMarshalUnmarshalPayload(t *testing.T) {
 	}{
 		{
 			"regular",
-			&types.EchoRequest{
+			&types.HelloRequest{
 				Message: "hello world",
 			},
 		},

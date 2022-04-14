@@ -62,8 +62,8 @@ func TestBroadcast_Responses(t *testing.T) {
 
 	time.Sleep(time.Second)
 
-	err := broadcasters[0].SendProtoMessage(&types.EchoRequest{
-		Message: "hi this isn't actually an echo",
+	err := broadcasters[0].SendProtoMessage(&types.HelloRequest{
+		Message: "hello world",
 	})
 	require.NoError(t, err)
 

@@ -38,8 +38,7 @@
     - [Msg](#bridge.v1beta1.Msg)
   
 - [relayer/v1beta1/message.proto](#relayer/v1beta1/message.proto)
-    - [EchoRequest](#relayer.v1beta1.EchoRequest)
-    - [EchoResponse](#relayer.v1beta1.EchoResponse)
+    - [HelloRequest](#relayer.v1beta1.HelloRequest)
     - [MessageData](#relayer.v1beta1.MessageData)
   
 - [Scalar Value Types](#scalar-value-types)
@@ -436,24 +435,9 @@ Msg defines the bridge Msg service.
 
 
 
-<a name="relayer.v1beta1.EchoRequest"></a>
+<a name="relayer.v1beta1.HelloRequest"></a>
 
-### EchoRequest
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `message` | [string](#string) |  |  |
-
-
-
-
-
-
-<a name="relayer.v1beta1.EchoResponse"></a>
-
-### EchoResponse
+### HelloRequest
 
 
 
@@ -474,6 +458,7 @@ Msg defines the bridge Msg service.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
+| `id` | [string](#string) |  |  |
 | `payload` | [google.protobuf.Any](#google.protobuf.Any) |  | Customtype workaround for not having to use a separate protocgen.sh script |
 
 

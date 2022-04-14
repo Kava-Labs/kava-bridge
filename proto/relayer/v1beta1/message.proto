@@ -7,14 +7,12 @@ import "google/protobuf/any.proto";
 option go_package = "github.com/kava-labs/kava-bridge/relayer/types";
 
 message MessageData {
+  string id = 1 [(gogoproto.customname) = "ID"];
+
   // Customtype workaround for not having to use a separate protocgen.sh script
-  google.protobuf.Any payload = 1 [(gogoproto.customtype) = "github.com/gogo/protobuf/types.Any"];
+  google.protobuf.Any payload = 2 [(gogoproto.customtype) = "github.com/gogo/protobuf/types.Any"];
 }
 
-message EchoRequest {
-  string message = 1;
-}
-
-message EchoResponse {
+message HelloRequest {
   string message = 1;
 }

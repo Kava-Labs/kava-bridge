@@ -26,7 +26,7 @@ func TestReadWrite(t *testing.T) {
 	}{
 		{
 			"regular",
-			&types.EchoRequest{
+			&types.HelloRequest{
 				Message: "hello world",
 			},
 			errArgs{
@@ -42,7 +42,7 @@ func TestReadWrite(t *testing.T) {
 		},
 		{
 			"large",
-			&types.EchoRequest{
+			&types.HelloRequest{
 				// Not quite max size since there's other data along with the Message
 				Message: string(make([]byte, stream.MAX_MESSAGE_SIZE-100)),
 			},
@@ -52,7 +52,7 @@ func TestReadWrite(t *testing.T) {
 		},
 		{
 			"exceed size",
-			&types.EchoRequest{
+			&types.HelloRequest{
 				// This plus the other data will exceed the max size.
 				Message: string(make([]byte, stream.MAX_MESSAGE_SIZE)),
 			},
