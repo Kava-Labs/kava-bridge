@@ -182,18 +182,34 @@ func (b *Broadcaster) handleIncomingRawMsg(msg *MessageWithPeerMetadata) {
 	// This just dumps all incoming messages to the handler.
 	go b.handler.HandleRawMessage(msg)
 
-	// Actually check all messages from all peers for validity.
+	// Check existing pending messages from other peers for the same message ID
 	b.pendingMessagesLock.Lock()
 	defer b.pendingMessagesLock.Unlock()
 
 	peerMsgGroup, found := b.pendingMessages[msg.Message.ID]
 	if !found {
+		log.Debugf("new message ID %s from peer %s, creating new pending group", msg.Message.ID, msg.PeerID)
 		peerMsgGroup = NewPeerMessageGroup()
 	}
 
-	peerMsgGroup.Add(msg)
+	if replaced := peerMsgGroup.Add(msg); replaced {
+		// Panic in development, but error in production.
+		log.DPanicw(
+			"duplicate message ID received from same peer",
+			"peerID", msg.PeerID,
+			"message", msg,
+		)
+	}
 	b.pendingMessages[msg.Message.ID] = peerMsgGroup
 
+	log.Debugw(
+		"added message to pending peer message group",
+		"peerID", msg.PeerID,
+		"messageID", msg.Message.ID,
+		"newGroupLength", peerMsgGroup.Len(),
+	)
+
+	// Validate the message group
 	if err := peerMsgGroup.Validate(); err != nil {
 		log.Errorf("broadcast message validation failed: %s", err)
 
@@ -205,17 +221,32 @@ func (b *Broadcaster) handleIncomingRawMsg(msg *MessageWithPeerMetadata) {
 	}
 
 	if peerMsgGroup.Len() == b.GetPeerCount() {
+		log.Debugw(
+			"pending peer message group complete",
+			"messageID", msg.Message.ID,
+			"groupLength", peerMsgGroup.Len(),
+			"peerCount", b.GetPeerCount(),
+		)
+
 		// All peers have responded with the same message, send it to the valid
 		// message channel to be handled.
 		b.incomingValidatedMessages <- peerMsgGroup.GetMessageData()
 
 		// Remove from pending messages
 		delete(b.pendingMessages, msg.Message.ID)
+	} else {
+		log.Debugw(
+			"peer message group still pending",
+			"messageID", msg.Message.ID,
+			"groupLength", peerMsgGroup.Len(),
+			"peerCount", b.GetPeerCount(),
+		)
 	}
 }
 
 func (b *Broadcaster) handleIncomingValidatedMsg(msg *types.MessageData) {
 	log.Info("received validated message: %v", msg.String())
+
 	go b.handler.HandleValidatedMessage(msg)
 }
 
