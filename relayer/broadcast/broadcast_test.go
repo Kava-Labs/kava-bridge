@@ -24,7 +24,7 @@ func TestBroadcasterTestSuite(t *testing.T) {
 func (suite *BroadcasterTestSuite) TestBroadcast_ConnectPeers() {
 	count := 5
 	suite.CreateHostBroadcasters(count)
-	suite.ConnectAllHosts()
+	testutil.ConnectAll(suite.T(), suite.Hosts)
 
 	time.Sleep(time.Second)
 
@@ -35,8 +35,7 @@ func (suite *BroadcasterTestSuite) TestBroadcast_ConnectPeers() {
 }
 
 func (suite *BroadcasterTestSuite) TestBroadcast_Responses() {
-	// This is really noisy but useful for... debugging
-	logging.SetAllLoggers(logging.LevelDebug)
+	logging.SetLogLevelRegex("broadcast", "debug")
 
 	handler := &TestHandler{
 		rawCount:   0,
@@ -45,7 +44,7 @@ func (suite *BroadcasterTestSuite) TestBroadcast_Responses() {
 
 	count := 5
 	suite.CreateHostBroadcasters(count, broadcast.WithHandler(handler))
-	suite.ConnectAllHosts()
+	testutil.ConnectAll(suite.T(), suite.Hosts)
 
 	time.Sleep(time.Second)
 

@@ -206,18 +206,25 @@ func (b *Broadcaster) broadcastRawMessage(
 	group, _ := errgroup.WithContext(ctx)
 
 	for peerID, ch := range b.outboundStreams {
-		// TODO: Handle if stream is closed
-
 		// Avoid capturing loop variable
 		func(peerID peer.ID, ch network.Stream) {
 			b.broadcasterHook.BeforeBroadcastRawMessage(b, peerID, &pb)
 
 			group.Go(func() error {
+				// Check if still connected to peer
+				if b.host.Network().Connectedness(peerID) != network.Connected {
+					return fmt.Errorf("peer %v is not connected", peerID)
+				}
+
 				log.Debugf("sending message to peer: %s", peerID)
 
 				// NewUint32DelimitedWriter has an internal buffer, bufio.NewWriter()
 				// should not be necessary.
-				return stream.NewProtoMessageWriter(ch).WriteMsg(pb)
+				err := stream.NewProtoMessageWriter(ch).WriteMsg(pb)
+				if err != nil {
+					return fmt.Errorf("failed to write proto message to peer: %w", err)
+				}
+				return nil
 			})
 		}(peerID, ch)
 	}
@@ -327,7 +334,7 @@ func (b *Broadcaster) handleIncomingValidatedMsg(msg *types.MessageData) {
 func (b *Broadcaster) handleNewPeer(ctx context.Context, pid peer.ID) {
 	s, err := b.host.NewStream(b.ctx, pid, ProtocolID)
 	if err != nil {
-		log.Errorf("failed to open new stream to peer: ", err, pid)
+		log.Errorf("failed to open new stream to peer %s: %v", pid, err)
 
 		return
 	}

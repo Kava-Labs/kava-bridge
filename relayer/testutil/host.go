@@ -38,7 +38,6 @@ func CreateHosts(t *testing.T, ctx context.Context, n int) []host.Host {
 		h, err := libp2p.New()
 		require.NoError(t, err)
 
-		t.Cleanup(func() { h.Close() })
 		out = append(out, h)
 	}
 
@@ -58,26 +57,20 @@ type Suite struct {
 func (suite *Suite) CreateHostBroadcasters(n int, options ...broadcast.BroadcasterOption) {
 	suite.Ctx, suite.Cancel = context.WithCancel(context.Background())
 
-	count := 5
-	suite.Hosts = CreateHosts(suite.T(), suite.Ctx, count)
+	suite.Hosts = CreateHosts(suite.T(), suite.Ctx, n)
+
+	// Without setting to nil first, suite tests will connect to peers
+	// on a different suite test for some reason.
+	suite.Broadcasters = nil
 
 	for i, h := range suite.Hosts {
 		suite.T().Logf("peer index %v id: %v", i, h.ID())
-	}
 
-	for _, h := range suite.Hosts {
 		b, err := broadcast.NewBroadcaster(suite.Ctx, h, options...)
 		suite.Require().NoError(err)
 
 		suite.Broadcasters = append(suite.Broadcasters, b)
 	}
-}
-
-func (suite *Suite) ConnectAllHosts() {
-	ConnectAll(suite.T(), suite.Hosts)
-}
-
-func (suite *Suite) SetupTest() {
 }
 
 func (suite *Suite) TearDownTest() {
