@@ -199,11 +199,12 @@ func (b *Broadcaster) broadcastRawMessage(
 	defer b.outboundStreamsLock.Unlock()
 
 	// Run writes to peers in parallel
-	g, _ := errgroup.WithContext(ctx)
+	group, _ := errgroup.WithContext(ctx)
 
 	for _, ch := range b.outboundStreams {
+		// Avoid capturing loop variable
 		func(ch network.Stream) {
-			g.Go(func() error {
+			group.Go(func() error {
 				log.Debugf("sending message to peer: %s", ch.Conn().RemotePeer())
 
 				// NewUint32DelimitedWriter has an internal buffer, bufio.NewWriter()
@@ -213,7 +214,7 @@ func (b *Broadcaster) broadcastRawMessage(
 		}(ch)
 	}
 
-	return g.Wait()
+	return group.Wait()
 }
 
 // handleIncomingRawMsg handles all raw messages from other peers. This is
