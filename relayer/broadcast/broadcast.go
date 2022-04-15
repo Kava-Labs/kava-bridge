@@ -168,6 +168,10 @@ func (b *Broadcaster) BroadcastMessage(
 		return err
 	}
 
+	if err := msg.Validate(); err != nil {
+		return fmt.Errorf("invalid message: %w", err)
+	}
+
 	// Add the message to the pending messages map to keep track of responses
 	// and to prevent re-broadcasting.
 	b.pendingMessagesLock.Lock()
@@ -179,10 +183,6 @@ func (b *Broadcaster) BroadcastMessage(
 		return fmt.Errorf("cannot broadcast message that is already pending: %v", msg.ID)
 	}
 	b.pendingMessages[msg.ID] = NewPeerMessageGroup()
-
-	if err := msg.Validate(); err != nil {
-		return fmt.Errorf("invalid message: %w", err)
-	}
 
 	return b.broadcastRawMessage(ctx, &msg)
 }
