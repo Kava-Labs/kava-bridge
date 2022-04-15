@@ -44,14 +44,14 @@ type TestHandler struct {
 	validCount int
 }
 
-func (h *TestHandler) HandleRawMessage(msg *broadcast.MessageWithPeerMetadata) {
+func (h *TestHandler) RawMessage(msg *broadcast.MessageWithPeerMetadata) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 
 	h.rawCount += 1
 }
 
-func (h *TestHandler) HandleValidatedMessage(msg *types.MessageData) {
+func (h *TestHandler) ValidatedMessage(msg *types.MessageData) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 
