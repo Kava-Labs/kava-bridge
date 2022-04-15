@@ -44,19 +44,21 @@ type TestHandler struct {
 	validCount int
 }
 
-func (h *TestHandler) RawMessage(msg *broadcast.MessageWithPeerMetadata) {
+func (h *TestHandler) RawMessage(msg broadcast.MessageWithPeerMetadata) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 
 	h.rawCount += 1
 }
 
-func (h *TestHandler) ValidatedMessage(msg *types.MessageData) {
+func (h *TestHandler) ValidatedMessage(msg types.MessageData) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 
 	h.validCount += 1
 }
+
+func (h *TestHandler) MismatchMessage(msg broadcast.MessageWithPeerMetadata) {}
 
 func TestBroadcast_Responses(t *testing.T) {
 	// This is really noisy but useful for... debugging

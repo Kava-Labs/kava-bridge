@@ -227,7 +227,7 @@ func (b *Broadcaster) handleIncomingRawMsg(msg *MessageWithPeerMetadata) {
 
 	// This just dumps all incoming messages to the handler for logging or
 	// testing purposes.
-	go b.handler.RawMessage(msg)
+	go b.handler.RawMessage(*msg)
 
 	// Check existing pending messages from other peers for the same message ID
 	b.pendingMessagesLock.Lock()
@@ -308,7 +308,7 @@ func (b *Broadcaster) handleIncomingRawMsg(msg *MessageWithPeerMetadata) {
 func (b *Broadcaster) handleIncomingValidatedMsg(msg *types.MessageData) {
 	log.Infof("received validated message: %v", msg.String())
 
-	go b.handler.ValidatedMessage(msg)
+	go b.handler.ValidatedMessage(*msg)
 }
 
 // -----------------------------------------------------------------------------
