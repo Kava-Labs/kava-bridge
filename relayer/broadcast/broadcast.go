@@ -206,6 +206,8 @@ func (b *Broadcaster) broadcastRawMessage(
 	group, _ := errgroup.WithContext(ctx)
 
 	for peerID, ch := range b.outboundStreams {
+		// TODO: Handle if stream is closed
+
 		// Avoid capturing loop variable
 		func(peerID peer.ID, ch network.Stream) {
 			b.broadcasterHook.BeforeBroadcastRawMessage(b, peerID, &pb)
