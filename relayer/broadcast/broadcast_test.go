@@ -25,6 +25,18 @@ type BroadcasterTestSuite struct {
 	Broadcasters []*broadcast.Broadcaster
 }
 
+func TestBroadcasterTestSuite(t *testing.T) {
+	suite.Run(t, new(BroadcasterTestSuite))
+}
+
+func (suite *BroadcasterTestSuite) TearDownTest() {
+	suite.Cancel()
+
+	for _, h := range suite.Hosts {
+		h.Close()
+	}
+}
+
 func (suite *BroadcasterTestSuite) CreateHostBroadcasters(n int, options ...broadcast.BroadcasterOption) {
 	suite.Ctx, suite.Cancel = context.WithCancel(context.Background())
 
@@ -44,38 +56,92 @@ func (suite *BroadcasterTestSuite) CreateHostBroadcasters(n int, options ...broa
 	}
 }
 
-func (suite *BroadcasterTestSuite) TearDownTest() {
-	suite.Cancel()
+func (suite *BroadcasterTestSuite) TestBroadcast_ConnectPeers() {
+	count := 5
+	suite.CreateHostBroadcasters(count)
+	ConnectAll(suite.T(), suite.Hosts)
 
-	for _, h := range suite.Hosts {
-		h.Close()
+	time.Sleep(time.Second)
+
+	for _, broadcaster := range suite.Broadcasters {
+		// Peer count does not include self
+		suite.Assert().Equal(count-1, broadcaster.GetPeerCount())
 	}
 }
 
-func CreateBroadcasters(
-	t *testing.T,
-	ctx context.Context,
-	hosts []host.Host,
-	options ...broadcast.BroadcasterOption,
-) []*broadcast.Broadcaster {
-	var out []*broadcast.Broadcaster
+func (suite *BroadcasterTestSuite) TestBroadcast_Responses() {
+	err := logging.SetLogLevelRegex("broadcast", "debug")
+	suite.Require().NoError(err)
 
-	for _, h := range hosts {
-		b, err := broadcast.NewBroadcaster(ctx, h, options...)
-		require.NoError(t, err)
-
-		out = append(out, b)
+	handler := &TestHandler{
+		rawCount:   0,
+		validCount: 0,
 	}
 
-	return out
+	count := 5
+	suite.CreateHostBroadcasters(count, broadcast.WithHandler(handler))
+	ConnectAll(suite.T(), suite.Hosts)
+
+	time.Sleep(time.Second)
+
+	err = suite.Broadcasters[0].BroadcastMessage(
+		context.Background(),
+		"1234 message id",
+		&types.HelloRequest{
+			Message: "hello world",
+		},
+	)
+	suite.Require().NoError(err)
+
+	time.Sleep(time.Second * 10)
+
+	for _, broadcaster := range suite.Broadcasters {
+		// Peer count does not include self
+		suite.Assert().Equal(count-1, broadcaster.GetPeerCount())
+	}
+
+	handler.mu.Lock()
+	defer handler.mu.Unlock()
+
+	// A -> B, C, D, E (4) // initial receive
+	// B, C, D, E rebroadcast to all other nodes (4 * 4)
+	// 4 initial + 16 re-broadcast = 20
+	suite.Assert().Equal(20, handler.rawCount, "raw message count should be 20")
+	suite.Assert().Equal(count, handler.validCount, "each peer should get a validated message")
 }
+
+// ----------------------------------------------------------------------------
+// test handler
+type TestHandler struct {
+	mu sync.Mutex
+
+	rawCount   int
+	validCount int
+}
+
+func (h *TestHandler) RawMessage(msg broadcast.MessageWithPeerMetadata) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+
+	h.rawCount += 1
+}
+
+func (h *TestHandler) ValidatedMessage(msg types.MessageData) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+
+	h.validCount += 1
+}
+
+func (h *TestHandler) MismatchMessage(msg broadcast.MessageWithPeerMetadata) {}
+
+// ----------------------------------------------------------------------------
+// util functions
 
 func Connect(t *testing.T, a, b host.Host) {
 	pinfo := a.Peerstore().PeerInfo(a.ID())
 	err := b.Connect(context.Background(), pinfo)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 }
 
 func ConnectAll(t *testing.T, hosts []host.Host) {
@@ -102,83 +168,3 @@ func CreateHosts(t *testing.T, ctx context.Context, n int) []host.Host {
 
 	return out
 }
-
-func TestBroadcasterTestSuite(t *testing.T) {
-	suite.Run(t, new(BroadcasterTestSuite))
-}
-
-func (suite *BroadcasterTestSuite) TestBroadcast_ConnectPeers() {
-	count := 5
-	suite.CreateHostBroadcasters(count)
-	ConnectAll(suite.T(), suite.Hosts)
-
-	time.Sleep(time.Second)
-
-	for _, broadcaster := range suite.Broadcasters {
-		// Peer count does not include self
-		suite.Assert().Equal(count-1, broadcaster.GetPeerCount())
-	}
-}
-
-func (suite *BroadcasterTestSuite) TestBroadcast_Responses() {
-	logging.SetLogLevelRegex("broadcast", "debug")
-
-	handler := &TestHandler{
-		rawCount:   0,
-		validCount: 0,
-	}
-
-	count := 5
-	suite.CreateHostBroadcasters(count, broadcast.WithHandler(handler))
-	ConnectAll(suite.T(), suite.Hosts)
-
-	time.Sleep(time.Second)
-
-	err := suite.Broadcasters[0].BroadcastMessage(
-		context.Background(),
-		"1234 message id",
-		&types.HelloRequest{
-			Message: "hello world",
-		},
-	)
-	suite.Require().NoError(err)
-
-	time.Sleep(time.Second * 10)
-
-	for _, broadcaster := range suite.Broadcasters {
-		// Peer count does not include self
-		suite.Assert().Equal(count-1, broadcaster.GetPeerCount())
-	}
-
-	handler.mu.Lock()
-	defer handler.mu.Unlock()
-
-	// A -> B, C, D, E (4) // initial receive
-	// B, C, D, E rebroadcast to all other nodes (4 * 4)
-	// 4 initial + 16 re-broadcast = 20
-	suite.Assert().Equal(20, handler.rawCount, "raw message count should be 20")
-	suite.Assert().Equal(count, handler.validCount, "each peer should get a validated message")
-}
-
-type TestHandler struct {
-	mu sync.Mutex
-
-	rawCount   int
-	validCount int
-}
-
-func (h *TestHandler) RawMessage(msg broadcast.MessageWithPeerMetadata) {
-	h.mu.Lock()
-	defer h.mu.Unlock()
-
-	h.rawCount += 1
-}
-
-func (h *TestHandler) ValidatedMessage(msg types.MessageData) {
-	h.mu.Lock()
-	defer h.mu.Unlock()
-
-	h.validCount += 1
-}
-
-func (h *TestHandler) MismatchMessage(msg broadcast.MessageWithPeerMetadata) {}
