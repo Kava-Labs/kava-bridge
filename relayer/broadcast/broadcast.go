@@ -62,6 +62,9 @@ type Broadcaster struct {
 	// External event handler
 	handler BroadcastHandler
 
+	// Message hook
+	broadcasterHook broadcasterHook
+
 	ctx context.Context
 }
 
@@ -86,6 +89,7 @@ func NewBroadcaster(
 		pendingMessages:           make(map[string]*PeerMessageGroup),
 		outgoing:                  make(chan *types.MessageData),
 		handler:                   &NoOpBroadcastHandler{},
+		broadcasterHook:           &noOpBroadcasterHook{},
 		ctx:                       ctx,
 	}
 
@@ -201,17 +205,19 @@ func (b *Broadcaster) broadcastRawMessage(
 	// Run writes to peers in parallel
 	group, _ := errgroup.WithContext(ctx)
 
-	for _, ch := range b.outboundStreams {
+	for peerID, ch := range b.outboundStreams {
 		// Avoid capturing loop variable
-		func(ch network.Stream) {
+		func(peerID peer.ID, ch network.Stream) {
+			b.broadcasterHook.BeforeBroadcastRawMessage(b, peerID, &pb)
+
 			group.Go(func() error {
-				log.Debugf("sending message to peer: %s", ch.Conn().RemotePeer())
+				log.Debugf("sending message to peer: %s", peerID)
 
 				// NewUint32DelimitedWriter has an internal buffer, bufio.NewWriter()
 				// should not be necessary.
 				return stream.NewProtoMessageWriter(ch).WriteMsg(pb)
 			})
-		}(ch)
+		}(peerID, ch)
 	}
 
 	return group.Wait()
@@ -273,6 +279,7 @@ func (b *Broadcaster) handleIncomingRawMsg(msg *MessageWithPeerMetadata) {
 	// from all peers, or each time a message is added.
 	if err := peerMsgGroup.Validate(); err != nil {
 		log.Errorf("broadcast message validation failed: %s", err)
+		go b.handler.MismatchMessage(*msg)
 
 		// TODO: Reject additional messages for the same message ID? Or prune
 		// them along with the expired messages
@@ -368,7 +375,8 @@ func (b *Broadcaster) handleNewStream(s network.Stream) {
 	for {
 		var msg types.MessageData
 		if err := r.ReadMsg(&msg); err != nil {
-			log.Errorf("error reading stream message from peer %s: %s", s.Conn().RemotePeer(), err)
+			// Error when closing stream
+			log.Warnf("error reading stream message from peer %s: %s", s.Conn().RemotePeer(), err)
 			_ = s.Reset()
 
 			return
