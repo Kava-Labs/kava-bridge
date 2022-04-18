@@ -239,7 +239,12 @@ func (suite *ParamsTestSuite) TestParamValidation() {
 
 	for _, tc := range testCases {
 		suite.Run(tc.name, func() {
-			params := types.NewParams(tc.args.enabledERC20Tokens, tc.args.relayer, types.DefaultConversionPairs)
+			params := types.NewParams(
+				true,
+				tc.args.enabledERC20Tokens,
+				tc.args.relayer,
+				types.DefaultConversionPairs,
+			)
 
 			err := params.Validate()
 			if tc.errArgs.expectPass {
@@ -344,6 +349,7 @@ func (suite *ParamsTestSuite) TestMarshalYAML() {
 	)
 
 	p := types.NewParams(
+		true,
 		enabledTokens,
 		relayer,
 		conversionPairs,
