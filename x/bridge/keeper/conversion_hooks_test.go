@@ -119,6 +119,19 @@ func (suite *ConversionHooksTestSuite) TestConvertToCoin() {
 	_ = suite.ConvertToCoin(suite.conversionPair.GetAddress(), toKavaAddr, amount)
 }
 
+func (suite *ConversionHooksTestSuite) TestConvertToCoin_BridgeDisabled() {
+	// Disable bridge
+	params := suite.Keeper.GetParams(suite.Ctx)
+	params.BridgeEnabled = false
+	suite.Keeper.SetParams(suite.Ctx, params)
+
+	toKavaAddr := sdk.AccAddress(suite.Key2.PubKey().Address())
+	amount := big.NewInt(100)
+
+	res := suite.ConvertToCoin(suite.conversionPair.GetAddress(), toKavaAddr, amount)
+	suite.Require().True(res.Failed(), "evm tx should fail if bridge is disabled")
+}
+
 func (suite *ConversionHooksTestSuite) TestConvertToCoin_Events() {
 	toKavaAddr := sdk.AccAddress(suite.Key2.PubKey().Address())
 	amount := big.NewInt(100)
