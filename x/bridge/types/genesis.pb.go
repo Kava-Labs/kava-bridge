@@ -85,8 +85,8 @@ func (m *GenesisState) GetERC20BridgePairs() ERC20BridgePairs {
 
 // Params defines the bridge module params
 type Params struct {
-	// Flag for enabling both incoming and outgoing bridge transactions. This does
-	// **not** affect Kava ERC20 <-> sdk.Coin conversions.
+	// Flag for enabling incoming/outgoing bridge transactions AND
+	// Kava ERC20/sdk.Coin conversions.
 	BridgeEnabled bool `protobuf:"varint,1,opt,name=bridge_enabled,json=bridgeEnabled,proto3" json:"bridge_enabled,omitempty"`
 	// List of ERC20Tokens that are allowed to be bridged to Kava
 	EnabledERC20Tokens EnabledERC20Tokens `protobuf:"bytes,2,rep,name=enabled_erc20_tokens,json=enabledErc20Tokens,proto3,castrepeated=EnabledERC20Tokens" json:"enabled_erc20_tokens"`

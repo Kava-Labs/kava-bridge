@@ -32,8 +32,8 @@ message GenesisState {
 
 // Params defines the bridge module params
 message Params {
-  // Flag for enabling both incoming and outgoing bridge transactions. This does
-  // **not** affect Kava ERC20 <-> sdk.Coin conversions.
+  // Flag for enabling incoming/outgoing bridge transactions AND
+  // Kava ERC20/sdk.Coin conversions.
   bool bridge_enabled = 1;
 
   // List of ERC20Tokens that are allowed to be bridged to Kava

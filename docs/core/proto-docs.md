@@ -161,7 +161,7 @@ Params defines the bridge module params
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `bridge_enabled` | [bool](#bool) |  | Flag for enabling both incoming and outgoing bridge transactions. This does **not** affect Kava ERC20 <-> sdk.Coin conversions. |
+| `bridge_enabled` | [bool](#bool) |  | Flag for enabling incoming/outgoing bridge transactions AND Kava ERC20/sdk.Coin conversions. |
 | `enabled_erc20_tokens` | [EnabledERC20Token](#bridge.v1beta1.EnabledERC20Token) | repeated | List of ERC20Tokens that are allowed to be bridged to Kava |
 | `relayer` | [bytes](#bytes) |  | Permissioned relayer address that is allowed to submit bridge messages |
 | `enabled_conversion_pairs` | [ConversionPair](#bridge.v1beta1.ConversionPair) | repeated | enabled_conversion_pairs defines the list of conversion pairs allowed to be converted between Kava ERC20 and sdk.Coin |
