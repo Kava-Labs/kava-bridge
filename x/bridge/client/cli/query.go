@@ -252,7 +252,29 @@ func QueryERC20BalanceOfCmd() *cobra.Command {
 				return fmt.Errorf("invalid type %T, expected %T", anyOutput[0], bal)
 			}
 
-			return clientCtx.PrintString(fmt.Sprintf("%v\n", bal))
+			symbolRes, err := ERC20Query(clientCtx, contractAddr, "symbol")
+			if err != nil {
+				return err
+			}
+
+			decimalsRes, err := ERC20Query(clientCtx, contractAddr, "decimals")
+			if err != nil {
+				return err
+			}
+
+			symbol, ok := symbolRes[0].(string)
+			if !ok {
+				return fmt.Errorf("invalid type %T, expected %T", symbolRes[0], symbol)
+			}
+
+			decimals, ok := decimalsRes[0].(uint8)
+			if !ok {
+				return fmt.Errorf("invalid type %T, expected %T", decimalsRes[0], decimals)
+			}
+
+			decBal := sdk.NewDecFromBigIntWithPrec(bal, int64(decimals))
+
+			return clientCtx.PrintString(fmt.Sprintf("%v %v\n", decBal, symbol))
 		},
 	}
 }
