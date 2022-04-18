@@ -4,6 +4,7 @@ The bridge module contains the following parameters:
 
 | Key                   | Type               | Example                                         | Description                                                                            |
 | --------------------- | ------------------ | ----------------------------------------------- | -------------------------------------------------------------------------------------- |
+| BridgeEnabled         | bool               | true                                            | global enabled status of bridge module                                                 |
 | EnabledERC20Tokens    | EnabledERC20Tokens | `[]EnabledERC20Token`                           | list of ERC20 tokens allowed to bridge                                                 |
 | EnabledConversionPair | ConversionPairs    | []ConversionPair                                | list of internal denom and ERC20 addresses allowed to be converted between one another |
 | Relayer               | sdk.AccAddress     | `"kava123fxg0l602etulhhcdm0vt7l57qya5wjcrwhzz"` | bridge relayer address                                                                 |
