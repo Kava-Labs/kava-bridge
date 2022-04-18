@@ -193,10 +193,48 @@ func (suite *EVMHooksTestSuite) TestERC20Withdraw_UnderMinimumWithdraw() {
 	withdrawAmount := testutil.MinWETHWithdrawAmount.Sub(sdk.OneInt())
 
 	// Send Withdraw TX
-	res := suite.Withdraw(suite.pair.GetInternalAddress(), withdrawToAddr, withdrawAmount.BigInt())
+	data, err := suite.erc20Abi.Pack(
+		"withdraw",
+		withdrawToAddr,
+		withdrawAmount.BigInt(),
+	)
+	suite.Require().NoError(err)
+
+	res, err := suite.SendTx(suite.pair.GetInternalAddress(), suite.key1Addr, suite.Key1, data)
+	suite.Require().NoError(err)
 
 	suite.Require().True(res.Failed(), "should fail for withdraws under minimum withdraw amount")
-	suite.Require().Equal(evmtypes.ErrExecutionReverted.Error(), res.VmError)
+	suite.Require().Equal(evmtypes.ErrPostTxProcessing.Error(), res.VmError)
+}
+
+func (suite *EVMHooksTestSuite) TestERC20Withdraw_AfterERC20Disabled() {
+	toKey, err := ethsecp256k1.GenerateKey()
+	suite.Require().NoError(err)
+	withdrawToAddr := common.BytesToAddress(toKey.PubKey().Address())
+	withdrawAmount := testutil.MinWETHWithdrawAmount.BigInt()
+
+	// Send Withdraw TX
+	res := suite.Withdraw(suite.pair.GetInternalAddress(), withdrawToAddr, withdrawAmount)
+	suite.Require().False(res.Failed(), "minimum withdraw should not fail")
+
+	// Remove all enabled ERC20 tokens
+	params := suite.Keeper.GetParams(suite.Ctx)
+	params.EnabledERC20Tokens = types.DefaultEnabledERC20Tokens
+	suite.Keeper.SetParams(suite.Ctx, params)
+
+	// Withdraw with ERC20 disabled should still fail
+	data, err := suite.erc20Abi.Pack(
+		"withdraw",
+		withdrawToAddr,
+		withdrawAmount,
+	)
+	suite.Require().NoError(err)
+
+	res, err = suite.SendTx(suite.pair.GetInternalAddress(), suite.key1Addr, suite.Key1, data)
+	suite.Require().NoError(err)
+
+	suite.Require().True(res.Failed(), "withdraw with disabled ERC20 but with bridge pair state should fail")
+	suite.Require().Equal(evmtypes.ErrPostTxProcessing.Error(), res.VmError)
 }
 
 func (suite *EVMHooksTestSuite) TestERC20Withdraw_SequenceIncrement() {
