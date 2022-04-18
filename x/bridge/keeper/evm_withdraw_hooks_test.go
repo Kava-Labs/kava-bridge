@@ -355,3 +355,20 @@ func (suite *EVMHooksTestSuite) TestERC20Withdraw_IgnoreUnregisteredERC20() {
 
 	suite.EventsDoNotContain(suite.GetEvents(), types.EventTypeBridgeKavaToEthereum)
 }
+
+func (suite *EVMHooksTestSuite) TestERC20Withdraw_BridgeDisabled() {
+	// Disable bridge
+	params := suite.Keeper.GetParams(suite.Ctx)
+	params.BridgeEnabled = false
+	suite.Keeper.SetParams(suite.Ctx, params)
+
+	toKey, err := ethsecp256k1.GenerateKey()
+	suite.Require().NoError(err)
+	withdrawToAddr := common.BytesToAddress(toKey.PubKey().Address())
+	withdrawAmount := big.NewInt(10)
+
+	// Send Withdraw TX
+	res := suite.Withdraw(suite.pair.GetInternalAddress(), withdrawToAddr, withdrawAmount)
+
+	suite.Require().True(res.Failed())
+}
