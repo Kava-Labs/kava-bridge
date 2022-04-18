@@ -367,8 +367,16 @@ func (suite *EVMHooksTestSuite) TestERC20Withdraw_BridgeDisabled() {
 	withdrawToAddr := common.BytesToAddress(toKey.PubKey().Address())
 	withdrawAmount := big.NewInt(10)
 
-	// Send Withdraw TX
-	res := suite.Withdraw(suite.pair.GetInternalAddress(), withdrawToAddr, withdrawAmount)
+	data, err := suite.erc20Abi.Pack(
+		"withdraw",
+		withdrawToAddr,
+		withdrawAmount,
+	)
+	suite.Require().NoError(err)
+
+	res, err := suite.SendTx(suite.pair.GetInternalAddress(), suite.key1Addr, suite.Key1, data)
+	suite.Require().NoError(err)
 
 	suite.Require().True(res.Failed())
+	suite.Require().Equal(evmtypes.ErrPostTxProcessing.Error(), res.VmError)
 }
