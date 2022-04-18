@@ -77,13 +77,15 @@ jq '.app_state.bridge.params.enabled_erc20_tokens = [
         address: "0x6098c27D41ec6dc280c2200A737D443b0AaA2E8F",
         name: "Wrapped ETH",
         symbol: "WETH",
-        decimals: 18
+        decimals: 18,
+        minimum_withdraw_amount: "10000000000000000"
     },
     {
         address: "0x4Fb48E68842bb59f07569c623ACa5826b600F8F7",
         name: "USDC",
         symbol: "USDC",
-        decimals: 6
+        decimals: 6,
+        minimum_withdraw_amount: "10000000"
     }]' $DATA/config/genesis.json | sponge $DATA/config/genesis.json
 
 # Set enabled conversion pairs - weth address is the first contract bridge module
