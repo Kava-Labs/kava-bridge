@@ -110,12 +110,19 @@ func (tokens EnabledERC20Tokens) Validate() error {
 }
 
 // NewEnabledERC20Token returns a new EnabledERC20Token.
-func NewEnabledERC20Token(address ExternalEVMAddress, name string, symbol string, decimals uint32) EnabledERC20Token {
+func NewEnabledERC20Token(
+	address ExternalEVMAddress,
+	name string,
+	symbol string,
+	decimals uint32,
+	minimum_withdraw_amount sdk.Int,
+) EnabledERC20Token {
 	return EnabledERC20Token{
-		Address:  address.Bytes(),
-		Name:     name,
-		Symbol:   symbol,
-		Decimals: decimals,
+		Address:               address.Bytes(),
+		Name:                  name,
+		Symbol:                symbol,
+		Decimals:              decimals,
+		MinimumWithdrawAmount: minimum_withdraw_amount,
 	}
 }
 
@@ -146,6 +153,10 @@ func (e EnabledERC20Token) Validate() error {
 	// size of erc20 decimals should be an uint8
 	if e.Decimals > math.MaxUint8 {
 		return fmt.Errorf("decimals is too large, max %v", math.MaxUint8)
+	}
+
+	if e.MinimumWithdrawAmount.LTE(sdk.ZeroInt()) {
+		return fmt.Errorf("minimum withdraw amount must be positive")
 	}
 
 	return nil

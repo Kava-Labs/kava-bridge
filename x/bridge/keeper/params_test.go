@@ -41,6 +41,7 @@ func (suite *ParamsTestSuite) TestGetEnabledERC20Token() {
 		"Wrapped Ether",
 		"WETH",
 		18,
+		testutil.MinWETHWithdrawAmount,
 	)
 
 	suite.Require().Equal(expectedToken, token)

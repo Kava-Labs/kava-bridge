@@ -54,9 +54,7 @@ message Params {
 // EnabledERC20Token defines an external ERC20 that is allowed to be bridged to Kava
 message EnabledERC20Token {
   // Address of the contract on Ethereum
-  bytes address = 1 [
-    (gogoproto.casttype) = "HexBytes"
-  ];
+  bytes address = 1 [(gogoproto.casttype) = "HexBytes"];
   // Name of the token.
   string name = 2;
   // Symbol of the ERC20 token, usually a shorter version of the name.
@@ -65,4 +63,11 @@ message EnabledERC20Token {
   // value is an unsigned 8 bit integer, but is an uint32 as the smallest
   // protobuf integer type.
   uint32 decimals = 4;
+  // Minimum amount of the token that can be bridged back to Ethereum to prevent
+  // outgoing transfers that are much smaller than Ethereum gas costs.
+  string minimum_withdraw_amount = 5 [
+    (cosmos_proto.scalar)  = "cosmos.Int",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable)   = false
+  ];
 }
