@@ -1,7 +1,5 @@
 # Concepts
 
-## Reliable Broadcast
-
 ## Multi-Party Threshold Signature Scheme
 
 We use [tss-lib] for key generation, signing using secret shares, and key
