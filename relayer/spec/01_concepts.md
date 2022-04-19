@@ -5,14 +5,14 @@
 ## Multi-Party Threshold Signature Scheme
 
 We use [tss-lib] for key generation, signing using secret shares, and key
-resharing.
+re-sharing.
 
 This threshold signature scheme enables multi-party signing among n peers such
 that any subset of size t + 1 can sign, while any group with t or fewer cannot.
 
-## TX monitor
+## Transaction Monitoring
 
-Relayer watches txs on both Ethereum and Kava blockchains for bridge
+Relayer monitors transactions on both Ethereum and Kava blockchains for bridge
 transactions.
 
 ## Leader
@@ -36,6 +36,11 @@ sort.Slice(peerIDs, func(i, j int) bool {
 leaderPeerID := peerIDs[leaderNumber]
 ```
 
+### Leader Failure
+
+If the leader is unresponsive within a certain timeout, a new leader is picked
+by simply incrementing the leader number, wrapping back to 0 if necessary.
+
 ## Party Initialization
 
 When a leader is picked, it broadcasts a party initialization message. When
@@ -47,14 +52,15 @@ This not only includes only the required number of peers to sign a message, but
 also handles certain cases such as a peer that is not responding.
 
 For example, if 4 of 5 are required to sign a message, the first 3 peers to
-respond to the leader will be selected to join the party (leader + 3 additional
-peers) while the last one will be excluded.
+respond to the leader will be selected to join the party (1 leader + 3
+additional peers) while the last one will be excluded.
 
-**Security Note:** Peers must validate the party initialization message
-originated from the chosen leader peer ID. As all peers pick the leader
-deterministically, they can reject any party initialization message broadcasted
-from a peer that does **not** match the picked leader ID and log for
-misbehaving or malfunctioning node.
+### Leader Validation
+
+Peers must validate the party initialization message originated from the chosen
+leader peer ID. As all peers pick the leader deterministically, they can reject
+any party initialization message broadcasted from a peer that does **not** match
+the picked leader ID and log for misbehaving or malfunctioning node.
 
 ## Party Pooper
 
