@@ -13,21 +13,23 @@ Each message contains the following data:
 
 * Unique ID
 * Peer ID list of participating peers (e.g. subset of all connected peers, or all of them)
-* Payload, protobuf Any data
+* Payload, protobuf `Any`
 * Initiating peer ID
 * Created timestamp to keep track expire time
 
 ## Basic Algorithm
 
-A simplified way of how reliable broadcast works is as follows.
+A simplified way of how the reliable broadcast works is as follows.
 
 Peer A wants to broadcast x.
 
 1. A sends x to all other peers in the message peer list.
-2. Every other peer re-sends x to all other peers in the message peer list
+2. Every other peer sends sha256(x) to all other peers in the message peer list
    including peer A.
-3. Every peer checks that they received the same values.
-4. If any inconsistent values, abort. Otherwise, x is output.
+3. Every peer verifies received hashes against it's own message and checks all
+   other peer hashes are the same.
+4. If any inconsistent values, abort. Otherwise, x is output, meaning peers can
+   continue to do work with the value such as signing.
 
 ## Failure Cases
 
