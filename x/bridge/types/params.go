@@ -14,9 +14,11 @@ import (
 
 // Parameter keys and default values
 var (
+	KeyBridgeEnabled          = []byte("BridgeEnabled")
 	KeyEnabledERC20Tokens     = []byte("EnabledERC20Tokens")
 	KeyRelayer                = []byte("Relayer")
 	KeyEnabledConversionPairs = []byte("EnabledConversionPairs")
+	DefaultBridgeEnabled      = false
 	DefaultEnabledERC20Tokens = EnabledERC20Tokens{}
 	DefaultRelayer            = sdk.AccAddress{}
 	DefaultConversionPairs    = ConversionPairs{}
@@ -31,6 +33,7 @@ func ParamKeyTable() paramtypes.KeyTable {
 // pairs pairs of the bridge module's parameters.
 func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 	return paramtypes.ParamSetPairs{
+		paramtypes.NewParamSetPair(KeyBridgeEnabled, &p.BridgeEnabled, validateBool),
 		paramtypes.NewParamSetPair(KeyEnabledERC20Tokens, &p.EnabledERC20Tokens, validateEnabledERC20Tokens),
 		paramtypes.NewParamSetPair(KeyRelayer, &p.Relayer, validateRelayer),
 		paramtypes.NewParamSetPair(KeyEnabledConversionPairs, &p.EnabledConversionPairs, validateConversionPairs),
@@ -38,8 +41,14 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 }
 
 // NewParams returns new bridge module Params.
-func NewParams(enabledERC20Tokens EnabledERC20Tokens, relayer sdk.AccAddress, conversionPairs ConversionPairs) Params {
+func NewParams(
+	bridgeEnabled bool,
+	enabledERC20Tokens EnabledERC20Tokens,
+	relayer sdk.AccAddress,
+	conversionPairs ConversionPairs,
+) Params {
 	return Params{
+		BridgeEnabled:          bridgeEnabled,
 		EnabledERC20Tokens:     enabledERC20Tokens,
 		Relayer:                relayer,
 		EnabledConversionPairs: conversionPairs,
@@ -48,7 +57,12 @@ func NewParams(enabledERC20Tokens EnabledERC20Tokens, relayer sdk.AccAddress, co
 
 // DefaultParams returns the default parameters for bridge.
 func DefaultParams() Params {
-	return NewParams(DefaultEnabledERC20Tokens, DefaultRelayer, DefaultConversionPairs)
+	return NewParams(
+		DefaultBridgeEnabled,
+		DefaultEnabledERC20Tokens,
+		DefaultRelayer,
+		DefaultConversionPairs,
+	)
 }
 
 func (p *Params) Validate() error {
@@ -62,6 +76,15 @@ func (p *Params) Validate() error {
 
 	if err := p.EnabledConversionPairs.Validate(); err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func validateBool(i interface{}) error {
+	_, ok := i.(bool)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
 	}
 
 	return nil

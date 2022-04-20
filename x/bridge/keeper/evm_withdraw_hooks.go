@@ -47,6 +47,7 @@ func (h WithdrawHook) PostTxProcessing(
 	receipt *ethtypes.Receipt,
 ) error {
 	erc20Abi := contract.ERC20MintableBurnableContract.ABI
+	params := h.k.GetParams(ctx)
 
 	for _, log := range receipt.Logs {
 		// ERC20MintableBurnableContract should contain 3 topics:
@@ -94,6 +95,11 @@ func (h WithdrawHook) PostTxProcessing(
 		if !found {
 			// Contract not a bridge pair in state
 			continue
+		}
+
+		// Only check if the bridge is enabled for contracts that are enabled.
+		if !params.BridgeEnabled {
+			return types.ErrBridgeDisabled
 		}
 
 		enabledERC20, err := h.k.GetEnabledERC20TokenFromExternal(ctx, pair.GetExternalAddress())

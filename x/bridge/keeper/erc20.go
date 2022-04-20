@@ -22,6 +22,11 @@ func (k Keeper) BridgeEthereumToKava(
 	amount *big.Int,
 	sequence sdk.Int,
 ) error {
+	params := k.GetParams(ctx)
+	if !params.BridgeEnabled {
+		return types.ErrBridgeDisabled
+	}
+
 	// Check if message signer/relayer matches the relayer set in params
 	if err := k.IsSignerAuthorized(ctx, relayer); err != nil {
 		return err

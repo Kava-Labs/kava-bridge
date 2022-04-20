@@ -32,22 +32,26 @@ message GenesisState {
 
 // Params defines the bridge module params
 message Params {
+  // Flag for enabling incoming/outgoing bridge transactions AND
+  // Kava ERC20/sdk.Coin conversions.
+  bool bridge_enabled = 1;
+
   // List of ERC20Tokens that are allowed to be bridged to Kava
-  repeated EnabledERC20Token enabled_erc20_tokens = 1 [
+  repeated EnabledERC20Token enabled_erc20_tokens = 2 [
     (gogoproto.nullable)     = false,
     (gogoproto.castrepeated) = "EnabledERC20Tokens",
     (gogoproto.customname)   = "EnabledERC20Tokens"
   ];
 
   // Permissioned relayer address that is allowed to submit bridge messages
-  bytes relayer = 2 [
+  bytes relayer = 3 [
     (cosmos_proto.scalar) = "cosmos.AddressBytes",
     (gogoproto.casttype)  = "github.com/cosmos/cosmos-sdk/types.AccAddress"
   ];
 
   // enabled_conversion_pairs defines the list of conversion pairs allowed to be
   // converted between Kava ERC20 and sdk.Coin
-  repeated ConversionPair enabled_conversion_pairs = 3
+  repeated ConversionPair enabled_conversion_pairs = 4
       [(gogoproto.nullable) = false, (gogoproto.castrepeated) = "ConversionPairs"];
 }
 

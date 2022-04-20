@@ -30,6 +30,7 @@ func (suite *genesisTestSuite) Test_InitGenesis_Validation() {
 			"valid",
 			types.NewGenesisState(
 				types.NewParams(
+					true,
 					types.EnabledERC20Tokens{
 						types.NewEnabledERC20Token(
 							testutil.MustNewExternalEVMAddressFromString("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
@@ -77,6 +78,7 @@ func (suite *genesisTestSuite) Test_InitGenesis_Validation() {
 			"invalid - nil relayer",
 			types.NewGenesisState(
 				types.NewParams(
+					true,
 					types.EnabledERC20Tokens{
 						types.NewEnabledERC20Token(
 							testutil.MustNewExternalEVMAddressFromString("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
@@ -113,6 +115,7 @@ func (suite *genesisTestSuite) Test_InitGenesis_Validation() {
 			"invalid - duplicate token address",
 			types.NewGenesisState(
 				types.NewParams(
+					true,
 					types.EnabledERC20Tokens{
 						types.NewEnabledERC20Token(
 							testutil.MustNewExternalEVMAddressFromString("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
@@ -149,6 +152,7 @@ func (suite *genesisTestSuite) Test_InitGenesis_Validation() {
 			"invalid - zero token address",
 			types.NewGenesisState(
 				types.NewParams(
+					true,
 					types.EnabledERC20Tokens{
 						types.NewEnabledERC20Token(
 							testutil.MustNewExternalEVMAddressFromString("0x0000000000000000000000000000000000000000"),
@@ -180,6 +184,7 @@ func (suite *genesisTestSuite) Test_InitGenesis_Validation() {
 			"invalid - empty token name",
 			types.NewGenesisState(
 				types.NewParams(
+					true,
 					types.EnabledERC20Tokens{
 						types.NewEnabledERC20Token(
 							testutil.MustNewExternalEVMAddressFromString("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
@@ -204,6 +209,7 @@ func (suite *genesisTestSuite) Test_InitGenesis_Validation() {
 			"invalid - zero minimum withdraw amount",
 			types.NewGenesisState(
 				types.NewParams(
+					true,
 					types.EnabledERC20Tokens{
 						types.NewEnabledERC20Token(
 							testutil.MustNewExternalEVMAddressFromString("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
@@ -244,6 +250,7 @@ func (suite *genesisTestSuite) Test_InitGenesis_Validation() {
 func (suite *genesisTestSuite) Test_InitAndExportGenesis() {
 	state := types.NewGenesisState(
 		types.NewParams(
+			true,
 			types.EnabledERC20Tokens{
 				types.NewEnabledERC20Token(
 					testutil.MustNewExternalEVMAddressFromString("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
@@ -291,6 +298,7 @@ func (suite *genesisTestSuite) Test_InitAndExportGenesis() {
 func (suite *genesisTestSuite) Test_Marshall() {
 	state := types.NewGenesisState(
 		types.NewParams(
+			true,
 			types.EnabledERC20Tokens{
 				types.NewEnabledERC20Token(
 					testutil.MustNewExternalEVMAddressFromString("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
@@ -344,6 +352,7 @@ func (suite *genesisTestSuite) Test_Marshall() {
 func (suite *genesisTestSuite) Test_LegacyJSONConversion() {
 	state := types.NewGenesisState(
 		types.NewParams(
+			true,
 			types.EnabledERC20Tokens{
 				types.NewEnabledERC20Token(
 					testutil.MustNewExternalEVMAddressFromString("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
