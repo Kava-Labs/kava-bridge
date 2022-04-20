@@ -64,5 +64,9 @@ Peer A, C, D would consider this as a valid message and output x as they
 received x from all other peers, but peer E would not, resulting in an
 inconsistent state across all peers.
 
-TODO: How do we handle this case? Do a second round of re-broadcasting to confirm
-the output message from each peer is the same?
+This is not handled by the reliable broadcast layer as it is a relaxed reliable
+broadcast protocol. Failure is handled in later steps (i.e. signing) where other
+peers will fail to continue.
+
+**Note:** Blaming the original peer that re-broadcasted the incorrect message 
+message is to be implemented later (e.g. signing broadcast messages).
