@@ -209,6 +209,7 @@ func (suite *genesisTestSuite) Test_InitGenesis_Validation() {
 			"invalid - zero minimum withdraw amount",
 			types.NewGenesisState(
 				types.NewParams(
+					true,
 					types.EnabledERC20Tokens{
 						types.NewEnabledERC20Token(
 							testutil.MustNewExternalEVMAddressFromString("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
