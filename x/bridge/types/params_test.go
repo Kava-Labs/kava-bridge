@@ -216,6 +216,25 @@ func (suite *ParamsTestSuite) TestParamValidation() {
 				contains:   "minimum withdraw amount must be positive",
 			},
 		},
+		{
+			"invalid - negative minimum_withdraw_amount",
+			args{
+				enabledERC20Tokens: types.EnabledERC20Tokens{
+					types.NewEnabledERC20Token(
+						testutil.MustNewExternalEVMAddressFromString("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
+						"Wrapped Ether",
+						"WETH",
+						18,
+						sdk.NewInt(-1),
+					),
+				},
+				relayer: nil,
+			},
+			errArgs{
+				expectPass: false,
+				contains:   "minimum withdraw amount must be positive",
+			},
+		},
 	}
 
 	for _, tc := range testCases {
