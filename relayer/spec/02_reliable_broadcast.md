@@ -37,14 +37,16 @@ A unresponsive peer would cause all other peers to not receive a message from
 that peer. This would be a clear failure case for other peers as it fails the
 basic requirement of receiving the same message from all other peers.
 
-### Inconsistent Peer
+### Inconsistent Broadcaster
 
 If the broadcasting peer sends 2 different messages to peers, all other peers
 will invalidate the message as there would be inconsistencies in the
 re-broadcasted values from other peers.
 
-However, in the case where a **re-broadcasting** peer sends 2 different
-messages, one valid and one invalid, it becomes more complicated.
+### Inconsistent Re-Broadcaster
+
+In the case where a **re-broadcasting** peer sends 2 different messages, one
+valid and one invalid, it becomes more complicated.
 
 For example, if peer A broadcasts x, and a malicious or faulty peer B re-broadcasts:
 * x to peers A, C and D
