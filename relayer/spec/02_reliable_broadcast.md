@@ -47,7 +47,7 @@ However, in the case where a **re-broadcasting** peer sends 2 different
 messages, one valid and one invalid, it becomes more complicated.
 
 For example, if peer A broadcasts x, and a malicious or faulty peer B re-broadcasts:
-* x to peers C and D
+* x to peers A, C and D
 * y to peer E
 
 ```mermaid
@@ -58,8 +58,9 @@ flowchart
     PB(Peer B) -->|"y (INVALID)"| PE(Peer E)
 ```
 
-Peer A, C, D would consider this as a valid message and output x, but peer E
-would not, resulting in an inconsistent state across all peers.
+Peer A, C, D would consider this as a valid message and output x as they
+received x from all other peers, but peer E would not, resulting in an
+inconsistent state across all peers.
 
 TODO: How do we handle this case? Do a second round of re-broadcasting to confirm
 the output message from each peer is the same?
