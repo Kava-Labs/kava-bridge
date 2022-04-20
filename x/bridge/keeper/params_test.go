@@ -30,7 +30,7 @@ func (suite *ParamsTestSuite) TestGetSetRelayer() {
 }
 
 func (suite *ParamsTestSuite) TestGetEnabledERC20Token() {
-	token, err := suite.App.BridgeKeeper.GetEnabledERC20Token(
+	token, err := suite.App.BridgeKeeper.GetEnabledERC20TokenFromExternal(
 		suite.Ctx,
 		testutil.MustNewExternalEVMAddressFromString("0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"),
 	)
@@ -41,13 +41,14 @@ func (suite *ParamsTestSuite) TestGetEnabledERC20Token() {
 		"Wrapped Ether",
 		"WETH",
 		18,
+		testutil.MinWETHWithdrawAmount,
 	)
 
 	suite.Require().Equal(expectedToken, token)
 }
 
 func (suite *ParamsTestSuite) TestGetEnabledERC20Token_NotFound() {
-	_, err := suite.App.BridgeKeeper.GetEnabledERC20Token(
+	_, err := suite.App.BridgeKeeper.GetEnabledERC20TokenFromExternal(
 		suite.Ctx,
 		testutil.MustNewExternalEVMAddressFromString("0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc4"),
 	)

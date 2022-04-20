@@ -15,6 +15,7 @@
 package keeper
 
 import (
+	"fmt"
 	"math/big"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -93,6 +94,27 @@ func (h WithdrawHook) PostTxProcessing(
 		if !found {
 			// Contract not a bridge pair in state
 			continue
+		}
+
+		enabledERC20, err := h.k.GetEnabledERC20TokenFromExternal(ctx, pair.GetExternalAddress())
+		if err != nil {
+			// This will error only if an existing erc20 was enabled in params,
+			// had the Kava erc20 contract deployed, then later removed. Doing
+			// so does *not* remove the ERC20 contract from erc20 bridge pairs
+			// state.
+
+			// Error is not user facing, but is logged.
+			return fmt.Errorf("failed to get enabled ERC20 token: %w", err)
+		}
+
+		if amount.Cmp(enabledERC20.MinimumWithdrawAmount.BigInt()) < 0 {
+			// Return error to revert transaction and avoid loss of funds.
+			// Only revert when this is an enabled ERC20 token.
+			return fmt.Errorf(
+				"withdraw amount is less than minimum withdraw amount: %v < %v",
+				amount,
+				enabledERC20.MinimumWithdrawAmount,
+			)
 		}
 
 		externalERC20Addr := pair.GetExternalAddress()

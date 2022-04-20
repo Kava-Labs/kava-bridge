@@ -56,6 +56,7 @@ func (suite *ConversionHooksTestSuite) SetupTest() {
 			"Invald Token",
 			"IT",
 			18,
+			sdk.NewInt(10_000_000_000_000_000),
 		),
 	)
 	suite.Require().NoError(err)

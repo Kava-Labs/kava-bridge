@@ -39,7 +39,11 @@ func (suite *EVMHooksTestSuite) SetupTest() {
 
 	// Bridge an asset to deploy the ERC20 asset and update store with pair
 	suite.key1Addr = common.BytesToAddress(suite.Key1.PubKey().Address())
-	suite.submitBridgeERC20Msg(externalWethAddr, sdk.NewInt(100), suite.key1Addr)
+	suite.submitBridgeERC20Msg(
+		externalWethAddr,
+		testutil.MinWETHWithdrawAmount.Mul(sdk.NewInt(10)),
+		suite.key1Addr,
+	)
 
 	var found bool
 	suite.pair, found = suite.App.BridgeKeeper.GetBridgePairFromExternal(suite.Ctx, externalWethAddr)
@@ -90,7 +94,7 @@ func (suite *EVMHooksTestSuite) Withdraw(
 }
 
 func (suite *EVMHooksTestSuite) TestERC20WithdrawUnpack() {
-	withdrawAmount := big.NewInt(10)
+	withdrawAmount := testutil.MinWETHWithdrawAmount.BigInt()
 	toKey, err := ethsecp256k1.GenerateKey()
 	suite.Require().NoError(err)
 	withdrawToAddr := common.BytesToAddress(toKey.PubKey().Address())
@@ -146,7 +150,7 @@ func (suite *EVMHooksTestSuite) TestERC20Withdraw_BalanceChange() {
 	toKey, err := ethsecp256k1.GenerateKey()
 	suite.Require().NoError(err)
 	withdrawToAddr := common.BytesToAddress(toKey.PubKey().Address())
-	withdrawAmount := big.NewInt(10)
+	withdrawAmount := testutil.MinWETHWithdrawAmount.MulRaw(2).BigInt()
 
 	balBefore := suite.GetERC20BalanceOf(
 		contract.ERC20MintableBurnableContract.ABI,
@@ -170,11 +174,74 @@ func (suite *EVMHooksTestSuite) TestERC20Withdraw_BalanceChange() {
 	)
 }
 
+func (suite *EVMHooksTestSuite) TestERC20Withdraw_MinimumWithdraw() {
+	toKey, err := ethsecp256k1.GenerateKey()
+	suite.Require().NoError(err)
+	withdrawToAddr := common.BytesToAddress(toKey.PubKey().Address())
+	withdrawAmount := testutil.MinWETHWithdrawAmount
+
+	// Send Withdraw TX
+	res := suite.Withdraw(suite.pair.GetInternalAddress(), withdrawToAddr, withdrawAmount.BigInt())
+
+	suite.Require().False(res.Failed(), "minimum withdraw should not fail")
+}
+
+func (suite *EVMHooksTestSuite) TestERC20Withdraw_UnderMinimumWithdraw() {
+	toKey, err := ethsecp256k1.GenerateKey()
+	suite.Require().NoError(err)
+	withdrawToAddr := common.BytesToAddress(toKey.PubKey().Address())
+	withdrawAmount := testutil.MinWETHWithdrawAmount.Sub(sdk.OneInt())
+
+	// Send Withdraw TX
+	data, err := suite.erc20Abi.Pack(
+		"withdraw",
+		withdrawToAddr,
+		withdrawAmount.BigInt(),
+	)
+	suite.Require().NoError(err)
+
+	res, err := suite.SendTx(suite.pair.GetInternalAddress(), suite.key1Addr, suite.Key1, data)
+	suite.Require().NoError(err)
+
+	suite.Require().True(res.Failed(), "should fail for withdraws under minimum withdraw amount")
+	suite.Require().Equal(evmtypes.ErrPostTxProcessing.Error(), res.VmError)
+}
+
+func (suite *EVMHooksTestSuite) TestERC20Withdraw_AfterERC20Disabled() {
+	toKey, err := ethsecp256k1.GenerateKey()
+	suite.Require().NoError(err)
+	withdrawToAddr := common.BytesToAddress(toKey.PubKey().Address())
+	withdrawAmount := testutil.MinWETHWithdrawAmount.BigInt()
+
+	// Send Withdraw TX
+	res := suite.Withdraw(suite.pair.GetInternalAddress(), withdrawToAddr, withdrawAmount)
+	suite.Require().False(res.Failed(), "minimum withdraw should not fail")
+
+	// Remove all enabled ERC20 tokens
+	params := suite.Keeper.GetParams(suite.Ctx)
+	params.EnabledERC20Tokens = types.DefaultEnabledERC20Tokens
+	suite.Keeper.SetParams(suite.Ctx, params)
+
+	// Withdraw with ERC20 disabled should still fail
+	data, err := suite.erc20Abi.Pack(
+		"withdraw",
+		withdrawToAddr,
+		withdrawAmount,
+	)
+	suite.Require().NoError(err)
+
+	res, err = suite.SendTx(suite.pair.GetInternalAddress(), suite.key1Addr, suite.Key1, data)
+	suite.Require().NoError(err)
+
+	suite.Require().True(res.Failed(), "withdraw with disabled ERC20 but with bridge pair state should fail")
+	suite.Require().Equal(evmtypes.ErrPostTxProcessing.Error(), res.VmError)
+}
+
 func (suite *EVMHooksTestSuite) TestERC20Withdraw_SequenceIncrement() {
 	toKey, err := ethsecp256k1.GenerateKey()
 	suite.Require().NoError(err)
 	withdrawToAddr := common.BytesToAddress(toKey.PubKey().Address())
-	withdrawAmount := big.NewInt(10)
+	withdrawAmount := testutil.MinWETHWithdrawAmount.BigInt()
 
 	beforeWithdrawSeq, err := suite.App.BridgeKeeper.GetNextWithdrawSequence(suite.Ctx)
 	suite.Require().NoError(err)
@@ -195,7 +262,7 @@ func (suite *EVMHooksTestSuite) TestERC20Withdraw_SequenceWrap() {
 	toKey, err := ethsecp256k1.GenerateKey()
 	suite.Require().NoError(err)
 	withdrawToAddr := common.BytesToAddress(toKey.PubKey().Address())
-	withdrawAmount := big.NewInt(10)
+	withdrawAmount := testutil.MinWETHWithdrawAmount.BigInt()
 
 	// Set next sequence to max int
 	suite.App.BridgeKeeper.SetNextWithdrawSequence(suite.Ctx, types.MaxWithdrawSequence)
@@ -225,7 +292,7 @@ func (suite *EVMHooksTestSuite) TestERC20Withdraw_EmitsEvent() {
 	toKey, err := ethsecp256k1.GenerateKey()
 	suite.Require().NoError(err)
 	withdrawToAddr := common.BytesToAddress(toKey.PubKey().Address())
-	withdrawAmount := big.NewInt(10)
+	withdrawAmount := testutil.MinWETHWithdrawAmount.BigInt()
 
 	// Send Withdraw TX
 	_ = suite.Withdraw(suite.pair.GetInternalAddress(), withdrawToAddr, withdrawAmount)
@@ -261,6 +328,7 @@ func (suite *EVMHooksTestSuite) TestERC20Withdraw_IgnoreUnregisteredERC20() {
 		"Token Anyone Can Deploy",
 		"TACD",
 		18,
+		sdk.NewInt(10_000_000_000_000_000),
 	)
 
 	// We are using keeper methods to deploy / mint ERC20 balance, but this can

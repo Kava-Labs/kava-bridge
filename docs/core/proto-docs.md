@@ -129,6 +129,7 @@ EnabledERC20Token defines an external ERC20 that is allowed to be bridged to Kav
 | `name` | [string](#string) |  | Name of the token. |
 | `symbol` | [string](#string) |  | Symbol of the ERC20 token, usually a shorter version of the name. |
 | `decimals` | [uint32](#uint32) |  | Number of decimals the ERC20 uses to get its user representation. The max value is an unsigned 8 bit integer, but is an uint32 as the smallest protobuf integer type. |
+| `minimum_withdraw_amount` | [string](#string) |  | Minimum amount of the token that can be bridged back to Ethereum to prevent outgoing transfers that are much smaller than Ethereum gas costs. |
 
 
 
