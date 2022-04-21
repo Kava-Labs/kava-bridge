@@ -144,7 +144,7 @@ func (suite *MsgServerSuite) TestBridgeEthereumToKava_NilRelayer() {
 }
 
 func (suite *MsgServerSuite) TestBridgeEthereumToKava_EmptyRelayer() {
-	// Set relayer to nil
+	// Set relayer to empty address
 	params := suite.Keeper.GetParams(suite.Ctx)
 	params.Relayer = sdk.AccAddress{}
 	suite.Keeper.SetParams(suite.Ctx, params)
