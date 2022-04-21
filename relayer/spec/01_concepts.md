@@ -11,7 +11,8 @@ that any subset of size t + 1 can sign, while any group with t or fewer cannot.
 ## Transaction Monitoring
 
 Relayer monitors transactions on both Ethereum and Kava blockchains for bridge
-transactions.
+transactions. Bridge transactions on both Ethereum and Kava have a unique
+incrementing sequence used to determine the transaction order.
 
 ## Leader
 
