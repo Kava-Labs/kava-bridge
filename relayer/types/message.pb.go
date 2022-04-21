@@ -25,6 +25,7 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
+// MessageData is used between peers to wrap messages for each protocol
 type MessageData struct {
 	// Customtype workaround for not having to use a separate protocgen.sh script
 	Payload *github_com_gogo_protobuf_types.Any `protobuf:"bytes,1,opt,name=payload,proto3,customtype=github.com/gogo/protobuf/types.Any" json:"payload,omitempty"`
@@ -63,6 +64,7 @@ func (m *MessageData) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MessageData proto.InternalMessageInfo
 
+// Echo is a message used for testing
 type Echo struct {
 	Message string `protobuf:"bytes,1,opt,name=message,proto3" json:"message,omitempty"`
 }

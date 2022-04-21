@@ -440,7 +440,7 @@ Msg defines the bridge Msg service.
 <a name="relayer.v1beta1.Echo"></a>
 
 ### Echo
-
+Echo is a message used for testing
 
 
 | Field | Type | Label | Description |
@@ -455,7 +455,7 @@ Msg defines the bridge Msg service.
 <a name="relayer.v1beta1.MessageData"></a>
 
 ### MessageData
-
+MessageData is used between peers to wrap messages for each protocol
 
 
 | Field | Type | Label | Description |
