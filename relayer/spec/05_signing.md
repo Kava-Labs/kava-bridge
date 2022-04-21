@@ -22,19 +22,18 @@ When a bridge transaction is found on either Ethereum or Kava, the transaction
 hash is used to deterministically pick a random leader.
 
 ```go
-leaderNumber := txHash % numOfPeers
+leaderIndex := txHash % numOfPeers
 ```
 
-The peers are sorted by their peer ID and the leader number used an an index to
-pick the leader.
-
+The peers are sorted by their peer ID and the leader index is used to pick the
+leader.
 
 ```go
 sort.Slice(peerIDs, func(i, j int) bool {
     return peerIDs[j] < peerIDs[i]
 })
 
-leaderPeerID := peerIDs[leaderNumber]
+leaderPeerID := peerIDs[leaderIndex]
 ```
 
 ### Leader Failure
