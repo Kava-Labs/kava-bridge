@@ -7,6 +7,17 @@ peers.
 This communication layer also supports reliable broadcast for a **subset** of
 all peers to selectively send messages for signing rounds.
 
+## P2P Communication
+
+The reliable broadcast protocol uses [go-libp2p] to provide encrypted and
+authenticated private peer to peer network. All peers will share a 256 bit
+network secret and have a secp256k1 private and public key pair to authenticate
+with each other and sign messages across the p2p network.
+
+All peers will have a list of peer [multiaddresses][multiaddr] that encodes the
+transport, protocol, and hash of the peer's public key. Any peers that are not
+in the configured peer list will be rejected.
+
 ## Message
 
 Each message contains the following data:
@@ -72,3 +83,6 @@ peers will fail to continue.
 
 **Note:** Blaming the original peer that re-broadcasted the incorrect message 
 message is to be implemented later (e.g. signing broadcast messages).
+
+[go-libp2p]: https://github.com/libp2p/go-libp2p
+[multiaddr]: https://docs.libp2p.io/concepts/addressing/
