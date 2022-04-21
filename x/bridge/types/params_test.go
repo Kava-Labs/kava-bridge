@@ -58,6 +58,24 @@ func (suite *ParamsTestSuite) TestParamValidation() {
 			},
 		},
 		{
+			"valid - nil address",
+			args{
+				enabledERC20Tokens: types.EnabledERC20Tokens{
+					types.NewEnabledERC20Token(
+						testutil.MustNewExternalEVMAddressFromString("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
+						"Wrapped Ether",
+						"WETH",
+						18,
+						testutil.MinWETHWithdrawAmount,
+					),
+				},
+				relayer: nil,
+			},
+			errArgs{
+				expectPass: true,
+			},
+		},
+		{
 			"invalid - duplicate token address",
 			args{
 				enabledERC20Tokens: types.EnabledERC20Tokens{
@@ -176,25 +194,6 @@ func (suite *ParamsTestSuite) TestParamValidation() {
 			errArgs{
 				expectPass: false,
 				contains:   "decimals is too large, max 255",
-			},
-		},
-		{
-			"invalid - nil address",
-			args{
-				enabledERC20Tokens: types.EnabledERC20Tokens{
-					types.NewEnabledERC20Token(
-						testutil.MustNewExternalEVMAddressFromString("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
-						"Wrapped Ether",
-						"WETH",
-						18,
-						testutil.MinWETHWithdrawAmount,
-					),
-				},
-				relayer: nil,
-			},
-			errArgs{
-				expectPass: false,
-				contains:   "relayer cannot be nil",
 			},
 		},
 		{
