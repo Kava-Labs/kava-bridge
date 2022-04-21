@@ -111,6 +111,42 @@ func (suite *genesisTestSuite) Test_InitGenesis_Validation() {
 			},
 		},
 		{
+			"valid - empty relayer",
+			types.NewGenesisState(
+				types.NewParams(
+					true,
+					types.EnabledERC20Tokens{
+						types.NewEnabledERC20Token(
+							testutil.MustNewExternalEVMAddressFromString("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
+							"Wrapped Ether",
+							"WETH",
+							18,
+							testutil.MinWETHWithdrawAmount,
+						),
+						types.NewEnabledERC20Token(
+							testutil.MustNewExternalEVMAddressFromString("0x000000000000000000000000000000000000000A"),
+							"Wrapped Kava",
+							"WKAVA",
+							6,
+							testutil.MinWKavaWithdrawAmount,
+						),
+					},
+					sdk.AccAddress{},
+					types.DefaultConversionPairs,
+				),
+				types.NewERC20BridgePairs(
+					types.NewERC20BridgePair(
+						testutil.MustNewExternalEVMAddressFromString("0x0000000000000000000000000000000000000001"),
+						testutil.MustNewInternalEVMAddressFromString("0x000000000000000000000000000000000000000A"),
+					),
+				),
+				types.DefaultNextWithdrawSequence,
+			),
+			errArgs{
+				expectPass: true,
+			},
+		},
+		{
 			"invalid - duplicate token address",
 			types.NewGenesisState(
 				types.NewParams(
