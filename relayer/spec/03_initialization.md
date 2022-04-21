@@ -42,5 +42,7 @@ $ kava-relayer network generate-network-secret
 zGLVgXcdZK8urz8YGZskJByeciFQhWm4xG1XPBrSNrr6U
 ```
 
+TODO: A command to send/receive the network secret to the list of other peers?
+
 [peer-id]: https://docs.libp2p.io/concepts/peer-id/
 [peer-id-spec]: https://github.com/libp2p/specs/blob/master/peer-ids/peer-ids.md
