@@ -75,7 +75,7 @@ func (suite *genesisTestSuite) Test_InitGenesis_Validation() {
 			},
 		},
 		{
-			"invalid - nil relayer",
+			"valid - nil relayer",
 			types.NewGenesisState(
 				types.NewParams(
 					true,
@@ -107,8 +107,7 @@ func (suite *genesisTestSuite) Test_InitGenesis_Validation() {
 				types.DefaultNextWithdrawSequence,
 			),
 			errArgs{
-				expectPass: false,
-				panicErr:   "value from ParamSetPair is invalid: relayer address cannot be nil",
+				expectPass: true,
 			},
 		},
 		{

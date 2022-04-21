@@ -3,7 +3,6 @@ package types
 import (
 	bytes "bytes"
 	"encoding/hex"
-	"errors"
 	"fmt"
 	"math"
 
@@ -20,7 +19,6 @@ var (
 	KeyEnabledConversionPairs = []byte("EnabledConversionPairs")
 	DefaultBridgeEnabled      = false
 	DefaultEnabledERC20Tokens = EnabledERC20Tokens{}
-	DefaultRelayer            = sdk.AccAddress{}
 	DefaultConversionPairs    = ConversionPairs{}
 )
 
@@ -60,24 +58,22 @@ func DefaultParams() Params {
 	return NewParams(
 		DefaultBridgeEnabled,
 		DefaultEnabledERC20Tokens,
-		DefaultRelayer,
+		nil,
 		DefaultConversionPairs,
 	)
 }
 
+// Validate returns an error if the Parmas is invalid.
 func (p *Params) Validate() error {
 	if err := p.EnabledERC20Tokens.Validate(); err != nil {
 		return err
-	}
-
-	if p.Relayer == nil {
-		return errors.New("relayer cannot be nil")
 	}
 
 	if err := p.EnabledConversionPairs.Validate(); err != nil {
 		return err
 	}
 
+	// Empty or nil value for Relayer is valid
 	return nil
 }
 
@@ -185,15 +181,12 @@ func (e EnabledERC20Token) Validate() error {
 	return nil
 }
 
-// validateRelayer validates a relayer address
+// validateRelayer validates a relayer address is the right type
 func validateRelayer(i interface{}) error {
-	relayerAddr, ok := i.(sdk.AccAddress)
+	// Empty or nil values are valid
+	_, ok := i.(sdk.AccAddress)
 	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
-	}
-
-	if relayerAddr == nil {
-		return errors.New("relayer address cannot be nil")
 	}
 
 	return nil

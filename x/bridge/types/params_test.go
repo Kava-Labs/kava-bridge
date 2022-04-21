@@ -58,6 +58,24 @@ func (suite *ParamsTestSuite) TestParamValidation() {
 			},
 		},
 		{
+			"valid - nil address",
+			args{
+				enabledERC20Tokens: types.EnabledERC20Tokens{
+					types.NewEnabledERC20Token(
+						testutil.MustNewExternalEVMAddressFromString("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
+						"Wrapped Ether",
+						"WETH",
+						18,
+						testutil.MinWETHWithdrawAmount,
+					),
+				},
+				relayer: nil,
+			},
+			errArgs{
+				expectPass: true,
+			},
+		},
+		{
 			"invalid - duplicate token address",
 			args{
 				enabledERC20Tokens: types.EnabledERC20Tokens{
@@ -179,25 +197,6 @@ func (suite *ParamsTestSuite) TestParamValidation() {
 			},
 		},
 		{
-			"invalid - nil address",
-			args{
-				enabledERC20Tokens: types.EnabledERC20Tokens{
-					types.NewEnabledERC20Token(
-						testutil.MustNewExternalEVMAddressFromString("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
-						"Wrapped Ether",
-						"WETH",
-						18,
-						testutil.MinWETHWithdrawAmount,
-					),
-				},
-				relayer: nil,
-			},
-			errArgs{
-				expectPass: false,
-				contains:   "relayer cannot be nil",
-			},
-		},
-		{
 			"invalid - zero minimum_withdraw_amount",
 			args{
 				enabledERC20Tokens: types.EnabledERC20Tokens{
@@ -264,7 +263,7 @@ func (suite *ParamsTestSuite) TestDefault() {
 
 	suite.Require().Empty(defaultParams.EnabledERC20Tokens)
 	suite.Require().Equal(types.DefaultEnabledERC20Tokens, defaultParams.EnabledERC20Tokens)
-	suite.Require().Equal(types.DefaultRelayer, defaultParams.Relayer)
+	suite.Require().Nil(defaultParams.Relayer)
 }
 
 func (suite *ParamsTestSuite) TestUnmarshalJSON() {

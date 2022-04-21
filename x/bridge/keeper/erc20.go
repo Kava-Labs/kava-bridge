@@ -27,6 +27,10 @@ func (k Keeper) BridgeEthereumToKava(
 		return types.ErrBridgeDisabled
 	}
 
+	if params.Relayer.Empty() {
+		return types.ErrNoRelayer
+	}
+
 	// Check if message signer/relayer matches the relayer set in params
 	if err := k.IsSignerAuthorized(ctx, relayer); err != nil {
 		return err
