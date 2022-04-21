@@ -22,8 +22,7 @@ When a bridge transaction is found on either Ethereum or Kava, the transaction
 hash is used to deterministically pick a random leader.
 
 ```go
-lastHashByte := txHash[HashLength - 1]
-leaderNumber := lastHashByte % numOfPeers
+leaderNumber := txHash % numOfPeers
 ```
 
 The peers are sorted by their peer ID and the leader number used an an index to
