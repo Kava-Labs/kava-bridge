@@ -263,7 +263,7 @@ func (suite *ParamsTestSuite) TestDefault() {
 
 	suite.Require().Empty(defaultParams.EnabledERC20Tokens)
 	suite.Require().Equal(types.DefaultEnabledERC20Tokens, defaultParams.EnabledERC20Tokens)
-	suite.Require().Nil(defaultParams.Relayer)
+	suite.Require().Equal(types.DefaultRelayer, defaultParams.Relayer)
 }
 
 func (suite *ParamsTestSuite) TestUnmarshalJSON() {

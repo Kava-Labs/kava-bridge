@@ -13,13 +13,14 @@ import (
 
 // Parameter keys and default values
 var (
-	KeyBridgeEnabled          = []byte("BridgeEnabled")
-	KeyEnabledERC20Tokens     = []byte("EnabledERC20Tokens")
-	KeyRelayer                = []byte("Relayer")
-	KeyEnabledConversionPairs = []byte("EnabledConversionPairs")
-	DefaultBridgeEnabled      = false
-	DefaultEnabledERC20Tokens = EnabledERC20Tokens{}
-	DefaultConversionPairs    = ConversionPairs{}
+	KeyBridgeEnabled                         = []byte("BridgeEnabled")
+	KeyEnabledERC20Tokens                    = []byte("EnabledERC20Tokens")
+	KeyRelayer                               = []byte("Relayer")
+	KeyEnabledConversionPairs                = []byte("EnabledConversionPairs")
+	DefaultBridgeEnabled                     = false
+	DefaultEnabledERC20Tokens                = EnabledERC20Tokens{}
+	DefaultRelayer            sdk.AccAddress = nil
+	DefaultConversionPairs                   = ConversionPairs{}
 )
 
 // ParamKeyTable for bridge module.
@@ -58,7 +59,7 @@ func DefaultParams() Params {
 	return NewParams(
 		DefaultBridgeEnabled,
 		DefaultEnabledERC20Tokens,
-		nil,
+		DefaultRelayer,
 		DefaultConversionPairs,
 	)
 }
