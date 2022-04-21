@@ -5,6 +5,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	evmtypes "github.com/tharsis/ethermint/x/evm/types"
 
@@ -28,8 +29,7 @@ func (k Keeper) ConversionHooks() ConversionHooks {
 // sdk.Coin when ConvertToCoin() is called on an eligible Kava ERC20 contract.
 func (h ConversionHooks) PostTxProcessing(
 	ctx sdk.Context,
-	from common.Address,
-	to *common.Address,
+	msg core.Message,
 	receipt *ethtypes.Receipt,
 ) error {
 	erc20Abi := contract.ERC20MintableBurnableContract.ABI
