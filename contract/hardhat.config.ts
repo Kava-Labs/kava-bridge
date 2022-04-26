@@ -36,6 +36,13 @@ const config: HardhatUserConfig = {
       url: "http://127.0.0.1:8555",
       accounts: "remote",
     },
+    kava: {
+      url: "http://127.0.0.1:8545",
+      accounts: [
+        // kava keys unsafe-export-eth-key user --keyring-backend test
+        "9549F115B0A21E5071A8AEC1B74AC093190E18DD83D019AC6497B0ADFBEFF26D",
+      ],
+    },
   },
   gasReporter: {
     enabled: process.env.REPORT_GAS !== undefined,
