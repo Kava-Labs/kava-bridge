@@ -8,7 +8,9 @@ pragma solidity ^0.8.9;
 contract WKAVA {
     string public name = "Wrapped Kava";
     string public symbol = "WKAVA";
-    uint8 public decimals = 6;
+
+    /// @dev Matches the 18 decimals of akava on EVM, not 6 decimals ukava.
+    uint8 public decimals = 18;
 
     event Approval(address indexed src, address indexed account, uint256 wad);
     event Transfer(address indexed src, address indexed dst, uint256 wad);
