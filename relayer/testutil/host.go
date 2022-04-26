@@ -13,35 +13,55 @@ import (
 // ----------------------------------------------------------------------------
 // host.Host util functions
 
-func Connect(t *testing.T, a, b host.Host) {
+func Connect(t *testing.T, a, b host.Host) error {
 	pinfo := a.Peerstore().PeerInfo(a.ID())
-	err := b.Connect(context.Background(), pinfo)
+
+	return b.Connect(context.Background(), pinfo)
+}
+
+func MustConnectAll(t *testing.T, hosts []host.Host) {
+	err := ConnectAll(t, hosts)
 	require.NoError(t, err)
 }
 
-func ConnectAll(t *testing.T, hosts []host.Host) {
+func ConnectAll(t *testing.T, hosts []host.Host) error {
 	for i, a := range hosts {
 		for j, b := range hosts {
 			if i == j {
 				continue
 			}
 
-			Connect(t, a, b)
+			if err := Connect(t, a, b); err != nil {
+				return err
+			}
 		}
 	}
+
+	return nil
 }
 
-func CreateHosts(t *testing.T, ctx context.Context, n int) []host.Host {
+func CreateHosts(
+	t *testing.T,
+	ctx context.Context,
+	n int,
+	options ...libp2p.Option,
+) []host.Host {
 	var out []host.Host
 
 	for i := 0; i < n; i++ {
-		h, err := libp2p.New()
-		require.NoError(t, err)
+		h := CreateHost(t, options...)
 
 		out = append(out, h)
 	}
 
 	return out
+}
+
+func CreateHost(t *testing.T, options ...libp2p.Option) host.Host {
+	h, err := libp2p.New(options...)
+	require.NoError(t, err)
+
+	return h
 }
 
 // AreAllConnected returns true if all hosts are connected to one another
