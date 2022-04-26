@@ -102,11 +102,14 @@ Ethereum, it is a [`ERC20MintableBurnable.sol`] deployed by the bridge module.
 
 These contracts were first deployed manually to Kava EVM, exported as Kava
 JSON state, then copied over to the `init-new-chain.sh` script. The following
-is **not** necessary to deploy Multicall and Multicall2, only documentation on
-how to add additional smart contracts to the genesis state.
+is **not** necessary to deploy Multicall and WKAVA, only when adding additional
+smart contracts to the genesis state.
 
 ```bash
-# Local running kava-bridged
+# First comment out the contract additions in init-new-chain.sh to prevent
+# address collisions, then start the local chain.
+make start
+
 cd contract
 npx hardhat run scripts/init_kava_evm.ts --network kava
 
