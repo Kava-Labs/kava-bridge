@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/libp2p/go-libp2p"
+	"github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/libp2p/go-libp2p-core/host"
 	"github.com/libp2p/go-libp2p-core/network"
 	"github.com/stretchr/testify/require"
@@ -50,6 +51,25 @@ func CreateHosts(
 
 	for i := 0; i < n; i++ {
 		h := CreateHost(t, options...)
+
+		out = append(out, h)
+	}
+
+	return out
+}
+
+func CreateHostsWithKeys(
+	t *testing.T,
+	ctx context.Context,
+	keys []crypto.PrivKey,
+	options ...libp2p.Option,
+) []host.Host {
+	var out []host.Host
+
+	for _, k := range keys {
+		opts := append([]libp2p.Option{libp2p.Identity(k)}, options...)
+
+		h := CreateHost(t, opts...)
 
 		out = append(out, h)
 	}
