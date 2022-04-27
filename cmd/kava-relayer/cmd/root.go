@@ -44,6 +44,10 @@ func NewRootCmd() (*cobra.Command, error) {
 	rootCmd.PersistentFlags().StringVar(&appDir, "home", defaultAppDir, "Directory for config and data")
 	rootCmd.PersistentFlags().StringVar(&logLevel, "log_level", "info", "The logging level (trace|debug|info|warn|error|fatal|panic)")
 
+	// Bind log_level flag so that it shows in config
+	err = viper.BindPFlag("log_level", rootCmd.Flag("log_level"))
+	cobra.CheckErr(err)
+
 	rootCmd.AddCommand(newStartCmd())
 	rootCmd.AddCommand(newInitCmd())
 	rootCmd.AddCommand(network.GetNetworkCmd())

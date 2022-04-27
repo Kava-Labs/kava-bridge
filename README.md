@@ -52,6 +52,10 @@ kava-relayer network generate-network-secret
 kava-relayer network generate-node-key
 kava-relayer network show-node-id
 
+# Initialize configuration file. By default this creates the file ~/.kava-relayer/config.yaml
+# Add network secret, node key, peer list.
+kava-relayer init
+
 # Connect to p2p network
 kava-relayer network connect
 
