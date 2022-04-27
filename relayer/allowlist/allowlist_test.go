@@ -73,4 +73,14 @@ func (suite *AllowListTestSuite) TestPeerIDAllowList_Missing() {
 
 	allConnected := testutil.AreAllConnected(suite.T(), suite.Hosts)
 	suite.False(allConnected)
+
+	connected := testutil.IsConnected(suite.T(), suite.Hosts[2], suite.Hosts[0])
+	suite.True(connected)
+
+	// Last 2 nodes are not connected as they are not included in peer allowlist
+	connected = testutil.IsConnected(suite.T(), suite.Hosts[3], suite.Hosts[0])
+	suite.False(connected, "peer not in allowlist should not be connected")
+
+	connected = testutil.IsConnected(suite.T(), suite.Hosts[4], suite.Hosts[0])
+	suite.False(connected, "peer not in allowlist should not be connected")
 }
