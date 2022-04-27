@@ -66,8 +66,8 @@ func (allowlist *AllowListConnectionGater) InterceptAddrDial(peerID peer.ID, add
 // This is called by the upgrader, or by the transport directly (e.g. QUIC,
 // Bluetooth), straight after it has accepted a connection from its socket.
 func (allowlist *AllowListConnectionGater) InterceptAccept(network.ConnMultiaddrs) bool {
-	// TODO: Do we also want to check peer IP addresses and also keep a allowlist
-	// for IPs? For now, allow any multiaddr and only check peer IDs.
+	// Peer connection IPs are not handled by relayer and should be configured
+	// in the machine firewall instead.
 	return true
 }
 
