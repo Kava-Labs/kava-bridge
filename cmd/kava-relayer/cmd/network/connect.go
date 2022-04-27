@@ -21,9 +21,6 @@ func newConnectCmd() *cobra.Command {
 		Short: "Connects the relayer to peers",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			err := viper.BindPFlags(cmd.Flags())
-			cobra.CheckErr(err)
-
 			port := viper.GetUint(p2pFlagPort)
 			pkPath := viper.GetString(p2pFlagPrivateKeyPath)
 			privateSharedKeyPath := viper.GetString(p2pFlagSharedKeyPath)

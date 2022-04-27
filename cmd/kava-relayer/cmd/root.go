@@ -45,6 +45,7 @@ func NewRootCmd() (*cobra.Command, error) {
 	rootCmd.PersistentFlags().StringVar(&logLevel, "log_level", "info", "The logging level (trace|debug|info|warn|error|fatal|panic)")
 
 	rootCmd.AddCommand(newStartCmd())
+	rootCmd.AddCommand(newInitCmd())
 	rootCmd.AddCommand(network.GetNetworkCmd())
 
 	return rootCmd, nil

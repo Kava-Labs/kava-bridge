@@ -14,9 +14,6 @@ func newShowNodeIdCmd() *cobra.Command {
 		Use:   "show-node-id",
 		Short: "Shows the node id",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			err := viper.BindPFlags(cmd.Flags())
-			cobra.CheckErr(err)
-
 			pkPath := viper.GetString(p2pFlagPrivateKeyPath)
 
 			privKeyData, err := os.ReadFile(pkPath)
