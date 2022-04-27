@@ -9,8 +9,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func MustNewMessageData(id string, payload proto.Message) types.MessageData {
-	msg, err := types.NewMessageData(id, payload)
+func MustNewBroadcastMessage(id string, payload proto.Message) types.BroadcastMessage {
+	msg, err := types.NewBroadcastMessage(id, payload)
 	if err != nil {
 		panic(err)
 	}
@@ -25,19 +25,19 @@ func TestValidateMessage(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		message types.MessageData
+		message types.BroadcastMessage
 		errArgs errArgs
 	}{
 		{
 			"valid",
-			MustNewMessageData("hi", &prototypes.Empty{}),
+			MustNewBroadcastMessage("hi", &prototypes.Empty{}),
 			errArgs{
 				expectPass: true,
 			},
 		},
 		{
 			"invalid - empty id",
-			MustNewMessageData("", &prototypes.Empty{}),
+			MustNewBroadcastMessage("", &prototypes.Empty{}),
 			errArgs{
 				expectPass: false,
 				contains:   "message ID is empty",
@@ -78,7 +78,7 @@ func TestMarshalUnmarshalPayload(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			msg, err := types.NewMessageData("an id", tc.payload)
+			msg, err := types.NewBroadcastMessage("an id", tc.payload)
 			require.NoError(t, err)
 
 			var unpacked prototypes.DynamicAny

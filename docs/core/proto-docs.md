@@ -37,9 +37,9 @@
   
     - [Msg](#bridge.v1beta1.Msg)
   
-- [relayer/v1beta1/message.proto](#relayer/v1beta1/message.proto)
+- [relayer/v1beta1/broadcast_message.proto](#relayer/v1beta1/broadcast_message.proto)
+    - [BroadcastMessage](#relayer.v1beta1.BroadcastMessage)
     - [Echo](#relayer.v1beta1.Echo)
-    - [MessageData](#relayer.v1beta1.MessageData)
   
 - [Scalar Value Types](#scalar-value-types)
 
@@ -430,10 +430,26 @@ Msg defines the bridge Msg service.
 
 
 
-<a name="relayer/v1beta1/message.proto"></a>
+<a name="relayer/v1beta1/broadcast_message.proto"></a>
 <p align="right"><a href="#top">Top</a></p>
 
-## relayer/v1beta1/message.proto
+## relayer/v1beta1/broadcast_message.proto
+
+
+
+<a name="relayer.v1beta1.BroadcastMessage"></a>
+
+### BroadcastMessage
+BroadcastMessage is used between peers to wrap messages for each protocol
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `id` | [string](#string) |  |  |
+| `payload` | [google.protobuf.Any](#google.protobuf.Any) |  | Customtype workaround for not having to use a separate protocgen.sh script |
+
+
+
 
 
 
@@ -446,22 +462,6 @@ Echo is a message used for testing
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | `message` | [string](#string) |  |  |
-
-
-
-
-
-
-<a name="relayer.v1beta1.MessageData"></a>
-
-### MessageData
-MessageData is used between peers to wrap messages for each protocol
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `id` | [string](#string) |  |  |
-| `payload` | [google.protobuf.Any](#google.protobuf.Any) |  | Customtype workaround for not having to use a separate protocgen.sh script |
 
 
 

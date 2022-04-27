@@ -6,8 +6,8 @@ import "google/protobuf/any.proto";
 
 option go_package = "github.com/kava-labs/kava-bridge/relayer/types";
 
-// MessageData is used between peers to wrap messages for each protocol
-message MessageData {
+// BroadcastMessage is used between peers to wrap messages for each protocol
+message BroadcastMessage {
   string id = 1 [(gogoproto.customname) = "ID"];
 
   // Customtype workaround for not having to use a separate protocgen.sh script
