@@ -1,7 +1,9 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -15,7 +17,7 @@ func newInitCmd() *cobra.Command {
 		Long:  "Creates the configuration file if it doesn't already exist.",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			_, err := os.Stat(appDir)
-			if !os.IsExist(err) {
+			if errors.Is(err, fs.ErrNotExist) {
 				if err := os.Mkdir(appDir, os.ModePerm); err != nil {
 					return err
 				}
