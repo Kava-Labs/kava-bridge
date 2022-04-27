@@ -32,3 +32,15 @@ func ParseMultiAddrSlice(addrStrings []string) ([]*peer.AddrInfo, error) {
 
 	return addrs, nil
 }
+
+// PeerIDsFromAddrInfos returns a slice of peer IDs from the given slice of
+// peer.AddrInfo.
+func PeerIDsFromAddrInfos(addrInfos []*peer.AddrInfo) []peer.ID {
+	var peerIDs []peer.ID
+
+	for _, addrInfo := range addrInfos {
+		peerIDs = append(peerIDs, addrInfo.ID)
+	}
+
+	return peerIDs
+}
