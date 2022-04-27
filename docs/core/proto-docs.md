@@ -460,6 +460,7 @@ MessageData is used between peers to wrap messages for each protocol
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
+| `id` | [string](#string) |  |  |
 | `payload` | [google.protobuf.Any](#google.protobuf.Any) |  | Customtype workaround for not having to use a separate protocgen.sh script |
 
 
