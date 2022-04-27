@@ -52,10 +52,13 @@ func newConnectCmd() *cobra.Command {
 				return err
 			}
 
+			peerIDs := p2p.PeerIDsFromAddrInfos(peerAddrInfos)
+
 			options := p2p.NodeOptions{
 				Port:              uint16(port),
 				NodePrivateKey:    privKey,
 				NetworkPrivateKey: privSharedKey,
+				PeerList:          peerIDs,
 				// Require response from all peers
 				EchoRequiredPeers: len(peerAddrInfos),
 			}
