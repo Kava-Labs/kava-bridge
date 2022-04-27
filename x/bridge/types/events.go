@@ -23,6 +23,7 @@ const (
 	AttributeKeyKavaERC20Address     = "kava_erc20_address"
 	AttributeKeyRelayer              = "relayer"
 	AttributeKeySequence             = "sequence"
+	AttributeKeyTxHash               = "tx_hash"
 
 	// Event Attributes - Conversions
 	AttributeKeyInitiator    = "initiator"

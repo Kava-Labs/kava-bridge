@@ -295,7 +295,7 @@ func (suite *EVMHooksTestSuite) TestERC20Withdraw_EmitsEvent() {
 	withdrawAmount := testutil.MinWETHWithdrawAmount.BigInt()
 
 	// Send Withdraw TX
-	_ = suite.Withdraw(suite.pair.GetInternalAddress(), withdrawToAddr, withdrawAmount)
+	res := suite.Withdraw(suite.pair.GetInternalAddress(), withdrawToAddr, withdrawAmount)
 
 	suite.EventsContains(suite.GetEvents(),
 		sdk.NewEvent(
@@ -305,10 +305,11 @@ func (suite *EVMHooksTestSuite) TestERC20Withdraw_EmitsEvent() {
 			sdk.NewAttribute(types.AttributeKeyReceiver, withdrawToAddr.String()),
 			sdk.NewAttribute(types.AttributeKeyAmount, withdrawAmount.String()),
 			sdk.NewAttribute(types.AttributeKeySequence, "1"),
+			sdk.NewAttribute(types.AttributeKeyTxHash, res.Hash),
 		))
 
 	// Second withdraw tx
-	_ = suite.Withdraw(suite.pair.GetInternalAddress(), withdrawToAddr, withdrawAmount)
+	res = suite.Withdraw(suite.pair.GetInternalAddress(), withdrawToAddr, withdrawAmount)
 
 	// Second one has incremented sequence
 	suite.EventsContains(suite.GetEvents(),
@@ -319,6 +320,7 @@ func (suite *EVMHooksTestSuite) TestERC20Withdraw_EmitsEvent() {
 			sdk.NewAttribute(types.AttributeKeyReceiver, withdrawToAddr.String()),
 			sdk.NewAttribute(types.AttributeKeyAmount, withdrawAmount.String()),
 			sdk.NewAttribute(types.AttributeKeySequence, "2"),
+			sdk.NewAttribute(types.AttributeKeyTxHash, res.Hash),
 		))
 }
 

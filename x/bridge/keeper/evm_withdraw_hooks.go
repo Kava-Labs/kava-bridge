@@ -146,6 +146,7 @@ func (h WithdrawHook) PostTxProcessing(
 			sdk.NewAttribute(types.AttributeKeyReceiver, toAddr.String()),
 			sdk.NewAttribute(types.AttributeKeyAmount, amount.String()),
 			sdk.NewAttribute(types.AttributeKeySequence, sequence.String()),
+			sdk.NewAttribute(types.AttributeKeyTxHash, receipt.TxHash.String()),
 		))
 	}
 
