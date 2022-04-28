@@ -445,8 +445,10 @@ BroadcastMessage is used between peers to wrap messages for each protocol
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `id` | [string](#string) |  |  |
+| `id` | [string](#string) |  | Unique ID of this message. |
+| `recipient_peer_ids` | [string](#string) | repeated | Selected recipients of the message, to partially restrict the broadcast to a subset a peers. |
 | `payload` | [google.protobuf.Any](#google.protobuf.Any) |  | Customtype workaround for not having to use a separate protocgen.sh script |
+| `created` | [google.protobuf.Timestamp](#google.protobuf.Timestamp) |  | Timestamp when the message was broadcasted. |
 
 
 

@@ -3,15 +3,22 @@ package relayer.v1beta1;
 
 import "gogoproto/gogo.proto";
 import "google/protobuf/any.proto";
+import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/kava-labs/kava-bridge/relayer/types";
 
 // BroadcastMessage is used between peers to wrap messages for each protocol
 message BroadcastMessage {
+  // Unique ID of this message.
   string id = 1 [(gogoproto.customname) = "ID"];
-
+  // Selected recipients of the message, to partially restrict the broadcast to
+  // a subset a peers.
+  repeated string recipient_peer_ids = 2 [(gogoproto.customname) = "RecipientPeerIDs"];
   // Customtype workaround for not having to use a separate protocgen.sh script
-  google.protobuf.Any payload = 2 [(gogoproto.customtype) = "github.com/gogo/protobuf/types.Any"];
+  google.protobuf.Any payload = 3
+      [(gogoproto.nullable) = false, (gogoproto.customtype) = "github.com/gogo/protobuf/types.Any"];
+  // Timestamp when the message was broadcasted.
+  google.protobuf.Timestamp created = 4 [(gogoproto.nullable) = false, (gogoproto.stdtime) = true];
 }
 
 // Echo is a message used for testing
