@@ -65,7 +65,7 @@ func TestReadWrite(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			msg, err := types.NewMessageData("id", tc.payload)
+			msg, err := types.NewBroadcastMessage("id", tc.payload, nil)
 			require.NoError(t, err)
 
 			// Write/read from buffer
@@ -73,7 +73,7 @@ func TestReadWrite(t *testing.T) {
 			err = stream.NewProtoMessageWriter(&buf).WriteMsg(&msg)
 			require.NoError(t, err)
 
-			var msgRes types.MessageData
+			var msgRes types.BroadcastMessage
 			err = stream.NewProtoMessageReader(&buf).ReadMsg(&msgRes)
 
 			if tc.errArgs.expectPass {
@@ -99,7 +99,7 @@ func TestRead_ExceedSize(t *testing.T) {
 	// Max u32
 	buf.Write([]byte{255, 255, 255, 255})
 
-	var msgRes types.MessageData
+	var msgRes types.BroadcastMessage
 	err := stream.NewProtoMessageReader(&buf).ReadMsg(&msgRes)
 
 	require.Error(t, err)
@@ -115,7 +115,7 @@ func TestRead_MaxSizeEmptyData(t *testing.T) {
 
 	buf.Write(b)
 
-	var msgRes types.MessageData
+	var msgRes types.BroadcastMessage
 	err := stream.NewProtoMessageReader(&buf).ReadMsg(&msgRes)
 
 	require.Error(t, err)
