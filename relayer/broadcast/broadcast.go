@@ -165,14 +165,10 @@ func (b *Broadcaster) BroadcastMessage(
 	ctx context.Context,
 	messageID string,
 	pb proto.Message,
+	recipients []peer.ID,
 ) error {
-	b.peersLock.RLock()
-	peerIDsSlice := PeerIDMapToSlice(b.peers)
-	// Unlock before sending to avoid deadlock.
-	b.peersLock.RUnlock()
-
 	// Wrap the proto message in the MessageData type.
-	msg, err := types.NewBroadcastMessage(messageID, pb, peerIDsSlice)
+	msg, err := types.NewBroadcastMessage(messageID, pb, recipients)
 	if err != nil {
 		return err
 	}
@@ -193,7 +189,7 @@ func (b *Broadcaster) BroadcastMessage(
 	}
 	b.pendingMessages[msg.ID] = NewPeerMessageGroup()
 
-	return b.broadcastRawMessage(ctx, &msg, peerIDsSlice)
+	return b.broadcastRawMessage(ctx, &msg, recipients)
 }
 
 // broadcastRawMessage sends a proto message to all connected peers without any
