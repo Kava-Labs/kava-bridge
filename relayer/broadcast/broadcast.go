@@ -316,12 +316,12 @@ func (b *Broadcaster) handleIncomingRawMsg(msg *MessageWithPeerMetadata) {
 		return
 	}
 
-	if peerMsgGroup.Len() == b.GetPeerCount() {
+	if peerMsgGroup.Completed(b.host.ID(), msg.BroadcastMessage.RecipientPeerIDs) {
 		log.Debugw(
 			"pending peer message group complete",
 			"messageID", msg.BroadcastMessage.ID,
 			"groupLength", peerMsgGroup.Len(),
-			"peerCount", b.GetPeerCount(),
+			"recipientsLength", len(msg.BroadcastMessage.RecipientPeerIDs),
 		)
 
 		// All peers have responded with the same message, send it to the valid
@@ -335,7 +335,7 @@ func (b *Broadcaster) handleIncomingRawMsg(msg *MessageWithPeerMetadata) {
 			"peer message group still pending",
 			"messageID", msg.BroadcastMessage.ID,
 			"groupLength", peerMsgGroup.Len(),
-			"peerCount", b.GetPeerCount(),
+			"recipientsLength", len(msg.BroadcastMessage.RecipientPeerIDs),
 		)
 	}
 }

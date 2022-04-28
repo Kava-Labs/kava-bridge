@@ -29,6 +29,25 @@ func (g *PeerMessageGroup) Add(msg *MessageWithPeerMetadata) bool {
 	return found
 }
 
+// Completed returns true if the number of received messages matches the number
+// of recipients.
+func (g *PeerMessageGroup) Completed(hostID peer.ID, recipients []peer.ID) bool {
+	for _, recipient := range recipients {
+		// Ignore current host peer as it may be in recipients list but won't be
+		// contained in messages.
+		if recipient == hostID {
+			continue
+		}
+
+		// All other recipients need to be contained in messages
+		if _, found := g.Messages[recipient]; !found {
+			return false
+		}
+	}
+
+	return true
+}
+
 // GetMessageData returns the underlying MessageData for the group. This should
 // be called *after* Validate() has been called and confirmed to have no errors.
 func (g *PeerMessageGroup) GetMessageData() *types.BroadcastMessage {
