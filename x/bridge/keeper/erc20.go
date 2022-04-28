@@ -22,6 +22,15 @@ func (k Keeper) BridgeEthereumToKava(
 	amount *big.Int,
 	sequence sdk.Int,
 ) error {
+	params := k.GetParams(ctx)
+	if !params.BridgeEnabled {
+		return types.ErrBridgeDisabled
+	}
+
+	if params.Relayer.Empty() {
+		return types.ErrNoRelayer
+	}
+
 	// Check if message signer/relayer matches the relayer set in params
 	if err := k.IsSignerAuthorized(ctx, relayer); err != nil {
 		return err
@@ -68,7 +77,7 @@ func (k Keeper) GetOrDeployInternalERC20(
 	// Check params for enabled ERC20. This both ensures the ERC20 is
 	// whitelisted and fetches required ERC20 metadata: name, symbol,
 	// decimals.
-	enabledToken, err := k.GetEnabledERC20Token(ctx, externalAddress)
+	enabledToken, err := k.GetEnabledERC20TokenFromExternal(ctx, externalAddress)
 	if err != nil {
 		return types.InternalEVMAddress{}, err
 	}

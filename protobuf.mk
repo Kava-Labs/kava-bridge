@@ -45,7 +45,7 @@ proto-format: ## Format protobuf files
 
 .PHONY: proto-lint
 proto-lint: ## Lint protobuf files
-	@$(DOCKER_BUF) lint --error-format=json --exclude-path ./third_party/proto/cosmos_proto,./third_party/proto/gogoproto,./third_party/proto/google
+	@$(DOCKER_BUF) lint --error-format=json --exclude-path ./third_party/proto/cosmos_proto,./third_party/proto/gogoproto,./third_party/proto/google,./third_party/proto/tendermint,./third_party/proto/cosmos
 
 PROTO_CHECK_REF ?= .git\#branch=main
 .PHONY: proto-check-breaking
@@ -58,6 +58,7 @@ GOOGLE_PROTO_TYPES = third_party/proto/google/api
 COSMOS_PROTO_PATH := $(shell go list -m -f '{{.Dir}}' github.com/cosmos/cosmos-proto)
 GOGO_PROTO_PATH := $(shell go list -m -f '{{.Dir}}' github.com/gogo/protobuf)
 COSMOS_SDK_PATH := $(shell go list -m -f '{{.Dir}}' github.com/cosmos/cosmos-sdk)
+TENDERMINT_SDK_PATH := $(shell go list -m -f '{{.Dir}}' github.com/tendermint/tendermint)
 
 .PHONY: proto-update-deps
 proto-update-deps: ## Update proto
@@ -66,6 +67,7 @@ proto-update-deps: ## Update proto
 	$(call sync_proto_deps,$(COSMOS_PROTO_PATH)/proto third_party)
 	$(call sync_proto_deps,$(GOGO_PROTO_PATH)/gogoproto third_party/proto)
 	$(call sync_proto_deps,$(COSMOS_SDK_PATH)/proto third_party)
+	$(call sync_proto_deps,$(TENDERMINT_SDK_PATH)/proto third_party)
 
 	mkdir -p $(GOOGLE_PROTO_TYPES)
 	curl -sSL $(GOOGLE_PROTO_URL)/annotations.proto > $(GOOGLE_PROTO_TYPES)/annotations.proto

@@ -7,6 +7,7 @@ import (
 	"github.com/libp2p/go-libp2p-core/peer"
 )
 
+// GetNodeID returns the node ID with the given private key.
 func GetNodeID(privKey crypto.PrivKey) (peer.ID, error) {
 	peerID, err := peer.IDFromPrivateKey(privKey)
 	if err != nil {

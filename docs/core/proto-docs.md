@@ -129,6 +129,7 @@ EnabledERC20Token defines an external ERC20 that is allowed to be bridged to Kav
 | `name` | [string](#string) |  | Name of the token. |
 | `symbol` | [string](#string) |  | Symbol of the ERC20 token, usually a shorter version of the name. |
 | `decimals` | [uint32](#uint32) |  | Number of decimals the ERC20 uses to get its user representation. The max value is an unsigned 8 bit integer, but is an uint32 as the smallest protobuf integer type. |
+| `minimum_withdraw_amount` | [string](#string) |  | Minimum amount of the token that can be bridged back to Ethereum to prevent outgoing transfers that are much smaller than Ethereum gas costs. |
 
 
 
@@ -160,6 +161,7 @@ Params defines the bridge module params
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
+| `bridge_enabled` | [bool](#bool) |  | Flag for enabling incoming/outgoing bridge transactions AND Kava ERC20/sdk.Coin conversions. |
 | `enabled_erc20_tokens` | [EnabledERC20Token](#bridge.v1beta1.EnabledERC20Token) | repeated | List of ERC20Tokens that are allowed to be bridged to Kava |
 | `relayer` | [bytes](#bytes) |  | Permissioned relayer address that is allowed to submit bridge messages |
 | `enabled_conversion_pairs` | [ConversionPair](#bridge.v1beta1.ConversionPair) | repeated | enabled_conversion_pairs defines the list of conversion pairs allowed to be converted between Kava ERC20 and sdk.Coin |
@@ -453,7 +455,7 @@ Msg defines the bridge Msg service.
 <a name="relayer.v1beta1.MessageData"></a>
 
 ### MessageData
-
+MessageData is used between peers to wrap messages for each protocol
 
 
 | Field | Type | Label | Description |

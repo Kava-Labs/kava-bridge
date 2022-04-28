@@ -30,24 +30,28 @@ func (suite *genesisTestSuite) Test_InitGenesis_Validation() {
 			"valid",
 			types.NewGenesisState(
 				types.NewParams(
+					true,
 					types.EnabledERC20Tokens{
 						types.NewEnabledERC20Token(
 							testutil.MustNewExternalEVMAddressFromString("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
 							"Wrapped Ether",
 							"WETH",
 							18,
+							testutil.MinWETHWithdrawAmount,
 						),
 						types.NewEnabledERC20Token(
 							testutil.MustNewExternalEVMAddressFromString("0x000000000000000000000000000000000000000A"),
 							"Wrapped Kava",
 							"WKAVA",
 							6,
+							testutil.MinWKavaWithdrawAmount,
 						),
 						types.NewEnabledERC20Token(
 							testutil.MustNewExternalEVMAddressFromString("0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"),
 							"USD Coin",
 							"USDC",
 							6,
+							testutil.MinUSDCWithdrawAmount,
 						),
 					},
 					sdk.AccAddress("hi"),
@@ -71,21 +75,24 @@ func (suite *genesisTestSuite) Test_InitGenesis_Validation() {
 			},
 		},
 		{
-			"invalid - nil relayer",
+			"valid - nil relayer",
 			types.NewGenesisState(
 				types.NewParams(
+					true,
 					types.EnabledERC20Tokens{
 						types.NewEnabledERC20Token(
 							testutil.MustNewExternalEVMAddressFromString("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
 							"Wrapped Ether",
 							"WETH",
 							18,
+							testutil.MinWETHWithdrawAmount,
 						),
 						types.NewEnabledERC20Token(
 							testutil.MustNewExternalEVMAddressFromString("0x000000000000000000000000000000000000000A"),
 							"Wrapped Kava",
 							"WKAVA",
 							6,
+							testutil.MinWKavaWithdrawAmount,
 						),
 					},
 					nil,
@@ -100,26 +107,64 @@ func (suite *genesisTestSuite) Test_InitGenesis_Validation() {
 				types.DefaultNextWithdrawSequence,
 			),
 			errArgs{
-				expectPass: false,
-				panicErr:   "value from ParamSetPair is invalid: relayer address cannot be nil",
+				expectPass: true,
 			},
 		},
 		{
-			"invalid - duplicate token address",
+			"valid - empty relayer",
 			types.NewGenesisState(
 				types.NewParams(
+					true,
 					types.EnabledERC20Tokens{
 						types.NewEnabledERC20Token(
 							testutil.MustNewExternalEVMAddressFromString("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
 							"Wrapped Ether",
 							"WETH",
 							18,
+							testutil.MinWETHWithdrawAmount,
+						),
+						types.NewEnabledERC20Token(
+							testutil.MustNewExternalEVMAddressFromString("0x000000000000000000000000000000000000000A"),
+							"Wrapped Kava",
+							"WKAVA",
+							6,
+							testutil.MinWKavaWithdrawAmount,
+						),
+					},
+					sdk.AccAddress{},
+					types.DefaultConversionPairs,
+				),
+				types.NewERC20BridgePairs(
+					types.NewERC20BridgePair(
+						testutil.MustNewExternalEVMAddressFromString("0x0000000000000000000000000000000000000001"),
+						testutil.MustNewInternalEVMAddressFromString("0x000000000000000000000000000000000000000A"),
+					),
+				),
+				types.DefaultNextWithdrawSequence,
+			),
+			errArgs{
+				expectPass: true,
+			},
+		},
+		{
+			"invalid - duplicate token address",
+			types.NewGenesisState(
+				types.NewParams(
+					true,
+					types.EnabledERC20Tokens{
+						types.NewEnabledERC20Token(
+							testutil.MustNewExternalEVMAddressFromString("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
+							"Wrapped Ether",
+							"WETH",
+							18,
+							testutil.MinWETHWithdrawAmount,
 						),
 						types.NewEnabledERC20Token(
 							testutil.MustNewExternalEVMAddressFromString("0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"),
 							"Wrapped Kava but actually WETH",
 							"WKAVA",
 							6,
+							testutil.MinWKavaWithdrawAmount,
 						),
 					},
 					sdk.AccAddress("hi"),
@@ -142,18 +187,21 @@ func (suite *genesisTestSuite) Test_InitGenesis_Validation() {
 			"invalid - zero token address",
 			types.NewGenesisState(
 				types.NewParams(
+					true,
 					types.EnabledERC20Tokens{
 						types.NewEnabledERC20Token(
 							testutil.MustNewExternalEVMAddressFromString("0x0000000000000000000000000000000000000000"),
 							"Wrapped Ether",
 							"WETH",
 							18,
+							testutil.MinWETHWithdrawAmount,
 						),
 						types.NewEnabledERC20Token(
 							testutil.MustNewExternalEVMAddressFromString("000000000000000000000000000000000000000A"),
 							"Wrapped Kava",
 							"WKAVA",
 							6,
+							testutil.MinWKavaWithdrawAmount,
 						),
 					},
 					sdk.AccAddress("hi"),
@@ -171,12 +219,14 @@ func (suite *genesisTestSuite) Test_InitGenesis_Validation() {
 			"invalid - empty token name",
 			types.NewGenesisState(
 				types.NewParams(
+					true,
 					types.EnabledERC20Tokens{
 						types.NewEnabledERC20Token(
 							testutil.MustNewExternalEVMAddressFromString("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
 							"",
 							"WETH",
 							18,
+							sdk.NewInt(2_000_000),
 						),
 					},
 					sdk.AccAddress("hi"),
@@ -188,6 +238,31 @@ func (suite *genesisTestSuite) Test_InitGenesis_Validation() {
 			errArgs{
 				expectPass: false,
 				panicErr:   "value from ParamSetPair is invalid: name cannot be empty",
+			},
+		},
+		{
+			"invalid - zero minimum withdraw amount",
+			types.NewGenesisState(
+				types.NewParams(
+					true,
+					types.EnabledERC20Tokens{
+						types.NewEnabledERC20Token(
+							testutil.MustNewExternalEVMAddressFromString("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
+							"Wrapped Ether",
+							"WETH",
+							18,
+							sdk.NewInt(0),
+						),
+					},
+					sdk.AccAddress("hi"),
+					types.DefaultConversionPairs,
+				),
+				types.NewERC20BridgePairs(),
+				types.DefaultNextWithdrawSequence,
+			),
+			errArgs{
+				expectPass: false,
+				panicErr:   "value from ParamSetPair is invalid: minimum withdraw amount must be positive",
 			},
 		},
 	}
@@ -210,18 +285,21 @@ func (suite *genesisTestSuite) Test_InitGenesis_Validation() {
 func (suite *genesisTestSuite) Test_InitAndExportGenesis() {
 	state := types.NewGenesisState(
 		types.NewParams(
+			true,
 			types.EnabledERC20Tokens{
 				types.NewEnabledERC20Token(
 					testutil.MustNewExternalEVMAddressFromString("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
 					"Wrapped Ether",
 					"WETH",
 					18,
+					sdk.NewInt(100_000_000_000_000_000),
 				),
 				types.NewEnabledERC20Token(
 					testutil.MustNewExternalEVMAddressFromString("0x000000000000000000000000000000000000000A"),
 					"Wrapped Kava",
 					"WKAVA",
 					6,
+					sdk.NewInt(2_000_000),
 				),
 			},
 			sdk.AccAddress("hello"),
@@ -255,18 +333,21 @@ func (suite *genesisTestSuite) Test_InitAndExportGenesis() {
 func (suite *genesisTestSuite) Test_Marshall() {
 	state := types.NewGenesisState(
 		types.NewParams(
+			true,
 			types.EnabledERC20Tokens{
 				types.NewEnabledERC20Token(
 					testutil.MustNewExternalEVMAddressFromString("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
 					"Wrapped Ether",
 					"WETH",
 					18,
+					testutil.MinWETHWithdrawAmount,
 				),
 				types.NewEnabledERC20Token(
 					testutil.MustNewExternalEVMAddressFromString("0x000000000000000000000000000000000000000A"),
 					"Wrapped Kava",
 					"WKAVA",
 					6,
+					testutil.MinWKavaWithdrawAmount,
 				),
 			},
 			sdk.AccAddress("hello"),
@@ -306,18 +387,21 @@ func (suite *genesisTestSuite) Test_Marshall() {
 func (suite *genesisTestSuite) Test_LegacyJSONConversion() {
 	state := types.NewGenesisState(
 		types.NewParams(
+			true,
 			types.EnabledERC20Tokens{
 				types.NewEnabledERC20Token(
 					testutil.MustNewExternalEVMAddressFromString("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
 					"Wrapped Ether",
 					"WETH",
 					18,
+					testutil.MinWETHWithdrawAmount,
 				),
 				types.NewEnabledERC20Token(
 					testutil.MustNewExternalEVMAddressFromString("0x000000000000000000000000000000000000000A"),
 					"Wrapped Kava",
 					"WKAVA",
 					6,
+					testutil.MinWKavaWithdrawAmount,
 				),
 			},
 			sdk.AccAddress("hello"),

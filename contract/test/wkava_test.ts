@@ -24,7 +24,7 @@ describe("WKAVA", function () {
     });
 
     it("should have correct number of decimals", async function () {
-      expect(await wkava.decimals()).to.be.equal(6);
+      expect(await wkava.decimals()).to.be.equal(18);
     });
   });
 

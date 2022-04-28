@@ -3,7 +3,6 @@ package types
 import (
 	bytes "bytes"
 	"encoding/hex"
-	"errors"
 	"fmt"
 	"math"
 
@@ -14,12 +13,14 @@ import (
 
 // Parameter keys and default values
 var (
-	KeyEnabledERC20Tokens     = []byte("EnabledERC20Tokens")
-	KeyRelayer                = []byte("Relayer")
-	KeyEnabledConversionPairs = []byte("EnabledConversionPairs")
-	DefaultEnabledERC20Tokens = EnabledERC20Tokens{}
-	DefaultRelayer            = sdk.AccAddress{}
-	DefaultConversionPairs    = ConversionPairs{}
+	KeyBridgeEnabled                         = []byte("BridgeEnabled")
+	KeyEnabledERC20Tokens                    = []byte("EnabledERC20Tokens")
+	KeyRelayer                               = []byte("Relayer")
+	KeyEnabledConversionPairs                = []byte("EnabledConversionPairs")
+	DefaultBridgeEnabled                     = false
+	DefaultEnabledERC20Tokens                = EnabledERC20Tokens{}
+	DefaultRelayer            sdk.AccAddress = nil
+	DefaultConversionPairs                   = ConversionPairs{}
 )
 
 // ParamKeyTable for bridge module.
@@ -31,6 +32,7 @@ func ParamKeyTable() paramtypes.KeyTable {
 // pairs pairs of the bridge module's parameters.
 func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 	return paramtypes.ParamSetPairs{
+		paramtypes.NewParamSetPair(KeyBridgeEnabled, &p.BridgeEnabled, validateBool),
 		paramtypes.NewParamSetPair(KeyEnabledERC20Tokens, &p.EnabledERC20Tokens, validateEnabledERC20Tokens),
 		paramtypes.NewParamSetPair(KeyRelayer, &p.Relayer, validateRelayer),
 		paramtypes.NewParamSetPair(KeyEnabledConversionPairs, &p.EnabledConversionPairs, validateConversionPairs),
@@ -38,8 +40,14 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 }
 
 // NewParams returns new bridge module Params.
-func NewParams(enabledERC20Tokens EnabledERC20Tokens, relayer sdk.AccAddress, conversionPairs ConversionPairs) Params {
+func NewParams(
+	bridgeEnabled bool,
+	enabledERC20Tokens EnabledERC20Tokens,
+	relayer sdk.AccAddress,
+	conversionPairs ConversionPairs,
+) Params {
 	return Params{
+		BridgeEnabled:          bridgeEnabled,
 		EnabledERC20Tokens:     enabledERC20Tokens,
 		Relayer:                relayer,
 		EnabledConversionPairs: conversionPairs,
@@ -48,20 +56,32 @@ func NewParams(enabledERC20Tokens EnabledERC20Tokens, relayer sdk.AccAddress, co
 
 // DefaultParams returns the default parameters for bridge.
 func DefaultParams() Params {
-	return NewParams(DefaultEnabledERC20Tokens, DefaultRelayer, DefaultConversionPairs)
+	return NewParams(
+		DefaultBridgeEnabled,
+		DefaultEnabledERC20Tokens,
+		DefaultRelayer,
+		DefaultConversionPairs,
+	)
 }
 
+// Validate returns an error if the Parmas is invalid.
 func (p *Params) Validate() error {
 	if err := p.EnabledERC20Tokens.Validate(); err != nil {
 		return err
 	}
 
-	if p.Relayer == nil {
-		return errors.New("relayer cannot be nil")
-	}
-
 	if err := p.EnabledConversionPairs.Validate(); err != nil {
 		return err
+	}
+
+	// Empty or nil value for Relayer is valid
+	return nil
+}
+
+func validateBool(i interface{}) error {
+	_, ok := i.(bool)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
 	}
 
 	return nil
@@ -110,12 +130,19 @@ func (tokens EnabledERC20Tokens) Validate() error {
 }
 
 // NewEnabledERC20Token returns a new EnabledERC20Token.
-func NewEnabledERC20Token(address ExternalEVMAddress, name string, symbol string, decimals uint32) EnabledERC20Token {
+func NewEnabledERC20Token(
+	address ExternalEVMAddress,
+	name string,
+	symbol string,
+	decimals uint32,
+	minimum_withdraw_amount sdk.Int,
+) EnabledERC20Token {
 	return EnabledERC20Token{
-		Address:  address.Bytes(),
-		Name:     name,
-		Symbol:   symbol,
-		Decimals: decimals,
+		Address:               address.Bytes(),
+		Name:                  name,
+		Symbol:                symbol,
+		Decimals:              decimals,
+		MinimumWithdrawAmount: minimum_withdraw_amount,
 	}
 }
 
@@ -148,18 +175,19 @@ func (e EnabledERC20Token) Validate() error {
 		return fmt.Errorf("decimals is too large, max %v", math.MaxUint8)
 	}
 
+	if e.MinimumWithdrawAmount.LTE(sdk.ZeroInt()) {
+		return fmt.Errorf("minimum withdraw amount must be positive")
+	}
+
 	return nil
 }
 
-// validateRelayer validates a relayer address
+// validateRelayer validates a relayer address is the right type
 func validateRelayer(i interface{}) error {
-	relayerAddr, ok := i.(sdk.AccAddress)
+	// Empty or nil values are valid
+	_, ok := i.(sdk.AccAddress)
 	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
-	}
-
-	if relayerAddr == nil {
-		return errors.New("relayer address cannot be nil")
 	}
 
 	return nil

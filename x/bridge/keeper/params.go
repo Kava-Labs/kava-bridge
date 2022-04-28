@@ -40,8 +40,12 @@ func (k Keeper) SetRelayer(ctx sdk.Context, relayer sdk.AccAddress) {
 // EnabledERC20Tokens
 // -----------------------------------------------------------------------------
 
-// GetEnabledERC20Token returns an EnabledERC20Token from the contract address
-func (k Keeper) GetEnabledERC20Token(ctx sdk.Context, address types.ExternalEVMAddress) (types.EnabledERC20Token, error) {
+// GetEnabledERC20TokenFromExternal returns an EnabledERC20Token from the
+// external Ethereum contract address.
+func (k Keeper) GetEnabledERC20TokenFromExternal(
+	ctx sdk.Context,
+	address types.ExternalEVMAddress,
+) (types.EnabledERC20Token, error) {
 	params := k.GetParams(ctx)
 	for _, token := range params.EnabledERC20Tokens {
 		if bytes.Equal(token.Address, address.Bytes()) {

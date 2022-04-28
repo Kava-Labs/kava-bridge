@@ -48,9 +48,28 @@ func (suite *ParamsTestSuite) TestParamValidation() {
 						"Wrapped Ether",
 						"WETH",
 						18,
+						testutil.MinWETHWithdrawAmount,
 					),
 				},
 				relayer: sdk.AccAddress("1234"),
+			},
+			errArgs{
+				expectPass: true,
+			},
+		},
+		{
+			"valid - nil address",
+			args{
+				enabledERC20Tokens: types.EnabledERC20Tokens{
+					types.NewEnabledERC20Token(
+						testutil.MustNewExternalEVMAddressFromString("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
+						"Wrapped Ether",
+						"WETH",
+						18,
+						testutil.MinWETHWithdrawAmount,
+					),
+				},
+				relayer: nil,
 			},
 			errArgs{
 				expectPass: true,
@@ -65,12 +84,14 @@ func (suite *ParamsTestSuite) TestParamValidation() {
 						"Wrapped Ether",
 						"WETH",
 						18,
+						testutil.MinWETHWithdrawAmount,
 					),
 					types.NewEnabledERC20Token(
 						testutil.MustNewExternalEVMAddressFromString("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
 						"Wrapped Ether",
 						"WETH",
 						18,
+						testutil.MinWETHWithdrawAmount,
 					),
 				},
 				relayer: sdk.AccAddress("1234"),
@@ -89,6 +110,7 @@ func (suite *ParamsTestSuite) TestParamValidation() {
 						"Wrapped Ether",
 						"WETH",
 						18,
+						testutil.MinWETHWithdrawAmount,
 					),
 				},
 				relayer: sdk.AccAddress("1234"),
@@ -107,6 +129,7 @@ func (suite *ParamsTestSuite) TestParamValidation() {
 						"",
 						"WETH",
 						18,
+						testutil.MinWETHWithdrawAmount,
 					),
 				},
 				relayer: sdk.AccAddress("1234"),
@@ -125,6 +148,7 @@ func (suite *ParamsTestSuite) TestParamValidation() {
 						"Wrapped Ether",
 						"",
 						18,
+						testutil.MinWETHWithdrawAmount,
 					),
 				},
 				relayer: sdk.AccAddress("1234"),
@@ -143,6 +167,7 @@ func (suite *ParamsTestSuite) TestParamValidation() {
 						"Wrapped Ether",
 						"WETH",
 						0,
+						testutil.MinWETHWithdrawAmount,
 					),
 				},
 				relayer: sdk.AccAddress("1234"),
@@ -161,6 +186,7 @@ func (suite *ParamsTestSuite) TestParamValidation() {
 						"Wrapped Ether",
 						"WETH",
 						256,
+						testutil.MinWETHWithdrawAmount,
 					),
 				},
 				relayer: sdk.AccAddress("1234"),
@@ -171,7 +197,7 @@ func (suite *ParamsTestSuite) TestParamValidation() {
 			},
 		},
 		{
-			"invalid - nil address",
+			"invalid - zero minimum_withdraw_amount",
 			args{
 				enabledERC20Tokens: types.EnabledERC20Tokens{
 					types.NewEnabledERC20Token(
@@ -179,20 +205,45 @@ func (suite *ParamsTestSuite) TestParamValidation() {
 						"Wrapped Ether",
 						"WETH",
 						18,
+						sdk.ZeroInt(),
 					),
 				},
 				relayer: nil,
 			},
 			errArgs{
 				expectPass: false,
-				contains:   "relayer cannot be nil",
+				contains:   "minimum withdraw amount must be positive",
+			},
+		},
+		{
+			"invalid - negative minimum_withdraw_amount",
+			args{
+				enabledERC20Tokens: types.EnabledERC20Tokens{
+					types.NewEnabledERC20Token(
+						testutil.MustNewExternalEVMAddressFromString("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
+						"Wrapped Ether",
+						"WETH",
+						18,
+						sdk.NewInt(-1),
+					),
+				},
+				relayer: nil,
+			},
+			errArgs{
+				expectPass: false,
+				contains:   "minimum withdraw amount must be positive",
 			},
 		},
 	}
 
 	for _, tc := range testCases {
 		suite.Run(tc.name, func() {
-			params := types.NewParams(tc.args.enabledERC20Tokens, tc.args.relayer, types.DefaultConversionPairs)
+			params := types.NewParams(
+				true,
+				tc.args.enabledERC20Tokens,
+				tc.args.relayer,
+				types.DefaultConversionPairs,
+			)
 
 			err := params.Validate()
 			if tc.errArgs.expectPass {
@@ -222,18 +273,21 @@ func (suite *ParamsTestSuite) TestUnmarshalJSON() {
 			"Wrapped Ether",
 			"WETH",
 			18,
+			testutil.MinWETHWithdrawAmount,
 		),
 		types.NewEnabledERC20Token(
 			testutil.MustNewExternalEVMAddressFromString("0x000000000000000000000000000000000000000A"),
 			"Wrapped Kava",
 			"WKAVA",
 			6,
+			testutil.MinWKavaWithdrawAmount,
 		),
 		types.NewEnabledERC20Token(
 			testutil.MustNewExternalEVMAddressFromString("0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"),
 			"USD Coin",
 			"USDC",
 			6,
+			testutil.MinUSDCWithdrawAmount,
 		),
 	)
 	enabledTokensJson, err := json.Marshal(enabledTokens)
@@ -265,18 +319,21 @@ func (suite *ParamsTestSuite) TestMarshalYAML() {
 			"Wrapped Ether",
 			"WETH",
 			18,
+			testutil.MinWETHWithdrawAmount,
 		),
 		types.NewEnabledERC20Token(
 			testutil.MustNewExternalEVMAddressFromString("0x000000000000000000000000000000000000000A"),
 			"Wrapped Kava",
 			"WKAVA",
 			6,
+			testutil.MinWKavaWithdrawAmount,
 		),
 		types.NewEnabledERC20Token(
 			testutil.MustNewExternalEVMAddressFromString("0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"),
 			"USD Coin",
 			"USDC",
 			6,
+			testutil.MinUSDCWithdrawAmount,
 		),
 	)
 
@@ -291,6 +348,7 @@ func (suite *ParamsTestSuite) TestMarshalYAML() {
 	)
 
 	p := types.NewParams(
+		true,
 		enabledTokens,
 		relayer,
 		conversionPairs,

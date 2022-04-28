@@ -6,6 +6,7 @@ import (
 	"time"
 
 	logging "github.com/ipfs/go-log/v2"
+	"github.com/kava-labs/kava-bridge/relayer/allowlist"
 	"github.com/kava-labs/kava-bridge/relayer/p2p/service"
 	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p-core/host"
@@ -34,6 +35,7 @@ func NewNode(options NodeOptions, done chan bool) (*Node, error) {
 		libp2p.Identity(options.NodePrivateKey),
 		libp2p.DisableRelay(),
 		libp2p.Security(noise.ID, noise.New),
+		allowlist.PeerIDAllowList(options.PeerList),
 	}
 
 	pnet.ForcePrivateNetwork = true

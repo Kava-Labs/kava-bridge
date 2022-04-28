@@ -15,10 +15,12 @@
 package keeper
 
 import (
+	"fmt"
 	"math/big"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	evmtypes "github.com/tharsis/ethermint/x/evm/types"
 
@@ -41,11 +43,11 @@ func (k Keeper) WithdrawHooks() WithdrawHook {
 // PostTxProcessing implements EvmHooks.PostTxProcessing
 func (h WithdrawHook) PostTxProcessing(
 	ctx sdk.Context,
-	from common.Address,
-	to *common.Address,
+	msg core.Message,
 	receipt *ethtypes.Receipt,
 ) error {
 	erc20Abi := contract.ERC20MintableBurnableContract.ABI
+	params := h.k.GetParams(ctx)
 
 	for _, log := range receipt.Logs {
 		// ERC20MintableBurnableContract should contain 3 topics:
@@ -93,6 +95,32 @@ func (h WithdrawHook) PostTxProcessing(
 		if !found {
 			// Contract not a bridge pair in state
 			continue
+		}
+
+		// Only check if the bridge is enabled for contracts that are enabled.
+		if !params.BridgeEnabled {
+			return types.ErrBridgeDisabled
+		}
+
+		enabledERC20, err := h.k.GetEnabledERC20TokenFromExternal(ctx, pair.GetExternalAddress())
+		if err != nil {
+			// This will error only if an existing erc20 was enabled in params,
+			// had the Kava erc20 contract deployed, then later removed. Doing
+			// so does *not* remove the ERC20 contract from erc20 bridge pairs
+			// state.
+
+			// Error is not user facing, but is logged.
+			return fmt.Errorf("failed to get enabled ERC20 token: %w", err)
+		}
+
+		if amount.Cmp(enabledERC20.MinimumWithdrawAmount.BigInt()) < 0 {
+			// Return error to revert transaction and avoid loss of funds.
+			// Only revert when this is an enabled ERC20 token.
+			return fmt.Errorf(
+				"withdraw amount is less than minimum withdraw amount: %v < %v",
+				amount,
+				enabledERC20.MinimumWithdrawAmount,
+			)
 		}
 
 		externalERC20Addr := pair.GetExternalAddress()
