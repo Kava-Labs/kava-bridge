@@ -11,6 +11,7 @@ import (
 	"github.com/kava-labs/kava-bridge/relayer/testutil"
 	"github.com/kava-labs/kava-bridge/relayer/types"
 	"github.com/libp2p/go-libp2p-core/host"
+	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -85,35 +86,67 @@ func (suite *BroadcasterTestSuite) TestBroadcast_Responses() {
 
 	time.Sleep(time.Second)
 
-	// Send message to all peers. This includes broadcaster peer but is ok since
-	// broadcaster ignores self node
-	recipients := testutil.PeerIDsFromHosts(suite.Hosts)
-
-	err = suite.Broadcasters[0].BroadcastMessage(
-		context.Background(),
-		"1234 message id",
-		&types.HelloRequest{
-			Message: "hello world",
-		},
-		recipients,
-	)
-	suite.Require().NoError(err)
-
-	time.Sleep(time.Second * 10)
-
 	for _, broadcaster := range suite.Broadcasters {
 		// Peer count does not include self
 		suite.Assert().Equal(count-1, broadcaster.GetPeerCount())
 	}
 
-	handler.mu.Lock()
-	defer handler.mu.Unlock()
+	// Send message to all peers. This includes broadcaster peer but is ok since
+	// broadcaster ignores self node
+	allPeerIDs := testutil.PeerIDsFromHosts(suite.Hosts)
 
-	// A -> B, C, D, E (4) // initial receive
-	// B, C, D, E rebroadcast to all other nodes (4 * 4)
-	// 4 initial + 16 re-broadcast = 20
-	suite.Assert().Equal(20, handler.rawCount, "raw message count should be 20")
-	suite.Assert().Equal(count, handler.validCount, "each peer should get a validated message")
+	tests := []struct {
+		name           string
+		recipients     []peer.ID
+		wantRawCount   int
+		wantValidCount int
+	}{
+		{
+			"all including broadcaster",
+			allPeerIDs,
+			20,
+			5,
+		},
+		{
+			"all excluding broadcaster",
+			allPeerIDs[1:],
+			20,
+			5,
+		},
+	}
+
+	for _, tc := range tests {
+		suite.Run(tc.name, func() {
+			// Reset handler counts
+			handler.mu.Lock()
+			handler.rawCount = 0
+			handler.validCount = 0
+			handler.mu.Unlock()
+
+			err = suite.Broadcasters[0].BroadcastMessage(
+				context.Background(),
+				"1234 message id",
+				&types.HelloRequest{
+					Message: "hello world",
+				},
+				tc.recipients,
+			)
+			suite.Require().NoError(err)
+
+			time.Sleep(time.Second * 3)
+
+			handler.mu.Lock()
+			defer handler.mu.Unlock()
+
+			// A -> B, C, D, E (4) // initial receive
+			// B, C, D, E rebroadcast to all other nodes (4 * 4)
+			// 4 initial + 16 re-broadcast = 20
+
+			// n * (n - 1) messages where n is number of recipients
+			suite.Assert().Equal(tc.wantRawCount, handler.rawCount, "raw message count should be 20")
+			suite.Assert().Equal(tc.wantValidCount, handler.validCount, "each recipient peer should get a validated message")
+		})
+	}
 }
 
 // ----------------------------------------------------------------------------

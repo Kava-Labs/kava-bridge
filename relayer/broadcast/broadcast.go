@@ -168,7 +168,7 @@ func (b *Broadcaster) BroadcastMessage(
 	recipients []peer.ID,
 ) error {
 	// Wrap the proto message in the MessageData type.
-	msg, err := types.NewBroadcastMessage(messageID, pb, recipients)
+	msg, err := types.NewBroadcastMessage(messageID, pb, b.host.ID(), recipients)
 	if err != nil {
 		return err
 	}

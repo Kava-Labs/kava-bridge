@@ -12,14 +12,15 @@ import (
 )
 
 var (
-	ErrMsgIDEmpty         = errors.New("message ID is empty")
-	ErrMsgRecipientsEmpty = errors.New("no recipient peer IDs in message")
+	ErrMsgIDEmpty                = errors.New("message ID is empty")
+	ErrMsgInsufficientRecipients = errors.New("not enough recipient peer IDs, requires at least two including source peer ID")
 )
 
 // NewBroadcastMessage creates a new BroadcastMessage with the payload marshaled as Any.
 func NewBroadcastMessage(
-	id string,
+	messageID string,
 	payload proto.Message,
+	hostID peer.ID,
 	recipientsPeerIDs []peer.ID,
 ) (BroadcastMessage, error) {
 	anyPayload, err := prototypes.MarshalAny(payload)
@@ -27,10 +28,13 @@ func NewBroadcastMessage(
 		return BroadcastMessage{}, err
 	}
 
+	allPeerIDs := append(recipientsPeerIDs, hostID)
+	allPeerIDs = dedupPeerIDs(allPeerIDs)
+
 	return BroadcastMessage{
-		ID:               id,
+		ID:               messageID,
 		Payload:          *anyPayload,
-		RecipientPeerIDs: recipientsPeerIDs,
+		RecipientPeerIDs: allPeerIDs,
 		Created:          time.Now().UTC(),
 	}, nil
 }
@@ -41,8 +45,12 @@ func (msg *BroadcastMessage) Validate() error {
 		return ErrMsgIDEmpty
 	}
 
-	if len(msg.RecipientPeerIDs) == 0 {
-		return ErrMsgRecipientsEmpty
+	if len(msg.RecipientPeerIDs) <= 1 {
+		return ErrMsgInsufficientRecipients
+	}
+
+	if duplicatePeerID, found := containsDuplicatePeerID(msg.RecipientPeerIDs); found {
+		return fmt.Errorf("duplicate recipient peer ID in message: %s", duplicatePeerID)
 	}
 
 	for _, peerID := range msg.RecipientPeerIDs {
@@ -57,4 +65,32 @@ func (msg *BroadcastMessage) Validate() error {
 // UnpackPayload unmarshals the payload message into the given proto.Message.
 func (msg *BroadcastMessage) UnpackPayload(pb proto.Message) error {
 	return prototypes.UnmarshalAny(&msg.Payload, pb)
+}
+
+func dedupPeerIDs(peerIDs []peer.ID) []peer.ID {
+	seen := make(map[peer.ID]struct{})
+	var deduped []peer.ID
+
+	for _, peerID := range peerIDs {
+		if _, ok := seen[peerID]; !ok {
+			seen[peerID] = struct{}{}
+			deduped = append(deduped, peerID)
+		}
+	}
+
+	return deduped
+}
+
+func containsDuplicatePeerID(peerIDs []peer.ID) (peer.ID, bool) {
+	seen := make(map[peer.ID]struct{})
+
+	for _, peerID := range peerIDs {
+		if _, found := seen[peerID]; found {
+			return peerID, true
+		}
+
+		seen[peerID] = struct{}{}
+	}
+
+	return "", false
 }

@@ -10,6 +10,7 @@ import (
 	prototypes "github.com/gogo/protobuf/types"
 	"github.com/kava-labs/kava-bridge/relayer/stream"
 	"github.com/kava-labs/kava-bridge/relayer/types"
+	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/stretchr/testify/require"
 )
 
@@ -44,7 +45,8 @@ func TestReadWrite(t *testing.T) {
 			"large",
 			&types.HelloRequest{
 				// Not quite max size since there's other data along with the Message
-				Message: string(make([]byte, stream.MAX_MESSAGE_SIZE-100)),
+				// This may fail if more fields are added and should be decreased.
+				Message: string(make([]byte, stream.MAX_MESSAGE_SIZE-200)),
 			},
 			errArgs{
 				expectPass: true,
@@ -65,7 +67,22 @@ func TestReadWrite(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			msg, err := types.NewBroadcastMessage("id", tc.payload, nil)
+			// Error if decoding invalid peer ID:
+			// "length greater than remaining number of bytes in buffer"
+			hostPeerID, err := peer.Decode("16Uiu2HAmTdEddBdw1JVs5tHhqQGaFPkqq64TwppmL2G8fYbZeZei")
+			require.NoError(t, err)
+
+			recipients, err := peer.Decode("16Uiu2HAm9z3t15JpqBbPQJ1ZLHm6w1AXD6M2FXdCG3GLoY4iDcD9")
+			require.NoError(t, err)
+
+			msg, err := types.NewBroadcastMessage(
+				"id",
+				tc.payload,
+				hostPeerID,
+				[]peer.ID{
+					recipients,
+				},
+			)
 			require.NoError(t, err)
 
 			// Write/read from buffer

@@ -10,8 +10,13 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func MustNewBroadcastMessage(id string, payload proto.Message, recipients []peer.ID) types.BroadcastMessage {
-	msg, err := types.NewBroadcastMessage(id, payload, recipients)
+func MustNewBroadcastMessage(
+	id string,
+	payload proto.Message,
+	hostPeerID peer.ID,
+	recipients []peer.ID,
+) types.BroadcastMessage {
+	msg, err := types.NewBroadcastMessage(id, payload, hostPeerID, recipients)
 	if err != nil {
 		panic(err)
 	}
@@ -31,14 +36,14 @@ func TestValidateMessage(t *testing.T) {
 	}{
 		{
 			"valid",
-			MustNewBroadcastMessage("hi", &prototypes.Empty{}, []peer.ID{peer.ID("QmQQGdG9Ybz2qXNmzXo9pT9VZpvZ2Zcq2R6zQmXo9FtZz")}),
+			MustNewBroadcastMessage("hi", &prototypes.Empty{}, "hostPeerID", []peer.ID{peer.ID("QmQQGdG9Ybz2qXNmzXo9pT9VZpvZ2Zcq2R6zQmXo9FtZz")}),
 			errArgs{
 				expectPass: true,
 			},
 		},
 		{
 			"invalid - empty id",
-			MustNewBroadcastMessage("", &prototypes.Empty{}, []peer.ID{peer.ID("QmQQGdG9Ybz2qXNmzXo9pT9VZpvZ2Zcq2R6zQmXo9FtZz")}),
+			MustNewBroadcastMessage("", &prototypes.Empty{}, "hostPeerID", []peer.ID{peer.ID("QmQQGdG9Ybz2qXNmzXo9pT9VZpvZ2Zcq2R6zQmXo9FtZz")}),
 			errArgs{
 				expectPass: false,
 				contains:   "message ID is empty",
@@ -46,10 +51,18 @@ func TestValidateMessage(t *testing.T) {
 		},
 		{
 			"invalid - empty recipients",
-			MustNewBroadcastMessage("", &prototypes.Empty{}, []peer.ID{}),
+			MustNewBroadcastMessage("hi", &prototypes.Empty{}, "hostPeerID", []peer.ID{}),
 			errArgs{
 				expectPass: false,
-				contains:   "message ID is empty",
+				contains:   types.ErrMsgInsufficientRecipients.Error(),
+			},
+		},
+		{
+			"invalid - empty host ID",
+			MustNewBroadcastMessage("hi", &prototypes.Empty{}, "", []peer.ID{peer.ID("QmQQGdG9Ybz2qXNmzXo9pT9VZpvZ2Zcq2R6zQmXo9FtZz")}),
+			errArgs{
+				expectPass: false,
+				contains:   peer.ErrEmptyPeerID.Error(),
 			},
 		},
 	}
@@ -87,7 +100,7 @@ func TestMarshalUnmarshalPayload(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			msg, err := types.NewBroadcastMessage("an id", tc.payload, nil)
+			msg, err := types.NewBroadcastMessage("an id", tc.payload, "host peer ID", nil)
 			require.NoError(t, err)
 
 			var unpacked prototypes.DynamicAny
