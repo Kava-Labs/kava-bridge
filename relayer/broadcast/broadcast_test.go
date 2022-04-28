@@ -8,10 +8,9 @@ import (
 
 	logging "github.com/ipfs/go-log/v2"
 	"github.com/kava-labs/kava-bridge/relayer/broadcast"
+	"github.com/kava-labs/kava-bridge/relayer/testutil"
 	"github.com/kava-labs/kava-bridge/relayer/types"
-	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p-core/host"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -40,7 +39,7 @@ func (suite *BroadcasterTestSuite) TearDownTest() {
 func (suite *BroadcasterTestSuite) CreateHostBroadcasters(n int, options ...broadcast.BroadcasterOption) {
 	suite.Ctx, suite.Cancel = context.WithCancel(context.Background())
 
-	suite.Hosts = CreateHosts(suite.T(), suite.Ctx, n)
+	suite.Hosts = testutil.CreateHosts(suite.T(), suite.Ctx, n)
 
 	// Without setting to nil first, suite tests will connect to peers
 	// on a different suite test for some reason.
@@ -59,7 +58,8 @@ func (suite *BroadcasterTestSuite) CreateHostBroadcasters(n int, options ...broa
 func (suite *BroadcasterTestSuite) TestBroadcast_ConnectPeers() {
 	count := 5
 	suite.CreateHostBroadcasters(count)
-	ConnectAll(suite.T(), suite.Hosts)
+	err := testutil.ConnectAll(suite.T(), suite.Hosts)
+	suite.Require().NoError(err)
 
 	time.Sleep(time.Second)
 
@@ -80,7 +80,8 @@ func (suite *BroadcasterTestSuite) TestBroadcast_Responses() {
 
 	count := 5
 	suite.CreateHostBroadcasters(count, broadcast.WithHandler(handler))
-	ConnectAll(suite.T(), suite.Hosts)
+	err = testutil.ConnectAll(suite.T(), suite.Hosts)
+	suite.Require().NoError(err)
 
 	time.Sleep(time.Second)
 
@@ -134,37 +135,3 @@ func (h *TestHandler) ValidatedMessage(msg types.BroadcastMessage) {
 }
 
 func (h *TestHandler) MismatchMessage(msg broadcast.MessageWithPeerMetadata) {}
-
-// ----------------------------------------------------------------------------
-// util functions
-
-func Connect(t *testing.T, a, b host.Host) {
-	pinfo := a.Peerstore().PeerInfo(a.ID())
-	err := b.Connect(context.Background(), pinfo)
-	require.NoError(t, err)
-}
-
-func ConnectAll(t *testing.T, hosts []host.Host) {
-	for i, a := range hosts {
-		for j, b := range hosts {
-			if i == j {
-				continue
-			}
-
-			Connect(t, a, b)
-		}
-	}
-}
-
-func CreateHosts(t *testing.T, ctx context.Context, n int) []host.Host {
-	var out []host.Host
-
-	for i := 0; i < n; i++ {
-		h, err := libp2p.New()
-		require.NoError(t, err)
-
-		out = append(out, h)
-	}
-
-	return out
-}
