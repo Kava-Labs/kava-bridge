@@ -166,9 +166,13 @@ func (b *Broadcaster) BroadcastMessage(
 	messageID string,
 	pb proto.Message,
 ) error {
+	b.peersLock.RLock()
+	peerIDsSlice := PeerIDMapToSlice(b.peers)
+	// Unlock before sending to avoid deadlock.
+	b.peersLock.RUnlock()
+
 	// Wrap the proto message in the MessageData type.
-	// TODO: Set recipient peer list, only broadcast to peers in list.
-	msg, err := types.NewBroadcastMessage(messageID, pb, nil)
+	msg, err := types.NewBroadcastMessage(messageID, pb, peerIDsSlice)
 	if err != nil {
 		return err
 	}
@@ -189,7 +193,7 @@ func (b *Broadcaster) BroadcastMessage(
 	}
 	b.pendingMessages[msg.ID] = NewPeerMessageGroup()
 
-	return b.broadcastRawMessage(ctx, &msg)
+	return b.broadcastRawMessage(ctx, &msg, peerIDsSlice)
 }
 
 // broadcastRawMessage sends a proto message to all connected peers without any
@@ -197,6 +201,7 @@ func (b *Broadcaster) BroadcastMessage(
 func (b *Broadcaster) broadcastRawMessage(
 	ctx context.Context,
 	pb proto.Message,
+	recipients []peer.ID,
 ) error {
 	log.Debugf("broadcast sending raw proto message: %s", pb.String())
 
@@ -206,7 +211,19 @@ func (b *Broadcaster) broadcastRawMessage(
 	// Run writes to peers in parallel
 	group, _ := errgroup.WithContext(ctx)
 
-	for peerID, ch := range b.outboundStreams {
+	// Only send messages in the recipient list.
+	for _, peerID := range recipients {
+		// Ignore self, will be contained in recipient list if not original broadcaster
+		if peerID == b.host.ID() {
+			continue
+		}
+
+		ch, ok := b.outboundStreams[peerID]
+		if !ok {
+			// TODO: Try to open a new stream to this peer.
+			return fmt.Errorf("no outbound stream for peer: %v", peerID)
+		}
+
 		// Avoid capturing loop variable
 		func(peerID peer.ID, ch network.Stream) {
 			b.broadcasterHook.BeforeBroadcastRawMessage(b, peerID, &pb)
@@ -258,8 +275,12 @@ func (b *Broadcaster) handleIncomingRawMsg(msg *MessageWithPeerMetadata) {
 
 		// Rebroadcast to all other peers when first time seeing this message.
 		go func() {
-			// Send Payload, NOT the Message, as SendProtoMessage wraps it in a Message.
-			if err := b.broadcastRawMessage(context.Background(), &msg.BroadcastMessage); err != nil {
+			// Send Payload, NOT the BroadcastMessage, as SendProtoMessage wraps it in a Message.
+			if err := b.broadcastRawMessage(
+				context.Background(),
+				&msg.BroadcastMessage,
+				msg.BroadcastMessage.RecipientPeerIDs,
+			); err != nil {
 				log.DPanic(
 					"error rebroadcasting message %s: %s",
 					msg.BroadcastMessage.ID,

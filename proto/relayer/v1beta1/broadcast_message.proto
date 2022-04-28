@@ -13,7 +13,10 @@ message BroadcastMessage {
   string id = 1 [(gogoproto.customname) = "ID"];
   // Selected recipients of the message, to partially restrict the broadcast to
   // a subset a peers.
-  repeated string recipient_peer_ids = 2 [(gogoproto.customname) = "RecipientPeerIDs"];
+  repeated string recipient_peer_ids = 2 [
+    (gogoproto.customtype) = "github.com/libp2p/go-libp2p-core/peer.ID",
+    (gogoproto.customname) = "RecipientPeerIDs"
+  ];
   // Customtype workaround for not having to use a separate protocgen.sh script
   google.protobuf.Any payload = 3
       [(gogoproto.nullable) = false, (gogoproto.customtype) = "github.com/gogo/protobuf/types.Any"];

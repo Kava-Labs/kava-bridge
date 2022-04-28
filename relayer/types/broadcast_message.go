@@ -2,6 +2,7 @@ package types
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -11,7 +12,8 @@ import (
 )
 
 var (
-	ErrMsgIDEmpty = errors.New("message ID is empty")
+	ErrMsgIDEmpty         = errors.New("message ID is empty")
+	ErrMsgRecipientsEmpty = errors.New("no recipient peer IDs in message")
 )
 
 // NewBroadcastMessage creates a new BroadcastMessage with the payload marshaled as Any.
@@ -25,15 +27,10 @@ func NewBroadcastMessage(
 		return BroadcastMessage{}, err
 	}
 
-	recipientsPeerIDsStr := make([]string, len(recipientsPeerIDs))
-	for i, peerID := range recipientsPeerIDs {
-		recipientsPeerIDsStr[i] = peerID.String()
-	}
-
 	return BroadcastMessage{
 		ID:               id,
 		Payload:          *anyPayload,
-		RecipientPeerIDs: recipientsPeerIDsStr,
+		RecipientPeerIDs: recipientsPeerIDs,
 		Created:          time.Now().UTC(),
 	}, nil
 }
@@ -42,6 +39,16 @@ func NewBroadcastMessage(
 func (msg *BroadcastMessage) Validate() error {
 	if strings.TrimSpace(msg.ID) == "" {
 		return ErrMsgIDEmpty
+	}
+
+	if len(msg.RecipientPeerIDs) == 0 {
+		return ErrMsgRecipientsEmpty
+	}
+
+	for _, peerID := range msg.RecipientPeerIDs {
+		if err := peerID.Validate(); err != nil {
+			return fmt.Errorf("recipient peer ID is invalid: %w", err)
+		}
 	}
 
 	return nil
