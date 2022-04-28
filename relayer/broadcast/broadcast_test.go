@@ -85,12 +85,17 @@ func (suite *BroadcasterTestSuite) TestBroadcast_Responses() {
 
 	time.Sleep(time.Second)
 
+	// Send message to all peers. This includes broadcaster peer but is ok since
+	// broadcaster ignores self node
+	recipients := testutil.PeerIDsFromHosts(suite.Hosts)
+
 	err = suite.Broadcasters[0].BroadcastMessage(
 		context.Background(),
 		"1234 message id",
 		&types.HelloRequest{
 			Message: "hello world",
 		},
+		recipients,
 	)
 	suite.Require().NoError(err)
 

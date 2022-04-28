@@ -6,11 +6,12 @@ import (
 	proto "github.com/gogo/protobuf/proto"
 	prototypes "github.com/gogo/protobuf/types"
 	"github.com/kava-labs/kava-bridge/relayer/types"
+	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/stretchr/testify/require"
 )
 
-func MustNewBroadcastMessage(id string, payload proto.Message) types.BroadcastMessage {
-	msg, err := types.NewBroadcastMessage(id, payload, nil)
+func MustNewBroadcastMessage(id string, payload proto.Message, recipients []peer.ID) types.BroadcastMessage {
+	msg, err := types.NewBroadcastMessage(id, payload, recipients)
 	if err != nil {
 		panic(err)
 	}
@@ -30,14 +31,22 @@ func TestValidateMessage(t *testing.T) {
 	}{
 		{
 			"valid",
-			MustNewBroadcastMessage("hi", &prototypes.Empty{}),
+			MustNewBroadcastMessage("hi", &prototypes.Empty{}, []peer.ID{peer.ID("QmQQGdG9Ybz2qXNmzXo9pT9VZpvZ2Zcq2R6zQmXo9FtZz")}),
 			errArgs{
 				expectPass: true,
 			},
 		},
 		{
 			"invalid - empty id",
-			MustNewBroadcastMessage("", &prototypes.Empty{}),
+			MustNewBroadcastMessage("", &prototypes.Empty{}, []peer.ID{peer.ID("QmQQGdG9Ybz2qXNmzXo9pT9VZpvZ2Zcq2R6zQmXo9FtZz")}),
+			errArgs{
+				expectPass: false,
+				contains:   "message ID is empty",
+			},
+		},
+		{
+			"invalid - empty recipients",
+			MustNewBroadcastMessage("", &prototypes.Empty{}, []peer.ID{}),
 			errArgs{
 				expectPass: false,
 				contains:   "message ID is empty",

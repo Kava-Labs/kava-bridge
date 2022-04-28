@@ -8,6 +8,7 @@ import (
 	"github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/libp2p/go-libp2p-core/host"
 	"github.com/libp2p/go-libp2p-core/network"
+	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/stretchr/testify/require"
 )
 
@@ -104,4 +105,15 @@ func AreAllConnected(t *testing.T, hosts []host.Host) bool {
 func IsConnected(t *testing.T, a, b host.Host) bool {
 	return a.Network().Connectedness(b.ID()) == network.Connected &&
 		b.Network().Connectedness(a.ID()) == network.Connected
+}
+
+// PeerIDsFromHosts returns a slice of peer IDs from a slice of hosts
+func PeerIDsFromHosts(hosts []host.Host) []peer.ID {
+	var out []peer.ID
+
+	for _, h := range hosts {
+		out = append(out, h.ID())
+	}
+
+	return out
 }
