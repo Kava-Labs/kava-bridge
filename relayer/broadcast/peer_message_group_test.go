@@ -34,9 +34,9 @@ func TestUniquePeerMessages(t *testing.T) {
 			&broadcast.PeerMessageGroup{
 				Messages: map[peer.ID]*broadcast.MessageWithPeerMetadata{
 					"peer1": {
-						Message: types.MessageData{
+						BroadcastMessage: types.BroadcastMessage{
 							ID: "msg id 1",
-							Payload: mustMarshalAny(&types.HelloRequest{
+							Payload: *mustMarshalAny(&types.HelloRequest{
 								Message: "hello world",
 							}),
 						},
@@ -53,18 +53,18 @@ func TestUniquePeerMessages(t *testing.T) {
 			&broadcast.PeerMessageGroup{
 				Messages: map[peer.ID]*broadcast.MessageWithPeerMetadata{
 					"peer1": {
-						Message: types.MessageData{
+						BroadcastMessage: types.BroadcastMessage{
 							ID: "msg id 1",
-							Payload: mustMarshalAny(&types.HelloRequest{
+							Payload: *mustMarshalAny(&types.HelloRequest{
 								Message: "hello world",
 							}),
 						},
 						PeerID: "peer1",
 					},
 					"peer2": {
-						Message: types.MessageData{
+						BroadcastMessage: types.BroadcastMessage{
 							ID: "msg id 1",
-							Payload: mustMarshalAny(&types.HelloRequest{
+							Payload: *mustMarshalAny(&types.HelloRequest{
 								Message: "hello world",
 							}),
 						},
@@ -81,18 +81,18 @@ func TestUniquePeerMessages(t *testing.T) {
 			&broadcast.PeerMessageGroup{
 				Messages: map[peer.ID]*broadcast.MessageWithPeerMetadata{
 					"peer1": {
-						Message: types.MessageData{
+						BroadcastMessage: types.BroadcastMessage{
 							ID: "msg id 1",
-							Payload: mustMarshalAny(&types.HelloRequest{
+							Payload: *mustMarshalAny(&types.HelloRequest{
 								Message: "hello world",
 							}),
 						},
 						PeerID: "peer1",
 					},
 					"peer2": {
-						Message: types.MessageData{
+						BroadcastMessage: types.BroadcastMessage{
 							ID: "msg id 2",
-							Payload: mustMarshalAny(&types.HelloRequest{
+							Payload: *mustMarshalAny(&types.HelloRequest{
 								Message: "hello world",
 							}),
 						},
@@ -110,18 +110,18 @@ func TestUniquePeerMessages(t *testing.T) {
 			&broadcast.PeerMessageGroup{
 				Messages: map[peer.ID]*broadcast.MessageWithPeerMetadata{
 					"peer1": {
-						Message: types.MessageData{
+						BroadcastMessage: types.BroadcastMessage{
 							ID: "msg id 1",
-							Payload: mustMarshalAny(&types.HelloRequest{
+							Payload: *mustMarshalAny(&types.HelloRequest{
 								Message: "hello world",
 							}),
 						},
 						PeerID: "peer1",
 					},
 					"peer2": {
-						Message: types.MessageData{
+						BroadcastMessage: types.BroadcastMessage{
 							ID: "msg id 1",
-							Payload: mustMarshalAny(&types.HelloRequest{
+							Payload: *mustMarshalAny(&types.HelloRequest{
 								Message: "goodbye world",
 							}),
 						},

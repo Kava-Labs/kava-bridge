@@ -126,7 +126,7 @@ func (h *TestHandler) RawMessage(msg broadcast.MessageWithPeerMetadata) {
 	h.rawCount += 1
 }
 
-func (h *TestHandler) ValidatedMessage(msg types.MessageData) {
+func (h *TestHandler) ValidatedMessage(msg types.BroadcastMessage) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 

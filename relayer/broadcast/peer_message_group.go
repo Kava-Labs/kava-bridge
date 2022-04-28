@@ -31,9 +31,9 @@ func (g *PeerMessageGroup) Add(msg *MessageWithPeerMetadata) bool {
 
 // GetMessageData returns the underlying MessageData for the group. This should
 // be called *after* Validate() has been called and confirmed to have no errors.
-func (g *PeerMessageGroup) GetMessageData() *types.MessageData {
+func (g *PeerMessageGroup) GetMessageData() *types.BroadcastMessage {
 	for _, msg := range g.Messages {
-		return &msg.Message
+		return &msg.BroadcastMessage
 	}
 
 	return nil
@@ -61,13 +61,13 @@ func (g *PeerMessageGroup) Validate() error {
 
 		// Set messageID on first iteration
 		if messageID == "" {
-			messageID = msg.Message.ID
+			messageID = msg.BroadcastMessage.ID
 		}
 
-		if msg.Message.ID != messageID {
+		if msg.BroadcastMessage.ID != messageID {
 			return fmt.Errorf(
 				"message ID from peer %s mismatch: %q != %q",
-				msg.PeerID, msg.Message.ID, messageID,
+				msg.PeerID, msg.BroadcastMessage.ID, messageID,
 			)
 		}
 
@@ -76,7 +76,7 @@ func (g *PeerMessageGroup) Validate() error {
 		}
 
 		// TODO: Ensure all messages are the same and signed?
-		if !msg.Message.Payload.Equal(message.Message.Payload) {
+		if !msg.BroadcastMessage.Payload.Equal(message.BroadcastMessage.Payload) {
 			return fmt.Errorf("message payloads do not match from peer %s", msg.PeerID)
 		}
 	}

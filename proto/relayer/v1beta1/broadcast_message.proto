@@ -21,7 +21,6 @@ message BroadcastMessage {
   google.protobuf.Timestamp created = 4 [(gogoproto.nullable) = false, (gogoproto.stdtime) = true];
 }
 
-// Echo is a message used for testing
-message Echo {
+message HelloRequest {
   string message = 1;
 }

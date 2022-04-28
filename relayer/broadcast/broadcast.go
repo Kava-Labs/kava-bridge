@@ -48,7 +48,7 @@ type Broadcaster struct {
 
 	// Messages that all peers have confirmed to have received. Does not contain
 	// any peer specific data as it does not originate from any specific peer.
-	incomingValidatedMessages chan *types.MessageData
+	incomingValidatedMessages chan *types.BroadcastMessage
 
 	// Messages that have been received but have not been validated to be same
 	// from all peers.
@@ -57,7 +57,7 @@ type Broadcaster struct {
 	pendingMessages map[string]*PeerMessageGroup
 
 	// Messages to send to all other peers
-	outgoing chan *types.MessageData
+	outgoing chan *types.BroadcastMessage
 
 	// External event handler
 	handler BroadcastHandler
@@ -84,10 +84,10 @@ func NewBroadcaster(
 		peers:                     make(map[peer.ID]struct{}),
 		newPeers:                  make(chan peer.ID),
 		incomingRawMessages:       make(chan *MessageWithPeerMetadata),
-		incomingValidatedMessages: make(chan *types.MessageData, 1),
+		incomingValidatedMessages: make(chan *types.BroadcastMessage, 1),
 		pendingMessagesLock:       sync.Mutex{},
 		pendingMessages:           make(map[string]*PeerMessageGroup),
-		outgoing:                  make(chan *types.MessageData),
+		outgoing:                  make(chan *types.BroadcastMessage),
 		handler:                   &NoOpBroadcastHandler{},
 		broadcasterHook:           &noOpBroadcasterHook{},
 		ctx:                       ctx,
@@ -167,7 +167,8 @@ func (b *Broadcaster) BroadcastMessage(
 	pb proto.Message,
 ) error {
 	// Wrap the proto message in the MessageData type.
-	msg, err := types.NewMessageData(messageID, pb)
+	// TODO: Set recipient peer list
+	msg, err := types.NewBroadcastMessage(messageID, pb, nil)
 	if err != nil {
 		return err
 	}
@@ -235,7 +236,7 @@ func (b *Broadcaster) broadcastRawMessage(
 // handleIncomingRawMsg handles all raw messages from other peers. This is
 // before messages are verified to be received from all peers.
 func (b *Broadcaster) handleIncomingRawMsg(msg *MessageWithPeerMetadata) {
-	if err := msg.Message.Validate(); err != nil {
+	if err := msg.BroadcastMessage.Validate(); err != nil {
 		log.Errorf("invalid message received from peer: %s", err)
 		return
 	}
@@ -248,19 +249,19 @@ func (b *Broadcaster) handleIncomingRawMsg(msg *MessageWithPeerMetadata) {
 	b.pendingMessagesLock.Lock()
 	defer b.pendingMessagesLock.Unlock()
 
-	peerMsgGroup, found := b.pendingMessages[msg.Message.ID]
+	peerMsgGroup, found := b.pendingMessages[msg.BroadcastMessage.ID]
 	// First time we see this message
 	if !found {
-		log.Debugf("new message ID %s from peer %s, creating new pending group", msg.Message.ID, msg.PeerID)
+		log.Debugf("new message ID %s from peer %s, creating new pending group", msg.BroadcastMessage.ID, msg.PeerID)
 		peerMsgGroup = NewPeerMessageGroup()
 
 		// Rebroadcast to all other peers when first time seeing this message.
 		go func() {
 			// Send Payload, NOT the Message, as SendProtoMessage wraps it in a Message.
-			if err := b.broadcastRawMessage(context.Background(), &msg.Message); err != nil {
+			if err := b.broadcastRawMessage(context.Background(), &msg.BroadcastMessage); err != nil {
 				log.DPanic(
 					"error rebroadcasting message %s: %s",
-					msg.Message.ID,
+					msg.BroadcastMessage.ID,
 					err,
 				)
 			}
@@ -275,12 +276,12 @@ func (b *Broadcaster) handleIncomingRawMsg(msg *MessageWithPeerMetadata) {
 			"message", msg,
 		)
 	}
-	b.pendingMessages[msg.Message.ID] = peerMsgGroup
+	b.pendingMessages[msg.BroadcastMessage.ID] = peerMsgGroup
 
 	log.Debugw(
 		"added message to pending peer message group",
 		"peerID", msg.PeerID,
-		"messageID", msg.Message.ID,
+		"messageID", msg.BroadcastMessage.ID,
 		"newGroupLength", peerMsgGroup.Len(),
 	)
 
@@ -292,7 +293,7 @@ func (b *Broadcaster) handleIncomingRawMsg(msg *MessageWithPeerMetadata) {
 
 		// TODO: Reject additional messages for the same message ID? Or prune
 		// them along with the expired messages
-		delete(b.pendingMessages, msg.Message.ID)
+		delete(b.pendingMessages, msg.BroadcastMessage.ID)
 
 		return
 	}
@@ -300,7 +301,7 @@ func (b *Broadcaster) handleIncomingRawMsg(msg *MessageWithPeerMetadata) {
 	if peerMsgGroup.Len() == b.GetPeerCount() {
 		log.Debugw(
 			"pending peer message group complete",
-			"messageID", msg.Message.ID,
+			"messageID", msg.BroadcastMessage.ID,
 			"groupLength", peerMsgGroup.Len(),
 			"peerCount", b.GetPeerCount(),
 		)
@@ -310,18 +311,18 @@ func (b *Broadcaster) handleIncomingRawMsg(msg *MessageWithPeerMetadata) {
 		b.incomingValidatedMessages <- peerMsgGroup.GetMessageData()
 
 		// Remove from pending messages
-		delete(b.pendingMessages, msg.Message.ID)
+		delete(b.pendingMessages, msg.BroadcastMessage.ID)
 	} else {
 		log.Debugw(
 			"peer message group still pending",
-			"messageID", msg.Message.ID,
+			"messageID", msg.BroadcastMessage.ID,
 			"groupLength", peerMsgGroup.Len(),
 			"peerCount", b.GetPeerCount(),
 		)
 	}
 }
 
-func (b *Broadcaster) handleIncomingValidatedMsg(msg *types.MessageData) {
+func (b *Broadcaster) handleIncomingValidatedMsg(msg *types.BroadcastMessage) {
 	log.Infof("received validated message: %v", msg.String())
 
 	go b.handler.ValidatedMessage(*msg)
@@ -382,7 +383,7 @@ func (b *Broadcaster) handleNewStream(s network.Stream) {
 	// Iterate over all messages, unmarshalling all as types.MessageData
 	r := stream.NewProtoMessageReader(s)
 	for {
-		var msg types.MessageData
+		var msg types.BroadcastMessage
 		if err := r.ReadMsg(&msg); err != nil {
 			// Error when closing stream
 			log.Warnf("error reading stream message from peer %s: %s", s.Conn().RemotePeer(), err)
@@ -393,8 +394,8 @@ func (b *Broadcaster) handleNewStream(s network.Stream) {
 
 		// Attach additional peer metadata to the message
 		peerMsg := MessageWithPeerMetadata{
-			Message: msg,
-			PeerID:  s.Conn().RemotePeer(),
+			BroadcastMessage: msg,
+			PeerID:           s.Conn().RemotePeer(),
 		}
 
 		log.Debugf("received message from peer: %s", peerMsg.PeerID)
