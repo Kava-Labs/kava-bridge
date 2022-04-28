@@ -79,8 +79,8 @@ func (suite *BroadcasterTestSuite) TestBroadcast_Responses() {
 		validCount: 0,
 	}
 
-	count := 5
-	suite.CreateHostBroadcasters(count, broadcast.WithHandler(handler))
+	hostCount := 5
+	suite.CreateHostBroadcasters(hostCount, broadcast.WithHandler(handler))
 	err = testutil.ConnectAll(suite.T(), suite.Hosts)
 	suite.Require().NoError(err)
 
@@ -88,7 +88,7 @@ func (suite *BroadcasterTestSuite) TestBroadcast_Responses() {
 
 	for _, broadcaster := range suite.Broadcasters {
 		// Peer count does not include self
-		suite.Assert().Equal(count-1, broadcaster.GetPeerCount())
+		suite.Assert().Equal(hostCount-1, broadcaster.GetPeerCount())
 	}
 
 	// Send message to all peers. This includes broadcaster peer but is ok since
@@ -112,6 +112,30 @@ func (suite *BroadcasterTestSuite) TestBroadcast_Responses() {
 			allPeerIDs[1:],
 			20,
 			5,
+		},
+		{
+			"partial including broadcaster",
+			allPeerIDs[:4],
+			12,
+			4,
+		},
+		{
+			"partial excluding broadcaster",
+			allPeerIDs[1:4],
+			12,
+			4,
+		},
+		{
+			"single including broadcaster",
+			allPeerIDs[:2],
+			2,
+			2,
+		},
+		{
+			"single excluding broadcaster",
+			allPeerIDs[1:2],
+			2,
+			2,
 		},
 	}
 
