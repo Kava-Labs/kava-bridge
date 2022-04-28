@@ -53,7 +53,7 @@ type Broadcaster struct {
 	// Messages that have been received but have not been validated to be same
 	// from all peers.
 	pendingMessagesLock sync.Mutex
-	// TODO: Remove messages after expired.
+	// TODO: Remove messages after expired. Add TTL to BroadcastMessage.
 	pendingMessages map[string]*PeerMessageGroup
 
 	// Messages to send to all other peers
@@ -167,7 +167,7 @@ func (b *Broadcaster) BroadcastMessage(
 	pb proto.Message,
 ) error {
 	// Wrap the proto message in the MessageData type.
-	// TODO: Set recipient peer list
+	// TODO: Set recipient peer list, only broadcast to peers in list.
 	msg, err := types.NewBroadcastMessage(messageID, pb, nil)
 	if err != nil {
 		return err
@@ -213,6 +213,7 @@ func (b *Broadcaster) broadcastRawMessage(
 
 			group.Go(func() error {
 				// Check if still connected to peer
+				// TODO: Reconnect if not connected to peer.
 				if b.host.Network().Connectedness(peerID) != network.Connected {
 					return fmt.Errorf("peer %v is not connected", peerID)
 				}
