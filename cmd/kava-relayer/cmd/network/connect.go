@@ -66,7 +66,8 @@ func newConnectCmd() *cobra.Command {
 			// Need to be buffered by 1 to not block
 			done := make(chan bool, 1)
 
-			node, err := p2p.NewNode(options, done)
+			// TODO: Context cancellation
+			node, err := p2p.NewNode(context.Background(), options, done)
 			if err != nil {
 				return err
 			}

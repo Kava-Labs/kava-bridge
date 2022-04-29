@@ -4,14 +4,17 @@ import (
 	"crypto/rand"
 	"fmt"
 
-	"github.com/kava-labs/kava-bridge/relayer/p2p"
 	"github.com/multiformats/go-multibase"
+)
+
+const (
+	MessageIDLengthBytes = 32
 )
 
 // NewBroadcastMessageID returns a new broadcast message ID. This consists of
 // random 32 bytes base58 encoded.
 func NewBroadcastMessageID() (string, error) {
-	b := make([]byte, p2p.PreSharedNetworkKeyLengthBytes)
+	b := make([]byte, MessageIDLengthBytes)
 
 	_, err := rand.Read(b)
 	if err != nil {
