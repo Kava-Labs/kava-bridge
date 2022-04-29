@@ -81,6 +81,13 @@ func (msg *BroadcastMessage) UnpackPayload(pb proto.Message) error {
 	return prototypes.UnmarshalAny(&msg.Payload, pb)
 }
 
+// Expired returns true if the TTL is exceeded since created time.
+func (msg *BroadcastMessage) Expired() bool {
+	// TTLSeconds converted to float, not converting duration to uint64 as it
+	// will underflow.
+	return time.Since(msg.Created).Seconds() > float64(msg.TTLSeconds)
+}
+
 func dedupPeerIDs(peerIDs []peer.ID) []peer.ID {
 	seen := make(map[peer.ID]struct{})
 	var deduped []peer.ID

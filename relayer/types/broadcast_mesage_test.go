@@ -2,6 +2,7 @@ package types_test
 
 import (
 	"testing"
+	"time"
 
 	proto "github.com/gogo/protobuf/proto"
 	prototypes "github.com/gogo/protobuf/types"
@@ -79,6 +80,31 @@ func TestValidateMessage(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestMessageExpired(t *testing.T) {
+	msg := MustNewBroadcastMessage(&prototypes.Empty{}, "host peer ID", nil, 1)
+	require.False(t, msg.Expired())
+
+	// 2 seconds to be > TTL and not >= TTL
+	time.Sleep(2 * time.Second)
+	require.True(t, msg.Expired())
+}
+
+func TestMessageExpired_Future(t *testing.T) {
+	// Message 5 seconds in future, ie. peers with out of sync times
+	msg := types.BroadcastMessage{
+		"id",
+		nil,
+		prototypes.Any{},
+		time.Now().Add(time.Second),
+		1,
+	}
+	require.False(t, msg.Expired(), "duration since created should not underflow")
+
+	// 2 seconds to be > TTL and not >= TTL
+	time.Sleep(2 * time.Second)
+	require.True(t, msg.Expired())
 }
 
 func TestMarshalUnmarshalPayload(t *testing.T) {
