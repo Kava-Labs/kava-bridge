@@ -9,6 +9,7 @@ import (
 	proto "github.com/gogo/protobuf/proto"
 	prototypes "github.com/gogo/protobuf/types"
 	"github.com/libp2p/go-libp2p-core/peer"
+	"github.com/multiformats/go-multibase"
 )
 
 var (
@@ -18,11 +19,15 @@ var (
 
 // NewBroadcastMessage creates a new BroadcastMessage with the payload marshaled as Any.
 func NewBroadcastMessage(
-	messageID string,
 	payload proto.Message,
 	hostID peer.ID,
 	recipientsPeerIDs []peer.ID,
 ) (BroadcastMessage, error) {
+	messageID, err := NewBroadcastMessageID()
+	if err != nil {
+		return BroadcastMessage{}, err
+	}
+
 	anyPayload, err := prototypes.MarshalAny(payload)
 	if err != nil {
 		return BroadcastMessage{}, err
@@ -43,6 +48,11 @@ func NewBroadcastMessage(
 func (msg *BroadcastMessage) Validate() error {
 	if strings.TrimSpace(msg.ID) == "" {
 		return ErrMsgIDEmpty
+	}
+
+	_, _, err := multibase.Decode(msg.ID)
+	if err != nil {
+		return fmt.Errorf("invalid message ID: %w", err)
 	}
 
 	if len(msg.RecipientPeerIDs) <= 1 {

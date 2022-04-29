@@ -149,7 +149,6 @@ func (suite *BroadcasterTestSuite) TestBroadcast_Responses() {
 
 			err = suite.Broadcasters[0].BroadcastMessage(
 				context.Background(),
-				"1234 message id",
 				&types.HelloRequest{
 					Message: "hello world",
 				},

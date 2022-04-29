@@ -163,12 +163,11 @@ func (b *Broadcaster) processLoop(ctx context.Context) {
 // and it to all connected peers.
 func (b *Broadcaster) BroadcastMessage(
 	ctx context.Context,
-	messageID string,
 	pb proto.Message,
 	recipients []peer.ID,
 ) error {
 	// Wrap the proto message in the MessageData type.
-	msg, err := types.NewBroadcastMessage(messageID, pb, b.host.ID(), recipients)
+	msg, err := types.NewBroadcastMessage(pb, b.host.ID(), recipients)
 	if err != nil {
 		return err
 	}

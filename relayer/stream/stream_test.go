@@ -46,7 +46,7 @@ func TestReadWrite(t *testing.T) {
 			&types.HelloRequest{
 				// Not quite max size since there's other data along with the Message
 				// This may fail if more fields are added and should be decreased.
-				Message: string(make([]byte, stream.MAX_MESSAGE_SIZE-200)),
+				Message: string(make([]byte, stream.MAX_MESSAGE_SIZE-300)),
 			},
 			errArgs{
 				expectPass: true,
@@ -76,7 +76,6 @@ func TestReadWrite(t *testing.T) {
 			require.NoError(t, err)
 
 			msg, err := types.NewBroadcastMessage(
-				"id",
 				tc.payload,
 				hostPeerID,
 				[]peer.ID{
