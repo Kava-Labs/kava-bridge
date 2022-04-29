@@ -81,6 +81,7 @@ func TestReadWrite(t *testing.T) {
 				[]peer.ID{
 					recipients,
 				},
+				1,
 			)
 			require.NoError(t, err)
 
