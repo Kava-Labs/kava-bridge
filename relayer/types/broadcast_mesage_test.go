@@ -14,8 +14,9 @@ func MustNewBroadcastMessage(
 	payload proto.Message,
 	hostPeerID peer.ID,
 	recipients []peer.ID,
+	TTLSeconds uint64,
 ) types.BroadcastMessage {
-	msg, err := types.NewBroadcastMessage(payload, hostPeerID, recipients)
+	msg, err := types.NewBroadcastMessage(payload, hostPeerID, recipients, TTLSeconds)
 	if err != nil {
 		panic(err)
 	}
@@ -35,14 +36,14 @@ func TestValidateMessage(t *testing.T) {
 	}{
 		{
 			"valid",
-			MustNewBroadcastMessage(&prototypes.Empty{}, "hostPeerID", []peer.ID{peer.ID("QmQQGdG9Ybz2qXNmzXo9pT9VZpvZ2Zcq2R6zQmXo9FtZz")}),
+			MustNewBroadcastMessage(&prototypes.Empty{}, "hostPeerID", []peer.ID{peer.ID("QmQQGdG9Ybz2qXNmzXo9pT9VZpvZ2Zcq2R6zQmXo9FtZz")}, 1),
 			errArgs{
 				expectPass: true,
 			},
 		},
 		{
 			"invalid - empty recipients",
-			MustNewBroadcastMessage(&prototypes.Empty{}, "hostPeerID", []peer.ID{}),
+			MustNewBroadcastMessage(&prototypes.Empty{}, "hostPeerID", []peer.ID{}, 1),
 			errArgs{
 				expectPass: false,
 				contains:   types.ErrMsgInsufficientRecipients.Error(),
@@ -50,10 +51,18 @@ func TestValidateMessage(t *testing.T) {
 		},
 		{
 			"invalid - empty host ID",
-			MustNewBroadcastMessage(&prototypes.Empty{}, "", []peer.ID{peer.ID("QmQQGdG9Ybz2qXNmzXo9pT9VZpvZ2Zcq2R6zQmXo9FtZz")}),
+			MustNewBroadcastMessage(&prototypes.Empty{}, "", []peer.ID{peer.ID("QmQQGdG9Ybz2qXNmzXo9pT9VZpvZ2Zcq2R6zQmXo9FtZz")}, 1),
 			errArgs{
 				expectPass: false,
 				contains:   peer.ErrEmptyPeerID.Error(),
+			},
+		},
+		{
+			"invalid - 0 TTL",
+			MustNewBroadcastMessage(&prototypes.Empty{}, "hostPeerID", []peer.ID{peer.ID("QmQQGdG9Ybz2qXNmzXo9pT9VZpvZ2Zcq2R6zQmXo9FtZz")}, 0),
+			errArgs{
+				expectPass: false,
+				contains:   types.ErrMsgTTLTooShort.Error(),
 			},
 		},
 	}
@@ -91,7 +100,7 @@ func TestMarshalUnmarshalPayload(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			msg, err := types.NewBroadcastMessage(tc.payload, "host peer ID", nil)
+			msg, err := types.NewBroadcastMessage(tc.payload, "host peer ID", nil, 1)
 			require.NoError(t, err)
 
 			var unpacked prototypes.DynamicAny

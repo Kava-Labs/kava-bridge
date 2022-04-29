@@ -165,9 +165,10 @@ func (b *Broadcaster) BroadcastMessage(
 	ctx context.Context,
 	pb proto.Message,
 	recipients []peer.ID,
+	TTLSeconds uint64,
 ) error {
 	// Wrap the proto message in the MessageData type.
-	msg, err := types.NewBroadcastMessage(pb, b.host.ID(), recipients)
+	msg, err := types.NewBroadcastMessage(pb, b.host.ID(), recipients, TTLSeconds)
 	if err != nil {
 		return err
 	}

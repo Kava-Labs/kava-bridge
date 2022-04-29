@@ -22,6 +22,9 @@ message BroadcastMessage {
       [(gogoproto.nullable) = false, (gogoproto.customtype) = "github.com/gogo/protobuf/types.Any"];
   // Timestamp when the message was broadcasted.
   google.protobuf.Timestamp created = 4 [(gogoproto.nullable) = false, (gogoproto.stdtime) = true];
+  // Seconds after created time until the message expires. This requires
+  // roughly synced times between peers
+  uint64 ttl_seconds = 5 [(gogoproto.customname) = "TTLSeconds"];
 }
 
 message HelloRequest {

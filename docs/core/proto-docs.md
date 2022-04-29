@@ -449,6 +449,7 @@ BroadcastMessage is used between peers to wrap messages for each protocol
 | `recipient_peer_ids` | [string](#string) | repeated | Selected recipients of the message, to partially restrict the broadcast to a subset a peers. |
 | `payload` | [google.protobuf.Any](#google.protobuf.Any) |  | Customtype workaround for not having to use a separate protocgen.sh script |
 | `created` | [google.protobuf.Timestamp](#google.protobuf.Timestamp) |  | Timestamp when the message was broadcasted. |
+| `ttl_seconds` | [uint64](#uint64) |  | Seconds after created time until the message expires. This requires roughly synced times between peers |
 
 
 

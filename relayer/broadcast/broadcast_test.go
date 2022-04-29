@@ -153,6 +153,7 @@ func (suite *BroadcasterTestSuite) TestBroadcast_Responses() {
 					Message: "hello world",
 				},
 				tc.recipients,
+				1, // 1 second TTL
 			)
 			suite.Require().NoError(err)
 

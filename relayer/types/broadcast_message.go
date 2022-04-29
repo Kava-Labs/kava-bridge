@@ -1,7 +1,6 @@
 package types
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -12,9 +11,8 @@ import (
 	"github.com/multiformats/go-multibase"
 )
 
-var (
-	ErrMsgIDEmpty                = errors.New("message ID is empty")
-	ErrMsgInsufficientRecipients = errors.New("not enough recipient peer IDs, requires at least two including source peer ID")
+const (
+	MinimumTTLSeconds = 1
 )
 
 // NewBroadcastMessage creates a new BroadcastMessage with the payload marshaled as Any.
@@ -22,6 +20,7 @@ func NewBroadcastMessage(
 	payload proto.Message,
 	hostID peer.ID,
 	recipientsPeerIDs []peer.ID,
+	TTLSeconds uint64,
 ) (BroadcastMessage, error) {
 	messageID, err := NewBroadcastMessageID()
 	if err != nil {
@@ -41,6 +40,7 @@ func NewBroadcastMessage(
 		Payload:          *anyPayload,
 		RecipientPeerIDs: allPeerIDs,
 		Created:          time.Now().UTC(),
+		TTLSeconds:       TTLSeconds,
 	}, nil
 }
 
@@ -67,6 +67,10 @@ func (msg *BroadcastMessage) Validate() error {
 		if err := peerID.Validate(); err != nil {
 			return fmt.Errorf("recipient peer ID is invalid: %w", err)
 		}
+	}
+
+	if msg.TTLSeconds < MinimumTTLSeconds {
+		return ErrMsgTTLTooShort
 	}
 
 	return nil
