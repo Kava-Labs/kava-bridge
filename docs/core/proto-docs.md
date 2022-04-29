@@ -37,9 +37,9 @@
   
     - [Msg](#bridge.v1beta1.Msg)
   
-- [relayer/v1beta1/message.proto](#relayer/v1beta1/message.proto)
-    - [Echo](#relayer.v1beta1.Echo)
-    - [MessageData](#relayer.v1beta1.MessageData)
+- [relayer/v1beta1/broadcast_message.proto](#relayer/v1beta1/broadcast_message.proto)
+    - [BroadcastMessage](#relayer.v1beta1.BroadcastMessage)
+    - [HelloRequest](#relayer.v1beta1.HelloRequest)
   
 - [Scalar Value Types](#scalar-value-types)
 
@@ -430,37 +430,41 @@ Msg defines the bridge Msg service.
 
 
 
-<a name="relayer/v1beta1/message.proto"></a>
+<a name="relayer/v1beta1/broadcast_message.proto"></a>
 <p align="right"><a href="#top">Top</a></p>
 
-## relayer/v1beta1/message.proto
+## relayer/v1beta1/broadcast_message.proto
 
 
 
-<a name="relayer.v1beta1.Echo"></a>
+<a name="relayer.v1beta1.BroadcastMessage"></a>
 
-### Echo
-Echo is a message used for testing
+### BroadcastMessage
+BroadcastMessage is used between peers to wrap messages for each protocol
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `id` | [string](#string) |  | Unique ID of this message. |
+| `recipient_peer_ids` | [string](#string) | repeated | Selected recipients of the message, to partially restrict the broadcast to a subset a peers. |
+| `payload` | [google.protobuf.Any](#google.protobuf.Any) |  | Customtype workaround for not having to use a separate protocgen.sh script |
+| `created` | [google.protobuf.Timestamp](#google.protobuf.Timestamp) |  | Timestamp when the message was broadcasted. |
+| `ttl_seconds` | [uint64](#uint64) |  | Seconds after created time until the message expires. This requires roughly synced times between peers |
+
+
+
+
+
+
+<a name="relayer.v1beta1.HelloRequest"></a>
+
+### HelloRequest
+
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | `message` | [string](#string) |  |  |
-
-
-
-
-
-
-<a name="relayer.v1beta1.MessageData"></a>
-
-### MessageData
-MessageData is used between peers to wrap messages for each protocol
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `payload` | [google.protobuf.Any](#google.protobuf.Any) |  | Customtype workaround for not having to use a separate protocgen.sh script |
 
 
 

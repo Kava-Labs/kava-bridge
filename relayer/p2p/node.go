@@ -7,6 +7,7 @@ import (
 
 	logging "github.com/ipfs/go-log/v2"
 	"github.com/kava-labs/kava-bridge/relayer/allowlist"
+	"github.com/kava-labs/kava-bridge/relayer/broadcast"
 	"github.com/kava-labs/kava-bridge/relayer/p2p/service"
 	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p-core/host"
@@ -23,11 +24,13 @@ var log = logging.Logger("p2p")
 
 type Node struct {
 	Host        host.Host
+	broadcaster *broadcast.Broadcaster
+
 	EchoService *service.EchoService
 	done        chan bool
 }
 
-func NewNode(options NodeOptions, done chan bool) (*Node, error) {
+func NewNode(ctx context.Context, options NodeOptions, done chan bool) (*Node, error) {
 	libp2pOpts := []libp2p.Option{
 		libp2p.ListenAddrStrings(fmt.Sprintf("/ip4/0.0.0.0/tcp/%d", options.Port)),
 		libp2p.Transport(tcp.NewTCPTransport),
@@ -45,8 +48,14 @@ func NewNode(options NodeOptions, done chan bool) (*Node, error) {
 		return nil, err
 	}
 
+	broadcaster, err := broadcast.NewBroadcaster(ctx, host)
+	if err != nil {
+		return nil, err
+	}
+
 	node := &Node{
-		Host: host,
+		Host:        host,
+		broadcaster: broadcaster,
 		// Sets stream handler
 		EchoService: service.NewEchoService(host, done, options.EchoRequiredPeers),
 		done:        done,

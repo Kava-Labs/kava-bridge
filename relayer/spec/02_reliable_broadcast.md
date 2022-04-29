@@ -26,7 +26,8 @@ Each message contains the following data:
 * Peer ID list of participating peers (e.g. subset of all connected peers, or all of them)
 * Payload, protobuf `Any`
 * Initiating peer ID
-* Created timestamp to keep track expire time
+* Created timestamp
+* TTL in seconds
 
 ## Basic Algorithm
 

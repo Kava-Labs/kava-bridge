@@ -10,6 +10,7 @@ import (
 	prototypes "github.com/gogo/protobuf/types"
 	"github.com/kava-labs/kava-bridge/relayer/stream"
 	"github.com/kava-labs/kava-bridge/relayer/types"
+	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/stretchr/testify/require"
 )
 
@@ -26,7 +27,7 @@ func TestReadWrite(t *testing.T) {
 	}{
 		{
 			"regular",
-			&types.Echo{
+			&types.HelloRequest{
 				Message: "hello world",
 			},
 			errArgs{
@@ -42,9 +43,10 @@ func TestReadWrite(t *testing.T) {
 		},
 		{
 			"large",
-			&types.Echo{
+			&types.HelloRequest{
 				// Not quite max size since there's other data along with the Message
-				Message: string(make([]byte, stream.MAX_MESSAGE_SIZE-100)),
+				// This may fail if more fields are added and should be decreased.
+				Message: string(make([]byte, stream.MAX_MESSAGE_SIZE-300)),
 			},
 			errArgs{
 				expectPass: true,
@@ -52,7 +54,7 @@ func TestReadWrite(t *testing.T) {
 		},
 		{
 			"exceed size",
-			&types.Echo{
+			&types.HelloRequest{
 				// This plus the other data will exceed the max size.
 				Message: string(make([]byte, stream.MAX_MESSAGE_SIZE)),
 			},
@@ -65,16 +67,31 @@ func TestReadWrite(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			msg, err := types.NewMessageData(tc.payload)
+			// Error if decoding invalid peer ID:
+			// "length greater than remaining number of bytes in buffer"
+			hostPeerID, err := peer.Decode("16Uiu2HAmTdEddBdw1JVs5tHhqQGaFPkqq64TwppmL2G8fYbZeZei")
+			require.NoError(t, err)
+
+			recipients, err := peer.Decode("16Uiu2HAm9z3t15JpqBbPQJ1ZLHm6w1AXD6M2FXdCG3GLoY4iDcD9")
+			require.NoError(t, err)
+
+			msg, err := types.NewBroadcastMessage(
+				tc.payload,
+				hostPeerID,
+				[]peer.ID{
+					recipients,
+				},
+				1,
+			)
 			require.NoError(t, err)
 
 			// Write/read from buffer
 			var buf bytes.Buffer
-			err = stream.WriteProtoMessage(&buf, &msg)
+			err = stream.NewProtoMessageWriter(&buf).WriteMsg(&msg)
 			require.NoError(t, err)
 
-			var msgRes types.MessageData
-			err = stream.ReadProtoMessage(&buf, &msgRes)
+			var msgRes types.BroadcastMessage
+			err = stream.NewProtoMessageReader(&buf).ReadMsg(&msgRes)
 
 			if tc.errArgs.expectPass {
 				require.NoError(t, err)
@@ -99,8 +116,8 @@ func TestRead_ExceedSize(t *testing.T) {
 	// Max u32
 	buf.Write([]byte{255, 255, 255, 255})
 
-	var msgRes types.MessageData
-	err := stream.ReadProtoMessage(&buf, &msgRes)
+	var msgRes types.BroadcastMessage
+	err := stream.NewProtoMessageReader(&buf).ReadMsg(&msgRes)
 
 	require.Error(t, err)
 	require.ErrorIs(t, io.ErrShortBuffer, err)
@@ -115,8 +132,8 @@ func TestRead_MaxSizeEmptyData(t *testing.T) {
 
 	buf.Write(b)
 
-	var msgRes types.MessageData
-	err := stream.ReadProtoMessage(&buf, &msgRes)
+	var msgRes types.BroadcastMessage
+	err := stream.NewProtoMessageReader(&buf).ReadMsg(&msgRes)
 
 	require.Error(t, err)
 	require.ErrorIs(t, io.EOF, err)
