@@ -63,7 +63,7 @@ stateDiagram-v2
     state Ethereum {
         User --> Contract: Lock(Ethereum ERC20 Addr, receiver, amount)
     }
-    
+
     Contract --> Relayer
     Relayer --> BridgeModule: MsgBridgeEthereumToKava
 
@@ -108,7 +108,7 @@ are done by the relayer.
    state (`EnabledERC20Tokens`), then it is ignored. These events may come from
    a contract that isn't deployed by the bridge module. Arbitrary contracts
    cannot maliciously try to get funds withdrawn this way as the withdrawal
-   Ethereum ERC20 address is queried from from module params, not from contract
+   Ethereum ERC20 address is queried from module params, not from contract
    events.
 3. When Relayer queries a new Withdraw bridge module event, unlock funds on the
    Ethereum bridge contract.
@@ -157,7 +157,7 @@ params and exist in state.
    * Emit a `ConvertToCoin(toKavaAddr, amount)` event.
    * Transfer token amount to the module account address.
 2. Similar to Kava ERC20 to Ethereum transfers, a `PostTxProcessing` EVM hook
-   will look for corresponding transactions only emitted from from enabled
+   will look for corresponding transactions only emitted from enabled
    `ConversionPair`s that contain both a `ConvertToCoin` and `Transfer`
    event.
 3. Bridge module mints `sdk.Coin` with the corresponding amount. The denom is

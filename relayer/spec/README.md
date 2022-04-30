@@ -9,7 +9,7 @@ to another, such as bridging tokens between Ethereum and Kava.
 
 1. **[Concepts](01_concepts.md)**
 2. **[Reliable Broadcast](02_reliable_broadcast.md)**
-4. **[Initialization](03_initialization.md)**
+3. **[Initialization](03_initialization.md)**
 4. **[Key Generation](04_key_generation.md)**
 5. **[Signing](05_signing.md)**
 6. **[Gas Estimation and Fees](06_gas_estimation_and_fees.md)**

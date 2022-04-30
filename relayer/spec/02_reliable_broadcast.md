@@ -82,7 +82,7 @@ This is not handled by the reliable broadcast layer as it is a relaxed reliable
 broadcast protocol. Failure is handled in later steps (i.e. signing) where other
 peers will fail to continue.
 
-**Note:** Blaming the original peer that re-broadcasted the incorrect message 
+**Note:** Blaming the original peer that re-broadcasted the incorrect message
 message is to be implemented later (e.g. signing broadcast messages).
 
 [go-libp2p]: https://github.com/libp2p/go-libp2p

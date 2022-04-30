@@ -19,13 +19,21 @@ The peer ID can be then shared with other peers. This not only serves as a
 unique identifier for each peer, but a verifiable link between peer and public
 key as it is the hash of the peer public key.
 
-```
+```bash
 $ kava-relayer network show-node-id  --p2p.private-key-path ./path/to/node.key
 16Uiu2HAm9z3t15JpqBbPQJ1ZLHm6w1AXD6M2FXdCG3GLoY4iDcD9
 ```
 
-TODO: Easier way to show a full multiaddress to share with other peers.
-Currently only shown when using `kava-relayer network connect`.
+The [multiaddress](https://github.com/multiformats/multiaddr) of a node is used
+by peers when connecting to this node via the `kava-relayer connect` command.
+To calculate and display the multi-address for a given node (based off the
+node id derived from it's private key and the port you intend to have the node
+listen on) use:
+
+```bash
+$ kava-relayer network show-node-multi-address  --p2p.private-key-path node.key --p2p.port 8000
+/ip4/127.0.0.1/tcp/8000/p2p/16Uiu2HAm9h4W8Yjt1Z83znprgegVUa1D7UA3i7WYwN5xpGw6BzZ3
+```
 
 ### Resources
 
