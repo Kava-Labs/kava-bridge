@@ -16,6 +16,57 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
+type TestBroadcaster struct {
+	*broadcast.Broadcaster
+	handler *TestHandler
+}
+
+func NewTestBroadcaster(
+	ctx context.Context,
+	h host.Host,
+	opts ...broadcast.BroadcasterOption,
+) (*TestBroadcaster, error) {
+	handler := &TestHandler{
+		mu:         sync.Mutex{},
+		rawCount:   0,
+		validCount: 0,
+	}
+
+	opts = append(opts, broadcast.WithHandler(handler))
+
+	b, err := broadcast.NewBroadcaster(ctx, h, opts...)
+	if err != nil {
+		return nil, err
+	}
+
+	return &TestBroadcaster{
+		Broadcaster: b,
+		handler:     handler,
+	}, nil
+}
+
+func (tb *TestBroadcaster) GetValidCount() int {
+	tb.handler.mu.Lock()
+	defer tb.handler.mu.Unlock()
+
+	return tb.handler.validCount
+}
+
+func (tb *TestBroadcaster) GetRawCount() int {
+	tb.handler.mu.Lock()
+	defer tb.handler.mu.Unlock()
+
+	return tb.handler.rawCount
+}
+
+func (tb *TestBroadcaster) ResetCounts() {
+	tb.handler.mu.Lock()
+	defer tb.handler.mu.Unlock()
+
+	tb.handler.rawCount = 0
+	tb.handler.validCount = 0
+}
+
 type BroadcasterTestSuite struct {
 	suite.Suite
 
@@ -23,7 +74,7 @@ type BroadcasterTestSuite struct {
 	Cancel context.CancelFunc
 
 	Hosts        []host.Host
-	Broadcasters []*broadcast.Broadcaster
+	Broadcasters []*TestBroadcaster
 }
 
 func TestBroadcasterTestSuite(t *testing.T) {
@@ -50,10 +101,36 @@ func (suite *BroadcasterTestSuite) CreateHostBroadcasters(n int, options ...broa
 	for i, h := range suite.Hosts {
 		suite.T().Logf("peer index %v id: %v", i, h.ID())
 
-		b, err := broadcast.NewBroadcaster(suite.Ctx, h, options...)
+		b, err := NewTestBroadcaster(suite.Ctx, h, options...)
 		suite.Require().NoError(err)
 
 		suite.Broadcasters = append(suite.Broadcasters, b)
+	}
+}
+
+func (suite *BroadcasterTestSuite) RequireHandlersRawCounts(expectedRawCounts []int) {
+	if len(expectedRawCounts) != len(suite.Broadcasters) {
+		suite.Fail("expectedRawCounts and Broadcasters are not the same length")
+	}
+
+	for i, b := range suite.Broadcasters {
+		suite.Equal(expectedRawCounts[i], b.GetRawCount(), "expected raw message count should match")
+	}
+}
+
+func (suite *BroadcasterTestSuite) RequireHandlersValidCounts(expectedValidCounts []int) {
+	if len(expectedValidCounts) != len(suite.Broadcasters) {
+		suite.Fail("expectedValidCounts and Broadcasters are not the same length")
+	}
+
+	for i, b := range suite.Broadcasters {
+		suite.Equal(expectedValidCounts[i], b.GetValidCount(), "expected valid message count should match")
+	}
+}
+
+func (suite *BroadcasterTestSuite) ResetBroadcasterCounts() {
+	for _, b := range suite.Broadcasters {
+		b.ResetCounts()
 	}
 }
 
@@ -75,13 +152,8 @@ func (suite *BroadcasterTestSuite) TestBroadcast_Responses() {
 	err := logging.SetLogLevelRegex("broadcast", "debug")
 	suite.Require().NoError(err)
 
-	handler := &TestHandler{
-		rawCount:   0,
-		validCount: 0,
-	}
-
 	hostCount := 5
-	suite.CreateHostBroadcasters(hostCount, broadcast.WithHandler(handler))
+	suite.CreateHostBroadcasters(hostCount)
 	err = testutil.ConnectAll(suite.T(), suite.Hosts)
 	suite.Require().NoError(err)
 
@@ -97,56 +169,52 @@ func (suite *BroadcasterTestSuite) TestBroadcast_Responses() {
 	allPeerIDs := testutil.PeerIDsFromHosts(suite.Hosts)
 
 	tests := []struct {
-		name           string
-		recipients     []peer.ID
-		wantRawCount   int
-		wantValidCount int
+		name            string
+		recipients      []peer.ID
+		wantRawCounts   []int
+		wantValidCounts []int
 	}{
 		{
 			"all including broadcaster",
 			allPeerIDs,
-			20,
-			5,
+			[]int{4, 4, 4, 4, 4},
+			[]int{1, 1, 1, 1, 1},
 		},
 		{
 			"all excluding broadcaster",
 			allPeerIDs[1:],
-			20,
-			5,
+			[]int{4, 4, 4, 4, 4},
+			[]int{1, 1, 1, 1, 1},
 		},
 		{
 			"partial including broadcaster",
 			allPeerIDs[:4],
-			12,
-			4,
+			[]int{3, 3, 3, 3, 0},
+			[]int{1, 1, 1, 1, 0},
 		},
 		{
 			"partial excluding broadcaster",
 			allPeerIDs[1:4],
-			12,
-			4,
+			[]int{3, 3, 3, 3, 0},
+			[]int{1, 1, 1, 1, 0},
 		},
 		{
 			"single including broadcaster",
 			allPeerIDs[:2],
-			2,
-			2,
+			[]int{1, 1, 0, 0, 0},
+			[]int{1, 1, 0, 0, 0},
 		},
 		{
 			"single excluding broadcaster",
 			allPeerIDs[1:2],
-			2,
-			2,
+			[]int{1, 1, 0, 0, 0},
+			[]int{1, 1, 0, 0, 0},
 		},
 	}
 
 	for _, tc := range tests {
 		suite.Run(tc.name, func() {
-			// Reset handler counts
-			handler.mu.Lock()
-			handler.rawCount = 0
-			handler.validCount = 0
-			handler.mu.Unlock()
+			suite.ResetBroadcasterCounts()
 
 			err = suite.Broadcasters[0].BroadcastMessage(
 				context.Background(),
@@ -154,22 +222,14 @@ func (suite *BroadcasterTestSuite) TestBroadcast_Responses() {
 					Message: "hello world",
 				},
 				tc.recipients,
-				1, // 1 second TTL
+				8, // TTL
 			)
 			suite.Require().NoError(err)
 
 			time.Sleep(time.Second * 3)
 
-			handler.mu.Lock()
-			defer handler.mu.Unlock()
-
-			// A -> B, C, D, E (4) // initial receive
-			// B, C, D, E rebroadcast to all other nodes (4 * 4)
-			// 4 initial + 16 re-broadcast = 20
-
-			// n * (n - 1) messages where n is number of recipients
-			suite.Assert().Equal(tc.wantRawCount, handler.rawCount, "raw message count should be 20")
-			suite.Assert().Equal(tc.wantValidCount, handler.validCount, "each recipient peer should get a validated message")
+			suite.RequireHandlersRawCounts(tc.wantRawCounts)
+			suite.RequireHandlersValidCounts(tc.wantValidCounts)
 		})
 	}
 }
