@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gogo/protobuf/proto"
 	logging "github.com/ipfs/go-log/v2"
 	"github.com/kava-labs/kava-bridge/relayer/broadcast"
 	"github.com/kava-labs/kava-bridge/relayer/testutil"
@@ -173,6 +174,51 @@ func (suite *BroadcasterTestSuite) TestBroadcast_Responses() {
 	}
 }
 
+func (suite *BroadcasterTestSuite) TestBroadcast_TTL() {
+	err := logging.SetLogLevelRegex("broadcast", "debug")
+	suite.Require().NoError(err)
+
+	handler := &TestHandler{
+		rawCount:   0,
+		validCount: 0,
+	}
+
+	hostCount := 5
+	suite.CreateHostBroadcasters(hostCount, broadcast.WithHandler(handler), broadcast.WithHook(&SleepyBroadcasterHook{}))
+	err = testutil.ConnectAll(suite.T(), suite.Hosts)
+	suite.Require().NoError(err)
+
+	time.Sleep(time.Second)
+
+	for _, broadcaster := range suite.Broadcasters {
+		// Peer count does not include self
+		suite.Assert().Equal(hostCount-1, broadcaster.GetPeerCount())
+	}
+
+	// Send message to all peers. This includes broadcaster peer but is ok since
+	// broadcaster ignores self node
+	allPeerIDs := testutil.PeerIDsFromHosts(suite.Hosts)
+
+	err = suite.Broadcasters[0].BroadcastMessage(
+		context.Background(),
+		&types.HelloRequest{
+			Message: "hello world",
+		},
+		allPeerIDs,
+		// Takes a few seconds for other peers to receive the message
+		6,
+	)
+	suite.Require().NoError(err)
+
+	time.Sleep(time.Second * 4)
+
+	handler.mu.Lock()
+	defer handler.mu.Unlock()
+
+	suite.Assert().Equal(20, handler.rawCount, "raw message count should be 20")
+	suite.Assert().Equal(5, handler.validCount, "each recipient peer should get a validated message")
+}
+
 // ----------------------------------------------------------------------------
 // test handler
 type TestHandler struct {
@@ -197,3 +243,15 @@ func (h *TestHandler) ValidatedMessage(msg types.BroadcastMessage) {
 }
 
 func (h *TestHandler) MismatchMessage(msg broadcast.MessageWithPeerMetadata) {}
+
+// ----------------------------------------------------------------------------
+// delay broadcast hook
+
+// SleepyBroadcasterHook is a broadcasterHook that delays broadcasting raw messages
+type SleepyBroadcasterHook struct{}
+
+var _ broadcast.BroadcasterHook = (*SleepyBroadcasterHook)(nil)
+
+func (h *SleepyBroadcasterHook) BeforeBroadcastRawMessage(b *broadcast.Broadcaster, target peer.ID, pb *proto.Message) {
+	time.Sleep(2 * time.Second)
+}

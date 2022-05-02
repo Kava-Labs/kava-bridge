@@ -63,7 +63,7 @@ type Broadcaster struct {
 	handler BroadcastHandler
 
 	// Message hook
-	broadcasterHook broadcasterHook
+	broadcasterHook BroadcasterHook
 
 	ctx context.Context
 }
@@ -222,9 +222,9 @@ func (b *Broadcaster) broadcastRawMessage(
 
 		// Avoid capturing loop variable
 		func(peerID peer.ID, ch network.Stream) {
-			b.broadcasterHook.BeforeBroadcastRawMessage(b, peerID, &pb)
-
 			group.Go(func() error {
+				b.broadcasterHook.BeforeBroadcastRawMessage(b, peerID, &pb)
+
 				// Check if still connected to peer
 				// TODO: Reconnect if not connected to peer.
 				if b.host.Network().Connectedness(peerID) != network.Connected {
@@ -251,7 +251,7 @@ func (b *Broadcaster) broadcastRawMessage(
 // before messages are verified to be received from all peers.
 func (b *Broadcaster) handleIncomingRawMsg(msg *MessageWithPeerMetadata) {
 	if err := msg.BroadcastMessage.Validate(); err != nil {
-		log.Errorf("invalid message received from peer: %s", err)
+		log.Warnf("invalid message received from peer: %s", err)
 		return
 	}
 

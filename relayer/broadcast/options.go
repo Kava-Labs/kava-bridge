@@ -12,7 +12,7 @@ func WithHandler(handler BroadcastHandler) BroadcasterOption {
 }
 
 // WithHook sets the message broadcast hook for the BroadcasterOption.
-func WithHook(hook broadcasterHook) BroadcasterOption {
+func WithHook(hook BroadcasterHook) BroadcasterOption {
 	return func(b *Broadcaster) error {
 		b.broadcasterHook = hook
 		return nil

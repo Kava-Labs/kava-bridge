@@ -129,7 +129,7 @@ func TestMarshalUnmarshalPayload(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			msg, err := types.NewBroadcastMessage(tc.payload, "host peer ID", nil, 1)
+			msg, err := types.NewBroadcastMessage(tc.payload, testutil.TestPeerIDs[0], nil, 1)
 			require.NoError(t, err)
 
 			var unpacked prototypes.DynamicAny
