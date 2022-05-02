@@ -27,7 +27,7 @@ func NewTestBroadcaster(
 	opts ...broadcast.BroadcasterOption,
 ) (*TestBroadcaster, error) {
 	handler := &TestHandler{
-		mu:         sync.Mutex{},
+		mu:         &sync.Mutex{},
 		rawCount:   0,
 		validCount: 0,
 	}
@@ -114,7 +114,7 @@ func (suite *BroadcasterTestSuite) RequireHandlersRawCounts(expectedRawCounts []
 	}
 
 	for i, b := range suite.Broadcasters {
-		suite.Equal(expectedRawCounts[i], b.GetRawCount(), "expected raw message count should match")
+		suite.Equalf(expectedRawCounts[i], b.GetRawCount(), "invalid raw message count for peer %v", i)
 	}
 }
 
@@ -124,10 +124,12 @@ func (suite *BroadcasterTestSuite) RequireHandlersValidCounts(expectedValidCount
 	}
 
 	for i, b := range suite.Broadcasters {
-		suite.Equal(expectedValidCounts[i], b.GetValidCount(), "expected valid message count should match")
+		suite.Equalf(expectedValidCounts[i], b.GetValidCount(), "invalid valid message count for peer %v", i)
 	}
 }
 
+// ResetBroadcasterCounts resets the raw and valid message counts for all
+// broadcasters, should be called between test cases
 func (suite *BroadcasterTestSuite) ResetBroadcasterCounts() {
 	for _, b := range suite.Broadcasters {
 		b.ResetCounts()
@@ -238,13 +240,8 @@ func (suite *BroadcasterTestSuite) TestBroadcast_TTL() {
 	err := logging.SetLogLevelRegex("broadcast", "debug")
 	suite.Require().NoError(err)
 
-	handler := &TestHandler{
-		rawCount:   0,
-		validCount: 0,
-	}
-
 	hostCount := 5
-	suite.CreateHostBroadcasters(hostCount, broadcast.WithHandler(handler), broadcast.WithHook(&SleepyBroadcasterHook{}))
+	suite.CreateHostBroadcasters(hostCount, broadcast.WithHook(&SleepyBroadcasterHook{}))
 	err = testutil.ConnectAll(suite.T(), suite.Hosts)
 	suite.Require().NoError(err)
 
@@ -272,17 +269,15 @@ func (suite *BroadcasterTestSuite) TestBroadcast_TTL() {
 
 	time.Sleep(time.Second * 4)
 
-	handler.mu.Lock()
-	defer handler.mu.Unlock()
-
-	suite.Assert().Equal(20, handler.rawCount, "raw message count should be 20")
-	suite.Assert().Equal(5, handler.validCount, "each recipient peer should get a validated message")
+	suite.RequireHandlersRawCounts([]int{4, 4, 4, 4, 4})
+	suite.RequireHandlersValidCounts([]int{1, 1, 1, 1, 1})
 }
 
 // ----------------------------------------------------------------------------
 // test handler
 type TestHandler struct {
-	mu sync.Mutex
+	// single mutex for everything just for simplicity.
+	mu *sync.Mutex
 
 	rawCount   int
 	validCount int
