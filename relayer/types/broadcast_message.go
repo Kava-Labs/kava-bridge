@@ -9,6 +9,7 @@ import (
 	prototypes "github.com/gogo/protobuf/types"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/multiformats/go-multibase"
+	"github.com/pkg/errors"
 )
 
 const (
@@ -70,7 +71,15 @@ func (msg *BroadcastMessage) Validate() error {
 	}
 
 	if msg.TTLSeconds < MinimumTTLSeconds {
-		return ErrMsgTTLTooShort
+		return errors.Wrapf(ErrMsgTTLTooShort, "%d < %d seconds", msg.TTLSeconds, MinimumTTLSeconds)
+	}
+
+	if msg.Expired() {
+		return errors.Wrapf(
+			ErrMsgExpired,
+			"%v + %v seconds < now (%v)",
+			msg.Created, msg.TTLSeconds, time.Now().UTC(),
+		)
 	}
 
 	return nil
