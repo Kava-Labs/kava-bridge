@@ -6,9 +6,12 @@ import (
 	"os/exec"
 	"testing"
 
+	"github.com/kava-labs/kava-bridge/cmd/kava-relayer/cmd/network"
+
 	"github.com/libp2p/go-libp2p-core/crypto"
 	crypto_pb "github.com/libp2p/go-libp2p-core/crypto/pb"
 	"github.com/libp2p/go-libp2p-core/peer"
+	ma "github.com/multiformats/go-multiaddr"
 	"github.com/multiformats/go-multibase"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -88,6 +91,21 @@ func TestShowNodeID(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.True(t, peerID.MatchesPrivateKey(privKey))
+}
+
+func TestShowNodeMultiAddress(t *testing.T) {
+	cmd := execRelayer("network", "show-node-multi-address", "--p2p.private-key-path", "test-fixtures/pk1.key", "--p2p.port", "8000")
+	out, err := cmd.CombinedOutput()
+	require.NoError(t, err, fmt.Sprintf("expected '%s' to return successful status code", cmd.String()))
+
+	actualPeerMultiAddress := string(out)
+	_, err = ma.NewMultiaddr(actualPeerMultiAddress)
+	require.NoError(t, err)
+
+	testHostIPv4, err := network.GetHostIPv4()
+	require.NoError(t, err)
+	expectedPeerMultiAddress := fmt.Sprintf("/ip4/%s/tcp/8000/p2p/16Uiu2HAm9z3t15JpqBbPQJ1ZLHm6w1AXD6M2FXdCG3GLoY4iDcD9", testHostIPv4)
+	assert.Equal(t, actualPeerMultiAddress, expectedPeerMultiAddress)
 }
 
 func TestConnectPeers(t *testing.T) {

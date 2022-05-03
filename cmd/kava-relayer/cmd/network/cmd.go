@@ -11,6 +11,7 @@ func GetNetworkCmd() *cobra.Command {
 	cmds := []*cobra.Command{
 		newConnectCmd(),
 		newShowNodeIdCmd(),
+		newShowNodeMultiAddressCmd(),
 		newGenerateNetworkSecretCmd(),
 		newGenerateNodeKeyCmd(),
 	}
