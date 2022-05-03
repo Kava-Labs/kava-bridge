@@ -27,7 +27,7 @@ $ kava-relayer network show-node-id  --p2p.private-key-path ./path/to/node.key
 The [multiaddress](https://github.com/multiformats/multiaddr) of a node is used
 by peers when connecting to this node via the `kava-relayer connect` command.
 To calculate and display the multi-address for a given node (based off the
-node id derived from it's private key and the port you intend to have the node
+node id derived from its public key and the port you intend to have the node
 listen on) use:
 
 ```bash
