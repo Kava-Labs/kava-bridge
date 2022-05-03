@@ -183,6 +183,7 @@ func (b *Broadcaster) BroadcastMessage(
 
 	_, found := b.pendingMessages[msg.ID]
 	if found {
+		b.pendingMessagesLock.Unlock()
 		return fmt.Errorf("cannot broadcast message that is already pending: %v", msg.ID)
 	}
 	b.pendingMessages[msg.ID] = NewPeerMessageGroup()
