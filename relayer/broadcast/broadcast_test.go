@@ -81,6 +81,10 @@ func TestBroadcasterTestSuite(t *testing.T) {
 	suite.Run(t, new(BroadcasterTestSuite))
 }
 
+func (suite *BroadcasterTestSuite) SetupTest() {
+	suite.Ctx, suite.Cancel = context.WithCancel(context.Background())
+}
+
 func (suite *BroadcasterTestSuite) TearDownTest() {
 	suite.Cancel()
 
@@ -90,21 +94,51 @@ func (suite *BroadcasterTestSuite) TearDownTest() {
 }
 
 func (suite *BroadcasterTestSuite) CreateHostBroadcasters(n int, options ...broadcast.BroadcasterOption) {
-	suite.Ctx, suite.Cancel = context.WithCancel(context.Background())
-
 	suite.Hosts = testutil.CreateHosts(suite.T(), suite.Ctx, n)
 
+	suite.CreateBroadcasterWithHosts(suite.Hosts, options...)
+}
+
+func (suite *BroadcasterTestSuite) CreateBroadcasterWithHosts(
+	hosts []host.Host,
+	options ...broadcast.BroadcasterOption,
+) {
 	// Without setting to nil first, suite tests will connect to peers
 	// on a different suite test for some reason.
 	suite.Broadcasters = nil
 
-	for i, h := range suite.Hosts {
+	for i, h := range hosts {
 		suite.T().Logf("peer index %v id: %v", i, h.ID())
 
 		b, err := NewTestBroadcaster(suite.Ctx, h, options...)
 		suite.Require().NoError(err)
 
 		suite.Broadcasters = append(suite.Broadcasters, b)
+	}
+}
+
+func (suite *BroadcasterTestSuite) WaitForAllBroadcastersConnected() {
+	timeout := time.Second * 10
+	start := time.Now()
+
+	for {
+		time.Sleep(time.Millisecond * 300)
+
+		completeCount := 0
+		for _, broadcaster := range suite.Broadcasters {
+			// Peer count does not include self
+			if broadcaster.GetPeerCount() == len(suite.Hosts)-1 {
+				completeCount += 1
+			}
+		}
+
+		if completeCount == len(suite.Broadcasters) {
+			return
+		}
+
+		if start.Add(timeout).Before(time.Now()) {
+			suite.T().Fatal("timeout waiting for hosts to connect")
+		}
 	}
 }
 
@@ -141,8 +175,7 @@ func (suite *BroadcasterTestSuite) TestBroadcast_ConnectPeers() {
 	suite.CreateHostBroadcasters(count)
 	err := testutil.ConnectAll(suite.T(), suite.Hosts)
 	suite.Require().NoError(err)
-
-	time.Sleep(time.Second)
+	suite.WaitForAllBroadcastersConnected()
 
 	for _, broadcaster := range suite.Broadcasters {
 		// Peer count does not include self
@@ -158,13 +191,7 @@ func (suite *BroadcasterTestSuite) TestBroadcast_Responses() {
 	suite.CreateHostBroadcasters(hostCount)
 	err = testutil.ConnectAll(suite.T(), suite.Hosts)
 	suite.Require().NoError(err)
-
-	time.Sleep(time.Second)
-
-	for _, broadcaster := range suite.Broadcasters {
-		// Peer count does not include self
-		suite.Assert().Equal(hostCount-1, broadcaster.GetPeerCount())
-	}
+	suite.WaitForAllBroadcastersConnected()
 
 	// Send message to all peers. This includes broadcaster peer but is ok since
 	// broadcaster ignores self node
@@ -240,17 +267,38 @@ func (suite *BroadcasterTestSuite) TestBroadcast_TTL() {
 	err := logging.SetLogLevelRegex("broadcast", "debug")
 	suite.Require().NoError(err)
 
-	hostCount := 5
-	suite.CreateHostBroadcasters(hostCount, broadcast.WithHook(&SleepyBroadcasterHook{}))
-	err = testutil.ConnectAll(suite.T(), suite.Hosts)
+	keys, err := testutil.GenerateNodeKeys(5)
 	suite.Require().NoError(err)
 
-	time.Sleep(time.Second)
+	peerIDs := testutil.PeerIDsFromKeys(keys)
 
-	for _, broadcaster := range suite.Broadcasters {
-		// Peer count does not include self
-		suite.Assert().Equal(hostCount-1, broadcaster.GetPeerCount())
+	suite.Hosts = testutil.CreateHostsWithKeys(
+		suite.T(),
+		suite.Ctx,
+		keys,
+	)
+
+	sleepTimeFn := func(
+		b *broadcast.Broadcaster,
+		target peer.ID,
+		pb *proto.Message,
+	) time.Duration {
+		// Delay sending to last peer
+		if target == peerIDs[4] {
+			suite.T().Logf("Delaying message to %v", target)
+			return time.Second * 7
+		}
+
+		return 0
 	}
+
+	suite.CreateBroadcasterWithHosts(suite.Hosts, broadcast.WithHook(&SleepyBroadcasterHook{
+		sleepTimeFn,
+	}))
+
+	err = testutil.ConnectAll(suite.T(), suite.Hosts)
+	suite.Require().NoError(err)
+	suite.WaitForAllBroadcastersConnected()
 
 	// Send message to all peers. This includes broadcaster peer but is ok since
 	// broadcaster ignores self node
@@ -263,14 +311,16 @@ func (suite *BroadcasterTestSuite) TestBroadcast_TTL() {
 		},
 		allPeerIDs,
 		// Takes a few seconds for other peers to receive the message
+		// Should be high enough for round trip
 		6,
 	)
 	suite.Require().NoError(err)
 
-	time.Sleep(time.Second * 4)
+	time.Sleep(time.Second * 12)
 
-	suite.RequireHandlersRawCounts([]int{4, 4, 4, 4, 4})
-	suite.RequireHandlersValidCounts([]int{1, 1, 1, 1, 1})
+	// All peers delay send to peer 4, peer 4 will consider them expired and won't re-broadcast any
+	suite.RequireHandlersRawCounts([]int{3, 3, 3, 3, 0})
+	suite.RequireHandlersValidCounts([]int{0, 0, 0, 0, 0})
 }
 
 // ----------------------------------------------------------------------------
@@ -303,10 +353,20 @@ func (h *TestHandler) MismatchMessage(msg broadcast.MessageWithPeerMetadata) {}
 // delay broadcast hook
 
 // SleepyBroadcasterHook is a broadcasterHook that delays broadcasting raw messages
-type SleepyBroadcasterHook struct{}
+type SleepyBroadcasterHook struct {
+	sleepTimeFn func(
+		b *broadcast.Broadcaster,
+		target peer.ID,
+		pb *proto.Message,
+	) time.Duration
+}
 
 var _ broadcast.BroadcasterHook = (*SleepyBroadcasterHook)(nil)
 
-func (h *SleepyBroadcasterHook) BeforeBroadcastRawMessage(b *broadcast.Broadcaster, target peer.ID, pb *proto.Message) {
-	time.Sleep(2 * time.Second)
+func (h *SleepyBroadcasterHook) BeforeBroadcastRawMessage(
+	b *broadcast.Broadcaster,
+	target peer.ID,
+	pb *proto.Message,
+) {
+	time.Sleep(h.sleepTimeFn(b, target, pb))
 }
