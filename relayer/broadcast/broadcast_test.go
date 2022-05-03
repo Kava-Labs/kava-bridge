@@ -312,7 +312,7 @@ func (suite *BroadcasterTestSuite) TestBroadcast_TTL() {
 		allPeerIDs,
 		// Takes a few seconds for other peers to receive the message
 		// Should be high enough for round trip
-		6,
+		7,
 	)
 	suite.Require().NoError(err)
 
@@ -352,7 +352,7 @@ func (h *TestHandler) MismatchMessage(msg broadcast.MessageWithPeerMetadata) {}
 // ----------------------------------------------------------------------------
 // delay broadcast hook
 
-// SleepyBroadcasterHook is a broadcasterHook that delays broadcasting raw messages
+// SleepyBroadcasterHook is a broadcasterHook that conditionally delays broadcasting raw messages
 type SleepyBroadcasterHook struct {
 	sleepTimeFn func(
 		b *broadcast.Broadcaster,

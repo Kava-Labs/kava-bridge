@@ -180,14 +180,15 @@ func (b *Broadcaster) BroadcastMessage(
 	// Add the message to the pending messages map to keep track of responses
 	// and to prevent re-broadcasting.
 	b.pendingMessagesLock.Lock()
-	// Could manually lock before broadcastRawMessage
-	defer b.pendingMessagesLock.Unlock()
 
 	_, found := b.pendingMessages[msg.ID]
 	if found {
 		return fmt.Errorf("cannot broadcast message that is already pending: %v", msg.ID)
 	}
 	b.pendingMessages[msg.ID] = NewPeerMessageGroup()
+
+	// Unlock to not block receiving messages while broadcasting
+	b.pendingMessagesLock.Unlock()
 
 	return b.broadcastRawMessage(ctx, &msg, recipients)
 }
@@ -270,6 +271,7 @@ func (b *Broadcaster) handleIncomingRawMsg(msg *MessageWithPeerMetadata) {
 		peerMsgGroup = NewPeerMessageGroup()
 
 		// Rebroadcast to all other peers when first time seeing this message.
+		// Run in a goroutine to avoid blocking the incoming message handler.
 		go func() {
 			// Send Payload, NOT the BroadcastMessage, as SendProtoMessage wraps it in a Message.
 			if err := b.broadcastRawMessage(
