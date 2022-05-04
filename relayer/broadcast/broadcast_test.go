@@ -9,6 +9,7 @@ import (
 	"github.com/gogo/protobuf/proto"
 	logging "github.com/ipfs/go-log/v2"
 	"github.com/kava-labs/kava-bridge/relayer/broadcast"
+	"github.com/kava-labs/kava-bridge/relayer/broadcast/pending_store"
 	"github.com/kava-labs/kava-bridge/relayer/testutil"
 	"github.com/kava-labs/kava-bridge/relayer/types"
 	"github.com/libp2p/go-libp2p-core/host"
@@ -189,8 +190,10 @@ func (suite *BroadcasterTestSuite) TestBroadcast_Responses() {
 
 	hostCount := 5
 	suite.CreateHostBroadcasters(hostCount)
+
 	err = testutil.ConnectAll(suite.T(), suite.Hosts)
 	suite.Require().NoError(err)
+
 	suite.WaitForAllBroadcastersConnected()
 
 	// Send message to all peers. This includes broadcaster peer but is ok since
@@ -333,7 +336,7 @@ type TestHandler struct {
 	validCount int
 }
 
-func (h *TestHandler) RawMessage(msg broadcast.MessageWithPeerMetadata) {
+func (h *TestHandler) RawMessage(msg pending_store.MessageWithPeerMetadata) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 
@@ -347,7 +350,7 @@ func (h *TestHandler) ValidatedMessage(msg types.BroadcastMessage) {
 	h.validCount += 1
 }
 
-func (h *TestHandler) MismatchMessage(msg broadcast.MessageWithPeerMetadata) {}
+func (h *TestHandler) MismatchMessage(msg pending_store.MessageWithPeerMetadata) {}
 
 // ----------------------------------------------------------------------------
 // delay broadcast hook

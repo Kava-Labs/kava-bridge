@@ -13,6 +13,7 @@ import (
 	"github.com/libp2p/go-libp2p-core/network"
 	"github.com/libp2p/go-libp2p-core/peer"
 
+	"github.com/kava-labs/kava-bridge/relayer/broadcast/pending_store"
 	"github.com/kava-labs/kava-bridge/relayer/stream"
 	"github.com/kava-labs/kava-bridge/relayer/types"
 )
@@ -44,14 +45,14 @@ type Broadcaster struct {
 
 	// Raw incoming messages from other peers, NOT verified. Will contain
 	// duplicate messages from different peers to be validated.
-	incomingRawMessages chan *MessageWithPeerMetadata
+	incomingRawMessages chan *pending_store.MessageWithPeerMetadata
 
 	// Messages that all peers have confirmed to have received. Does not contain
 	// any peer specific data as it does not originate from any specific peer.
 	incomingValidatedMessages chan types.BroadcastMessage
 
 	// Messages that have been sent/received but not validated by other peers yet.
-	pendingMessagesStore *PendingMessagesStore
+	pendingMessagesStore *pending_store.PendingMessagesStore
 
 	// Messages to send to all other peers
 	outgoing chan *types.BroadcastMessage
@@ -80,9 +81,9 @@ func NewBroadcaster(
 		peersLock:                 sync.RWMutex{},
 		peers:                     make(map[peer.ID]struct{}),
 		newPeers:                  make(chan peer.ID),
-		incomingRawMessages:       make(chan *MessageWithPeerMetadata),
+		incomingRawMessages:       make(chan *pending_store.MessageWithPeerMetadata),
 		incomingValidatedMessages: make(chan types.BroadcastMessage, 1),
-		pendingMessagesStore:      NewPendingMessagesStore(),
+		pendingMessagesStore:      pending_store.NewPendingMessagesStore(),
 		outgoing:                  make(chan *types.BroadcastMessage),
 		handler:                   &NoOpBroadcastHandler{},
 		broadcasterHook:           &noOpBroadcasterHook{},
@@ -176,7 +177,10 @@ func (b *Broadcaster) BroadcastMessage(
 	// Add the message to the pending messages map to keep track of responses
 	// and to prevent re-broadcasting.
 	// Does not block receiving messages while broadcasting
-	b.pendingMessagesStore.NewGroup(msg.ID)
+	created := b.pendingMessagesStore.TryNewGroup(msg.ID)
+	if !created {
+		return fmt.Errorf("cannot broadcast message that is is already pending")
+	}
 
 	return b.broadcastRawMessage(ctx, &msg, recipients)
 }
@@ -238,7 +242,7 @@ func (b *Broadcaster) broadcastRawMessage(
 
 // handleIncomingRawMsg handles all raw messages from other peers. This is
 // before messages are verified to be received from all peers.
-func (b *Broadcaster) handleIncomingRawMsg(msg *MessageWithPeerMetadata) {
+func (b *Broadcaster) handleIncomingRawMsg(msg *pending_store.MessageWithPeerMetadata) {
 	if err := msg.BroadcastMessage.Validate(); err != nil {
 		log.Warnf("invalid message received from peer: %s", err)
 		return
@@ -248,9 +252,10 @@ func (b *Broadcaster) handleIncomingRawMsg(msg *MessageWithPeerMetadata) {
 	// testing purposes.
 	go b.handler.RawMessage(*msg)
 
-	created := b.pendingMessagesStore.NewGroup(msg.BroadcastMessage.ID)
+	// Create new group if it doesn't exist already.
+	created := b.pendingMessagesStore.TryNewGroup(msg.BroadcastMessage.ID)
 	// First time we see this message, re-broadcast
-	if !created {
+	if created {
 		log.Debugf("new message ID %s from peer %s, creating new pending group", msg.BroadcastMessage.ID, msg.PeerID)
 
 		// Rebroadcast to all other peers when first time seeing this message.
@@ -366,7 +371,7 @@ func (b *Broadcaster) handleNewStream(s network.Stream) {
 		}
 
 		// Attach additional peer metadata to the message
-		peerMsg := MessageWithPeerMetadata{
+		peerMsg := pending_store.MessageWithPeerMetadata{
 			BroadcastMessage: msg,
 			PeerID:           s.Conn().RemotePeer(),
 		}

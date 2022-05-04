@@ -1,18 +1,22 @@
-package broadcast
+package pending_store
 
 import (
 	"fmt"
 	"sync"
 	"time"
 
+	logging "github.com/ipfs/go-log/v2"
+
 	"github.com/kava-labs/kava-bridge/relayer/types"
 	"github.com/libp2p/go-libp2p-core/peer"
 )
 
+var log = logging.Logger("broadcast/pending_store")
+
 const CLEAR_EXPIRED_INTERVAL = time.Second * 30
 
 type PendingMessagesStore struct {
-	pendingMessagesLock sync.Mutex
+	pendingMessagesLock sync.RWMutex
 	pendingMessages     map[string]*PeerMessageGroup
 }
 
@@ -20,11 +24,13 @@ type PendingMessagesStore struct {
 // background goroutine to remove expired message groups.
 func NewPendingMessagesStore() *PendingMessagesStore {
 	store := &PendingMessagesStore{
-		pendingMessagesLock: sync.Mutex{},
+		pendingMessagesLock: sync.RWMutex{},
 		pendingMessages:     make(map[string]*PeerMessageGroup),
 	}
 
 	go func() {
+		// Leaky Ticker, will not be collected by GC but should live for
+		// entirety of process.
 		for range time.Tick(CLEAR_EXPIRED_INTERVAL) {
 			store.pendingMessagesLock.Lock()
 
@@ -49,20 +55,21 @@ func NewPendingMessagesStore() *PendingMessagesStore {
 
 // NewGroup creates a new PeerMessageGroup for the given message ID.
 func (pm *PendingMessagesStore) ContainsGroup(msgID string) bool {
-	pm.pendingMessagesLock.Lock()
-	defer pm.pendingMessagesLock.Unlock()
+	pm.pendingMessagesLock.RLock()
+	defer pm.pendingMessagesLock.RUnlock()
 
 	_, found := pm.pendingMessages[msgID]
 	return found
 }
 
-// NewGroup creates a new PeerMessageGroup for the given message ID and returns
+// TryNewGroup creates a new PeerMessageGroup for the given message ID and returns
 // true if it was created. Returns false if the group already exists.
-func (pm *PendingMessagesStore) NewGroup(msgID string) bool {
+func (pm *PendingMessagesStore) TryNewGroup(msgID string) bool {
 	pm.pendingMessagesLock.Lock()
 	defer pm.pendingMessagesLock.Unlock()
 
 	if _, found := pm.pendingMessages[msgID]; found {
+		log.Debug("message group already exists", "msgID", msgID)
 		return false
 	}
 
@@ -105,6 +112,7 @@ func (pm *PendingMessagesStore) AddMessage(msg MessageWithPeerMetadata) error {
 		return fmt.Errorf("invalid message: %w", err)
 	}
 
+	log.Debugw("added message to pending message group", "msgID", msg.BroadcastMessage.ID)
 	pm.pendingMessages[msg.BroadcastMessage.ID] = peerMsgGroup
 
 	return nil
@@ -117,8 +125,8 @@ func (pm *PendingMessagesStore) GroupIsCompleted(
 	hostID peer.ID,
 	recipients []peer.ID,
 ) (types.BroadcastMessage, bool) {
-	pm.pendingMessagesLock.Lock()
-	defer pm.pendingMessagesLock.Unlock()
+	pm.pendingMessagesLock.RLock()
+	defer pm.pendingMessagesLock.RUnlock()
 
 	peerMsgGroup, found := pm.pendingMessages[msgID]
 	if !found {

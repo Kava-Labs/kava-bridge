@@ -1,11 +1,11 @@
-package broadcast_test
+package pending_store_test
 
 import (
 	"testing"
 
 	"github.com/gogo/protobuf/proto"
 	prototypes "github.com/gogo/protobuf/types"
-	"github.com/kava-labs/kava-bridge/relayer/broadcast"
+	"github.com/kava-labs/kava-bridge/relayer/broadcast/pending_store"
 	"github.com/kava-labs/kava-bridge/relayer/types"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/stretchr/testify/require"
@@ -19,20 +19,20 @@ func TestUniquePeerMessages(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		group   *broadcast.PeerMessageGroup
+		group   *pending_store.PeerMessageGroup
 		errArgs errArgs
 	}{
 		{
 			"valid - empty",
-			broadcast.NewPeerMessageGroup(),
+			pending_store.NewPeerMessageGroup(),
 			errArgs{
 				expectPass: true,
 			},
 		},
 		{
 			"valid - 1 item",
-			&broadcast.PeerMessageGroup{
-				Messages: map[peer.ID]*broadcast.MessageWithPeerMetadata{
+			&pending_store.PeerMessageGroup{
+				Messages: map[peer.ID]*pending_store.MessageWithPeerMetadata{
 					"peer1": {
 						BroadcastMessage: types.BroadcastMessage{
 							ID: "msg id 1",
@@ -50,8 +50,8 @@ func TestUniquePeerMessages(t *testing.T) {
 		},
 		{
 			"valid - 2 same items",
-			&broadcast.PeerMessageGroup{
-				Messages: map[peer.ID]*broadcast.MessageWithPeerMetadata{
+			&pending_store.PeerMessageGroup{
+				Messages: map[peer.ID]*pending_store.MessageWithPeerMetadata{
 					"peer1": {
 						BroadcastMessage: types.BroadcastMessage{
 							ID: "msg id 1",
@@ -78,8 +78,8 @@ func TestUniquePeerMessages(t *testing.T) {
 		},
 		{
 			"invalid - different message id",
-			&broadcast.PeerMessageGroup{
-				Messages: map[peer.ID]*broadcast.MessageWithPeerMetadata{
+			&pending_store.PeerMessageGroup{
+				Messages: map[peer.ID]*pending_store.MessageWithPeerMetadata{
 					"peer1": {
 						BroadcastMessage: types.BroadcastMessage{
 							ID: "msg id 1",
@@ -107,8 +107,8 @@ func TestUniquePeerMessages(t *testing.T) {
 		},
 		{
 			"invalid - different payload",
-			&broadcast.PeerMessageGroup{
-				Messages: map[peer.ID]*broadcast.MessageWithPeerMetadata{
+			&pending_store.PeerMessageGroup{
+				Messages: map[peer.ID]*pending_store.MessageWithPeerMetadata{
 					"peer1": {
 						BroadcastMessage: types.BroadcastMessage{
 							ID: "msg id 1",

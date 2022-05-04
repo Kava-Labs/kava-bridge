@@ -1,4 +1,4 @@
-package broadcast
+package pending_store
 
 import (
 	"fmt"
