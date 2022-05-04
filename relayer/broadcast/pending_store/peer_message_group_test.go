@@ -102,7 +102,9 @@ func TestUniquePeerMessages(t *testing.T) {
 			},
 			errArgs{
 				expectPass: false,
-				contains:   "mismatch: \"msg id 2\" != \"msg id 1\"",
+				// Does not contain full message, non-deterministic map iteration
+				// may swap the order.
+				contains: "mismatch: \"msg id ",
 			},
 		},
 		{

@@ -84,7 +84,7 @@ func (pm *PendingMessagesStore) DeleteGroup(msgID string) error {
 	defer pm.pendingMessagesLock.Unlock()
 
 	if _, found := pm.pendingMessages[msgID]; !found {
-		return fmt.Errorf("message group not found")
+		return ErrGroupNotFound
 	}
 
 	delete(pm.pendingMessages, msgID)
@@ -100,7 +100,7 @@ func (pm *PendingMessagesStore) AddMessage(msg MessageWithPeerMetadata) error {
 
 	peerMsgGroup, found := pm.pendingMessages[msg.BroadcastMessage.ID]
 	if !found {
-		return fmt.Errorf("message group not found")
+		return ErrGroupNotFound
 	}
 
 	if err := peerMsgGroup.Add(&msg); err != nil {
