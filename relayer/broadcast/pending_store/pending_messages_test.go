@@ -198,7 +198,7 @@ func TestKeepsNonExpiredGroups(t *testing.T) {
 		PeerID: testutil.TestPeerIDs[0],
 		BroadcastMessage: types.BroadcastMessage{
 			ID:         msgID,
-			Created:    time.Now().Add(-time.Hour),
+			Created:    time.Now(),
 			TTLSeconds: 4,
 		},
 	})
