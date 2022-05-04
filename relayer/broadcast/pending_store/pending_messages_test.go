@@ -2,6 +2,7 @@ package pending_store_test
 
 import (
 	"testing"
+	"time"
 
 	prototypes "github.com/gogo/protobuf/types"
 	"github.com/kava-labs/kava-bridge/relayer/broadcast/pending_store"
@@ -11,7 +12,7 @@ import (
 )
 
 func TestContainsGroup(t *testing.T) {
-	store := pending_store.NewPendingMessagesStore()
+	store := pending_store.NewPendingMessagesStore(pending_store.DEFAULT_CLEAR_EXPIRED_INTERVAL)
 
 	msgID := "test-msg-id"
 
@@ -26,7 +27,7 @@ func TestContainsGroup(t *testing.T) {
 }
 
 func TestTryNewGroup(t *testing.T) {
-	store := pending_store.NewPendingMessagesStore()
+	store := pending_store.NewPendingMessagesStore(pending_store.DEFAULT_CLEAR_EXPIRED_INTERVAL)
 
 	msgID := "test-msg-id"
 
@@ -38,7 +39,7 @@ func TestTryNewGroup(t *testing.T) {
 }
 
 func TestDeleteGroup(t *testing.T) {
-	store := pending_store.NewPendingMessagesStore()
+	store := pending_store.NewPendingMessagesStore(pending_store.DEFAULT_CLEAR_EXPIRED_INTERVAL)
 
 	msgID := "test-msg-id"
 
@@ -53,7 +54,7 @@ func TestDeleteGroup(t *testing.T) {
 }
 
 func TestAddMessage_GroupNotExists(t *testing.T) {
-	store := pending_store.NewPendingMessagesStore()
+	store := pending_store.NewPendingMessagesStore(pending_store.DEFAULT_CLEAR_EXPIRED_INTERVAL)
 
 	msgID, err := types.NewBroadcastMessageID()
 	require.NoError(t, err)
@@ -68,7 +69,7 @@ func TestAddMessage_GroupNotExists(t *testing.T) {
 }
 
 func TestAddMessage_GroupExists(t *testing.T) {
-	store := pending_store.NewPendingMessagesStore()
+	store := pending_store.NewPendingMessagesStore(pending_store.DEFAULT_CLEAR_EXPIRED_INTERVAL)
 
 	msgID, err := types.NewBroadcastMessageID()
 	require.NoError(t, err)
@@ -86,7 +87,7 @@ func TestAddMessage_GroupExists(t *testing.T) {
 }
 
 func TestAddMessage_InvalidMessage(t *testing.T) {
-	store := pending_store.NewPendingMessagesStore()
+	store := pending_store.NewPendingMessagesStore(pending_store.DEFAULT_CLEAR_EXPIRED_INTERVAL)
 
 	msgID, err := types.NewBroadcastMessageID()
 	require.NoError(t, err)
@@ -114,7 +115,7 @@ func TestAddMessage_InvalidMessage(t *testing.T) {
 }
 
 func TestGroupIsCompleted_NotExist(t *testing.T) {
-	store := pending_store.NewPendingMessagesStore()
+	store := pending_store.NewPendingMessagesStore(pending_store.DEFAULT_CLEAR_EXPIRED_INTERVAL)
 
 	msgID, err := types.NewBroadcastMessageID()
 	require.NoError(t, err)
@@ -124,7 +125,7 @@ func TestGroupIsCompleted_NotExist(t *testing.T) {
 }
 
 func TestGroupIsCompleted_Incomplete(t *testing.T) {
-	store := pending_store.NewPendingMessagesStore()
+	store := pending_store.NewPendingMessagesStore(pending_store.DEFAULT_CLEAR_EXPIRED_INTERVAL)
 
 	msgID, err := types.NewBroadcastMessageID()
 	require.NoError(t, err)
@@ -154,4 +155,32 @@ func TestGroupIsCompleted_Incomplete(t *testing.T) {
 
 	_, complete = store.GroupIsCompleted(msgID, testutil.TestPeerIDs[0], testutil.TestPeerIDs[1:2])
 	require.True(t, complete, "should not be complete when host + recipients match num messages")
+}
+
+func TestRemovesExpiredGroups(t *testing.T) {
+	store := pending_store.NewPendingMessagesStore(1 * time.Second)
+
+	msgID, err := types.NewBroadcastMessageID()
+	require.NoError(t, err)
+
+	created := store.TryNewGroup(msgID)
+	require.True(t, created)
+
+	err = store.AddMessage(pending_store.MessageWithPeerMetadata{
+		PeerID: testutil.TestPeerIDs[0],
+		BroadcastMessage: types.BroadcastMessage{
+			ID:         msgID,
+			Created:    time.Now().Add(-time.Hour),
+			TTLSeconds: 1,
+		},
+	})
+	require.NoError(t, err)
+
+	contains := store.ContainsGroup(msgID)
+	require.True(t, contains, "should contain group after creation")
+
+	time.Sleep(2 * time.Second)
+
+	contains = store.ContainsGroup(msgID)
+	require.False(t, contains, "should delete expired groups")
 }

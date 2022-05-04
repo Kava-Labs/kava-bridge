@@ -13,8 +13,9 @@ import (
 
 var log = logging.Logger("broadcast/pending_store")
 
-const CLEAR_EXPIRED_INTERVAL = time.Second * 30
+const DEFAULT_CLEAR_EXPIRED_INTERVAL = time.Second * 30
 
+// PendingMessagesStore stores pending messages and removes expired messages.
 type PendingMessagesStore struct {
 	pendingMessagesLock sync.RWMutex
 	pendingMessages     map[string]*PeerMessageGroup
@@ -22,7 +23,7 @@ type PendingMessagesStore struct {
 
 // NewPendingMessagesStore returns a new PendingMessagesStore and starts a
 // background goroutine to remove expired message groups.
-func NewPendingMessagesStore() *PendingMessagesStore {
+func NewPendingMessagesStore(expire_interval time.Duration) *PendingMessagesStore {
 	store := &PendingMessagesStore{
 		pendingMessagesLock: sync.RWMutex{},
 		pendingMessages:     make(map[string]*PeerMessageGroup),
@@ -31,7 +32,7 @@ func NewPendingMessagesStore() *PendingMessagesStore {
 	go func() {
 		// Leaky Ticker, will not be collected by GC but should live for
 		// entirety of process.
-		for range time.Tick(CLEAR_EXPIRED_INTERVAL) {
+		for range time.Tick(expire_interval) {
 			store.pendingMessagesLock.Lock()
 
 			for key, msg := range store.pendingMessages {
@@ -53,7 +54,7 @@ func NewPendingMessagesStore() *PendingMessagesStore {
 	return store
 }
 
-// NewGroup creates a new PeerMessageGroup for the given message ID.
+// ContainsGroup returns true if the given message ID is in the store.
 func (pm *PendingMessagesStore) ContainsGroup(msgID string) bool {
 	pm.pendingMessagesLock.RLock()
 	defer pm.pendingMessagesLock.RUnlock()
@@ -107,7 +108,7 @@ func (pm *PendingMessagesStore) AddMessage(msg MessageWithPeerMetadata) error {
 		return err
 	}
 
-	// TODO: Optimize validate
+	// TODO: Optimize validate when using hashes
 	if err := peerMsgGroup.Validate(); err != nil {
 		return fmt.Errorf("invalid message: %w", err)
 	}

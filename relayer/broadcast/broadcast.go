@@ -83,7 +83,7 @@ func NewBroadcaster(
 		newPeers:                  make(chan peer.ID),
 		incomingRawMessages:       make(chan *pending_store.MessageWithPeerMetadata),
 		incomingValidatedMessages: make(chan types.BroadcastMessage, 1),
-		pendingMessagesStore:      pending_store.NewPendingMessagesStore(),
+		pendingMessagesStore:      pending_store.NewPendingMessagesStore(pending_store.DEFAULT_CLEAR_EXPIRED_INTERVAL),
 		outgoing:                  make(chan *types.BroadcastMessage),
 		handler:                   &NoOpBroadcastHandler{},
 		broadcasterHook:           &noOpBroadcasterHook{},
