@@ -281,7 +281,13 @@ func (b *Broadcaster) handleIncomingRawMsg(msg *pending_store.MessageWithPeerMet
 
 		// Remove from pending messages -- if there is 1 invalid message then
 		// the message should be cancelled
-		b.pendingMessagesStore.DeleteGroup(msg.BroadcastMessage.ID)
+		if err := b.pendingMessagesStore.DeleteGroup(msg.BroadcastMessage.ID); err != nil {
+			log.Warnw(
+				"failed to remove invalid message group from pending messages store",
+				"msgId", msg.BroadcastMessage.ID,
+				"err", err,
+			)
+		}
 
 		return
 	}
@@ -296,7 +302,13 @@ func (b *Broadcaster) handleIncomingRawMsg(msg *pending_store.MessageWithPeerMet
 		b.incomingValidatedMessages <- msgData
 
 		// Remove from pending messages
-		b.pendingMessagesStore.DeleteGroup(msg.BroadcastMessage.ID)
+		if err := b.pendingMessagesStore.DeleteGroup(msg.BroadcastMessage.ID); err != nil {
+			log.Warnw(
+				"failed to remove completed message group from pending messages store",
+				"msgId", msg.BroadcastMessage.ID,
+				"err", err,
+			)
+		}
 	}
 }
 
