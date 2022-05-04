@@ -184,3 +184,31 @@ func TestRemovesExpiredGroups(t *testing.T) {
 	contains = store.ContainsGroup(msgID)
 	require.False(t, contains, "should delete expired groups")
 }
+
+func TestKeepsNonExpiredGroups(t *testing.T) {
+	store := pending_store.NewPendingMessagesStore(1 * time.Second)
+
+	msgID, err := types.NewBroadcastMessageID()
+	require.NoError(t, err)
+
+	created := store.TryNewGroup(msgID)
+	require.True(t, created)
+
+	err = store.AddMessage(pending_store.MessageWithPeerMetadata{
+		PeerID: testutil.TestPeerIDs[0],
+		BroadcastMessage: types.BroadcastMessage{
+			ID:         msgID,
+			Created:    time.Now().Add(-time.Hour),
+			TTLSeconds: 4,
+		},
+	})
+	require.NoError(t, err)
+
+	contains := store.ContainsGroup(msgID)
+	require.True(t, contains, "should contain group after creation")
+
+	time.Sleep(2 * time.Second)
+
+	contains = store.ContainsGroup(msgID)
+	require.True(t, contains, "should not delete groups not yet expired")
+}
