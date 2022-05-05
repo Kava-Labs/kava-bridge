@@ -33,7 +33,11 @@ func NewBroadcastMessage(
 		return BroadcastMessage{}, err
 	}
 
-	allPeerIDs := append(recipientsPeerIDs, hostID)
+	// Create copy of slice to prevent mutating original.
+	var allPeerIDs []peer.ID
+	allPeerIDs = append(allPeerIDs, hostID)
+	allPeerIDs = append(allPeerIDs, recipientsPeerIDs...)
+
 	allPeerIDs = dedupPeerIDs(allPeerIDs)
 
 	return BroadcastMessage{
@@ -102,7 +106,7 @@ func dedupPeerIDs(peerIDs []peer.ID) []peer.ID {
 	var deduped []peer.ID
 
 	for _, peerID := range peerIDs {
-		if _, ok := seen[peerID]; !ok {
+		if _, found := seen[peerID]; !found {
 			seen[peerID] = struct{}{}
 			deduped = append(deduped, peerID)
 		}
