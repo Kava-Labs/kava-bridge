@@ -3,8 +3,8 @@ package types_test
 import (
 	"testing"
 
+	"github.com/kava-labs/kava-bridge/relayer/broadcast/types"
 	"github.com/kava-labs/kava-bridge/relayer/testutil"
-	"github.com/kava-labs/kava-bridge/relayer/types"
 	"github.com/stretchr/testify/require"
 )
 

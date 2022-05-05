@@ -14,8 +14,8 @@ import (
 	"github.com/libp2p/go-libp2p-core/peer"
 
 	"github.com/kava-labs/kava-bridge/relayer/broadcast/pending_store"
+	"github.com/kava-labs/kava-bridge/relayer/broadcast/types"
 	"github.com/kava-labs/kava-bridge/relayer/stream"
-	"github.com/kava-labs/kava-bridge/relayer/types"
 )
 
 var log = logging.Logger("broadcast")

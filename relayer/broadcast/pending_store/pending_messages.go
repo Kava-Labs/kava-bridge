@@ -7,7 +7,7 @@ import (
 
 	logging "github.com/ipfs/go-log/v2"
 
-	"github.com/kava-labs/kava-bridge/relayer/types"
+	"github.com/kava-labs/kava-bridge/relayer/broadcast/types"
 	"github.com/libp2p/go-libp2p-core/peer"
 )
 
