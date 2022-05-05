@@ -6,7 +6,7 @@ import (
 	"github.com/gogo/protobuf/proto"
 	prototypes "github.com/gogo/protobuf/types"
 	"github.com/kava-labs/kava-bridge/relayer/broadcast/pending_store"
-	"github.com/kava-labs/kava-bridge/relayer/types"
+	"github.com/kava-labs/kava-bridge/relayer/broadcast/types"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/stretchr/testify/require"
 )
