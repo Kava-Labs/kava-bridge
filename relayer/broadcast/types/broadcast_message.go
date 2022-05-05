@@ -16,6 +16,8 @@ const (
 	MinimumTTLSeconds = 1
 )
 
+var _ Message = (*BroadcastMessage)(nil)
+
 // NewBroadcastMessage creates a new BroadcastMessage with the payload marshaled as Any.
 func NewBroadcastMessage(
 	payload proto.Message,

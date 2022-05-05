@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/gogo/protobuf/proto"
+	prototypes "github.com/gogo/protobuf/types"
 	"golang.org/x/sync/errgroup"
 
 	logging "github.com/ipfs/go-log/v2"
@@ -242,21 +243,30 @@ func (b *Broadcaster) broadcastRawMessage(
 
 // handleIncomingRawMsg handles all raw messages from other peers. This is
 // before messages are verified to be received from all peers.
-func (b *Broadcaster) handleIncomingRawMsg(msg *pending_store.MessageWithPeerMetadata) {
-	if err := msg.BroadcastMessage.Validate(); err != nil {
+func (b *Broadcaster) handleIncomingRawMsg(peerMsg *pending_store.MessageWithPeerMetadata) {
+	if err := peerMsg.Message.Validate(); err != nil {
 		log.Warnf("invalid message received from peer: %s", err)
 		return
 	}
 
 	// This just dumps all incoming messages to the handler for logging or
 	// testing purposes.
-	go b.handler.RawMessage(*msg)
+	go b.handler.RawMessage(*peerMsg)
 
+	switch msg := peerMsg.Message.(type) {
+	case *types.BroadcastMessage:
+		b.handleIncomingBroadcastMsg(peerMsg.PeerID, *msg)
+	case *types.HashMsg:
+		b.handleIncomingHashMsg(peerMsg.PeerID, *msg)
+	}
+}
+
+func (b *Broadcaster) handleIncomingBroadcastMsg(peerID peer.ID, msg types.BroadcastMessage) {
 	// Create new group if it doesn't exist already.
-	created := b.pendingMessagesStore.TryNewGroup(msg.BroadcastMessage.ID)
+	created := b.pendingMessagesStore.TryNewGroup(msg.ID)
 	// First time we see this message, re-broadcast
 	if created {
-		log.Debugf("new message ID %s from peer %s, creating new pending group", msg.BroadcastMessage.ID, msg.PeerID)
+		log.Debugf("new message ID %s from peer %s, creating new pending group", msg.ID, peerID)
 
 		// Rebroadcast to all other peers when first time seeing this message.
 		// Run in a goroutine to avoid blocking the incoming message handler.
@@ -264,27 +274,27 @@ func (b *Broadcaster) handleIncomingRawMsg(msg *pending_store.MessageWithPeerMet
 			// Send Payload, NOT the BroadcastMessage, as SendProtoMessage wraps it in a Message.
 			if err := b.broadcastRawMessage(
 				context.Background(),
-				&msg.BroadcastMessage,
-				msg.BroadcastMessage.RecipientPeerIDs,
+				&msg,
+				msg.RecipientPeerIDs,
 			); err != nil {
 				log.DPanic(
 					"error rebroadcasting message %s: %s",
-					msg.BroadcastMessage.ID,
+					msg.ID,
 					err,
 				)
 			}
 		}()
 	}
 
-	if err := b.pendingMessagesStore.AddMessage(*msg); err != nil {
-		log.Errorf("error adding message %s to pending messages store: %s", msg.BroadcastMessage.ID, err)
+	if err := b.pendingMessagesStore.AddMessage(msg); err != nil {
+		log.Errorf("error adding message %s to pending messages store: %s", msg.ID, err)
 
 		// Remove from pending messages -- if there is 1 invalid message then
 		// the message should be cancelled
-		if err := b.pendingMessagesStore.DeleteGroup(msg.BroadcastMessage.ID); err != nil {
+		if err := b.pendingMessagesStore.DeleteGroup(msg.ID); err != nil {
 			log.Warnw(
 				"failed to remove invalid message group from pending messages store",
-				"msgId", msg.BroadcastMessage.ID,
+				"msgId", msg.ID,
 				"err", err,
 			)
 		}
@@ -293,19 +303,63 @@ func (b *Broadcaster) handleIncomingRawMsg(msg *pending_store.MessageWithPeerMet
 	}
 
 	if msgData, completed := b.pendingMessagesStore.GroupIsCompleted(
-		msg.BroadcastMessage.ID,
+		msg.ID,
 		b.host.ID(),
-		msg.BroadcastMessage.RecipientPeerIDs,
+		msg.RecipientPeerIDs,
 	); completed {
 		// All peers have responded with the same message, send it to the valid
 		// message channel to be handled.
 		b.incomingValidatedMessages <- msgData
 
 		// Remove from pending messages
-		if err := b.pendingMessagesStore.DeleteGroup(msg.BroadcastMessage.ID); err != nil {
+		if err := b.pendingMessagesStore.DeleteGroup(msg.ID); err != nil {
 			log.Warnw(
 				"failed to remove completed message group from pending messages store",
-				"msgId", msg.BroadcastMessage.ID,
+				"msgId", msg.ID,
+				"err", err,
+			)
+		}
+	}
+}
+
+func (b *Broadcaster) handleIncomingHashMsg(peerID peer.ID, msg types.HashMsg) {
+	// Create new group if it doesn't exist already.
+	created := b.pendingMessagesStore.TryNewGroup(msg.MessageID)
+	// First time we see this message, but it is a hash message, no re-broadcast
+	if created {
+		log.Debugf("new message ID %s from peer %s, creating new pending group", msg.MessageID, peerID)
+	}
+
+	if err := b.pendingMessagesStore.AddHash(peerID, msg); err != nil {
+		log.Errorf("error adding hash %s to pending messages store: %s", msg.MessageID, err)
+
+		// Remove from pending messages -- if there is 1 invalid message then
+		// the message should be cancelled
+		if err := b.pendingMessagesStore.DeleteGroup(msg.MessageID); err != nil {
+			log.Warnw(
+				"failed to remove invalid message group from pending messages store",
+				"msgId", msg.MessageID,
+				"err", err,
+			)
+		}
+
+		return
+	}
+
+	if msgData, completed := b.pendingMessagesStore.GroupIsCompleted(
+		msg.MessageID,
+		b.host.ID(),
+		msg.RecipientPeerIDs,
+	); completed {
+		// All peers have responded with the same message, send it to the valid
+		// message channel to be handled.
+		b.incomingValidatedMessages <- msgData
+
+		// Remove from pending messages
+		if err := b.pendingMessagesStore.DeleteGroup(msg.ID); err != nil {
+			log.Warnw(
+				"failed to remove completed message group from pending messages store",
+				"msgId", msg.ID,
 				"err", err,
 			)
 		}
@@ -373,8 +427,8 @@ func (b *Broadcaster) handleNewStream(s network.Stream) {
 	// Iterate over all messages, unmarshalling all as types.MessageData
 	r := stream.NewProtoMessageReader(s)
 	for {
-		var msg types.BroadcastMessage
-		if err := r.ReadMsg(&msg); err != nil {
+		var anyMsg prototypes.DynamicAny
+		if err := r.ReadMsg(&anyMsg); err != nil {
 			// Error when closing stream
 			log.Warnf("error reading stream message from peer %s: %s", s.Conn().RemotePeer(), err)
 			_ = s.Reset()
@@ -382,10 +436,17 @@ func (b *Broadcaster) handleNewStream(s network.Stream) {
 			return
 		}
 
+		// Ensure protobuf message fits our Message interface
+		msg, ok := anyMsg.Message.(types.Message)
+		if !ok {
+			log.Warnf("invalid message received from peer %s", s.Conn().RemotePeer())
+			continue
+		}
+
 		// Attach additional peer metadata to the message
 		peerMsg := pending_store.MessageWithPeerMetadata{
-			BroadcastMessage: msg,
-			PeerID:           s.Conn().RemotePeer(),
+			Message: msg,
+			PeerID:  s.Conn().RemotePeer(),
 		}
 
 		log.Debugf("received message from peer: %s", peerMsg.PeerID)

@@ -10,45 +10,56 @@ import (
 // PeerMessageGroup is a group of the same message from different peers to be
 // validated.
 type PeerMessageGroup struct {
-	Messages map[peer.ID]*MessageWithPeerMetadata
+	// BroadcastedMessage will only be received by broadcaster peer.
+	BroadcastedMessage types.BroadcastMessage
+	// BroadcastedMessageReceived will be false before the message is received. This may
+	// occur if a hash is received from a re-broadcasting node before the
+	// broadcasted message.
+	BroadcastedMessageReceived bool
+	// Hash of messages from other peers.
+	PeerMessageHashes map[peer.ID]types.BroadcastMessageHash
 }
 
 // NewPeerMessageGroup returns a new PeerMessageGroup
 func NewPeerMessageGroup() *PeerMessageGroup {
 	return &PeerMessageGroup{
-		Messages: make(map[peer.ID]*MessageWithPeerMetadata),
+		BroadcastedMessage:         types.BroadcastMessage{},
+		BroadcastedMessageReceived: false,
+		PeerMessageHashes:          make(map[peer.ID]types.BroadcastMessageHash),
 	}
 }
 
-// Add adds a message to the group, returning true if it replaced a message with
-// the same peer ID.
-func (g *PeerMessageGroup) Add(msg *MessageWithPeerMetadata) error {
-	if _, found := g.Messages[msg.PeerID]; found {
-		return fmt.Errorf("message from peer %s already exists", msg.PeerID)
+// AddMessage adds a broadcasted message to the group, returning an error if the
+// message already exists.
+func (g *PeerMessageGroup) AddMessage(msg types.BroadcastMessage) error {
+	if g.BroadcastedMessageReceived {
+		return fmt.Errorf("message already received")
 	}
 
-	g.Messages[msg.PeerID] = msg
+	g.BroadcastedMessage = msg
+	g.BroadcastedMessageReceived = true
+
+	return nil
+}
+
+// AddHash adds a message hash to the group, returning an error if a hash
+// already exists for a peer. This does **not** check if the message is
+// validated as a hash may be added before the broadcasted message is received.
+func (g *PeerMessageGroup) AddHash(peerID peer.ID, hash types.BroadcastMessageHash) error {
+	if _, found := g.PeerMessageHashes[peerID]; found {
+		return fmt.Errorf("peer hash %s already exists", peerID)
+	}
+
+	g.PeerMessageHashes[peerID] = hash
 
 	return nil
 }
 
 // Completed returns true if the number of received messages matches the number
 // of recipients.
-func (g *PeerMessageGroup) Completed(hostID peer.ID, recipients []peer.ID) bool {
-	for _, recipient := range recipients {
-		// Ignore current host peer as it may be in recipients list but won't be
-		// contained in messages.
-		if recipient == hostID {
-			continue
-		}
-
-		// All other recipients need to be contained in messages
-		if _, found := g.Messages[recipient]; !found {
-			return false
-		}
-	}
-
-	return true
+func (g *PeerMessageGroup) Completed() bool {
+	return g.BroadcastedMessageReceived &&
+		len(g.PeerMessageHashes) == len(g.BroadcastedMessage.RecipientPeerIDs)
 }
 
 // GetMessageData returns the underlying MessageData for the group. This should
@@ -56,52 +67,40 @@ func (g *PeerMessageGroup) Completed(hostID peer.ID, recipients []peer.ID) bool 
 // This may return false if the group was created but did not receive any
 // messages (ie. when broadcasting)
 func (g *PeerMessageGroup) GetMessageData() (types.BroadcastMessage, bool) {
-	for _, msg := range g.Messages {
-		return msg.BroadcastMessage, true
-	}
-
-	return types.BroadcastMessage{}, false
+	return g.BroadcastedMessage, g.BroadcastedMessageReceived
 }
 
-// Len returns the number of messages in the group.
+// Len returns the number of received messages in the group, including the
+// broadcasted message.
 func (g *PeerMessageGroup) Len() int {
-	return len(g.Messages)
+	if g.BroadcastedMessageReceived {
+		return len(g.PeerMessageHashes) + 1
+	}
+
+	return len(g.PeerMessageHashes)
 }
 
 // Validate returns true if all messages in the group are the same.
 func (g *PeerMessageGroup) Validate() error {
-	if len(g.Messages) == 0 {
-		return nil
+	if len(g.PeerMessageHashes) == 0 {
+		return fmt.Errorf("group contains no hashes")
 	}
 
-	var messageID string
-	var message *MessageWithPeerMetadata
+	if !g.BroadcastedMessageReceived {
+		return fmt.Errorf("group contains no broadcasted message")
+	}
 
-	for _, msg := range g.Messages {
-		// All messages checked against the first one in slice
-		// TODO: Return the real message that is different from the others. e.g
-		// If the first one is the wrong one, this reports the second one as
-		// wrong.
+	broadcastMessageHash, err := g.BroadcastedMessage.Hash()
+	if err != nil {
+		return err
+	}
 
-		// Set messageID on first iteration
-		if messageID == "" {
-			messageID = msg.BroadcastMessage.ID
-		}
-
-		if msg.BroadcastMessage.ID != messageID {
+	for peerID, hash := range g.PeerMessageHashes {
+		if !broadcastMessageHash.Equal(hash) {
 			return fmt.Errorf(
-				"message ID from peer %s mismatch: %q != %q",
-				msg.PeerID, msg.BroadcastMessage.ID, messageID,
+				"group contains invalid hash for peer %s, got %v, expected %v",
+				peerID, hash, broadcastMessageHash,
 			)
-		}
-
-		if message == nil {
-			message = msg
-		}
-
-		// TODO: Ensure all messages are the same and signed?
-		if !msg.BroadcastMessage.Payload.Equal(message.BroadcastMessage.Payload) {
-			return fmt.Errorf("message payloads do not match from peer %s", msg.PeerID)
 		}
 	}
 

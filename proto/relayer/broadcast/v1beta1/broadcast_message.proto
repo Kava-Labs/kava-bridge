@@ -7,7 +7,8 @@ import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/kava-labs/kava-bridge/relayer/broadcast/types";
 
-// BroadcastMessage is used between peers to wrap messages for each protocol
+// BroadcastMessage is sent to other peers in the recipient list when a peer
+// wants to broadcast a new message.
 message BroadcastMessage {
   // Unique ID of this message.
   string id = 1 [(gogoproto.customname) = "ID"];
@@ -29,4 +30,15 @@ message BroadcastMessage {
 
 message HelloRequest {
   string message = 1;
+}
+
+// HashMsg is sent when a peer receives a broadcasted message and re-broadcasts
+// a hash of the broadcast message to other (non-broadcaster) peers.
+message HashMsg {
+  option (gogoproto.goproto_getters) = false;
+
+  // Message ID this hash is for.
+  string message_id = 1 [(gogoproto.customname) = "MessageID"];
+  // SHA3 256 hash of the message.
+  bytes hash = 2;
 }

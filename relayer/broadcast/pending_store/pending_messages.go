@@ -95,26 +95,52 @@ func (pm *PendingMessagesStore) DeleteGroup(msgID string) error {
 
 // AddMessage adds a message to it's corresponding pending message group,
 // returning an error if it is invalid.
-func (pm *PendingMessagesStore) AddMessage(msg MessageWithPeerMetadata) error {
+func (pm *PendingMessagesStore) AddMessage(msg types.BroadcastMessage) error {
 	pm.pendingMessagesLock.Lock()
 	defer pm.pendingMessagesLock.Unlock()
 
-	peerMsgGroup, found := pm.pendingMessages[msg.BroadcastMessage.ID]
+	peerMsgGroup, found := pm.pendingMessages[msg.ID]
 	if !found {
 		return ErrGroupNotFound
 	}
 
-	if err := peerMsgGroup.Add(&msg); err != nil {
+	if err := peerMsgGroup.AddMessage(msg); err != nil {
 		return err
 	}
 
-	// TODO: Optimize validate when using hashes
+	// Check if group contains any mismatched hashes
 	if err := peerMsgGroup.Validate(); err != nil {
 		return fmt.Errorf("invalid message: %w", err)
 	}
 
-	log.Debugw("added message to pending message group", "msgID", msg.BroadcastMessage.ID)
-	pm.pendingMessages[msg.BroadcastMessage.ID] = peerMsgGroup
+	log.Debugw("added message to pending message group", "msgID", msg.ID)
+	pm.pendingMessages[msg.ID] = peerMsgGroup
+
+	return nil
+}
+
+// AddMessage adds a message to it's corresponding pending message group,
+// returning an error if it is invalid.
+func (pm *PendingMessagesStore) AddHash(peerID peer.ID, msg types.HashMsg) error {
+	pm.pendingMessagesLock.Lock()
+	defer pm.pendingMessagesLock.Unlock()
+
+	peerMsgGroup, found := pm.pendingMessages[msg.MessageID]
+	if !found {
+		return ErrGroupNotFound
+	}
+
+	if err := peerMsgGroup.AddHash(peerID, msg.GetHash()); err != nil {
+		return err
+	}
+
+	// Check if group contains any mismatched hashes
+	if err := peerMsgGroup.Validate(); err != nil {
+		return fmt.Errorf("invalid message: %w", err)
+	}
+
+	log.Debugw("added hash to pending message group", "msgID", msg.MessageID)
+	pm.pendingMessages[msg.MessageID] = peerMsgGroup
 
 	return nil
 }
@@ -123,8 +149,6 @@ func (pm *PendingMessagesStore) AddMessage(msg MessageWithPeerMetadata) error {
 // received messages matches the number of recipients.
 func (pm *PendingMessagesStore) GroupIsCompleted(
 	msgID string,
-	hostID peer.ID,
-	recipients []peer.ID,
 ) (types.BroadcastMessage, bool) {
 	pm.pendingMessagesLock.RLock()
 	defer pm.pendingMessagesLock.RUnlock()
@@ -134,7 +158,7 @@ func (pm *PendingMessagesStore) GroupIsCompleted(
 		return types.BroadcastMessage{}, false
 	}
 
-	if !peerMsgGroup.Completed(hostID, recipients) {
+	if !peerMsgGroup.Completed() {
 		return types.BroadcastMessage{}, false
 	}
 

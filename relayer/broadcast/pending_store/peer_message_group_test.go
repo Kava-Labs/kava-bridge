@@ -34,7 +34,7 @@ func TestUniquePeerMessages(t *testing.T) {
 			&pending_store.PeerMessageGroup{
 				Messages: map[peer.ID]*pending_store.MessageWithPeerMetadata{
 					"peer1": {
-						BroadcastMessage: types.BroadcastMessage{
+						Message: types.BroadcastMessage{
 							ID: "msg id 1",
 							Payload: *mustMarshalAny(&types.HelloRequest{
 								Message: "hello world",
@@ -53,7 +53,7 @@ func TestUniquePeerMessages(t *testing.T) {
 			&pending_store.PeerMessageGroup{
 				Messages: map[peer.ID]*pending_store.MessageWithPeerMetadata{
 					"peer1": {
-						BroadcastMessage: types.BroadcastMessage{
+						Message: types.BroadcastMessage{
 							ID: "msg id 1",
 							Payload: *mustMarshalAny(&types.HelloRequest{
 								Message: "hello world",
@@ -62,7 +62,7 @@ func TestUniquePeerMessages(t *testing.T) {
 						PeerID: "peer1",
 					},
 					"peer2": {
-						BroadcastMessage: types.BroadcastMessage{
+						Message: types.BroadcastMessage{
 							ID: "msg id 1",
 							Payload: *mustMarshalAny(&types.HelloRequest{
 								Message: "hello world",
@@ -81,7 +81,7 @@ func TestUniquePeerMessages(t *testing.T) {
 			&pending_store.PeerMessageGroup{
 				Messages: map[peer.ID]*pending_store.MessageWithPeerMetadata{
 					"peer1": {
-						BroadcastMessage: types.BroadcastMessage{
+						Message: types.BroadcastMessage{
 							ID: "msg id 1",
 							Payload: *mustMarshalAny(&types.HelloRequest{
 								Message: "hello world",
@@ -90,7 +90,7 @@ func TestUniquePeerMessages(t *testing.T) {
 						PeerID: "peer1",
 					},
 					"peer2": {
-						BroadcastMessage: types.BroadcastMessage{
+						Message: types.BroadcastMessage{
 							ID: "msg id 2",
 							Payload: *mustMarshalAny(&types.HelloRequest{
 								Message: "hello world",
@@ -112,7 +112,7 @@ func TestUniquePeerMessages(t *testing.T) {
 			&pending_store.PeerMessageGroup{
 				Messages: map[peer.ID]*pending_store.MessageWithPeerMetadata{
 					"peer1": {
-						BroadcastMessage: types.BroadcastMessage{
+						Message: types.BroadcastMessage{
 							ID: "msg id 1",
 							Payload: *mustMarshalAny(&types.HelloRequest{
 								Message: "hello world",
@@ -121,7 +121,7 @@ func TestUniquePeerMessages(t *testing.T) {
 						PeerID: "peer1",
 					},
 					"peer2": {
-						BroadcastMessage: types.BroadcastMessage{
+						Message: types.BroadcastMessage{
 							ID: "msg id 1",
 							Payload: *mustMarshalAny(&types.HelloRequest{
 								Message: "goodbye world",

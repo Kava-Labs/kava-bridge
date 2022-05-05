@@ -37,8 +37,9 @@
   
     - [Msg](#bridge.v1beta1.Msg)
   
-- [relayer/v1beta1/broadcast_message.proto](#relayer/v1beta1/broadcast_message.proto)
+- [relayer/broadcast/v1beta1/broadcast_message.proto](#relayer/broadcast/v1beta1/broadcast_message.proto)
     - [BroadcastMessage](#relayer.v1beta1.BroadcastMessage)
+    - [HashMsg](#relayer.v1beta1.HashMsg)
     - [HelloRequest](#relayer.v1beta1.HelloRequest)
   
 - [Scalar Value Types](#scalar-value-types)
@@ -430,17 +431,18 @@ Msg defines the bridge Msg service.
 
 
 
-<a name="relayer/v1beta1/broadcast_message.proto"></a>
+<a name="relayer/broadcast/v1beta1/broadcast_message.proto"></a>
 <p align="right"><a href="#top">Top</a></p>
 
-## relayer/v1beta1/broadcast_message.proto
+## relayer/broadcast/v1beta1/broadcast_message.proto
 
 
 
 <a name="relayer.v1beta1.BroadcastMessage"></a>
 
 ### BroadcastMessage
-BroadcastMessage is used between peers to wrap messages for each protocol
+BroadcastMessage is sent to other peers in the recipient list when a peer
+wants to broadcast a new message.
 
 
 | Field | Type | Label | Description |
@@ -450,6 +452,23 @@ BroadcastMessage is used between peers to wrap messages for each protocol
 | `payload` | [google.protobuf.Any](#google.protobuf.Any) |  | Customtype workaround for not having to use a separate protocgen.sh script |
 | `created` | [google.protobuf.Timestamp](#google.protobuf.Timestamp) |  | Timestamp when the message was broadcasted. |
 | `ttl_seconds` | [uint64](#uint64) |  | Seconds after created time until the message expires. This requires roughly synced times between peers |
+
+
+
+
+
+
+<a name="relayer.v1beta1.HashMsg"></a>
+
+### HashMsg
+HashMsg is sent when a peer receives a broadcasted message and re-broadcasts
+a hash of the broadcast message to other (non-broadcaster) peers.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `message_id` | [string](#string) |  | Message ID this hash is for. |
+| `hash` | [bytes](#bytes) |  | SHA3 256 hash of the message. |
 
 
 
