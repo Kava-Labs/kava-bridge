@@ -7,6 +7,16 @@ import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/kava-labs/kava-bridge/relayer/broadcast/types";
 
+// BroadcasterMessage is the base message type for the broadcast package that
+// wraps all other message types. This is used as protobuf io segfaults when
+// reading as the Any type.
+message BroadcasterMessage {
+  // Customtype workaround for not having to use a separate protocgen.sh script.
+  // Data contains other proto messages, e.g. BroadcastMessage, HashMsg.
+  google.protobuf.Any data = 1
+      [(gogoproto.nullable) = false, (gogoproto.customtype) = "github.com/gogo/protobuf/types.Any"];
+}
+
 // BroadcastMessage is sent to other peers in the recipient list when a peer
 // wants to broadcast a new message.
 message BroadcastMessage {

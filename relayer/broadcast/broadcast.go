@@ -270,6 +270,8 @@ func (b *Broadcaster) handleIncomingBroadcastMsg(peerID peer.ID, msg types.Broad
 
 		// Rebroadcast to all other peers when first time seeing this message.
 		// Run in a goroutine to avoid blocking the incoming message handler.
+
+		// Broadcast hash of the received message to all other peers
 		go func() {
 			// Send Payload, NOT the BroadcastMessage, as SendProtoMessage wraps it in a Message.
 			if err := b.broadcastRawMessage(
@@ -419,13 +421,20 @@ func (b *Broadcaster) handleNewStream(s network.Stream) {
 	// Iterate over all messages, unmarshalling all as types.MessageData
 	r := stream.NewProtoMessageReader(s)
 	for {
-		var anyMsg prototypes.DynamicAny
-		if err := r.ReadMsg(&anyMsg); err != nil {
+		// Segfault if passing prototypes.DynamicAny to ReadMsg()
+		var broadcasterMsg types.BroadcasterMessage
+		if err := r.ReadMsg(&broadcasterMsg); err != nil {
 			// Error when closing stream
 			log.Warnf("error reading stream message from peer %s: %s", s.Conn().RemotePeer(), err)
 			_ = s.Reset()
 
 			return
+		}
+
+		var anyMsg prototypes.DynamicAny
+		if err := prototypes.UnmarshalAny(&broadcasterMsg.Data, &anyMsg); err != nil {
+			log.Warnf("error unmarshalling message Any data from peer %s: %s", s.Conn().RemotePeer(), err)
+			continue
 		}
 
 		// Ensure protobuf message fits our Message interface

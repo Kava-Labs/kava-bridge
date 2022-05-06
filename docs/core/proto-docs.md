@@ -39,6 +39,7 @@
   
 - [relayer/broadcast/v1beta1/broadcast_message.proto](#relayer/broadcast/v1beta1/broadcast_message.proto)
     - [BroadcastMessage](#relayer.v1beta1.BroadcastMessage)
+    - [BroadcasterMessage](#relayer.v1beta1.BroadcasterMessage)
     - [HashMsg](#relayer.v1beta1.HashMsg)
     - [HelloRequest](#relayer.v1beta1.HelloRequest)
   
@@ -452,6 +453,23 @@ wants to broadcast a new message.
 | `payload` | [google.protobuf.Any](#google.protobuf.Any) |  | Customtype workaround for not having to use a separate protocgen.sh script |
 | `created` | [google.protobuf.Timestamp](#google.protobuf.Timestamp) |  | Timestamp when the message was broadcasted. |
 | `ttl_seconds` | [uint64](#uint64) |  | Seconds after created time until the message expires. This requires roughly synced times between peers |
+
+
+
+
+
+
+<a name="relayer.v1beta1.BroadcasterMessage"></a>
+
+### BroadcasterMessage
+BroadcasterMessage is the base message type for the broadcast package that
+wraps all other message types. This is used as protobuf io segfaults when
+reading as the Any type.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `data` | [google.protobuf.Any](#google.protobuf.Any) |  | Customtype workaround for not having to use a separate protocgen.sh script. Data contains other proto messages, e.g. BroadcastMessage, HashMsg. |
 
 
 
