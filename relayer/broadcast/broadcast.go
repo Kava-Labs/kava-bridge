@@ -302,11 +302,7 @@ func (b *Broadcaster) handleIncomingBroadcastMsg(peerID peer.ID, msg types.Broad
 		return
 	}
 
-	if msgData, completed := b.pendingMessagesStore.GroupIsCompleted(
-		msg.ID,
-		b.host.ID(),
-		msg.RecipientPeerIDs,
-	); completed {
+	if msgData, completed := b.pendingMessagesStore.GroupIsCompleted(msg.ID); completed {
 		// All peers have responded with the same message, send it to the valid
 		// message channel to be handled.
 		b.incomingValidatedMessages <- msgData
@@ -346,20 +342,16 @@ func (b *Broadcaster) handleIncomingHashMsg(peerID peer.ID, msg types.HashMsg) {
 		return
 	}
 
-	if msgData, completed := b.pendingMessagesStore.GroupIsCompleted(
-		msg.MessageID,
-		b.host.ID(),
-		msg.RecipientPeerIDs,
-	); completed {
+	if msgData, completed := b.pendingMessagesStore.GroupIsCompleted(msg.MessageID); completed {
 		// All peers have responded with the same message, send it to the valid
 		// message channel to be handled.
 		b.incomingValidatedMessages <- msgData
 
 		// Remove from pending messages
-		if err := b.pendingMessagesStore.DeleteGroup(msg.ID); err != nil {
+		if err := b.pendingMessagesStore.DeleteGroup(msg.MessageID); err != nil {
 			log.Warnw(
 				"failed to remove completed message group from pending messages store",
-				"msgId", msg.ID,
+				"msgId", msg.MessageID,
 				"err", err,
 			)
 		}

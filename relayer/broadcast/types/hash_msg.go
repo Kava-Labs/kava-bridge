@@ -9,6 +9,14 @@ import (
 
 var _ Message = (*HashMsg)(nil)
 
+// NewHashMsg returns a new HashMsg
+func NewHashMsg(messageID string, hash BroadcastMessageHash) HashMsg {
+	return HashMsg{
+		MessageID: messageID,
+		Hash:      hash[:],
+	}
+}
+
 func (msg *HashMsg) Validate() error {
 	if strings.TrimSpace(msg.MessageID) == "" {
 		return ErrMsgIDEmpty

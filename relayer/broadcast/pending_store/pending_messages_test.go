@@ -4,7 +4,6 @@ import (
 	"testing"
 	"time"
 
-	prototypes "github.com/gogo/protobuf/types"
 	"github.com/kava-labs/kava-bridge/relayer/broadcast/pending_store"
 	"github.com/kava-labs/kava-bridge/relayer/broadcast/types"
 	"github.com/kava-labs/kava-bridge/relayer/testutil"
@@ -80,7 +79,7 @@ func TestAddMessage_GroupExists(t *testing.T) {
 	require.NoError(t, err, "should not error when adding to a group that exists")
 }
 
-func TestAddMessage_InvalidMessage(t *testing.T) {
+func TestAddMessage_DuplicateMessage(t *testing.T) {
 	store := pending_store.NewPendingMessagesStore(pending_store.DEFAULT_CLEAR_EXPIRED_INTERVAL)
 
 	msgID, err := types.NewBroadcastMessageID()
@@ -96,10 +95,10 @@ func TestAddMessage_InvalidMessage(t *testing.T) {
 
 	// Invalid message should error
 	err = store.AddMessage(types.BroadcastMessage{
-		ID:      msgID,
-		Payload: prototypes.Any{TypeUrl: "cats"},
+		ID: msgID,
 	})
 	require.Error(t, err)
+	require.Equal(t, "message already received", err.Error())
 }
 
 func TestGroupIsCompleted_NotExist(t *testing.T) {
@@ -121,23 +120,27 @@ func TestGroupIsCompleted_Incomplete(t *testing.T) {
 	created := store.TryNewGroup(msgID)
 	require.True(t, created)
 
-	err = store.AddMessage(types.BroadcastMessage{
+	msg := types.BroadcastMessage{
 		ID: msgID,
-	})
+		// Only 1 recipient
+		RecipientPeerIDs: testutil.TestPeerIDs[1:2],
+	}
+
+	err = store.AddMessage(msg)
 	require.NoError(t, err)
 
 	// Requires 2
 	_, complete := store.GroupIsCompleted(msgID)
 	require.False(t, complete, "should not be complete if group is incomplete")
 
-	err = store.AddMessage(types.BroadcastMessage{
-		ID:               msgID,
-		RecipientPeerIDs: testutil.TestPeerIDs[1:2],
-	})
+	msgHash, err := msg.Hash()
+	require.NoError(t, err)
+
+	err = store.AddHash(testutil.TestPeerIDs[2], types.NewHashMsg(msgID, msgHash))
 	require.NoError(t, err)
 
 	_, complete = store.GroupIsCompleted(msgID)
-	require.True(t, complete, "should not be complete when host + recipients match num messages")
+	require.True(t, complete, "should be complete when recipient hashes added")
 }
 
 func TestRemovesExpiredGroups(t *testing.T) {
