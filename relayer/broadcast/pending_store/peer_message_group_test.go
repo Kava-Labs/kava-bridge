@@ -7,11 +7,27 @@ import (
 	prototypes "github.com/gogo/protobuf/types"
 	"github.com/kava-labs/kava-bridge/relayer/broadcast/pending_store"
 	"github.com/kava-labs/kava-bridge/relayer/broadcast/types"
+	"github.com/kava-labs/kava-bridge/relayer/testutil"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/stretchr/testify/require"
 )
 
 func TestUniquePeerMessages(t *testing.T) {
+	msgID, err := types.NewBroadcastMessageID()
+	require.NoError(t, err)
+
+	msg := types.BroadcastMessage{
+		ID: msgID,
+		Payload: *mustMarshalAny(&types.HelloRequest{
+			Message: "hello world",
+		}),
+	}
+
+	msgHash, err := msg.Hash()
+	require.NoError(t, err)
+
+	invalidMsgHash := types.BroadcastMessageHash{}
+
 	type errArgs struct {
 		expectPass bool
 		contains   string
@@ -23,117 +39,65 @@ func TestUniquePeerMessages(t *testing.T) {
 		errArgs errArgs
 	}{
 		{
-			"valid - empty",
+			"valid - broadcasted message + 1 hash",
+			&pending_store.PeerMessageGroup{
+				BroadcastedMessage:         msg,
+				BroadcastedMessageReceived: true,
+				PeerMessageHashes: map[peer.ID]types.BroadcastMessageHash{
+					testutil.TestPeerIDs[0]: msgHash,
+				},
+			},
+			errArgs{
+				expectPass: true,
+			},
+		},
+		{
+			"valid - broadcasted message + 2 hashes",
+			&pending_store.PeerMessageGroup{
+				BroadcastedMessage:         msg,
+				BroadcastedMessageReceived: true,
+				PeerMessageHashes: map[peer.ID]types.BroadcastMessageHash{
+					testutil.TestPeerIDs[0]: msgHash,
+					testutil.TestPeerIDs[1]: msgHash,
+				},
+			},
+			errArgs{
+				expectPass: true,
+			},
+		},
+		{
+			"invalid - empty",
 			pending_store.NewPeerMessageGroup(),
 			errArgs{
-				expectPass: true,
+				expectPass: false,
+				contains:   "group contains no hashes",
 			},
 		},
 		{
-			"valid - 1 item",
+			"invalid - with broadcasted message + no hashes",
 			&pending_store.PeerMessageGroup{
-				Messages: map[peer.ID]*pending_store.MessageWithPeerMetadata{
-					"peer1": {
-						Message: types.BroadcastMessage{
-							ID: "msg id 1",
-							Payload: *mustMarshalAny(&types.HelloRequest{
-								Message: "hello world",
-							}),
-						},
-						PeerID: "peer1",
-					},
-				},
+				BroadcastedMessage:         msg,
+				BroadcastedMessageReceived: true,
+				PeerMessageHashes:          map[peer.ID]types.BroadcastMessageHash{},
 			},
 			errArgs{
-				expectPass: true,
+				expectPass: false,
+				contains:   "group contains no hashes",
 			},
 		},
 		{
-			"valid - 2 same items",
+			"invalid - broadcasted message + mismatch hashes",
 			&pending_store.PeerMessageGroup{
-				Messages: map[peer.ID]*pending_store.MessageWithPeerMetadata{
-					"peer1": {
-						Message: types.BroadcastMessage{
-							ID: "msg id 1",
-							Payload: *mustMarshalAny(&types.HelloRequest{
-								Message: "hello world",
-							}),
-						},
-						PeerID: "peer1",
-					},
-					"peer2": {
-						Message: types.BroadcastMessage{
-							ID: "msg id 1",
-							Payload: *mustMarshalAny(&types.HelloRequest{
-								Message: "hello world",
-							}),
-						},
-						PeerID: "peer2",
-					},
-				},
-			},
-			errArgs{
-				expectPass: true,
-			},
-		},
-		{
-			"invalid - different message id",
-			&pending_store.PeerMessageGroup{
-				Messages: map[peer.ID]*pending_store.MessageWithPeerMetadata{
-					"peer1": {
-						Message: types.BroadcastMessage{
-							ID: "msg id 1",
-							Payload: *mustMarshalAny(&types.HelloRequest{
-								Message: "hello world",
-							}),
-						},
-						PeerID: "peer1",
-					},
-					"peer2": {
-						Message: types.BroadcastMessage{
-							ID: "msg id 2",
-							Payload: *mustMarshalAny(&types.HelloRequest{
-								Message: "hello world",
-							}),
-						},
-						PeerID: "peer2",
-					},
+				BroadcastedMessage:         msg,
+				BroadcastedMessageReceived: true,
+				PeerMessageHashes: map[peer.ID]types.BroadcastMessageHash{
+					testutil.TestPeerIDs[0]: msgHash,
+					testutil.TestPeerIDs[1]: invalidMsgHash,
 				},
 			},
 			errArgs{
 				expectPass: false,
-				// Does not contain full message, non-deterministic map iteration
-				// may swap the order.
-				contains: "mismatch: \"msg id ",
-			},
-		},
-		{
-			"invalid - different payload",
-			&pending_store.PeerMessageGroup{
-				Messages: map[peer.ID]*pending_store.MessageWithPeerMetadata{
-					"peer1": {
-						Message: types.BroadcastMessage{
-							ID: "msg id 1",
-							Payload: *mustMarshalAny(&types.HelloRequest{
-								Message: "hello world",
-							}),
-						},
-						PeerID: "peer1",
-					},
-					"peer2": {
-						Message: types.BroadcastMessage{
-							ID: "msg id 1",
-							Payload: *mustMarshalAny(&types.HelloRequest{
-								Message: "goodbye world",
-							}),
-						},
-						PeerID: "peer2",
-					},
-				},
-			},
-			errArgs{
-				expectPass: false,
-				contains:   "message payloads do not match from peer",
+				contains:   "group contains invalid hash for peer",
 			},
 		},
 	}

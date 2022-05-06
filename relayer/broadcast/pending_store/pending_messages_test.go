@@ -59,11 +59,8 @@ func TestAddMessage_GroupNotExists(t *testing.T) {
 	msgID, err := types.NewBroadcastMessageID()
 	require.NoError(t, err)
 
-	err = store.AddMessage(pending_store.MessageWithPeerMetadata{
-		PeerID: testutil.TestPeerIDs[0],
-		BroadcastMessage: types.BroadcastMessage{
-			ID: msgID,
-		},
+	err = store.AddMessage(types.BroadcastMessage{
+		ID: msgID,
 	})
 	require.ErrorIs(t, err, pending_store.ErrGroupNotFound, "should not be able to add to a group that doesn't exist")
 }
@@ -77,11 +74,8 @@ func TestAddMessage_GroupExists(t *testing.T) {
 	created := store.TryNewGroup(msgID)
 	require.True(t, created)
 
-	err = store.AddMessage(pending_store.MessageWithPeerMetadata{
-		PeerID: testutil.TestPeerIDs[0],
-		BroadcastMessage: types.BroadcastMessage{
-			ID: msgID,
-		},
+	err = store.AddMessage(types.BroadcastMessage{
+		ID: msgID,
 	})
 	require.NoError(t, err, "should not error when adding to a group that exists")
 }
@@ -95,21 +89,15 @@ func TestAddMessage_InvalidMessage(t *testing.T) {
 	created := store.TryNewGroup(msgID)
 	require.True(t, created)
 
-	err = store.AddMessage(pending_store.MessageWithPeerMetadata{
-		PeerID: testutil.TestPeerIDs[0],
-		BroadcastMessage: types.BroadcastMessage{
-			ID: msgID,
-		},
+	err = store.AddMessage(types.BroadcastMessage{
+		ID: msgID,
 	})
 	require.NoError(t, err)
 
 	// Invalid message should error
-	err = store.AddMessage(pending_store.MessageWithPeerMetadata{
-		PeerID: testutil.TestPeerIDs[1],
-		BroadcastMessage: types.BroadcastMessage{
-			ID:      msgID,
-			Payload: prototypes.Any{TypeUrl: "cats"},
-		},
+	err = store.AddMessage(types.BroadcastMessage{
+		ID:      msgID,
+		Payload: prototypes.Any{TypeUrl: "cats"},
 	})
 	require.Error(t, err)
 }
@@ -120,7 +108,7 @@ func TestGroupIsCompleted_NotExist(t *testing.T) {
 	msgID, err := types.NewBroadcastMessageID()
 	require.NoError(t, err)
 
-	_, complete := store.GroupIsCompleted(msgID, testutil.TestPeerIDs[0], testutil.TestPeerIDs[1:2])
+	_, complete := store.GroupIsCompleted(msgID)
 	require.False(t, complete, "should not be complete if group doesn't exist")
 }
 
@@ -133,27 +121,22 @@ func TestGroupIsCompleted_Incomplete(t *testing.T) {
 	created := store.TryNewGroup(msgID)
 	require.True(t, created)
 
-	err = store.AddMessage(pending_store.MessageWithPeerMetadata{
-		PeerID: testutil.TestPeerIDs[0],
-		BroadcastMessage: types.BroadcastMessage{
-			ID: msgID,
-		},
+	err = store.AddMessage(types.BroadcastMessage{
+		ID: msgID,
 	})
 	require.NoError(t, err)
 
 	// Requires 2
-	_, complete := store.GroupIsCompleted(msgID, testutil.TestPeerIDs[0], testutil.TestPeerIDs[1:2])
+	_, complete := store.GroupIsCompleted(msgID)
 	require.False(t, complete, "should not be complete if group is incomplete")
 
-	err = store.AddMessage(pending_store.MessageWithPeerMetadata{
-		PeerID: testutil.TestPeerIDs[1],
-		BroadcastMessage: types.BroadcastMessage{
-			ID: msgID,
-		},
+	err = store.AddMessage(types.BroadcastMessage{
+		ID:               msgID,
+		RecipientPeerIDs: testutil.TestPeerIDs[1:2],
 	})
 	require.NoError(t, err)
 
-	_, complete = store.GroupIsCompleted(msgID, testutil.TestPeerIDs[0], testutil.TestPeerIDs[1:2])
+	_, complete = store.GroupIsCompleted(msgID)
 	require.True(t, complete, "should not be complete when host + recipients match num messages")
 }
 
@@ -166,13 +149,10 @@ func TestRemovesExpiredGroups(t *testing.T) {
 	created := store.TryNewGroup(msgID)
 	require.True(t, created)
 
-	err = store.AddMessage(pending_store.MessageWithPeerMetadata{
-		PeerID: testutil.TestPeerIDs[0],
-		BroadcastMessage: types.BroadcastMessage{
-			ID:         msgID,
-			Created:    time.Now().Add(-time.Hour),
-			TTLSeconds: 1,
-		},
+	err = store.AddMessage(types.BroadcastMessage{
+		ID:         msgID,
+		Created:    time.Now().Add(-time.Hour),
+		TTLSeconds: 1,
 	})
 	require.NoError(t, err)
 
@@ -194,13 +174,10 @@ func TestKeepsNonExpiredGroups(t *testing.T) {
 	created := store.TryNewGroup(msgID)
 	require.True(t, created)
 
-	err = store.AddMessage(pending_store.MessageWithPeerMetadata{
-		PeerID: testutil.TestPeerIDs[0],
-		BroadcastMessage: types.BroadcastMessage{
-			ID:         msgID,
-			Created:    time.Now(),
-			TTLSeconds: 4,
-		},
+	err = store.AddMessage(types.BroadcastMessage{
+		ID:         msgID,
+		Created:    time.Now(),
+		TTLSeconds: 4,
 	})
 	require.NoError(t, err)
 
