@@ -70,24 +70,12 @@ func (g *PeerMessageGroup) GetMessageData() (types.BroadcastMessage, bool) {
 	return g.BroadcastedMessage, g.BroadcastedMessageReceived
 }
 
-// Len returns the number of received messages in the group, including the
-// broadcasted message.
-func (g *PeerMessageGroup) Len() int {
-	if g.BroadcastedMessageReceived {
-		return len(g.PeerMessageHashes) + 1
-	}
-
-	return len(g.PeerMessageHashes)
-}
-
-// Validate returns true if all messages in the group are the same.
+// Validate returns nil if all message hashes are valid OR if it is still
+// waiting on additional information e.g. the broadcasted message. This only
+// returns an error if the entire group should be invalidated and discarded.
 func (g *PeerMessageGroup) Validate() error {
-	if len(g.PeerMessageHashes) == 0 {
-		return fmt.Errorf("group contains no hashes")
-	}
-
 	if !g.BroadcastedMessageReceived {
-		return fmt.Errorf("group contains no broadcasted message")
+		return nil
 	}
 
 	broadcastMessageHash, err := g.BroadcastedMessage.Hash()

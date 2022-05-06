@@ -39,6 +39,24 @@ func TestUniquePeerMessages(t *testing.T) {
 		errArgs errArgs
 	}{
 		{
+			"valid - empty",
+			pending_store.NewPeerMessageGroup(),
+			errArgs{
+				expectPass: true,
+			},
+		},
+		{
+			"valid - with broadcasted message + no hashes",
+			&pending_store.PeerMessageGroup{
+				BroadcastedMessage:         msg,
+				BroadcastedMessageReceived: true,
+				PeerMessageHashes:          map[peer.ID]types.BroadcastMessageHash{},
+			},
+			errArgs{
+				expectPass: true,
+			},
+		},
+		{
 			"valid - broadcasted message + 1 hash",
 			&pending_store.PeerMessageGroup{
 				BroadcastedMessage:         msg,
@@ -63,26 +81,6 @@ func TestUniquePeerMessages(t *testing.T) {
 			},
 			errArgs{
 				expectPass: true,
-			},
-		},
-		{
-			"invalid - empty",
-			pending_store.NewPeerMessageGroup(),
-			errArgs{
-				expectPass: false,
-				contains:   "group contains no hashes",
-			},
-		},
-		{
-			"invalid - with broadcasted message + no hashes",
-			&pending_store.PeerMessageGroup{
-				BroadcastedMessage:         msg,
-				BroadcastedMessageReceived: true,
-				PeerMessageHashes:          map[peer.ID]types.BroadcastMessageHash{},
-			},
-			errArgs{
-				expectPass: false,
-				contains:   "group contains no hashes",
 			},
 		},
 		{

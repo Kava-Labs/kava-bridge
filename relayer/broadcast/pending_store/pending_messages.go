@@ -108,7 +108,8 @@ func (pm *PendingMessagesStore) AddMessage(msg types.BroadcastMessage) error {
 		return err
 	}
 
-	// Check if group contains any mismatched hashes
+	// Check if group contains any mismatched hashes, only if hash received
+	// before broadcast message.
 	if err := peerMsgGroup.Validate(); err != nil {
 		return fmt.Errorf("invalid message: %w", err)
 	}
@@ -136,7 +137,7 @@ func (pm *PendingMessagesStore) AddHash(peerID peer.ID, msg types.HashMsg) error
 
 	// Check if group contains any mismatched hashes
 	if err := peerMsgGroup.Validate(); err != nil {
-		return fmt.Errorf("invalid message: %w", err)
+		return fmt.Errorf("invalid hash: %w", err)
 	}
 
 	log.Debugw("added hash to pending message group", "msgID", msg.MessageID)
