@@ -2,6 +2,7 @@ package mp_tss
 
 import (
 	"fmt"
+	"time"
 
 	logging "github.com/ipfs/go-log/v2"
 
@@ -21,7 +22,21 @@ func RunKeyGen(params SetupOutput, transport Transporter) (chan keygen.LocalPart
 
 	log.Debugw("creating new local party")
 	party := keygen.NewLocalParty(params.params, outCh, endCh, *params.preParams)
+
+	log := log.Named(party.PartyID().String())
+
 	log.Debugw("local party created", "partyID", party.PartyID().String())
+
+	go func() {
+		for {
+			time.Sleep(5 * time.Second)
+			log.Debugw(
+				"party waiting for",
+				"party index", party.PartyID().Index,
+				"waitingFor()", party.WaitingFor(),
+			)
+		}
+	}()
 
 	// Start party in goroutine
 	go func() {
@@ -33,14 +48,21 @@ func RunKeyGen(params SetupOutput, transport Transporter) (chan keygen.LocalPart
 
 	// Process outgoing and incoming messages
 	go func() {
+		incomingMsgCh := transport.Receive()
+
 		log.Debug("Starting out/in message loop")
 		for {
+			log.Debugw("waiting for next message...", "party index", party.PartyID().Index)
 			select {
 			case outgoingMsg := <-outCh:
-				outgoingMsg.GetTo()
+				log.Debugw("outgoing message", "GetTo()", outgoingMsg.GetTo())
 
 				data, routing, err := outgoingMsg.WireBytes()
-				log.Debugw("keygen output message", "routing", routing)
+				log.Debugw(
+					"keygen outgoing msg write bytes",
+					"party index", party.PartyID().Index,
+					"routing", routing,
+				)
 
 				if err != nil {
 					errCh <- party.WrapError(err)
@@ -54,9 +76,16 @@ func RunKeyGen(params SetupOutput, transport Transporter) (chan keygen.LocalPart
 					return
 				}
 
-				log.Debugw("outgoing message done")
-			case incomingMsg := <-transport.Receive():
-				log.Debugw("received message", "from", incomingMsg.from.String(), "isBroadcast", incomingMsg.isBroadcast)
+				log.Debugw("outgoing message done", "party index", party.PartyID().Index)
+			case incomingMsg := <-incomingMsgCh:
+				log.Debugw(
+					"received message",
+					"party index", party.PartyID().Index,
+					"from index", incomingMsg.from.Index,
+					"isBroadcast", incomingMsg.isBroadcast,
+					"len(bytes)", len(incomingMsg.wireBytes),
+				)
+
 				ok, err := party.UpdateFromBytes(incomingMsg.wireBytes, incomingMsg.from, incomingMsg.isBroadcast)
 				if err != nil {
 					log.Errorw("failed to update from bytes", "err", err)
@@ -64,7 +93,11 @@ func RunKeyGen(params SetupOutput, transport Transporter) (chan keygen.LocalPart
 					return
 				}
 
-				log.Debugw("updated party from bytes", "ok", ok)
+				log.Debugw(
+					"updated party from bytes",
+					"party index", party.PartyID().Index,
+					"ok", ok,
+				)
 
 				// TODO: What does ok mean?
 				if !ok {

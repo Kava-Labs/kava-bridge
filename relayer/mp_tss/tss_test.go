@@ -3,7 +3,9 @@ package mp_tss_test
 import (
 	"encoding/json"
 	"fmt"
+	"runtime"
 	"testing"
+	"time"
 
 	logging "github.com/ipfs/go-log/v2"
 
@@ -18,10 +20,15 @@ func TestKeygen(t *testing.T) {
 	require.NoError(t, err)
 
 	count := 2
-	threshold := 1 // 4 of 5
+	threshold := 1 // 1 of 2
 
 	// 1. Create party ID for each peer, share with other peers
 	partyIDs := tss.GenerateTestPartyIDs(count)
+
+	partyIDMap := make(map[string]*tss.PartyID)
+	for _, id := range partyIDs {
+		partyIDMap[id.Id] = id
+	}
 
 	var setupOptions []mp_tss.SetupOptions
 	for i := 0; i < count; i++ {
@@ -57,7 +64,8 @@ func TestKeygen(t *testing.T) {
 	for _, transport := range transports {
 		for _, otherTransport := range transports {
 			// Skip self
-			if transport.PartyID == otherTransport.PartyID {
+			if transport.PartyID.Index == otherTransport.PartyID.Index {
+				t.Logf("skipping self for transport: %v == %v", transport.PartyID.Index, otherTransport.PartyID.Index)
 				continue
 			}
 
@@ -78,14 +86,38 @@ func TestKeygen(t *testing.T) {
 
 	t.Logf("started: %+v", outputChs)
 
-	var keys []keygen.LocalPartySaveData
-	for i := 0; i < count; i++ {
-		select {
-		case output := <-outputChs[i]:
-			keys = append(keys, output)
-		case err := <-errChs[i]:
-			t.Fatal(err)
+	errAgg := make(chan *tss.Error)
+	outputAgg := make(chan keygen.LocalPartySaveData)
+
+	for _, errCh := range errChs {
+		go func(errCh chan *tss.Error) {
+			for err := range errCh {
+				errAgg <- err
+			}
+		}(errCh)
+	}
+
+	for _, outputCh := range outputChs {
+		go func(outputCh chan keygen.LocalPartySaveData) {
+			for output := range outputCh {
+				outputAgg <- output
+			}
+		}(outputCh)
+	}
+
+	go func() {
+		for {
+			t.Logf("goroutines: %v", runtime.NumGoroutine())
+			time.Sleep(time.Second * 5)
 		}
+	}()
+
+	var keys []keygen.LocalPartySaveData
+	select {
+	case output := <-outputAgg:
+		keys = append(keys, output)
+	case err := <-errAgg:
+		t.Fatal(err)
 	}
 
 	// 5. Output keys

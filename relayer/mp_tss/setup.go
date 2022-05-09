@@ -5,7 +5,6 @@ import (
 
 	"github.com/binance-chain/tss-lib/ecdsa/keygen"
 	"github.com/binance-chain/tss-lib/tss"
-	s256k1 "github.com/btcsuite/btcd/btcec"
 )
 
 type SetupOptions struct {
@@ -24,7 +23,7 @@ func CreateKeygenParams(options SetupOptions) (SetupOutput, error) {
 	// Set up elliptic curve
 	// use ECDSA, which is used by default
 	// TODO: Check if this is necessary since tss.NewParameters accepts a curve.
-	tss.SetCurve(s256k1.S256())
+	// tss.SetCurve(s256k1.S256())
 
 	// When using the keygen party it is recommended that you pre-compute the
 	// "safe primes" and Paillier secret beforehand because this can take some time.
@@ -40,7 +39,7 @@ func CreateKeygenParams(options SetupOptions) (SetupOutput, error) {
 	parties := tss.SortPartyIDs(options.PartyIDs)
 
 	ctx := tss.NewPeerContext(parties)
-	params := tss.NewParameters(s256k1.S256(), ctx, options.PartyID, len(parties), options.Threshold)
+	params := tss.NewParameters(tss.S256(), ctx, options.PartyID, len(parties), options.Threshold)
 
 	// You should keep a local mapping of `id` strings to `*PartyID` instances
 	// so that an incoming message can have its origin party's `*PartyID`
