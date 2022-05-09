@@ -25,32 +25,23 @@ func TestKeygen(t *testing.T) {
 	// 1. Create party ID for each peer, share with other peers
 	partyIDs := tss.GenerateTestPartyIDs(count)
 
-	var setupOptions []mp_tss.SetupOptions
-	for i := 0; i < count; i++ {
-		setupOptions = append(setupOptions, mp_tss.SetupOptions{
-			PartyIDs:  partyIDs.ToUnSorted(),
-			PartyID:   partyIDs[i],
-			Threshold: threshold,
-		})
-	}
-
-	t.Logf("setupOptions: %+v", setupOptions)
-
 	// 2. Generate pre-params and params for each peer
-	var preParams []mp_tss.SetupOutput
-	for _, opts := range setupOptions {
-		params, err := mp_tss.CreateKeygenParams(opts)
+	var preParamsSlice []*keygen.LocalPreParams
+	var paramsSlice []*tss.Parameters
+	for i := 0; i < count; i++ {
+		preParams, params, err := mp_tss.CreateKeygenParams(partyIDs.ToUnSorted(), partyIDs[i], threshold)
 		require.NoError(t, err)
 
-		preParams = append(preParams, params)
+		preParamsSlice = append(preParamsSlice, preParams)
+		paramsSlice = append(paramsSlice, params)
 	}
 
-	t.Logf("preParams: %+v", preParams)
+	t.Logf("preParams: %+v", preParamsSlice)
 
 	// 3. Create transport between peers
 	var transports []*mp_tss.MemoryTransporter
-	for _, opts := range setupOptions {
-		transports = append(transports, mp_tss.NewMemoryTransporter(opts.PartyID))
+	for i := 0; i < count; i++ {
+		transports = append(transports, mp_tss.NewMemoryTransporter(partyIDs[i]))
 	}
 
 	t.Logf("transports: %+v", transports)
@@ -74,7 +65,7 @@ func TestKeygen(t *testing.T) {
 	var outputChs []chan keygen.LocalPartySaveData
 	var errChs []chan *tss.Error
 	for i := 0; i < count; i++ {
-		outputCh, errCh := mp_tss.RunKeyGen(preParams[i], transports[i])
+		outputCh, errCh := mp_tss.RunKeyGen(preParamsSlice[i], paramsSlice[i], transports[i])
 		outputChs = append(outputChs, outputCh)
 		errChs = append(errChs, errCh)
 	}
@@ -108,15 +99,22 @@ func TestKeygen(t *testing.T) {
 	}()
 
 	var keys []keygen.LocalPartySaveData
-	select {
-	case output := <-outputAgg:
-		keys = append(keys, output)
-	case err := <-errAgg:
-		t.Fatal(err)
+
+	for i := 0; i < count; i++ {
+		select {
+		case output := <-outputAgg:
+			keys = append(keys, output)
+		case err := <-errAgg:
+			t.Fatal(err)
+		}
 	}
 
 	// 5. Output keys
 	bz, err := json.Marshal(&keys)
 	require.NoError(t, err)
 	fmt.Println(string(bz))
+
+	// make sure everyone has the same ECDSA public key
+	require.Equal(t, keys[0].ECDSAPub.X(), keys[1].ECDSAPub.X())
+	require.Equal(t, keys[0].ECDSAPub.Y(), keys[1].ECDSAPub.Y())
 }

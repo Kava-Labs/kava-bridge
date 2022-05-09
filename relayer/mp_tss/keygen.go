@@ -12,7 +12,11 @@ import (
 
 var log = logging.Logger("mp_tss")
 
-func RunKeyGen(params SetupOutput, transport Transporter) (chan keygen.LocalPartySaveData, chan *tss.Error) {
+func RunKeyGen(
+	preParams *keygen.LocalPreParams,
+	params *tss.Parameters,
+	transport Transporter,
+) (chan keygen.LocalPartySaveData, chan *tss.Error) {
 	// outgoing messages to other peers
 	outCh := make(chan tss.Message, 10)
 	// output data when keygen finished
@@ -21,7 +25,7 @@ func RunKeyGen(params SetupOutput, transport Transporter) (chan keygen.LocalPart
 	errCh := make(chan *tss.Error, 10)
 
 	log.Debugw("creating new local party")
-	party := keygen.NewLocalParty(params.params, outCh, endCh, *params.preParams)
+	party := keygen.NewLocalParty(params, outCh, endCh, *preParams)
 
 	log := log.Named(party.PartyID().String())
 

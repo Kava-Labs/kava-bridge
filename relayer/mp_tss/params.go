@@ -7,37 +7,26 @@ import (
 	"github.com/binance-chain/tss-lib/tss"
 )
 
-type SetupOptions struct {
-	PartyIDs tss.UnSortedPartyIDs
-	PartyID  *tss.PartyID
-
-	Threshold int
-}
-
-type SetupOutput struct {
-	preParams *keygen.LocalPreParams
-	params    *tss.Parameters
-}
-
-func CreateKeygenParams(options SetupOptions) (SetupOutput, error) {
+func CreateKeygenParams(
+	partyIDs tss.UnSortedPartyIDs,
+	localPartyID *tss.PartyID,
+	threshold int,
+) (*keygen.LocalPreParams, *tss.Parameters, error) {
 	// When using the keygen party it is recommended that you pre-compute the
 	// "safe primes" and Paillier secret beforehand because this can take some time.
 	// This code will generate those parameters using a concurrency limit equal
 	// to the number of available CPU cores.
 	preParams, err := keygen.GeneratePreParams(1 * time.Minute)
 	if err != nil {
-		return SetupOutput{}, err
+		return nil, nil, err
 	}
 
 	// Create a `*PartyID` for each participating peer on the network
 	// (you should call `tss.NewPartyID` for each one)
-	parties := tss.SortPartyIDs(options.PartyIDs)
+	parties := tss.SortPartyIDs(partyIDs)
 
 	ctx := tss.NewPeerContext(parties)
-	params := tss.NewParameters(tss.S256(), ctx, options.PartyID, len(parties), options.Threshold)
+	params := tss.NewParameters(tss.S256(), ctx, localPartyID, len(parties), threshold)
 
-	return SetupOutput{
-		preParams: preParams,
-		params:    params,
-	}, err
+	return preParams, params, nil
 }
