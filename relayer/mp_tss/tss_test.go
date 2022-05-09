@@ -25,11 +25,6 @@ func TestKeygen(t *testing.T) {
 	// 1. Create party ID for each peer, share with other peers
 	partyIDs := tss.GenerateTestPartyIDs(count)
 
-	partyIDMap := make(map[string]*tss.PartyID)
-	for _, id := range partyIDs {
-		partyIDMap[id.Id] = id
-	}
-
 	var setupOptions []mp_tss.SetupOptions
 	for i := 0; i < count; i++ {
 		setupOptions = append(setupOptions, mp_tss.SetupOptions{

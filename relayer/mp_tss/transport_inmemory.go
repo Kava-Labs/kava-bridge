@@ -11,7 +11,7 @@ type MemoryTransporter struct {
 	// incoming messages from other parties.
 	recvChan chan ReceivedPartyState
 	// outgoing messages to other parties
-	sendChan map[string]chan ReceivedPartyState
+	sendChan map[*tss.PartyID]chan ReceivedPartyState
 }
 
 var _ Transporter = (*MemoryTransporter)(nil)
@@ -20,7 +20,7 @@ func NewMemoryTransporter(partyID *tss.PartyID) *MemoryTransporter {
 	ts := &MemoryTransporter{
 		PartyID:  partyID,
 		recvChan: make(chan ReceivedPartyState, 1),
-		sendChan: make(map[string]chan ReceivedPartyState),
+		sendChan: make(map[*tss.PartyID]chan ReceivedPartyState),
 	}
 
 	return ts
@@ -32,8 +32,7 @@ func (mt *MemoryTransporter) Send(data []byte, routing *tss.MessageRouting) erro
 	log.Debugw("sending message", "to", routing.To, "isBroadcast", routing.IsBroadcast)
 
 	if routing.IsBroadcast && len(routing.To) != 0 {
-		panic("cannot send broadcast message to a specific party")
-		// return fmt.Errorf("cannot send broadcast message to a specific party")
+		return fmt.Errorf("cannot send broadcast message to a specific party")
 	}
 
 	if routing.IsBroadcast && len(routing.To) == 0 {
@@ -54,26 +53,26 @@ func (mt *MemoryTransporter) Send(data []byte, routing *tss.MessageRouting) erro
 		return nil
 	}
 
-	for _, party := range routing.To {
-		ch, ok := mt.sendChan[party.Id]
+	for _, partyID := range routing.To {
+		ch, ok := mt.sendChan[partyID]
 		if !ok {
-			return fmt.Errorf("party %s not found", party)
+			return fmt.Errorf("party %s not found", partyID)
 		}
 
-		log.Debugw("sending message to party", "partyID", party, "len(ch)", len(ch))
+		log.Debugw("sending message to party", "partyID", partyID, "len(ch)", len(ch))
 		ch <- ReceivedPartyState{
 			wireBytes:   data,
 			from:        routing.From,
 			isBroadcast: routing.IsBroadcast,
 		}
-		log.Debugw("sent message to party", "partyID", party)
+		log.Debugw("sent message to party", "partyID", partyID)
 	}
 
 	return nil
 }
 
 func (mt *MemoryTransporter) AddTarget(partyID *tss.PartyID, ch chan ReceivedPartyState) {
-	mt.sendChan[partyID.Id] = ch
+	mt.sendChan[partyID] = ch
 }
 
 // GetReceiver returns a channel for other peer to send messages to.
