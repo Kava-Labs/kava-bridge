@@ -35,8 +35,6 @@ func newPrecomputePreParamsCmd() *cobra.Command {
 				}
 			}
 
-			fmt.Printf("generating pre-params...")
-
 			// When using the keygen party it is recommended that you pre-compute the
 			// "safe primes" and Paillier secret beforehand because this can take some time.
 			// This code will generate those parameters using a concurrency limit equal
