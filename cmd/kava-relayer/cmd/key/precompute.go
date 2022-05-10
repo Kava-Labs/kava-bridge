@@ -49,7 +49,8 @@ func newPrecomputePreParamsCmd() *cobra.Command {
 				return fmt.Errorf("failed to json marshal pre-params: %s", err)
 			}
 
-			err = os.WriteFile(preParamsFilePath, b, 0644)
+			// No perms for public
+			err = os.WriteFile(preParamsFilePath, b, 0600)
 			if err != nil {
 				return fmt.Errorf("failed to write pre-params file: %s", err)
 			}
