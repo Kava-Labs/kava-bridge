@@ -3,9 +3,7 @@ package mp_tss_test
 import (
 	"encoding/json"
 	"fmt"
-	"runtime"
 	"testing"
-	"time"
 
 	logging "github.com/ipfs/go-log/v2"
 
@@ -29,7 +27,10 @@ func TestKeygen(t *testing.T) {
 	var preParamsSlice []*keygen.LocalPreParams
 	var paramsSlice []*tss.Parameters
 	for i := 0; i < count; i++ {
-		preParams, params, err := mp_tss.CreateKeygenParams(partyIDs.ToUnSorted(), partyIDs[i], threshold)
+		// Load from disk to avoid re-generating
+		preParams := LoadTestPreParam(i)
+
+		params, err := mp_tss.CreateKeygenParams(partyIDs.ToUnSorted(), partyIDs[i], threshold)
 		require.NoError(t, err)
 
 		preParamsSlice = append(preParamsSlice, preParams)
@@ -91,13 +92,6 @@ func TestKeygen(t *testing.T) {
 		}(outputCh)
 	}
 
-	go func() {
-		for {
-			t.Logf("goroutines: %v", runtime.NumGoroutine())
-			time.Sleep(time.Second * 5)
-		}
-	}()
-
 	var keys []keygen.LocalPartySaveData
 
 	for i := 0; i < count; i++ {
@@ -115,6 +109,5 @@ func TestKeygen(t *testing.T) {
 	fmt.Println(string(bz))
 
 	// make sure everyone has the same ECDSA public key
-	require.Equal(t, keys[0].ECDSAPub.X(), keys[1].ECDSAPub.X())
-	require.Equal(t, keys[0].ECDSAPub.Y(), keys[1].ECDSAPub.Y())
+	require.True(t, keys[0].ECDSAPub.Equals(keys[1].ECDSAPub), "ECDSA public keys should be equal")
 }
