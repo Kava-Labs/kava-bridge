@@ -2,10 +2,23 @@
 
 Repository for Kava Ethereum Bridge
 
-### Directories
+## Directories
 
-- `(root)` - Relayer module
-- `contracts` - Bridge Ethereum Contract
+- `(root)` - Bridge module
+- `relayer` - Relayer
+- `contracts` - Ethereum bridge contracts
+
+### Install
+
+```bash
+make install
+```
+
+Installs `kava-bridge` and `kava-relayer` to `$GOPATH/bin`
+
+### Usage
+
+The relayer usage can be found on the [relayer README](./relayer).
 
 ## Development
 
@@ -35,28 +48,6 @@ test                           Run go test
 vet                            Run go vet
 watch-integration              Run integration tests on file changes
 watch                          Run tests on file changes
-```
-
-### Install
-
-```
-make install
-```
-
-Installs `kava-bridge` and `kava-relayer` to `$GOPATH/bin`
-
-### Relayer Usage
-
-```bash
-kava-relayer network generate-network-secret
-kava-relayer network generate-node-key
-kava-relayer network show-node-id
-
-# Connect to p2p network
-kava-relayer network connect
-
-# Start single signer relayer without P2P network
-kava-relayer start 
 ```
 
 ### Test
