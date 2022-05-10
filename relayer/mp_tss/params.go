@@ -4,6 +4,8 @@ import (
 	"github.com/binance-chain/tss-lib/tss"
 )
 
+// CreateKeygenParams creates tss parameters for the given party IDs, local
+// partyID, and threshold for keygen.
 func CreateKeygenParams(
 	partyIDs tss.UnSortedPartyIDs,
 	localPartyID *tss.PartyID,

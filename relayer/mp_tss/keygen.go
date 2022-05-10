@@ -12,6 +12,8 @@ import (
 
 var log = logging.Logger("mp_tss")
 
+// RunKeyGen starts the local keygen party and handles incoming and outgoing
+// messages to other parties.
 func RunKeyGen(
 	preParams *keygen.LocalPreParams,
 	params *tss.Parameters,
