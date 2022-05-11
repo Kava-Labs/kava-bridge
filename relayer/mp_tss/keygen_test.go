@@ -9,11 +9,12 @@ import (
 	"github.com/binance-chain/tss-lib/ecdsa/keygen"
 	"github.com/binance-chain/tss-lib/tss"
 	"github.com/kava-labs/kava-bridge/relayer/mp_tss"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-const partyCount = 10
-const threshold = 8
+const partyCount = 2
+const threshold = 1
 
 func TestKeygen(t *testing.T) {
 	err := logging.SetLogLevel("*", "debug")
@@ -29,8 +30,7 @@ func TestKeygen(t *testing.T) {
 		// Load from disk to avoid re-generating
 		preParams := LoadTestPreParam(i)
 
-		params, err := mp_tss.CreateParams(partyIDs.ToUnSorted(), partyIDs[i], threshold)
-		require.NoError(t, err)
+		params := mp_tss.CreateParams(partyIDs.ToUnSorted(), partyIDs[i], threshold)
 
 		preParamsSlice = append(preParamsSlice, preParams)
 		paramsSlice = append(paramsSlice, params)
@@ -71,9 +71,18 @@ func TestKeygen(t *testing.T) {
 	}
 
 	// make sure everyone has the same ECDSA public key
-	require.True(t, keys[0].ECDSAPub.Equals(keys[1].ECDSAPub), "ECDSA public keys should be equal")
+	for i, key := range keys {
+		for j, key2 := range keys {
+			// Skip self and previous keys
+			if j <= i {
+				continue
+			}
 
-	// Write keys and partyIDs to file for test fixtures for signing
+			assert.Truef(t, key.ECDSAPub.Equals(key2.ECDSAPub), "key %v != %v", i, j)
+		}
+	}
+
+	// // Write keys to file for test fixtures for signing
 	for i, key := range keys {
 		bz, err := json.MarshalIndent(&key, "", "  ")
 		require.NoError(t, err)
@@ -85,6 +94,7 @@ func TestKeygen(t *testing.T) {
 	for i, partyID := range partyIDs {
 		bz, err := json.MarshalIndent(&partyID, "", "  ")
 		require.NoError(t, err)
+		t.Log(string(bz))
 
 		WriteTestPartyID(i, bz)
 	}

@@ -19,13 +19,18 @@ func TestSign(t *testing.T) {
 	err := logging.SetLogLevel("*", "debug")
 	require.NoError(t, err)
 
-	// 1. Get party ID for each peer from file, share with other peers
-	partyIDs := GetTestPartyIDs(partyCount)
+	// 1. Get party keys from file
+	keys := GetTestKeys(threshold + 1)
+	require.Len(t, keys, threshold+1)
+
+	// Recreate party IDs from keys
+	partyIDs := GetTestPartyIDs(threshold + 1)
+	require.Len(t, partyIDs, threshold+1)
 
 	// 2. Create and connect transport between peers
 	transports := CreateAndConnectTransports(t, partyIDs)
 
-	// 3. Get a hash to sign
+	// 3. Create a hash to sign -- not necessarily the same as actual tx hash
 	hash := sha256.Sum256([]byte("hello world"))
 	hashBigInt := new(big.Int).SetBytes(hash[:])
 
@@ -34,11 +39,10 @@ func TestSign(t *testing.T) {
 	errAgg := make(chan *tss.Error)
 
 	for i, partyID := range partyIDs {
-		params, err := mp_tss.CreateParams(partyIDs.ToUnSorted(), partyID, threshold)
-		require.NoError(t, err)
+		params := mp_tss.CreateParams(partyIDs.ToUnSorted(), partyID, threshold)
+		t.Log(params.PartyID())
 
-		key := ReadTestKey(i)
-		outputCh, errCh := mp_tss.RunSigner(hashBigInt, params, key, transports[i])
+		outputCh, errCh := mp_tss.RunSigner(hashBigInt, params, keys[i], transports[i])
 
 		go func(outputCh chan common.SignatureData, errCh chan *tss.Error) {
 			for {

@@ -32,6 +32,16 @@ func ReadTestKey(index int) keygen.LocalPartySaveData {
 	return key
 }
 
+func GetTestKeys(count int) []keygen.LocalPartySaveData {
+	var keys []keygen.LocalPartySaveData
+	for i := 0; i < count; i++ {
+		key := ReadTestKey(i)
+		keys = append(keys, key)
+	}
+
+	return keys
+}
+
 func WriteTestKey(index int, bz []byte) {
 	os.MustWriteFile(KeyPath(index), bz, 0600)
 }
@@ -71,7 +81,7 @@ func WriteTestPartyID(index int, bz []byte) {
 }
 
 func TestLoadKey(t *testing.T) {
-	for i := 0; i < 2; i++ {
+	for i := 0; i < partyCount; i++ {
 		key := ReadTestKey(i)
 		require.True(t, key.Validate(), "test-fixture keys should be valid")
 	}
