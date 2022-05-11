@@ -1,8 +1,6 @@
 package mp_tss_test
 
 import (
-	"encoding/json"
-	"fmt"
 	"testing"
 
 	logging "github.com/ipfs/go-log/v2"
@@ -26,75 +24,43 @@ func TestKeygen(t *testing.T) {
 	// 2. Generate pre-params and params for each peer
 	var preParamsSlice []*keygen.LocalPreParams
 	var paramsSlice []*tss.Parameters
-	for i := 0; i < count; i++ {
+	for i := range partyIDs {
 		// Load from disk to avoid re-generating
 		preParams := LoadTestPreParam(i)
 
-		params, err := mp_tss.CreateKeygenParams(partyIDs.ToUnSorted(), partyIDs[i], threshold)
+		params, err := mp_tss.CreateParams(partyIDs.ToUnSorted(), partyIDs[i], threshold)
 		require.NoError(t, err)
 
 		preParamsSlice = append(preParamsSlice, preParams)
 		paramsSlice = append(paramsSlice, params)
 	}
 
-	t.Logf("preParams: %+v", preParamsSlice)
-
-	// 3. Create transport between peers
-	var transports []*mp_tss.MemoryTransporter
-	for i := 0; i < count; i++ {
-		transports = append(transports, mp_tss.NewMemoryTransporter(partyIDs[i]))
-	}
-
-	t.Logf("transports: %+v", transports)
-
-	// Add transport receivers to each other
-	for _, transport := range transports {
-		for _, otherTransport := range transports {
-			// Skip self
-			if transport.PartyID.Index == otherTransport.PartyID.Index {
-				t.Logf("skipping self for transport: %v == %v", transport.PartyID.Index, otherTransport.PartyID.Index)
-				continue
-			}
-
-			transport.AddTarget(otherTransport.PartyID, otherTransport.GetReceiver())
-		}
-	}
-
-	t.Logf("transports connected: %+v", transports)
+	// 3. Create and connect transport between peers
+	transports := CreateAndConnectTransports(t, partyIDs)
 
 	// 4. Start keygen party for each peer
-	var outputChs []chan keygen.LocalPartySaveData
-	var errChs []chan *tss.Error
-	for i := 0; i < count; i++ {
-		outputCh, errCh := mp_tss.RunKeyGen(preParamsSlice[i], paramsSlice[i], transports[i])
-		outputChs = append(outputChs, outputCh)
-		errChs = append(errChs, errCh)
-	}
-
-	t.Logf("started: %+v", outputChs)
-
 	errAgg := make(chan *tss.Error)
 	outputAgg := make(chan keygen.LocalPartySaveData)
 
-	for _, errCh := range errChs {
-		go func(errCh chan *tss.Error) {
-			for err := range errCh {
-				errAgg <- err
+	for i := 0; i < count; i++ {
+		outputCh, errCh := mp_tss.RunKeyGen(preParamsSlice[i], paramsSlice[i], transports[i])
+		go func(outputCh chan keygen.LocalPartySaveData, errCh chan *tss.Error) {
+			for {
+				select {
+				case output := <-outputCh:
+					outputAgg <- output
+				case err := <-errCh:
+					errAgg <- err
+				}
 			}
-		}(errCh)
+		}(outputCh, errCh)
 	}
 
-	for _, outputCh := range outputChs {
-		go func(outputCh chan keygen.LocalPartySaveData) {
-			for output := range outputCh {
-				outputAgg <- output
-			}
-		}(outputCh)
-	}
+	t.Logf("started keygen")
 
 	var keys []keygen.LocalPartySaveData
 
-	for i := 0; i < count; i++ {
+	for range partyIDs {
 		select {
 		case output := <-outputAgg:
 			keys = append(keys, output)
@@ -103,11 +69,15 @@ func TestKeygen(t *testing.T) {
 		}
 	}
 
-	// 5. Output keys
-	bz, err := json.Marshal(&keys)
-	require.NoError(t, err)
-	fmt.Println(string(bz))
-
 	// make sure everyone has the same ECDSA public key
 	require.True(t, keys[0].ECDSAPub.Equals(keys[1].ECDSAPub), "ECDSA public keys should be equal")
+
+	// // Write to file for fixtures
+	// for i, key := range keys {
+	// 	bz, err := json.MarshalIndent(&key, "", "  ")
+	// 	require.NoError(t, err)
+	// 	t.Log(string(bz))
+	//
+	// 	WriteTestKey(i, bz)
+	// }
 }

@@ -15,7 +15,6 @@ func RunSigner(
 	msg *big.Int,
 	params *tss.Parameters,
 	key keygen.LocalPartySaveData,
-	end chan<- common.SignatureData,
 	transport Transporter,
 ) (chan common.SignatureData, chan *tss.Error) {
 	// outgoing messages to other peers

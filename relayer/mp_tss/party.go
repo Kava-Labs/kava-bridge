@@ -10,8 +10,8 @@ import (
 // outgoing messages. Does **not** block.
 func RunParty(
 	party tss.Party,
-	errCh chan *tss.Error,
-	outCh chan tss.Message,
+	errCh chan<- *tss.Error,
+	outCh <-chan tss.Message,
 	transport Transporter,
 ) {
 	// Start party in goroutine
