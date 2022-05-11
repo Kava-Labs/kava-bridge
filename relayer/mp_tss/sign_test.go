@@ -2,12 +2,12 @@ package mp_tss_test
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"encoding/json"
 	"math/big"
 	"testing"
 
 	logging "github.com/ipfs/go-log/v2"
-	"golang.org/x/crypto/sha3"
 
 	"github.com/binance-chain/tss-lib/common"
 	"github.com/binance-chain/tss-lib/tss"
@@ -19,19 +19,17 @@ func TestSign(t *testing.T) {
 	err := logging.SetLogLevel("*", "debug")
 	require.NoError(t, err)
 
-	count := 2
-	threshold := 1
+	// 1. Get party ID for each peer from file, share with other peers
+	partyIDs := GetTestPartyIDs(partyCount)
 
-	// 1. Create party ID for each peer, share with other peers
-	partyIDs := tss.GenerateTestPartyIDs(count)
-
+	// 2. Create and connect transport between peers
 	transports := CreateAndConnectTransports(t, partyIDs)
 
-	msg := []byte("hello world")
-	hash := sha3.Sum256(msg)
+	// 3. Get a hash to sign
+	hash := sha256.Sum256([]byte("hello world"))
 	hashBigInt := new(big.Int).SetBytes(hash[:])
 
-	// 4. Start keygen party for each peer
+	// 4. Start signing party for each peer
 	outputAgg := make(chan common.SignatureData)
 	errAgg := make(chan *tss.Error)
 
@@ -39,8 +37,7 @@ func TestSign(t *testing.T) {
 		params, err := mp_tss.CreateParams(partyIDs.ToUnSorted(), partyID, threshold)
 		require.NoError(t, err)
 
-		key := LoadTestKey(i)
-
+		key := ReadTestKey(i)
 		outputCh, errCh := mp_tss.RunSigner(hashBigInt, params, key, transports[i])
 
 		go func(outputCh chan common.SignatureData, errCh chan *tss.Error) {

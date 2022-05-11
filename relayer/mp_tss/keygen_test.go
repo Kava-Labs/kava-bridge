@@ -1,6 +1,7 @@
 package mp_tss_test
 
 import (
+	"encoding/json"
 	"testing"
 
 	logging "github.com/ipfs/go-log/v2"
@@ -11,15 +12,15 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const partyCount = 10
+const threshold = 8
+
 func TestKeygen(t *testing.T) {
 	err := logging.SetLogLevel("*", "debug")
 	require.NoError(t, err)
 
-	count := 2
-	threshold := 1 // 1 of 2
-
 	// 1. Create party ID for each peer, share with other peers
-	partyIDs := tss.GenerateTestPartyIDs(count)
+	partyIDs := tss.GenerateTestPartyIDs(partyCount)
 
 	// 2. Generate pre-params and params for each peer
 	var preParamsSlice []*keygen.LocalPreParams
@@ -42,7 +43,7 @@ func TestKeygen(t *testing.T) {
 	errAgg := make(chan *tss.Error)
 	outputAgg := make(chan keygen.LocalPartySaveData)
 
-	for i := 0; i < count; i++ {
+	for i := 0; i < partyCount; i++ {
 		outputCh, errCh := mp_tss.RunKeyGen(preParamsSlice[i], paramsSlice[i], transports[i])
 		go func(outputCh chan keygen.LocalPartySaveData, errCh chan *tss.Error) {
 			for {
@@ -72,12 +73,19 @@ func TestKeygen(t *testing.T) {
 	// make sure everyone has the same ECDSA public key
 	require.True(t, keys[0].ECDSAPub.Equals(keys[1].ECDSAPub), "ECDSA public keys should be equal")
 
-	// // Write to file for fixtures
-	// for i, key := range keys {
-	// 	bz, err := json.MarshalIndent(&key, "", "  ")
-	// 	require.NoError(t, err)
-	// 	t.Log(string(bz))
-	//
-	// 	WriteTestKey(i, bz)
-	// }
+	// Write keys and partyIDs to file for test fixtures for signing
+	for i, key := range keys {
+		bz, err := json.MarshalIndent(&key, "", "  ")
+		require.NoError(t, err)
+		t.Log(string(bz))
+
+		WriteTestKey(i, bz)
+	}
+
+	for i, partyID := range partyIDs {
+		bz, err := json.MarshalIndent(&partyID, "", "  ")
+		require.NoError(t, err)
+
+		WriteTestPartyID(i, bz)
+	}
 }

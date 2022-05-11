@@ -16,7 +16,7 @@ func RunParty(
 ) {
 	// Start party in goroutine
 	go func() {
-		log.Debug("Starting keygen party")
+		log.Debug("Starting party")
 		if err := party.Start(); err != nil {
 			errCh <- err
 		}
@@ -35,7 +35,7 @@ func RunParty(
 
 				data, routing, err := outgoingMsg.WireBytes()
 				log.Debugw(
-					"keygen outgoing msg write bytes",
+					"party outgoing msg write bytes",
 					"party index", party.PartyID().Index,
 					"routing", routing,
 				)
@@ -45,14 +45,18 @@ func RunParty(
 					return
 				}
 
-				// send to other parties
-				if err := transport.Send(data, routing); err != nil {
-					log.Errorw("failed to send output message", "err", err)
-					errCh <- party.WrapError(err)
-					return
-				}
+				// Prevent blocking goroutine to receive messages, may deadlock
+				// if receive channels are full.
+				go func() {
+					// send to other parties
+					if err := transport.Send(data, routing); err != nil {
+						log.Errorw("failed to send output message", "err", err)
+						errCh <- party.WrapError(err)
+						return
+					}
 
-				log.Debugw("outgoing message done", "party index", party.PartyID().Index)
+					log.Debugw("outgoing message done", "party index", party.PartyID().Index)
+				}()
 			case incomingMsg := <-incomingMsgCh:
 				log.Debugw(
 					"received message",
@@ -78,7 +82,7 @@ func RunParty(
 				// TODO: What does ok mean?
 				if !ok {
 					log.Errorw("failed to update party from bytes")
-					errCh <- party.WrapError(fmt.Errorf("keygen update returned not ok"))
+					errCh <- party.WrapError(fmt.Errorf("party update returned not ok"))
 					return
 				}
 			}

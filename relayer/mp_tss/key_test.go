@@ -7,15 +7,21 @@ import (
 	"testing"
 
 	"github.com/binance-chain/tss-lib/ecdsa/keygen"
+	"github.com/binance-chain/tss-lib/tss"
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/tendermint/libs/os"
 )
+
+// -----------------------------------------------------------------------------
+// keygen
 
 func KeyPath(index int) string {
 	return path.Join("test-fixtures", fmt.Sprintf("localparty-savedata%d.json", index))
 }
 
-func LoadKey(path string) keygen.LocalPartySaveData {
+func ReadTestKey(index int) keygen.LocalPartySaveData {
+	path := KeyPath(index)
+
 	bytes := os.MustReadFile(path)
 
 	var key keygen.LocalPartySaveData
@@ -26,17 +32,47 @@ func LoadKey(path string) keygen.LocalPartySaveData {
 	return key
 }
 
-func LoadTestKey(index int) keygen.LocalPartySaveData {
-	return LoadKey(KeyPath(index))
-}
-
 func WriteTestKey(index int, bz []byte) {
 	os.MustWriteFile(KeyPath(index), bz, 0600)
 }
 
+// -----------------------------------------------------------------------------
+// partyIDs
+
+func PartyIDPath(index int) string {
+	return path.Join("test-fixtures", fmt.Sprintf("partyid%d.json", index))
+}
+
+func ReadPartyID(index int) *tss.PartyID {
+	path := PartyIDPath(index)
+
+	bytes := os.MustReadFile(path)
+
+	var partyID tss.PartyID
+	if err := json.Unmarshal(bytes, &partyID); err != nil {
+		panic(err)
+	}
+
+	return &partyID
+}
+
+func GetTestPartyIDs(count int) tss.SortedPartyIDs {
+	var partyIDs []*tss.PartyID
+	for i := 0; i < count; i++ {
+		partyID := ReadPartyID(i)
+		partyIDs = append(partyIDs, partyID)
+	}
+
+	return tss.SortPartyIDs(partyIDs)
+}
+
+func WriteTestPartyID(index int, bz []byte) {
+	os.MustWriteFile(PartyIDPath(index), bz, 0600)
+}
+
 func TestLoadKey(t *testing.T) {
 	for i := 0; i < 2; i++ {
-		key := LoadTestKey(i)
+		key := ReadTestKey(i)
 		require.True(t, key.Validate(), "test-fixture keys should be valid")
 	}
 }
