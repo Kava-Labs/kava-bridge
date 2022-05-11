@@ -13,8 +13,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const partyCount = 2
-const threshold = 1
+const partyCount = 10
+const threshold = 8
 
 func TestKeygen(t *testing.T) {
 	err := logging.SetLogLevel("*", "debug")
