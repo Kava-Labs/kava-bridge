@@ -7,7 +7,10 @@ import (
 	"github.com/kava-labs/kava-bridge/relayer/mp_tss"
 )
 
-func CreateAndConnectTransports(t *testing.T, partyIDs []*tss.PartyID) []*mp_tss.MemoryTransporter {
+func CreateAndConnectTransports(
+	t *testing.T,
+	partyIDs []*tss.PartyID,
+) []*mp_tss.MemoryTransporter {
 	// Create transport between peers
 	var transports []*mp_tss.MemoryTransporter
 	for _, partyID := range partyIDs {
@@ -20,8 +23,11 @@ func CreateAndConnectTransports(t *testing.T, partyIDs []*tss.PartyID) []*mp_tss
 	for _, transport := range transports {
 		for _, otherTransport := range transports {
 			// Skip self
-			if transport.PartyID.Index == otherTransport.PartyID.Index {
-				t.Logf("skipping self for transport: %v == %v", transport.PartyID.Index, otherTransport.PartyID.Index)
+			if transport.PartyID.KeyInt().Cmp(otherTransport.PartyID.KeyInt()) == 0 {
+				t.Logf(
+					"skipping self for transport: %v == %v",
+					transport.PartyID.KeyInt(), otherTransport.PartyID.KeyInt(),
+				)
 				continue
 			}
 

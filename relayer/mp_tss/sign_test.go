@@ -12,6 +12,7 @@ import (
 	"github.com/binance-chain/tss-lib/common"
 	"github.com/binance-chain/tss-lib/tss"
 	"github.com/kava-labs/kava-bridge/relayer/mp_tss"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -73,6 +74,18 @@ func TestSign(t *testing.T) {
 		}
 	}
 
-	// make sure everyone has the same signature
-	require.True(t, bytes.Equal(signatures[0].Signature, signatures[1].Signature))
+	require.Len(t, signatures, threshold+1, "each party should get a signature")
+
+	for i, sig := range signatures {
+		for j, sig2 := range signatures {
+			// Skip self and previous keys
+			if j <= i {
+				continue
+			}
+
+			// make sure everyone has the same signature
+			assert.True(t, bytes.Equal(sig.Signature, sig2.Signature))
+		}
+	}
+
 }

@@ -12,39 +12,80 @@ type MemoryTransporter struct {
 	recvChan chan ReceivedPartyState
 	// outgoing messages to other parties
 	sendChan map[*tss.PartyID]chan ReceivedPartyState
+	// old/new committee only for resigning
+	oldCommittee map[*tss.PartyID]struct{}
+	newCommittee map[*tss.PartyID]struct{}
 }
 
 var _ Transporter = (*MemoryTransporter)(nil)
 
 func NewMemoryTransporter(partyID *tss.PartyID) *MemoryTransporter {
 	ts := &MemoryTransporter{
-		PartyID:  partyID,
-		recvChan: make(chan ReceivedPartyState, 1),
-		sendChan: make(map[*tss.PartyID]chan ReceivedPartyState),
+		PartyID:      partyID,
+		recvChan:     make(chan ReceivedPartyState, 1),
+		sendChan:     make(map[*tss.PartyID]chan ReceivedPartyState),
+		oldCommittee: make(map[*tss.PartyID]struct{}),
+		newCommittee: make(map[*tss.PartyID]struct{}),
 	}
 
 	return ts
 }
 
-func (mt *MemoryTransporter) Send(data []byte, routing *tss.MessageRouting) error {
-	log := log.Named(mt.PartyID.String())
-
-	log.Debugw("sending message", "to", routing.To, "isBroadcast", routing.IsBroadcast)
-
-	if routing.IsBroadcast && len(routing.To) != 0 {
-		return fmt.Errorf("cannot send broadcast message to a specific party")
+func (mt *MemoryTransporter) Send(data []byte, routing *tss.MessageRouting, isResharing bool) error {
+	if isResharing {
+		return mt.sendKeygenOrSigning(data, routing)
 	}
+
+	return mt.sendReSharing(data, routing)
+}
+
+func (mt *MemoryTransporter) sendReSharing(data []byte, routing *tss.MessageRouting) error {
+	log.Debugw(
+		"sending resharing message",
+		"to", routing.To,
+		"isBroadcast", routing.IsBroadcast,
+		"IsToOldCommittee", routing.IsToOldCommittee,
+		"IsToOldAndNewCommittees", routing.IsToOldAndNewCommittees,
+	)
+
+	if routing.IsToOldCommittee || routing.IsToOldAndNewCommittees {
+		log.Debug("sending message to old committee")
+		for partyID := range mt.oldCommittee {
+			ch, ok := mt.sendChan[partyID]
+			if !ok {
+				return fmt.Errorf("old committee party %s not found", partyID)
+			}
+			ch <- DataRoutingToMessage(data, routing)
+		}
+	}
+
+	if !routing.IsToOldCommittee || routing.IsToOldAndNewCommittees {
+		log.Debug("sending message to new committee")
+		for partyID := range mt.newCommittee {
+			ch, ok := mt.sendChan[partyID]
+			if !ok {
+				return fmt.Errorf("new committee party %s not found", partyID)
+			}
+			ch <- DataRoutingToMessage(data, routing)
+		}
+	}
+
+	return nil
+}
+
+func (mt *MemoryTransporter) sendKeygenOrSigning(data []byte, routing *tss.MessageRouting) error {
+	log.Debugw(
+		"sending message",
+		"to", routing.To,
+		"isBroadcast", routing.IsBroadcast,
+	)
 
 	if routing.IsBroadcast && len(routing.To) == 0 {
 		log.Debug("broadcast message to all peers")
 
 		for party, ch := range mt.sendChan {
 			log.Debugw("sending message to party", "partyID", party)
-			ch <- ReceivedPartyState{
-				wireBytes:   data,
-				from:        routing.From,
-				isBroadcast: routing.IsBroadcast,
-			}
+			ch <- DataRoutingToMessage(data, routing)
 			log.Debugw("sent message to party", "partyID", party)
 		}
 
@@ -60,11 +101,7 @@ func (mt *MemoryTransporter) Send(data []byte, routing *tss.MessageRouting) erro
 		}
 
 		log.Debugw("sending message to party", "partyID", partyID, "len(ch)", len(ch))
-		ch <- ReceivedPartyState{
-			wireBytes:   data,
-			from:        routing.From,
-			isBroadcast: routing.IsBroadcast,
-		}
+		ch <- DataRoutingToMessage(data, routing)
 		log.Debugw("sent message to party", "partyID", partyID)
 	}
 
@@ -84,4 +121,24 @@ func (mt *MemoryTransporter) GetReceiver() chan ReceivedPartyState {
 // other peers.
 func (mt *MemoryTransporter) Receive() <-chan ReceivedPartyState {
 	return mt.recvChan
+}
+
+func (mt *MemoryTransporter) AddOldCommittee(partyIDs ...*tss.PartyID) {
+	for _, partyID := range partyIDs {
+		mt.oldCommittee[partyID] = struct{}{}
+	}
+}
+
+func (mt *MemoryTransporter) AddNewCommittee(partyIDs ...*tss.PartyID) {
+	for _, partyID := range partyIDs {
+		mt.newCommittee[partyID] = struct{}{}
+	}
+}
+
+func DataRoutingToMessage(data []byte, routing *tss.MessageRouting) ReceivedPartyState {
+	return ReceivedPartyState{
+		wireBytes:   data,
+		from:        routing.From,
+		isBroadcast: routing.IsBroadcast,
+	}
 }

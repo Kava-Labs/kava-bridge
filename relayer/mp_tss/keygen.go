@@ -27,7 +27,7 @@ func RunKeyGen(
 	party := keygen.NewLocalParty(params, outCh, endCh, *preParams)
 	log.Debugw("local party created", "partyID", party.PartyID())
 
-	RunParty(party, errCh, outCh, transport)
+	RunParty(party, errCh, outCh, transport, false)
 
 	return endCh, errCh
 }

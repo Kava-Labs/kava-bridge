@@ -13,6 +13,7 @@ func RunParty(
 	errCh chan<- *tss.Error,
 	outCh <-chan tss.Message,
 	transport Transporter,
+	isReSharing bool,
 ) {
 	// Start party in goroutine
 	go func() {
@@ -49,7 +50,7 @@ func RunParty(
 				// if receive channels are full.
 				go func() {
 					// send to other parties
-					if err := transport.Send(data, routing); err != nil {
+					if err := transport.Send(data, routing, isReSharing); err != nil {
 						log.Errorw("failed to send output message", "err", err)
 						errCh <- party.WrapError(err)
 						return

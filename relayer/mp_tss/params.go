@@ -14,7 +14,30 @@ func CreateParams(
 	parties := tss.SortPartyIDs(partyIDs)
 
 	ctx := tss.NewPeerContext(parties)
-	params := tss.NewParameters(tss.S256(), ctx, localPartyID, len(parties), threshold)
+	return tss.NewParameters(tss.S256(), ctx, localPartyID, len(parties), threshold)
+}
 
-	return params
+func CreateReShareParams(
+	partyIDs tss.UnSortedPartyIDs,
+	newPartyIDs tss.UnSortedPartyIDs,
+	localPartyID *tss.PartyID,
+	threshold int,
+	newThreshold int,
+) *tss.ReSharingParameters {
+	oldParties := tss.SortPartyIDs(partyIDs)
+	newParties := tss.SortPartyIDs(newPartyIDs)
+
+	oldCtx := tss.NewPeerContext(oldParties)
+	newCtx := tss.NewPeerContext(newParties)
+
+	return tss.NewReSharingParameters(
+		tss.S256(),      // curve
+		oldCtx,          // Old PeerContext
+		newCtx,          // New PeerContext with new peers
+		localPartyID,    // Current party ID
+		len(oldParties), // Current party count
+		threshold,       // Current threshold
+		len(newParties), // New party count
+		newThreshold,    // New threshold
+	)
 }
