@@ -64,6 +64,9 @@ func TestKeygen(t *testing.T) {
 
 	// make sure everyone has the same ECDSA public key
 	for i, key := range keys {
+		assert.True(t, key.Validate(), "key should be valid")
+		assert.True(t, key.ValidateWithProof(), "key should be valid with proof")
+
 		for j, key2 := range keys {
 			// Skip self and previous keys
 			if j <= i {
