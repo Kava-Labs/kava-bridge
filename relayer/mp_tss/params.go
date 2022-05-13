@@ -18,13 +18,13 @@ func CreateParams(
 }
 
 func CreateReShareParams(
-	partyIDs tss.UnSortedPartyIDs,
+	oldPartyIDs tss.UnSortedPartyIDs,
 	newPartyIDs tss.UnSortedPartyIDs,
 	localPartyID *tss.PartyID,
 	threshold int,
 	newThreshold int,
 ) *tss.ReSharingParameters {
-	oldParties := tss.SortPartyIDs(partyIDs)
+	oldParties := tss.SortPartyIDs(oldPartyIDs)
 	newParties := tss.SortPartyIDs(newPartyIDs)
 
 	oldCtx := tss.NewPeerContext(oldParties)

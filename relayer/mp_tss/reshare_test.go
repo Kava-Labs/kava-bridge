@@ -14,11 +14,9 @@ import (
 )
 
 func TestReshare(t *testing.T) {
-	newTotalPartyCount := 15
-	numNewPeers := newTotalPartyCount - partyCount
+	newTotalPartyCount := 10
 	// Number of participants in resharing -- t+1 + num new peers
-	resharingPartySize := threshold + 1 + numNewPeers
-	newThreshold := 12
+	newThreshold := 9
 
 	err := logging.SetLogLevel("*", "debug")
 	require.NoError(t, err)
@@ -31,17 +29,24 @@ func TestReshare(t *testing.T) {
 	oldPartyIDs := GetTestPartyIDs(threshold + 1)
 	require.Len(t, oldPartyIDs, threshold+1)
 
-	// 2. Create new party IDs to add
-	newPartyIDs := tss.GenerateTestPartyIDs(numNewPeers)
-	require.Len(t, newPartyIDs, numNewPeers)
+	// 2. Create new party IDs to add.. or replace ? confused
+	newPartyIDs := tss.GenerateTestPartyIDs(newTotalPartyCount)
+	require.Len(t, newPartyIDs, newTotalPartyCount)
 
 	t.Log(newPartyIDs)
 
 	allPartyIDs := tss.UnSortedPartyIDs(append(oldPartyIDs, newPartyIDs...))
-	require.Len(t, allPartyIDs, resharingPartySize)
+	require.Len(t, allPartyIDs, threshold+1+newTotalPartyCount)
+	require.Len(t, allPartyIDs, 19) // 9 old to sign + 10 new
 
 	// 3. Create and connect transport between peers
 	transports := CreateAndConnectTransports(t, allPartyIDs)
+
+	// Add committee lists to transports
+	for _, transport := range transports {
+		transport.AddOldCommittee(oldPartyIDs...)
+		transport.AddNewCommittee(newPartyIDs...)
+	}
 
 	// 4. Start signing party for each peer
 	outputAgg := make(chan keygen.LocalPartySaveData)
@@ -51,7 +56,7 @@ func TestReshare(t *testing.T) {
 	for i, partyID := range oldPartyIDs {
 		params := mp_tss.CreateReShareParams(
 			oldPartyIDs.ToUnSorted(),
-			allPartyIDs,
+			newPartyIDs.ToUnSorted(),
 			partyID,
 			threshold,    // 8
 			newThreshold, // 12
@@ -75,7 +80,7 @@ func TestReshare(t *testing.T) {
 	for i, partyID := range newPartyIDs {
 		params := mp_tss.CreateReShareParams(
 			oldPartyIDs.ToUnSorted(),
-			allPartyIDs,
+			newPartyIDs.ToUnSorted(),
 			partyID,
 			threshold,    // 8
 			newThreshold, // 12

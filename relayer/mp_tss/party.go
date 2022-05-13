@@ -56,44 +56,47 @@ func RunParty(
 						return
 					}
 
-					log.Debugw("outgoing message done", "partyID", party.PartyID())
+					log.Debugw("done sending outgoing message", "partyID", party.PartyID())
 				}()
 			case incomingMsg := <-incomingMsgCh:
-				// Prevent blocking goroutine to process outgoing messages, also
-				// may deadlock if outgoing channels are full.
-				// go func() {
-				log.Debugw(
-					"received message",
-					"partyID", party.PartyID(),
-					"from partyID", incomingMsg.from,
-					"isBroadcast", incomingMsg.isBroadcast,
-					"len(bytes)", len(incomingMsg.wireBytes),
-				)
+				// This may deadlock if outgoing channels are full. Outgoing
+				// channels should either not block or the following should be
+				// run in a goroutine.
 
-				ok, err := party.UpdateFromBytes(
-					incomingMsg.wireBytes,
-					incomingMsg.from,
-					incomingMsg.isBroadcast,
-				)
-				if err != nil {
-					log.Errorw("failed to update from bytes", "err", err)
-					errCh <- party.WrapError(err)
-					return
-				}
+				// Running in goroutine prevents channels from getting filled up
+				go func() {
+					log.Debugw(
+						"received message",
+						"partyID", party.PartyID(),
+						"from partyID", incomingMsg.from,
+						"isBroadcast", incomingMsg.isBroadcast,
+						"len(bytes)", len(incomingMsg.wireBytes),
+					)
 
-				log.Debugw(
-					"updated party from bytes",
-					"partyID", party.PartyID(),
-					"ok", ok,
-				)
+					ok, err := party.UpdateFromBytes(
+						incomingMsg.wireBytes,
+						incomingMsg.from,
+						incomingMsg.isBroadcast,
+					)
+					if err != nil {
+						log.Errorw("failed to update from bytes", "err", err)
+						errCh <- party.WrapError(err)
+						return
+					}
 
-				// TODO: What does ok mean?
-				if !ok {
-					log.Errorw("failed to update party from bytes")
-					errCh <- party.WrapError(fmt.Errorf("party update returned not ok"))
-					return
-				}
-				// }()
+					log.Debugw(
+						"updated party from bytes",
+						"partyID", party.PartyID(),
+						"ok", ok,
+					)
+
+					// TODO: What does ok mean?
+					if !ok {
+						log.Errorw("failed to update party from bytes")
+						errCh <- party.WrapError(fmt.Errorf("party update returned not ok"))
+						return
+					}
+				}()
 			}
 		}
 	}()

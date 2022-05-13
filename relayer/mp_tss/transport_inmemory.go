@@ -56,7 +56,10 @@ func (mt *MemoryTransporter) sendReSharing(data []byte, routing *tss.MessageRout
 			if !ok {
 				return fmt.Errorf("old committee party %s not found", partyID)
 			}
+
+			log.Debugw("sending message to party", "partyID", partyID, "len(ch)", len(ch))
 			ch <- DataRoutingToMessage(data, routing)
+			log.Debugw("sent message to party", "partyID", partyID, "len(ch)", len(ch))
 		}
 	}
 
@@ -67,7 +70,9 @@ func (mt *MemoryTransporter) sendReSharing(data []byte, routing *tss.MessageRout
 			if !ok {
 				return fmt.Errorf("new committee party %s not found", partyID)
 			}
+
 			ch <- DataRoutingToMessage(data, routing)
+			log.Debugw("sent message to party", "partyID", partyID, "len(ch)", len(ch))
 		}
 	}
 
