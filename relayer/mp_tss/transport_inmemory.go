@@ -33,10 +33,10 @@ func NewMemoryTransporter(partyID *tss.PartyID) *MemoryTransporter {
 
 func (mt *MemoryTransporter) Send(data []byte, routing *tss.MessageRouting, isResharing bool) error {
 	if isResharing {
-		return mt.sendKeygenOrSigning(data, routing)
+		return mt.sendReSharing(data, routing)
 	}
 
-	return mt.sendReSharing(data, routing)
+	return mt.sendKeygenOrSigning(data, routing)
 }
 
 func (mt *MemoryTransporter) sendReSharing(data []byte, routing *tss.MessageRouting) error {
