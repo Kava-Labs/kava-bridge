@@ -67,7 +67,11 @@ func RunParty(
 					"len(bytes)", len(incomingMsg.wireBytes),
 				)
 
-				ok, err := party.UpdateFromBytes(incomingMsg.wireBytes, incomingMsg.from, incomingMsg.isBroadcast)
+				ok, err := party.UpdateFromBytes(
+					incomingMsg.wireBytes,
+					incomingMsg.from,
+					incomingMsg.isBroadcast,
+				)
 				if err != nil {
 					log.Errorw("failed to update from bytes", "err", err)
 					errCh <- party.WrapError(err)

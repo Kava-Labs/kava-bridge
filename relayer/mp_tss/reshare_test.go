@@ -14,28 +14,31 @@ import (
 )
 
 func TestReshare(t *testing.T) {
-	newPartyCount := 15
+	newTotalPartyCount := 15
+	numNewPeers := newTotalPartyCount - partyCount
+	// Number of participants in resharing -- t+1 + num new peers
+	resharingPartySize := threshold + 1 + numNewPeers
 	newThreshold := 12
 
 	err := logging.SetLogLevel("*", "debug")
 	require.NoError(t, err)
 
-	// 1. Get all current parties
-	oldKeys := GetTestKeys(partyCount)
-	require.Len(t, oldKeys, partyCount)
+	// 1. Get t+1 current keys
+	oldKeys := GetTestKeys(threshold + 1)
+	require.Len(t, oldKeys, threshold+1)
 
 	// Recreate party IDs from keys
-	oldPartyIDs := GetTestPartyIDs(partyCount)
-	require.Len(t, oldPartyIDs, partyCount)
+	oldPartyIDs := GetTestPartyIDs(threshold + 1)
+	require.Len(t, oldPartyIDs, threshold+1)
 
-	// 2. Create new party ID list
-	newPartyIDs := tss.GenerateTestPartyIDs(newPartyCount - partyCount)
-	require.Len(t, newPartyIDs, newPartyCount-partyCount)
+	// 2. Create new party IDs to add
+	newPartyIDs := tss.GenerateTestPartyIDs(numNewPeers)
+	require.Len(t, newPartyIDs, numNewPeers)
 
 	t.Log(newPartyIDs)
 
 	allPartyIDs := tss.UnSortedPartyIDs(append(oldPartyIDs, newPartyIDs...))
-	require.Len(t, allPartyIDs, newPartyCount)
+	require.Len(t, allPartyIDs, resharingPartySize)
 
 	// 3. Create and connect transport between peers
 	transports := CreateAndConnectTransports(t, allPartyIDs)
@@ -80,8 +83,10 @@ func TestReshare(t *testing.T) {
 		t.Log(params.PartyID())
 
 		preParams := LoadTestPreParam(i)
-		save := keygen.NewLocalPartySaveData(newPartyCount)
+		save := keygen.NewLocalPartySaveData(newTotalPartyCount)
 		save.LocalPreParams = *preParams
+
+		require.True(t, save.Validate(), "new party save data should be valid")
 
 		outputCh, errCh := mp_tss.RunReshare(params, save, transports[len(oldPartyIDs)+i])
 
