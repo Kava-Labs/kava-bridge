@@ -17,12 +17,13 @@ func RunSigner(
 	key keygen.LocalPartySaveData,
 	transport Transporter,
 ) (chan common.SignatureData, chan *tss.Error) {
-	// outgoing messages to other peers
-	outCh := make(chan tss.Message, 10)
+	// outgoing messages to other peers - not one to not deadlock when a party
+	// round is waiting for outgoing messages channel to clear
+	outCh := make(chan tss.Message, params.PartyCount())
 	// output signature when finished
-	endCh := make(chan common.SignatureData, 10)
+	endCh := make(chan common.SignatureData, 1)
 	// error if signing fails, contains culprits to blame
-	errCh := make(chan *tss.Error, 10)
+	errCh := make(chan *tss.Error, 1)
 
 	log.Debugw("creating new local party")
 	party := signing.NewLocalParty(msg, params, key, outCh, endCh)

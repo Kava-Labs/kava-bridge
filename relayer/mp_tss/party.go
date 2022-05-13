@@ -29,7 +29,7 @@ func RunParty(
 
 		log.Debug("Starting out/in message loop")
 		for {
-			log.Debugw("waiting for next message...", "party index", party.PartyID().Index)
+			log.Debugw("waiting for next message...", "partyID", party.PartyID())
 			select {
 			case outgoingMsg := <-outCh:
 				log.Debugw("outgoing message", "GetTo()", outgoingMsg.GetTo())
@@ -37,7 +37,7 @@ func RunParty(
 				data, routing, err := outgoingMsg.WireBytes()
 				log.Debugw(
 					"party outgoing msg write bytes",
-					"party index", party.PartyID().Index,
+					"partyID", party.PartyID(),
 					"routing", routing,
 				)
 
@@ -56,13 +56,16 @@ func RunParty(
 						return
 					}
 
-					log.Debugw("outgoing message done", "party index", party.PartyID().Index)
+					log.Debugw("outgoing message done", "partyID", party.PartyID())
 				}()
 			case incomingMsg := <-incomingMsgCh:
+				// Prevent blocking goroutine to process outgoing messages, also
+				// may deadlock if outgoing channels are full.
+				// go func() {
 				log.Debugw(
 					"received message",
-					"party index", party.PartyID().Index,
-					"from index", incomingMsg.from.Index,
+					"partyID", party.PartyID(),
+					"from partyID", incomingMsg.from,
 					"isBroadcast", incomingMsg.isBroadcast,
 					"len(bytes)", len(incomingMsg.wireBytes),
 				)
@@ -80,7 +83,7 @@ func RunParty(
 
 				log.Debugw(
 					"updated party from bytes",
-					"party index", party.PartyID().Index,
+					"partyID", party.PartyID(),
 					"ok", ok,
 				)
 
@@ -90,6 +93,7 @@ func RunParty(
 					errCh <- party.WrapError(fmt.Errorf("party update returned not ok"))
 					return
 				}
+				// }()
 			}
 		}
 	}()

@@ -14,7 +14,7 @@ func CreateAndConnectTransports(
 	// Create transport between peers
 	var transports []*mp_tss.MemoryTransporter
 	for _, partyID := range partyIDs {
-		transports = append(transports, mp_tss.NewMemoryTransporter(partyID))
+		transports = append(transports, mp_tss.NewMemoryTransporter(partyID, len(partyIDs)))
 	}
 
 	t.Logf("transports: %+v", transports)
