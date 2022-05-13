@@ -23,28 +23,19 @@ func TestKeygen(t *testing.T) {
 	// 1. Create party ID for each peer, share with other peers
 	partyIDs := tss.GenerateTestPartyIDs(partyCount)
 
-	// 2. Generate pre-params and params for each peer
-	var preParamsSlice []*keygen.LocalPreParams
-	var paramsSlice []*tss.Parameters
-	for i := range partyIDs {
-		// Load from disk to avoid re-generating
-		preParams := LoadTestPreParam(i)
-
-		params := mp_tss.CreateParams(partyIDs.ToUnSorted(), partyIDs[i], threshold)
-
-		preParamsSlice = append(preParamsSlice, preParams)
-		paramsSlice = append(paramsSlice, params)
-	}
-
-	// 3. Create and connect transport between peers
+	// 2. Create and connect transport between peers
 	transports := CreateAndConnectTransports(t, partyIDs)
 
-	// 4. Start keygen party for each peer
+	// 3. Make params and start peers
 	errAgg := make(chan *tss.Error)
 	outputAgg := make(chan keygen.LocalPartySaveData)
 
-	for i := 0; i < partyCount; i++ {
-		outputCh, errCh := mp_tss.RunKeyGen(preParamsSlice[i], paramsSlice[i], transports[i])
+	for i := range partyIDs {
+		// Load from disk to avoid re-generating
+		preParams := LoadTestPreParam(i)
+		params := mp_tss.CreateParams(partyIDs.ToUnSorted(), partyIDs[i], threshold)
+
+		outputCh, errCh := mp_tss.RunKeyGen(preParams, params, transports[i])
 		go func(outputCh chan keygen.LocalPartySaveData, errCh chan *tss.Error) {
 			for {
 				select {
@@ -61,6 +52,7 @@ func TestKeygen(t *testing.T) {
 
 	var keys []keygen.LocalPartySaveData
 
+	// 4. Wait for all parties to finish.
 	for range partyIDs {
 		select {
 		case output := <-outputAgg:
