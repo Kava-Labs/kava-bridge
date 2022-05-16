@@ -51,7 +51,11 @@ func RunParty(
 				go func() {
 					// send to other parties
 					if err := transport.Send(data, routing, isReSharing); err != nil {
-						log.Errorw("failed to send output message", "err", err)
+						log.Errorw(
+							"failed to send output message",
+							"from PartyID", party.PartyID(),
+							"err", err,
+						)
 						errCh <- party.WrapError(err)
 						return
 					}

@@ -30,7 +30,7 @@ func TestReshare(t *testing.T) {
 	require.Len(t, oldPartyIDs, threshold+1)
 
 	// 2. Create new party IDs to add.. or replace ? confused
-	newPartyIDs := tss.GenerateTestPartyIDs(newTotalPartyCount)
+	newPartyIDs := tss.GenerateTestPartyIDs(newTotalPartyCount, len(oldPartyIDs))
 	require.Len(t, newPartyIDs, newTotalPartyCount)
 
 	t.Log(newPartyIDs)
@@ -120,7 +120,7 @@ func TestReshare(t *testing.T) {
 
 			newKeys = append(newKeys, output)
 		case err := <-errAgg:
-			t.Logf("err: %v", err)
+			t.Fatal(err)
 		}
 	}
 
