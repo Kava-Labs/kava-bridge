@@ -4,6 +4,8 @@ import (
 	"github.com/binance-chain/tss-lib/tss"
 )
 
+var curve = tss.S256()
+
 // CreateParams creates tss parameters for the given party IDs, local partyID,
 // and threshold for tss.
 func CreateParams(
@@ -14,30 +16,27 @@ func CreateParams(
 	parties := tss.SortPartyIDs(partyIDs)
 
 	ctx := tss.NewPeerContext(parties)
-	return tss.NewParameters(tss.S256(), ctx, localPartyID, len(parties), threshold)
+	return tss.NewParameters(curve, ctx, localPartyID, len(parties), threshold)
 }
 
 func CreateReShareParams(
-	oldPartyIDs tss.UnSortedPartyIDs,
-	newPartyIDs tss.UnSortedPartyIDs,
+	oldPartyIDs tss.SortedPartyIDs,
+	newPartyIDs tss.SortedPartyIDs,
 	localPartyID *tss.PartyID,
 	threshold int,
 	newThreshold int,
 ) *tss.ReSharingParameters {
-	oldParties := tss.SortPartyIDs(oldPartyIDs)
-	newParties := tss.SortPartyIDs(newPartyIDs)
-
-	oldCtx := tss.NewPeerContext(oldParties)
-	newCtx := tss.NewPeerContext(newParties)
+	oldCtx := tss.NewPeerContext(oldPartyIDs)
+	newCtx := tss.NewPeerContext(newPartyIDs)
 
 	return tss.NewReSharingParameters(
-		tss.S256(),      // curve
-		oldCtx,          // Old PeerContext
-		newCtx,          // New PeerContext with new peers
-		localPartyID,    // Current party ID
-		len(oldParties), // Current party count
-		threshold,       // Current threshold
-		len(newParties), // New party count
-		newThreshold,    // New threshold
+		curve,             // secp256k1 curve
+		oldCtx,            // Old PeerContext
+		newCtx,            // New PeerContext with new peers
+		localPartyID,      // Current party ID
+		oldPartyIDs.Len(), // Current party count
+		threshold,         // Current threshold
+		newPartyIDs.Len(), // New party count
+		newThreshold,      // New threshold
 	)
 }
