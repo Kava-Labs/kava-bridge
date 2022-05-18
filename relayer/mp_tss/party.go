@@ -1,8 +1,6 @@
 package mp_tss
 
 import (
-	"fmt"
-
 	"github.com/binance-chain/tss-lib/tss"
 )
 
@@ -78,7 +76,9 @@ func RunParty(
 						"len(bytes)", len(incomingMsg.wireBytes),
 					)
 
-					ok, err := party.UpdateFromBytes(
+					// first return value ok is false only when there is an error
+					// fine to ignore as we handle err instead.
+					_, err := party.UpdateFromBytes(
 						incomingMsg.wireBytes,
 						incomingMsg.from,
 						incomingMsg.isBroadcast,
@@ -92,15 +92,7 @@ func RunParty(
 					log.Debugw(
 						"updated party from bytes",
 						"partyID", party.PartyID(),
-						"ok", ok,
 					)
-
-					// TODO: What does mean and how does it relate to err?
-					if !ok {
-						log.Errorw("failed to update party from bytes")
-						errCh <- party.WrapError(fmt.Errorf("party update returned not ok"))
-						return
-					}
 				}()
 			}
 		}
