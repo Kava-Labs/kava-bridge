@@ -3,9 +3,7 @@ package mp_tss_test
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"math/big"
-	"sort"
 	"testing"
 
 	"github.com/kava-labs/kava-bridge/relayer/mp_tss"
@@ -23,25 +21,8 @@ func TestSign(t *testing.T) {
 	// require.NoError(t, err)
 
 	// 1. Get party keys from file
-	keys := GetTestKeys(threshold + 1)
+	keys, signPIDs := GetTestKeys(threshold + 1)
 	require.Len(t, keys, threshold+1)
-	//
-	// // Recreate party IDs from keys
-	// signPIDs := GetTestPartyIDs(threshold + 1)
-	// require.Len(t, signPIDs, threshold+1)
-
-	signPIDsUnsorted := make(tss.UnSortedPartyIDs, len(keys))
-	for i, key := range keys {
-		pMoniker := fmt.Sprintf("%d", i+1)
-		signPIDsUnsorted[i] = tss.NewPartyID(pMoniker, pMoniker, key.ShareID)
-	}
-
-	signPIDs := tss.SortPartyIDs(signPIDsUnsorted)
-	// Sort keys so they match keys order
-	sort.Slice(keys, func(i, j int) bool { return keys[i].ShareID.Cmp(keys[j].ShareID) == -1 })
-
-	require.Equal(t, keygen.TestThreshold+1, len(keys))
-	require.Equal(t, keygen.TestThreshold+1, len(signPIDs))
 
 	// 2. Create and connect transport between peers
 	transports := CreateAndConnectTransports(t, signPIDs)

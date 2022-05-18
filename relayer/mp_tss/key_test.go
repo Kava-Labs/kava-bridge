@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"path"
+	"sort"
 	"testing"
 
 	"github.com/binance-chain/tss-lib/ecdsa/keygen"
@@ -32,52 +33,29 @@ func ReadTestKey(index int) keygen.LocalPartySaveData {
 	return key
 }
 
-func GetTestKeys(count int) []keygen.LocalPartySaveData {
+func GetTestKeys(count int) ([]keygen.LocalPartySaveData, tss.SortedPartyIDs) {
 	var keys []keygen.LocalPartySaveData
 	for i := 0; i < count; i++ {
 		key := ReadTestKey(i)
 		keys = append(keys, key)
 	}
 
-	return keys
+	signPIDsUnsorted := make(tss.UnSortedPartyIDs, len(keys))
+	for i, key := range keys {
+		pMoniker := fmt.Sprintf("%d", i+1)
+		signPIDsUnsorted[i] = tss.NewPartyID(pMoniker, pMoniker, key.ShareID)
+	}
+
+	signPIDs := tss.SortPartyIDs(signPIDsUnsorted)
+	// Sort keys so they match keys order, signing/resharing will fail if the keys
+	// are mismatched to the wrong party ID
+	sort.Slice(keys, func(i, j int) bool { return keys[i].ShareID.Cmp(keys[j].ShareID) == -1 })
+
+	return keys, signPIDs
 }
 
 func WriteTestKey(index int, bz []byte) {
 	os.MustWriteFile(KeyPath(index), bz, 0600)
-}
-
-// -----------------------------------------------------------------------------
-// partyIDs
-
-func PartyIDPath(index int) string {
-	return path.Join("test-fixtures", fmt.Sprintf("partyid%d.json", index))
-}
-
-func ReadPartyID(index int) *tss.PartyID {
-	path := PartyIDPath(index)
-
-	bytes := os.MustReadFile(path)
-
-	var partyID tss.PartyID
-	if err := json.Unmarshal(bytes, &partyID); err != nil {
-		panic(err)
-	}
-
-	return &partyID
-}
-
-func GetTestPartyIDs(count int) tss.SortedPartyIDs {
-	var partyIDs []*tss.PartyID
-	for i := 0; i < count; i++ {
-		partyID := ReadPartyID(i)
-		partyIDs = append(partyIDs, partyID)
-	}
-
-	return tss.SortPartyIDs(partyIDs)
-}
-
-func WriteTestPartyID(index int, bz []byte) {
-	os.MustWriteFile(PartyIDPath(index), bz, 0600)
 }
 
 func TestLoadKey(t *testing.T) {

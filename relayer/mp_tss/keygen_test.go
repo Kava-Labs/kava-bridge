@@ -1,7 +1,6 @@
 package mp_tss_test
 
 import (
-	"encoding/json"
 	"testing"
 
 	logging "github.com/ipfs/go-log/v2"
@@ -79,19 +78,11 @@ func TestKeygen(t *testing.T) {
 	}
 
 	// // Write keys to file for test fixtures for signing
-	for i, key := range keys {
-		bz, err := json.MarshalIndent(&key, "", "  ")
-		require.NoError(t, err)
-		t.Log(string(bz))
+	// for i, key := range keys {
+	// 	bz, err := json.MarshalIndent(&key, "", "  ")
+	// 	require.NoError(t, err)
+	// 	t.Log(string(bz))
 
-		WriteTestKey(i, bz)
-	}
-
-	for i, partyID := range partyIDs {
-		bz, err := json.MarshalIndent(&partyID, "", "  ")
-		require.NoError(t, err)
-		t.Log(string(bz))
-
-		WriteTestPartyID(i, bz)
-	}
+	// 	WriteTestKey(i, bz)
+	// }
 }
