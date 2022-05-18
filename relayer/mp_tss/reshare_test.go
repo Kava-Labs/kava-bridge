@@ -30,8 +30,6 @@ func TestReshare(t *testing.T) {
 	require.Equal(t, keygen.TestThreshold+1, len(oldKeys))
 	require.Equal(t, keygen.TestThreshold+1, len(oldPartyIDs))
 
-	oldP2PCtx := tss.NewPeerContext(oldPartyIDs)
-
 	// 2. Create new party IDs to add.. or replace ? confused
 	newPartyIDs := tss.GenerateTestPartyIDs(test.TestParticipants)
 	require.Len(t, newPartyIDs, test.TestParticipants)
@@ -42,29 +40,13 @@ func TestReshare(t *testing.T) {
 	// 3. Create and connect transport between peers
 	oldTransports, newTransports := CreateAndConnectReSharingTransports(t, oldPartyIDs, newPartyIDs)
 
-	newP2PCtx := tss.NewPeerContext(newPartyIDs)
-	newPCount := len(newPartyIDs)
-	//
-	// oldCommittee := make([]*resharing.LocalParty, 0, len(oldPartyIDs))
-	// newCommittee := make([]*resharing.LocalParty, 0, newPCount)
-	// bothCommitteesPax := len(oldCommittee) + len(newCommittee)
-	//
-	// errCh := make(chan *tss.Error, bothCommitteesPax)
-	// outCh := make(chan tss.Message, bothCommitteesPax)
-	// endCh := make(chan keygen.LocalPartySaveData, bothCommitteesPax)
-
-	// updater := test.SharedPartyUpdater
-
 	// 4. Start resharing party for each peer
 	outputAgg := make(chan keygen.LocalPartySaveData)
 	errAgg := make(chan *tss.Error)
 
 	// Start old parties
 	for i, partyID := range oldPartyIDs {
-		params := tss.NewReSharingParameters(tss.S256(), oldP2PCtx, newP2PCtx, partyID, test.TestParticipants, threshold, newPCount, newThreshold)
-
-		// P := resharing.NewLocalParty(params, oldKeys[i], outCh, endCh).(*resharing.LocalParty) // discard old key data
-		// oldCommittee = append(oldCommittee, P)
+		params := mp_tss.CreateReShareParams(oldPartyIDs, newPartyIDs, partyID, threshold, newThreshold)
 
 		outputCh, errCh := mp_tss.RunReshare(params, oldKeys[i], oldTransports[i])
 
@@ -81,17 +63,12 @@ func TestReshare(t *testing.T) {
 	}
 
 	for i, partyID := range newPartyIDs {
-		params := tss.NewReSharingParameters(tss.S256(), oldP2PCtx, newP2PCtx, partyID, test.TestParticipants, threshold, newPCount, newThreshold)
+		params := mp_tss.CreateReShareParams(oldPartyIDs, newPartyIDs, partyID, threshold, newThreshold)
 		t.Log(params.PartyID())
 
-		save := keygen.NewLocalPartySaveData(newPCount)
-		// Verify() fail is not from this
+		save := keygen.NewLocalPartySaveData(len(newPartyIDs))
+		// Reuse fixture pre-generated preparams
 		save.LocalPreParams = ReadTestKey(i).LocalPreParams
-
-		// require.True(t, save.Validate(), "new party save data should be valid")
-
-		// P := resharing.NewLocalParty(params, save, outCh, endCh).(*resharing.LocalParty)
-		// newCommittee = append(newCommittee, P)
 
 		outputCh, errCh := mp_tss.RunReshare(params, save, newTransports[i])
 
@@ -109,7 +86,7 @@ func TestReshare(t *testing.T) {
 
 	t.Logf("started key reshare")
 
-	newKeys := make([]keygen.LocalPartySaveData, newPCount)
+	newKeys := make([]keygen.LocalPartySaveData, len(newPartyIDs))
 
 	for i := 0; i < len(oldPartyIDs)+len(newPartyIDs); i++ {
 		select {
@@ -118,20 +95,31 @@ func TestReshare(t *testing.T) {
 			require.NoError(t, err)
 			t.Log(string(bz))
 
-			newKeys = append(newKeys, output)
+			// Old committee parties have Xi zeroed, ignore those
+			if output.Xi == nil {
+				continue
+			}
+
+			// new committee -- must use original index in slice
+			index, err := output.OriginalIndex()
+			assert.NoErrorf(t, err, "should not be an error getting a party's index from save data")
+			newKeys[index] = output
 		case err := <-errAgg:
 			t.Fatal(err)
 		}
 	}
 
-	require.Equal(t, len(newKeys), newPCount, "each party should get a key")
+	require.Equal(t, len(newPartyIDs), len(newKeys), "each party should get a key")
 
 	// xj tests: BigXj == xj*G
 	for j, key := range newKeys {
 		// xj test: BigXj == xj*G
 		xj := key.Xi
-		gXj := crypto.ScalarBaseMult(tss.S256(), xj)
+		gXj := crypto.ScalarBaseMult(mp_tss.Curve, xj)
+
+		// Uses index here so it must use OriginalIndex(), not append() in arbitrary order
 		BigXj := key.BigXj[j]
+
 		assert.True(t, BigXj.Equals(gXj), "ensure BigX_j == g^x_j")
 	}
 

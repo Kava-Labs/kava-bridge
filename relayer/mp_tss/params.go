@@ -4,7 +4,7 @@ import (
 	"github.com/binance-chain/tss-lib/tss"
 )
 
-var curve = tss.S256()
+var Curve = tss.S256()
 
 // CreateParams creates tss parameters for the given party IDs, local partyID,
 // and threshold for tss.
@@ -16,7 +16,7 @@ func CreateParams(
 	parties := tss.SortPartyIDs(partyIDs)
 
 	ctx := tss.NewPeerContext(parties)
-	return tss.NewParameters(curve, ctx, localPartyID, len(parties), threshold)
+	return tss.NewParameters(Curve, ctx, localPartyID, len(parties), threshold)
 }
 
 func CreateReShareParams(
@@ -30,7 +30,7 @@ func CreateReShareParams(
 	newCtx := tss.NewPeerContext(newPartyIDs)
 
 	return tss.NewReSharingParameters(
-		curve,             // secp256k1 curve
+		Curve,             // secp256k1 curve
 		oldCtx,            // Old PeerContext
 		newCtx,            // New PeerContext with new peers
 		localPartyID,      // Current party ID
