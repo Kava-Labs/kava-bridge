@@ -2,6 +2,7 @@ package mp_tss_test
 
 import (
 	"bytes"
+	"crypto/ecdsa"
 	"encoding/json"
 	"math/big"
 	"testing"
@@ -31,12 +32,14 @@ func TestSign(t *testing.T) {
 	outputAgg := make(chan common.SignatureData, keygen.TestThreshold)
 	errAgg := make(chan *tss.Error, keygen.TestThreshold)
 
+	msgHash := big.NewInt(1234)
+
 	for i := range signPIDs {
 		params := mp_tss.CreateParams(signPIDs.ToUnSorted(), signPIDs[i], keygen.TestThreshold)
 		t.Log(params.PartyID())
 
 		// big.Int message, would be message hash converted to big int
-		outputCh, errCh := mp_tss.RunSigner(big.NewInt(1234), params, keys[i], transports[i])
+		outputCh, errCh := mp_tss.RunSigner(msgHash, params, keys[i], transports[i])
 
 		go func(outputCh chan common.SignatureData, errCh chan *tss.Error) {
 			for {
@@ -80,4 +83,22 @@ func TestSign(t *testing.T) {
 			assert.True(t, bytes.Equal(sig.Signature, sig2.Signature))
 		}
 	}
+
+	// Verify signature
+	pkX, pkY := keys[0].ECDSAPub.X(), keys[0].ECDSAPub.Y()
+	pk := ecdsa.PublicKey{
+		Curve: mp_tss.Curve,
+		X:     pkX,
+		Y:     pkY,
+	}
+
+	ok := ecdsa.Verify(
+		&pk,                                    // pubkey
+		msgHash.Bytes(),                        // message hash
+		new(big.Int).SetBytes(signatures[0].R), // R
+		new(big.Int).SetBytes(signatures[0].S), // S
+	)
+	assert.True(t, ok, "ecdsa verify must pass")
+
+	t.Log("signature verified")
 }

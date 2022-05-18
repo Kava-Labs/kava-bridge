@@ -25,7 +25,7 @@ func TestReshare(t *testing.T) {
 	require.NoError(t, err)
 
 	// 1. Get t+1 current keys
-	oldKeys, oldPartyIDs, err := keygen.LoadKeygenTestFixturesRandomSet(keygen.TestThreshold+1, keygen.TestParticipants)
+	oldKeys, oldPartyIDs := GetTestKeys(threshold + 1)
 	require.NoError(t, err)
 	require.Equal(t, keygen.TestThreshold+1, len(oldKeys))
 	require.Equal(t, keygen.TestThreshold+1, len(oldPartyIDs))
