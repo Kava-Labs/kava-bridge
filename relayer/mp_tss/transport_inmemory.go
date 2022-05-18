@@ -19,11 +19,10 @@ type MemoryTransporter struct {
 
 var _ Transporter = (*MemoryTransporter)(nil)
 
-func NewMemoryTransporter(partyID *tss.PartyID, bufSize int) *MemoryTransporter {
+func NewMemoryTransporter(partyID *tss.PartyID) *MemoryTransporter {
 	ts := &MemoryTransporter{
-		PartyID: partyID,
-		// Much faster with buf size more than 1
-		recvChan:     make(chan ReceivedPartyState, bufSize),
+		PartyID:      partyID,
+		recvChan:     make(chan ReceivedPartyState, 1),
 		sendChan:     make(map[*tss.PartyID]chan ReceivedPartyState),
 		oldCommittee: make(map[*tss.PartyID]chan ReceivedPartyState),
 		newCommittee: make(map[*tss.PartyID]chan ReceivedPartyState),

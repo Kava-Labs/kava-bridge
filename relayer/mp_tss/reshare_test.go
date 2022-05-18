@@ -62,6 +62,7 @@ func TestReshare(t *testing.T) {
 		}(outputCh, errCh)
 	}
 
+	// Start new parties
 	for i, partyID := range newPartyIDs {
 		params := mp_tss.CreateReShareParams(oldPartyIDs, newPartyIDs, partyID, threshold, newThreshold)
 		t.Log(params.PartyID())
@@ -88,6 +89,7 @@ func TestReshare(t *testing.T) {
 
 	newKeys := make([]keygen.LocalPartySaveData, len(newPartyIDs))
 
+	// Wait for parties to finish
 	for i := 0; i < len(oldPartyIDs)+len(newPartyIDs); i++ {
 		select {
 		case output := <-outputAgg:

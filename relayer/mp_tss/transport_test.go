@@ -14,7 +14,7 @@ func CreateAndConnectTransports(
 	// Create transport between peers
 	var transports []*mp_tss.MemoryTransporter
 	for _, partyID := range partyIDs {
-		transports = append(transports, mp_tss.NewMemoryTransporter(partyID, len(partyIDs)))
+		transports = append(transports, mp_tss.NewMemoryTransporter(partyID))
 	}
 
 	t.Logf("transports: %+v", transports)
@@ -48,13 +48,13 @@ func CreateAndConnectReSharingTransports(
 	// Create transport between peers
 	var oldTransports []*mp_tss.MemoryTransporter
 	for _, partyID := range oldCommittee {
-		mt := mp_tss.NewMemoryTransporter(partyID, len(oldCommittee)+len(newCommittee))
+		mt := mp_tss.NewMemoryTransporter(partyID)
 		oldTransports = append(oldTransports, mt)
 	}
 
 	var newTransports []*mp_tss.MemoryTransporter
 	for _, partyID := range newCommittee {
-		mt := mp_tss.NewMemoryTransporter(partyID, len(oldCommittee)+len(newCommittee))
+		mt := mp_tss.NewMemoryTransporter(partyID)
 		newTransports = append(newTransports, mt)
 	}
 
