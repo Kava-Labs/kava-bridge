@@ -11,10 +11,10 @@ type MemoryTransporter struct {
 	// incoming messages from other parties.
 	recvChan chan ReceivedPartyState
 	// outgoing messages to other parties
-	sendChan map[string]chan ReceivedPartyState
+	sendChan map[*tss.PartyID]chan ReceivedPartyState
 	// old/new committee only for resigning
-	oldCommittee map[string]chan ReceivedPartyState
-	newCommittee map[string]chan ReceivedPartyState
+	oldCommittee map[*tss.PartyID]chan ReceivedPartyState
+	newCommittee map[*tss.PartyID]chan ReceivedPartyState
 }
 
 var _ Transporter = (*MemoryTransporter)(nil)
@@ -24,9 +24,9 @@ func NewMemoryTransporter(partyID *tss.PartyID, bufSize int) *MemoryTransporter 
 		PartyID: partyID,
 		// Much faster with buf size more than 1
 		recvChan:     make(chan ReceivedPartyState, bufSize),
-		sendChan:     make(map[string]chan ReceivedPartyState),
-		oldCommittee: make(map[string]chan ReceivedPartyState),
-		newCommittee: make(map[string]chan ReceivedPartyState),
+		sendChan:     make(map[*tss.PartyID]chan ReceivedPartyState),
+		oldCommittee: make(map[*tss.PartyID]chan ReceivedPartyState),
+		newCommittee: make(map[*tss.PartyID]chan ReceivedPartyState),
 	}
 
 	return ts
@@ -49,14 +49,21 @@ func (mt *MemoryTransporter) sendReSharing(data []byte, routing *tss.MessageRout
 		"IsToOldAndNewCommittees", routing.IsToOldAndNewCommittees,
 	)
 
+	dest := routing.To
+	if dest == nil {
+		return fmt.Errorf("resharing should not have a msg with nil destination")
+	}
+
 	if routing.IsToOldCommittee || routing.IsToOldAndNewCommittees {
 		log.Debug("sending message to old committee")
-		for partyID, ch := range mt.oldCommittee {
-			if partyID == mt.PartyID.Id {
-				continue
-			}
+		for _, partyID := range dest[:len(mt.oldCommittee)] {
+			// if partyID == mt.PartyID {
+			// continue
+			// }
 
-			go func(partyID string, ch chan ReceivedPartyState) {
+			ch := mt.oldCommittee[partyID]
+
+			go func(partyID *tss.PartyID, ch chan ReceivedPartyState) {
 				log.Debugw("sending message to party", "partyID", partyID, "len(ch)", len(ch))
 				ch <- DataRoutingToMessage(data, routing)
 				log.Debugw("sent message to party", "partyID", partyID, "len(ch)", len(ch))
@@ -66,12 +73,14 @@ func (mt *MemoryTransporter) sendReSharing(data []byte, routing *tss.MessageRout
 
 	if !routing.IsToOldCommittee || routing.IsToOldAndNewCommittees {
 		log.Debug("sending message to new committee")
-		for partyID, ch := range mt.newCommittee {
-			if partyID == mt.PartyID.Id {
-				continue
-			}
+		for _, partyID := range dest {
+			// if partyID == mt.PartyID {
+			// continue
+			// }
 
-			go func(partyID string, ch chan ReceivedPartyState) {
+			ch := mt.newCommittee[partyID]
+
+			go func(partyID *tss.PartyID, ch chan ReceivedPartyState) {
 				log.Debugw("sending message to party", "partyID", partyID, "len(ch)", len(ch))
 				ch <- DataRoutingToMessage(data, routing)
 				log.Debugw("sent message to party", "partyID", partyID, "len(ch)", len(ch))
@@ -92,10 +101,12 @@ func (mt *MemoryTransporter) sendKeygenOrSigning(data []byte, routing *tss.Messa
 	if routing.IsBroadcast && len(routing.To) == 0 {
 		log.Debug("broadcast message to all peers")
 
-		for party, ch := range mt.sendChan {
-			log.Debugw("sending message to party", "partyID", party)
-			ch <- DataRoutingToMessage(data, routing)
-			log.Debugw("sent message to party", "partyID", party)
+		for partyID, ch := range mt.sendChan {
+			go func(partyID *tss.PartyID, ch chan ReceivedPartyState) {
+				log.Debugw("sending message to party", "partyID", partyID, "len(ch)", len(ch))
+				ch <- DataRoutingToMessage(data, routing)
+				log.Debugw("sent message to party", "partyID", partyID, "len(ch)", len(ch))
+			}(partyID, ch)
 		}
 
 		log.Debug("done broadcast")
@@ -104,21 +115,23 @@ func (mt *MemoryTransporter) sendKeygenOrSigning(data []byte, routing *tss.Messa
 	}
 
 	for _, partyID := range routing.To {
-		ch, ok := mt.sendChan[partyID.Id]
+		ch, ok := mt.sendChan[partyID]
 		if !ok {
 			return fmt.Errorf("party %s not found", partyID)
 		}
 
-		log.Debugw("sending message to party", "partyID", partyID, "len(ch)", len(ch))
-		ch <- DataRoutingToMessage(data, routing)
-		log.Debugw("sent message to party", "partyID", partyID)
+		go func(partyID *tss.PartyID, ch chan ReceivedPartyState) {
+			log.Debugw("sending message to party", "partyID", partyID, "len(ch)", len(ch))
+			ch <- DataRoutingToMessage(data, routing)
+			log.Debugw("sent message to party", "partyID", partyID, "len(ch)", len(ch))
+		}(partyID, ch)
 	}
 
 	return nil
 }
 
 func (mt *MemoryTransporter) AddTarget(partyID *tss.PartyID, ch chan ReceivedPartyState) {
-	mt.sendChan[partyID.Id] = ch
+	mt.sendChan[partyID] = ch
 }
 
 // GetReceiver returns a channel for other peer to send messages to.
@@ -133,11 +146,11 @@ func (mt *MemoryTransporter) Receive() <-chan ReceivedPartyState {
 }
 
 func (mt *MemoryTransporter) AddOldCommitteeTarget(partyID *tss.PartyID, ch chan ReceivedPartyState) {
-	mt.oldCommittee[partyID.Id] = ch
+	mt.oldCommittee[partyID] = ch
 }
 
 func (mt *MemoryTransporter) AddNewCommitteeTarget(partyID *tss.PartyID, ch chan ReceivedPartyState) {
-	mt.newCommittee[partyID.Id] = ch
+	mt.newCommittee[partyID] = ch
 }
 
 func DataRoutingToMessage(data []byte, routing *tss.MessageRouting) ReceivedPartyState {

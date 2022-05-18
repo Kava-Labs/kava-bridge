@@ -67,7 +67,8 @@ func RunParty(
 				// channels should either not block or the following should be
 				// run in a goroutine.
 
-				// Running in goroutine prevents channels from getting filled up
+				// Running in goroutine prevents blocking when channels get
+				// filled up
 				go func() {
 					log.Debugw(
 						"received message",
@@ -94,7 +95,7 @@ func RunParty(
 						"ok", ok,
 					)
 
-					// TODO: What does ok mean?
+					// TODO: What does mean and how does it relate to err?
 					if !ok {
 						log.Errorw("failed to update party from bytes")
 						errCh <- party.WrapError(fmt.Errorf("party update returned not ok"))
