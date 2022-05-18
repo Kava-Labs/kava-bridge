@@ -57,9 +57,10 @@ func (mt *MemoryTransporter) sendReSharing(data []byte, routing *tss.MessageRout
 	if routing.IsToOldCommittee || routing.IsToOldAndNewCommittees {
 		log.Debug("sending message to old committee")
 		for _, partyID := range dest[:len(mt.oldCommittee)] {
-			// if partyID == mt.PartyID {
-			// continue
-			// }
+			// Skip sending back to sender
+			if partyID == routing.From {
+				continue
+			}
 
 			ch := mt.oldCommittee[partyID]
 
@@ -74,9 +75,10 @@ func (mt *MemoryTransporter) sendReSharing(data []byte, routing *tss.MessageRout
 	if !routing.IsToOldCommittee || routing.IsToOldAndNewCommittees {
 		log.Debug("sending message to new committee")
 		for _, partyID := range dest {
-			// if partyID == mt.PartyID {
-			// continue
-			// }
+			// Skip sending back to sender
+			if partyID == routing.From {
+				continue
+			}
 
 			ch := mt.newCommittee[partyID]
 
