@@ -3,10 +3,11 @@ package mp_tss_test
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"math/big"
+	"sort"
 	"testing"
 
-	logging "github.com/ipfs/go-log/v2"
 	"github.com/kava-labs/kava-bridge/relayer/mp_tss"
 
 	"github.com/binance-chain/tss-lib/common"
@@ -18,19 +19,27 @@ import (
 )
 
 func TestSign(t *testing.T) {
-	err := logging.SetLogLevel("*", "debug")
-	require.NoError(t, err)
+	// err := logging.SetLogLevel("*", "debug")
+	// require.NoError(t, err)
 
 	// 1. Get party keys from file
-	// keys := GetTestKeys(threshold + 1)
-	// require.Len(t, keys, threshold+1)
+	keys := GetTestKeys(threshold + 1)
+	require.Len(t, keys, threshold+1)
 	//
 	// // Recreate party IDs from keys
 	// signPIDs := GetTestPartyIDs(threshold + 1)
 	// require.Len(t, signPIDs, threshold+1)
 
-	keys, signPIDs, err := keygen.LoadKeygenTestFixturesRandomSet(keygen.TestThreshold+1, keygen.TestParticipants)
-	require.NoError(t, err)
+	signPIDsUnsorted := make(tss.UnSortedPartyIDs, len(keys))
+	for i, key := range keys {
+		pMoniker := fmt.Sprintf("%d", i+1)
+		signPIDsUnsorted[i] = tss.NewPartyID(pMoniker, pMoniker, key.ShareID)
+	}
+
+	signPIDs := tss.SortPartyIDs(signPIDsUnsorted)
+	// Sort keys so they match keys order
+	sort.Slice(keys, func(i, j int) bool { return keys[i].ShareID.Cmp(keys[j].ShareID) == -1 })
+
 	require.Equal(t, keygen.TestThreshold+1, len(keys))
 	require.Equal(t, keygen.TestThreshold+1, len(signPIDs))
 

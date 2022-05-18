@@ -104,6 +104,11 @@ func (mt *MemoryTransporter) sendKeygenOrSigning(data []byte, routing *tss.Messa
 		log.Debug("broadcast message to all peers")
 
 		for partyID, ch := range mt.sendChan {
+			// Skip send back to sender
+			if partyID == routing.From {
+				continue
+			}
+
 			go func(partyID *tss.PartyID, ch chan ReceivedPartyState) {
 				log.Debugw("sending message to party", "partyID", partyID, "len(ch)", len(ch))
 				ch <- DataRoutingToMessage(data, routing)
@@ -117,6 +122,10 @@ func (mt *MemoryTransporter) sendKeygenOrSigning(data []byte, routing *tss.Messa
 	}
 
 	for _, partyID := range routing.To {
+		if partyID == routing.From {
+			continue
+		}
+
 		ch, ok := mt.sendChan[partyID]
 		if !ok {
 			return fmt.Errorf("party %s not found", partyID)
