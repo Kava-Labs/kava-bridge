@@ -13,9 +13,6 @@ import (
 	"github.com/tendermint/tendermint/libs/os"
 )
 
-// -----------------------------------------------------------------------------
-// keygen
-
 func KeyPath(index int) string {
 	return path.Join("test-fixtures", fmt.Sprintf("localparty-savedata%d.json", index))
 }
