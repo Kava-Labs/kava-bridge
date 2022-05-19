@@ -22,15 +22,6 @@ func CreateAndConnectTransports(
 	// Add transport receivers to each other
 	for _, transport := range transports {
 		for _, otherTransport := range transports {
-			// Skip self
-			// if transport.PartyID.KeyInt().Cmp(otherTransport.PartyID.KeyInt()) == 0 {
-			// 	t.Logf(
-			// 		"skipping self for transport: %v == %v",
-			// 		transport.PartyID.KeyInt(), otherTransport.PartyID.KeyInt(),
-			// 	)
-			// 	continue
-			// }
-
 			transport.AddTarget(otherTransport.PartyID, otherTransport.GetReceiver())
 		}
 	}
