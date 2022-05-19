@@ -8,7 +8,6 @@ import (
 	"github.com/binance-chain/tss-lib/ecdsa/keygen"
 	"github.com/binance-chain/tss-lib/test"
 	"github.com/binance-chain/tss-lib/tss"
-	logging "github.com/ipfs/go-log/v2"
 	"github.com/kava-labs/kava-bridge/relayer/mp_tss"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -21,12 +20,11 @@ func TestReshare(t *testing.T) {
 
 	newThreshold := test.TestThreshold
 
-	err := logging.SetLogLevel("*", "debug")
-	require.NoError(t, err)
+	// err := logging.SetLogLevel("*", "debug")
+	// require.NoError(t, err)
 
 	// 1. Get t+1 current keys
 	oldKeys, oldPartyIDs := GetTestKeys(threshold + 1)
-	require.NoError(t, err)
 	require.Equal(t, keygen.TestThreshold+1, len(oldKeys))
 	require.Equal(t, keygen.TestThreshold+1, len(oldPartyIDs))
 

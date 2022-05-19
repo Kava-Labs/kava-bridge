@@ -3,22 +3,19 @@ package mp_tss_test
 import (
 	"testing"
 
-	logging "github.com/ipfs/go-log/v2"
-
 	"github.com/binance-chain/tss-lib/ecdsa/keygen"
 	"github.com/binance-chain/tss-lib/test"
 	"github.com/binance-chain/tss-lib/tss"
 	"github.com/kava-labs/kava-bridge/relayer/mp_tss"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 const partyCount = test.TestParticipants
 const threshold = test.TestThreshold
 
 func TestKeygen(t *testing.T) {
-	err := logging.SetLogLevel("*", "debug")
-	require.NoError(t, err)
+	// err := logging.SetLogLevel("*", "debug")
+	// require.NoError(t, err)
 
 	// 1. Create party ID for each peer, share with other peers
 	partyIDs := tss.GenerateTestPartyIDs(partyCount)
