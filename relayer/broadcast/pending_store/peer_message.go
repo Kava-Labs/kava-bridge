@@ -1,4 +1,4 @@
-package broadcast
+package pending_store
 
 import (
 	"github.com/kava-labs/kava-bridge/relayer/types"

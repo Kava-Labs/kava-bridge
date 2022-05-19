@@ -5,9 +5,9 @@ import (
 	"github.com/libp2p/go-libp2p-core/peer"
 )
 
-// broadcasterHook defines the interface for broadcaster hooks. This is not
+// BroadcasterHook defines the interface for broadcaster hooks. This is not
 // exported as it should only be used for testing.
-type broadcasterHook interface {
+type BroadcasterHook interface {
 	// Run before a raw message is broadcasted and can be used to modify the
 	// message.
 	BeforeBroadcastRawMessage(b *Broadcaster, target peer.ID, pb *proto.Message)
@@ -16,7 +16,7 @@ type broadcasterHook interface {
 // NoOpBroadcasterHook is a broadcasterHook that does nothing.
 type noOpBroadcasterHook struct{}
 
-var _ broadcasterHook = (*noOpBroadcasterHook)(nil)
+var _ BroadcasterHook = (*noOpBroadcasterHook)(nil)
 
 func (h *noOpBroadcasterHook) BeforeBroadcastRawMessage(b *Broadcaster, target peer.ID, pb *proto.Message) {
 }

@@ -1,4 +1,4 @@
-package broadcast
+package pending_store
 
 import (
 	"fmt"
@@ -22,11 +22,14 @@ func NewPeerMessageGroup() *PeerMessageGroup {
 
 // Add adds a message to the group, returning true if it replaced a message with
 // the same peer ID.
-func (g *PeerMessageGroup) Add(msg *MessageWithPeerMetadata) bool {
-	_, found := g.Messages[msg.PeerID]
+func (g *PeerMessageGroup) Add(msg *MessageWithPeerMetadata) error {
+	if _, found := g.Messages[msg.PeerID]; found {
+		return fmt.Errorf("message from peer %s already exists", msg.PeerID)
+	}
+
 	g.Messages[msg.PeerID] = msg
 
-	return found
+	return nil
 }
 
 // Completed returns true if the number of received messages matches the number
@@ -50,12 +53,14 @@ func (g *PeerMessageGroup) Completed(hostID peer.ID, recipients []peer.ID) bool 
 
 // GetMessageData returns the underlying MessageData for the group. This should
 // be called *after* Validate() has been called and confirmed to have no errors.
-func (g *PeerMessageGroup) GetMessageData() *types.BroadcastMessage {
+// This may return false if the group was created but did not receive any
+// messages (ie. when broadcasting)
+func (g *PeerMessageGroup) GetMessageData() (types.BroadcastMessage, bool) {
 	for _, msg := range g.Messages {
-		return &msg.BroadcastMessage
+		return msg.BroadcastMessage, true
 	}
 
-	return nil
+	return types.BroadcastMessage{}, false
 }
 
 // Len returns the number of messages in the group.

@@ -9,6 +9,7 @@ import (
 	prototypes "github.com/gogo/protobuf/types"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/multiformats/go-multibase"
+	"github.com/pkg/errors"
 )
 
 const (
@@ -70,7 +71,15 @@ func (msg *BroadcastMessage) Validate() error {
 	}
 
 	if msg.TTLSeconds < MinimumTTLSeconds {
-		return ErrMsgTTLTooShort
+		return errors.Wrapf(ErrMsgTTLTooShort, "%d < %d seconds", msg.TTLSeconds, MinimumTTLSeconds)
+	}
+
+	if msg.Expired() {
+		return errors.Wrapf(
+			ErrMsgExpired,
+			"%v + %v seconds < now (%v)",
+			msg.Created, msg.TTLSeconds, time.Now().UTC(),
+		)
 	}
 
 	return nil
@@ -79,6 +88,13 @@ func (msg *BroadcastMessage) Validate() error {
 // UnpackPayload unmarshals the payload message into the given proto.Message.
 func (msg *BroadcastMessage) UnpackPayload(pb proto.Message) error {
 	return prototypes.UnmarshalAny(&msg.Payload, pb)
+}
+
+// Expired returns true if the TTL is exceeded since created time.
+func (msg *BroadcastMessage) Expired() bool {
+	// TTLSeconds converted to float, not converting duration to uint64 as it
+	// will underflow.
+	return time.Since(msg.Created).Seconds() > float64(msg.TTLSeconds)
 }
 
 func dedupPeerIDs(peerIDs []peer.ID) []peer.ID {
