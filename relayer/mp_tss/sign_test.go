@@ -39,7 +39,7 @@ func TestSign(t *testing.T) {
 		t.Log(params.PartyID())
 
 		// big.Int message, would be message hash converted to big int
-		outputCh, errCh := mp_tss.RunSigner(msgHash, params, keys[i], transports[i])
+		outputCh, errCh := mp_tss.RunSign(msgHash, params, keys[i], transports[i])
 
 		go func(outputCh chan common.SignatureData, errCh chan *tss.Error) {
 			for {

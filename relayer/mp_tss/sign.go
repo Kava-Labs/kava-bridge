@@ -9,9 +9,9 @@ import (
 	"github.com/binance-chain/tss-lib/tss"
 )
 
-// RunSigner starts the local signing party and handles incoming and outgoing
+// RunSign starts the local signing party and handles incoming and outgoing
 // messages to other parties.
-func RunSigner(
+func RunSign(
 	msg *big.Int,
 	params *tss.Parameters,
 	key keygen.LocalPartySaveData,
