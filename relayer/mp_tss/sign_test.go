@@ -44,6 +44,7 @@ func TestSign(t *testing.T) {
 		go func(outputCh chan common.SignatureData, errCh chan *tss.Error) {
 			for {
 				select {
+				//nolint:govet // https://github.com/bnb-chain/tss-lib/pull/167
 				case output := <-outputCh:
 					outputAgg <- output
 				case err := <-errCh:
@@ -59,11 +60,13 @@ func TestSign(t *testing.T) {
 
 	for range signPIDs {
 		select {
+		//nolint:govet
 		case output := <-outputAgg:
 			bz, err := json.Marshal(&output)
 			require.NoError(t, err)
 			t.Log(string(bz))
 
+			//nolint:govet
 			signatures = append(signatures, output)
 		case err := <-errAgg:
 			t.Logf("err: %v", err)
@@ -72,7 +75,9 @@ func TestSign(t *testing.T) {
 
 	require.Len(t, signatures, test.TestThreshold+1, "each party should get a signature")
 
+	//nolint:govet
 	for i, sig := range signatures {
+		//nolint:govet
 		for j, sig2 := range signatures {
 			// Skip self and previous keys
 			if j <= i {
