@@ -9,6 +9,8 @@ import (
 )
 
 func TestPrecomputeParams(t *testing.T) {
+	t.Skip("skipping intensive precompute params test")
+
 	// Unique per call, not necessary to delete file beforehand
 	testHomeDir := t.TempDir()
 
@@ -20,6 +22,8 @@ func TestPrecomputeParams(t *testing.T) {
 }
 
 func TestPrecomputeParams_NoOverwrite(t *testing.T) {
+	t.Skip("skipping intensive precompute params test")
+
 	testHomeDir := t.TempDir()
 
 	cmd := execRelayer("key", "precompute-preparams", "--home", testHomeDir)
@@ -38,6 +42,8 @@ func TestPrecomputeParams_NoOverwrite(t *testing.T) {
 }
 
 func TestPrecomputeParams_Force(t *testing.T) {
+	t.Skip("skipping intensive precompute params test")
+
 	testHomeDir := t.TempDir()
 
 	cmd := execRelayer("key", "precompute-preparams", "--home", testHomeDir)
