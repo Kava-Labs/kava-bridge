@@ -63,7 +63,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - run: make vet
+      # Re-enable when merged: https://github.com/bnb-chain/tss-lib/pull/167
+      # - run: make vet
       - uses: golangci/golangci-lint-action@v2
         with:
           args: --timeout 5m
