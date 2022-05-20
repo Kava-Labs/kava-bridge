@@ -84,7 +84,7 @@ func (n Node) ConnectToPeers(ctx context.Context, peerAddrInfos []*peer.AddrInfo
 		}
 
 		// TODO: Determine TTL for peer
-		n.Host.Peerstore().AddAddrs(peer.ID, peer.Addrs, peerstore.RecentlyConnectedAddrTTL)
+		n.Host.Peerstore().AddAddrs(peer.ID, peer.Addrs, peerstore.ConnectedAddrTTL)
 
 		// Retry connection 10 times to account for peers starting later than others.
 		// This is not entirely necessary as using a service will also connect

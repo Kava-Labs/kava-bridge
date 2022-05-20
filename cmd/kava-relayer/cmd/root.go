@@ -10,6 +10,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	"github.com/kava-labs/kava-bridge/cmd/kava-relayer/cmd/key"
 	"github.com/kava-labs/kava-bridge/cmd/kava-relayer/cmd/network"
 )
 
@@ -46,6 +47,7 @@ func NewRootCmd() (*cobra.Command, error) {
 
 	rootCmd.AddCommand(newStartCmd())
 	rootCmd.AddCommand(network.GetNetworkCmd())
+	rootCmd.AddCommand(key.GetKeyCmd())
 
 	return rootCmd, nil
 }
