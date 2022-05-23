@@ -10,15 +10,19 @@ import (
 
 // GetLeader returns the leader of the given transaction hash and peer.IDSlice.
 func GetLeader(txHash common.Hash, peerIDs peer.IDSlice) peer.ID {
-	// Mutates peerIDs slice
-	sort.Sort(peerIDs)
+	// Make a copy to prevent mutation of the original slice.
+	copiedPeerIDs := make(peer.IDSlice, len(peerIDs))
+	_ = copy(copiedPeerIDs, peerIDs)
 
-	leaderIndexBig := new(big.Int).Mod(txHash.Big(), big.NewInt(int64(len(peerIDs))))
+	// Sort copy
+	sort.Sort(copiedPeerIDs)
+
+	leaderIndexBig := new(big.Int).Mod(txHash.Big(), big.NewInt(int64(len(copiedPeerIDs))))
 
 	// Should not happen as there shouldn't be maxint number of peers.
 	if !leaderIndexBig.IsUint64() {
 		panic("leader index is not uint64")
 	}
 
-	return peerIDs[leaderIndexBig.Uint64()]
+	return copiedPeerIDs[leaderIndexBig.Uint64()]
 }
