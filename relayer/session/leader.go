@@ -9,7 +9,9 @@ import (
 )
 
 // GetLeader returns the leader of the given transaction hash and peer.IDSlice.
-func GetLeader(txHash common.Hash, peerIDs peer.IDSlice) peer.ID {
+// The offset is only used when there is an inactive leader. The initial offset
+// should be 0, and incremented only while the leader does not respond.
+func GetLeader(txHash common.Hash, peerIDs peer.IDSlice, offset int64) peer.ID {
 	// Make a copy to prevent mutation of the original slice.
 	copiedPeerIDs := make(peer.IDSlice, len(peerIDs))
 	_ = copy(copiedPeerIDs, peerIDs)
@@ -17,7 +19,9 @@ func GetLeader(txHash common.Hash, peerIDs peer.IDSlice) peer.ID {
 	// Sort copy
 	sort.Sort(copiedPeerIDs)
 
-	leaderIndexBig := new(big.Int).Mod(txHash.Big(), big.NewInt(int64(len(copiedPeerIDs))))
+	// (hash + offset) % len(peerIDs)
+	sum := new(big.Int).Add(txHash.Big(), big.NewInt(offset))
+	leaderIndexBig := sum.Mod(sum, big.NewInt(int64(len(copiedPeerIDs))))
 
 	// Should not happen as there shouldn't be maxint number of peers.
 	if !leaderIndexBig.IsUint64() {
