@@ -77,7 +77,7 @@ func TestValidate(t *testing.T) {
 				contains:   "resharing session ID length incorrect: expected 32, got 0",
 			},
 		},
-		// Keygen
+		// Valid
 		{
 			name:    "valid - keygen",
 			giveMsg: types.NewJoinKeygenSessionMessage(types.KeygenSessionID{}),
