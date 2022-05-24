@@ -9,8 +9,6 @@ import (
 	"github.com/gogo/protobuf/proto"
 	prototypes "github.com/gogo/protobuf/types"
 	"github.com/kava-labs/kava-bridge/relayer/stream"
-	"github.com/kava-labs/kava-bridge/relayer/types"
-	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/stretchr/testify/require"
 )
 
@@ -27,8 +25,8 @@ func TestReadWrite(t *testing.T) {
 	}{
 		{
 			"regular",
-			&types.HelloRequest{
-				Message: "hello world",
+			&prototypes.Int64Value{
+				Value: 123,
 			},
 			errArgs{
 				expectPass: true,
@@ -43,10 +41,10 @@ func TestReadWrite(t *testing.T) {
 		},
 		{
 			"large",
-			&types.HelloRequest{
+			&prototypes.StringValue{
 				// Not quite max size since there's other data along with the Message
 				// This may fail if more fields are added and should be decreased.
-				Message: string(make([]byte, stream.MAX_MESSAGE_SIZE-300)),
+				Value: string(make([]byte, stream.MAX_MESSAGE_SIZE-300)),
 			},
 			errArgs{
 				expectPass: true,
@@ -54,9 +52,9 @@ func TestReadWrite(t *testing.T) {
 		},
 		{
 			"exceed size",
-			&types.HelloRequest{
+			&prototypes.StringValue{
 				// This plus the other data will exceed the max size.
-				Message: string(make([]byte, stream.MAX_MESSAGE_SIZE)),
+				Value: string(make([]byte, stream.MAX_MESSAGE_SIZE)),
 			},
 			errArgs{
 				expectPass: false,
@@ -67,41 +65,21 @@ func TestReadWrite(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			// Error if decoding invalid peer ID:
-			// "length greater than remaining number of bytes in buffer"
-			hostPeerID, err := peer.Decode("16Uiu2HAmTdEddBdw1JVs5tHhqQGaFPkqq64TwppmL2G8fYbZeZei")
-			require.NoError(t, err)
-
-			recipients, err := peer.Decode("16Uiu2HAm9z3t15JpqBbPQJ1ZLHm6w1AXD6M2FXdCG3GLoY4iDcD9")
-			require.NoError(t, err)
-
-			msg, err := types.NewBroadcastMessage(
-				tc.payload,
-				hostPeerID,
-				[]peer.ID{
-					recipients,
-				},
-				1,
-			)
+			msgAny, err := prototypes.MarshalAny(tc.payload)
 			require.NoError(t, err)
 
 			// Write/read from buffer
 			var buf bytes.Buffer
-			err = stream.NewProtoMessageWriter(&buf).WriteMsg(&msg)
+			err = stream.NewProtoMessageWriter(&buf).WriteMsg(msgAny)
 			require.NoError(t, err)
 
-			var msgRes types.BroadcastMessage
-			err = stream.NewProtoMessageReader(&buf).ReadMsg(&msgRes)
+			var msgRead prototypes.Any
+			err = stream.NewProtoMessageReader(&buf).ReadMsg(&msgRead)
 
 			if tc.errArgs.expectPass {
 				require.NoError(t, err)
 
-				// Unpack response
-				var unpacked prototypes.DynamicAny
-				err = msgRes.UnpackPayload(&unpacked)
-				require.NoError(t, err)
-
-				require.Equal(t, tc.payload, unpacked.Message, "unpacked message should match original")
+				require.True(t, msgAny.Equal(msgRead), "unpacked message should match original")
 			} else {
 				require.Error(t, err)
 				require.Contains(t, err.Error(), tc.errArgs.contains)
@@ -116,7 +94,7 @@ func TestRead_ExceedSize(t *testing.T) {
 	// Max u32
 	buf.Write([]byte{255, 255, 255, 255})
 
-	var msgRes types.BroadcastMessage
+	var msgRes prototypes.StringValue
 	err := stream.NewProtoMessageReader(&buf).ReadMsg(&msgRes)
 
 	require.Error(t, err)
@@ -132,7 +110,7 @@ func TestRead_MaxSizeEmptyData(t *testing.T) {
 
 	buf.Write(b)
 
-	var msgRes types.BroadcastMessage
+	var msgRes prototypes.StringValue
 	err := stream.NewProtoMessageReader(&buf).ReadMsg(&msgRes)
 
 	require.Error(t, err)

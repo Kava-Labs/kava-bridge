@@ -1,0 +1,38 @@
+syntax = "proto3";
+package tss.v1beta1;
+
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/kava-labs/kava-bridge/relayer/mp_tss/types";
+
+option (gogoproto.goproto_getters_all) = false;
+
+// JoinSessionMessage is used to create a new signing session.
+message JoinSessionMessage {
+  oneof session {
+    JoinSigningSessionMessage   join_signing_session_message   = 1;
+    JoinKeygenSessionMessage    join_keygen_session_message    = 2;
+    JoinReSharingSessionMessage join_resharing_session_message = 3;
+  }
+}
+
+// JoinSigningSessionMessage is used to create and join a new signing session.
+message JoinSigningSessionMessage {
+  // Hash of the transaction that initiated the signing session.
+  bytes tx_hash = 1;
+
+  // Random bytes different per peer to create an aggregated party session ID.
+  bytes peer_session_id_part = 2 [(gogoproto.customname) = "PeerSessionIDPart"];
+}
+
+// JoinKeygenSessionMessage is used to create and join a new keygen session.
+message JoinKeygenSessionMessage {
+  // Shared session ID, same for all peers.
+  bytes keygen_session_id = 1 [(gogoproto.customname) = "KeygenSessionID"];
+}
+
+// JoinReSharingSessionMessage is used to create and join a new resharing session.
+message JoinReSharingSessionMessage {
+  // Shared session ID, same for all peers.
+  bytes resharing_session_id = 1 [(gogoproto.customname) = "ReSharingSessionID"];
+}

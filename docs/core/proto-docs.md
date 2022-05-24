@@ -37,9 +37,19 @@
   
     - [Msg](#bridge.v1beta1.Msg)
   
-- [relayer/v1beta1/broadcast_message.proto](#relayer/v1beta1/broadcast_message.proto)
+- [relayer/broadcast/v1beta1/broadcast_message.proto](#relayer/broadcast/v1beta1/broadcast_message.proto)
     - [BroadcastMessage](#relayer.v1beta1.BroadcastMessage)
     - [HelloRequest](#relayer.v1beta1.HelloRequest)
+  
+- [relayer/tss/v1beta1/join_session.proto](#relayer/tss/v1beta1/join_session.proto)
+    - [JoinKeygenSessionMessage](#tss.v1beta1.JoinKeygenSessionMessage)
+    - [JoinReSharingSessionMessage](#tss.v1beta1.JoinReSharingSessionMessage)
+    - [JoinSessionMessage](#tss.v1beta1.JoinSessionMessage)
+    - [JoinSigningSessionMessage](#tss.v1beta1.JoinSigningSessionMessage)
+  
+- [relayer/tss/v1beta1/signing.proto](#relayer/tss/v1beta1/signing.proto)
+    - [SigningPartMessage](#tss.v1beta1.SigningPartMessage)
+    - [SigningPartyStartMessage](#tss.v1beta1.SigningPartyStartMessage)
   
 - [Scalar Value Types](#scalar-value-types)
 
@@ -430,10 +440,10 @@ Msg defines the bridge Msg service.
 
 
 
-<a name="relayer/v1beta1/broadcast_message.proto"></a>
+<a name="relayer/broadcast/v1beta1/broadcast_message.proto"></a>
 <p align="right"><a href="#top">Top</a></p>
 
-## relayer/v1beta1/broadcast_message.proto
+## relayer/broadcast/v1beta1/broadcast_message.proto
 
 
 
@@ -465,6 +475,135 @@ BroadcastMessage is used between peers to wrap messages for each protocol
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | `message` | [string](#string) |  |  |
+
+
+
+
+
+ <!-- end messages -->
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
+
+ <!-- end services -->
+
+
+
+<a name="relayer/tss/v1beta1/join_session.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## relayer/tss/v1beta1/join_session.proto
+
+
+
+<a name="tss.v1beta1.JoinKeygenSessionMessage"></a>
+
+### JoinKeygenSessionMessage
+JoinKeygenSessionMessage is used to create and join a new keygen session.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `keygen_session_id` | [bytes](#bytes) |  | Shared session ID, same for all peers. |
+
+
+
+
+
+
+<a name="tss.v1beta1.JoinReSharingSessionMessage"></a>
+
+### JoinReSharingSessionMessage
+JoinReSharingSessionMessage is used to create and join a new resharing session.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `resharing_session_id` | [bytes](#bytes) |  | Shared session ID, same for all peers. |
+
+
+
+
+
+
+<a name="tss.v1beta1.JoinSessionMessage"></a>
+
+### JoinSessionMessage
+JoinSessionMessage is used to create a new signing session.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `join_signing_session_message` | [JoinSigningSessionMessage](#tss.v1beta1.JoinSigningSessionMessage) |  |  |
+| `join_keygen_session_message` | [JoinKeygenSessionMessage](#tss.v1beta1.JoinKeygenSessionMessage) |  |  |
+| `join_resharing_session_message` | [JoinReSharingSessionMessage](#tss.v1beta1.JoinReSharingSessionMessage) |  |  |
+
+
+
+
+
+
+<a name="tss.v1beta1.JoinSigningSessionMessage"></a>
+
+### JoinSigningSessionMessage
+JoinSigningSessionMessage is used to create and join a new signing session.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `tx_hash` | [bytes](#bytes) |  | Hash of the transaction that initiated the signing session. |
+| `peer_session_id_part` | [bytes](#bytes) |  | Random bytes different per peer to create an aggregated party session ID. |
+
+
+
+
+
+ <!-- end messages -->
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
+
+ <!-- end services -->
+
+
+
+<a name="relayer/tss/v1beta1/signing.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## relayer/tss/v1beta1/signing.proto
+
+
+
+<a name="tss.v1beta1.SigningPartMessage"></a>
+
+### SigningPartMessage
+SigningPartMessage is an outgoing message from lib-tss.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `session_id` | [bytes](#bytes) |  | Signing party session ID. |
+| `data` | [bytes](#bytes) |  | Bytes from lib-tss to send. |
+| `is_broadcast` | [bool](#bool) |  | If this message is broadcasted to all session peers. |
+
+
+
+
+
+
+<a name="tss.v1beta1.SigningPartyStartMessage"></a>
+
+### SigningPartyStartMessage
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `tx_hash` | [bytes](#bytes) |  | Hash of the transaction that initiated the signing session. |
+| `session_id` | [bytes](#bytes) |  | Aggregated party session ID. |
+| `participating_peer_ids` | [string](#string) | repeated | The peer IDs of the parties involved in the signing session. |
 
 
 

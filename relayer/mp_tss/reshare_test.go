@@ -14,6 +14,8 @@ import (
 )
 
 func TestReshare(t *testing.T) {
+	t.Skip("intensive test")
+
 	// newTotalPartyCount := 10
 	// Number of participants in resharing -- t+1 + num new peers
 	// newThreshold := 9

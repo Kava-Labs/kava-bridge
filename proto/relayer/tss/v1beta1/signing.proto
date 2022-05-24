@@ -1,0 +1,30 @@
+syntax = "proto3";
+package tss.v1beta1;
+
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/kava-labs/kava-bridge/relayer/mp_tss/types";
+
+option (gogoproto.goproto_getters_all) = false;
+
+message SigningPartyStartMessage {
+  // Hash of the transaction that initiated the signing session.
+  bytes tx_hash = 1;
+  // Aggregated party session ID.
+  bytes session_id = 2;
+  // The peer IDs of the parties involved in the signing session.
+  repeated string participating_peer_ids = 3 [
+    (gogoproto.customtype) = "github.com/libp2p/go-libp2p-core/peer.ID",
+    (gogoproto.customname) = "ParticipatingPeerIDs"
+  ];
+}
+
+// SigningPartMessage is an outgoing message from lib-tss.
+message SigningPartMessage {
+  // Signing party session ID.
+  bytes session_id = 1;
+  // Bytes from lib-tss to send.
+  bytes data = 2;
+  // If this message is broadcasted to all session peers.
+  bool is_broadcast = 3;
+}

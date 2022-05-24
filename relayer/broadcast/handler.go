@@ -2,7 +2,7 @@ package broadcast
 
 import (
 	"github.com/kava-labs/kava-bridge/relayer/broadcast/pending_store"
-	"github.com/kava-labs/kava-bridge/relayer/types"
+	"github.com/kava-labs/kava-bridge/relayer/broadcast/types"
 )
 
 // BroadcastHandler defines the interface for handling broadcast messages.
