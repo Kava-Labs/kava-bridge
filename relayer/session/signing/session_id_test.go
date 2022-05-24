@@ -1,4 +1,4 @@
-package session_test
+package signing_test
 
 import (
 	"math/rand"
@@ -6,7 +6,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/kava-labs/kava-bridge/relayer/mp_tss/types"
-	"github.com/kava-labs/kava-bridge/relayer/session"
+	"github.com/kava-labs/kava-bridge/relayer/session/signing"
 	"github.com/stretchr/testify/require"
 )
 
@@ -49,7 +49,7 @@ func TestGetAggregateSigningSessionID_Invalid(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			sessionID, err := session.GetAggregateSigningSessionID(tc.messages)
+			sessionID, err := signing.GetAggregateSigningSessionID(tc.messages)
 
 			if tc.errArgs.expectPass {
 				require.NoError(t, err)
@@ -107,7 +107,7 @@ func TestGetAggregateSigningSessionID_Order(t *testing.T) {
 		})
 
 		// Make sure each shuffled order produces the same result
-		sessionID, err := session.GetAggregateSigningSessionID(msgs)
+		sessionID, err := signing.GetAggregateSigningSessionID(msgs)
 		require.NoError(t, err)
 
 		require.Equal(t, expectedSessionID, sessionID)
