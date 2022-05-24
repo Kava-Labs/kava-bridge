@@ -43,7 +43,8 @@ func NewJoinSigningSessionMessage(
 // NewJoinKeygenSessionMessage creates a new keygen JoinSessionMessage.
 func NewJoinKeygenSessionMessage(
 	peerID peer.ID,
-	keygen_session_id KeygenSessionID) JoinSessionMessage {
+	keygen_session_id KeygenSessionID,
+) JoinSessionMessage {
 	return NewJoinSessionMessage(
 		peerID,
 		&JoinSessionMessage_JoinKeygenSessionMessage{
@@ -57,7 +58,8 @@ func NewJoinKeygenSessionMessage(
 // NewJoinReSharingSessionMessage creates a new resharing JoinSessionMessage.
 func NewJoinReSharingSessionMessage(
 	peerID peer.ID,
-	resharing_session_id ReSharingSessionID) JoinSessionMessage {
+	resharing_session_id ReSharingSessionID,
+) JoinSessionMessage {
 	return NewJoinSessionMessage(
 		peerID,
 		&JoinSessionMessage_JoinResharingSessionMessage{
