@@ -388,6 +388,21 @@ func (b *Broadcaster) handleNewStream(s network.Stream) {
 			PeerID:           s.Conn().RemotePeer(),
 		}
 
+		var broadcastMsg types.PeerMessage
+		peerMsg.BroadcastMessage.UnpackPayload(broadcastMsg)
+
+		if err := broadcastMsg.ValidateBasic(); err != nil {
+			log.Warnf("invalid message from peer %s: %s", s.Conn().RemotePeer(), err)
+
+			continue
+		}
+
+		if broadcastMsg.GetSenderPeerID() != s.Conn().RemotePeer() {
+			log.Warnf("invalid sender peer ID on message from peer %s", s.Conn().RemotePeer())
+
+			continue
+		}
+
 		log.Debugf("received message from peer: %s", peerMsg.PeerID)
 
 		select {

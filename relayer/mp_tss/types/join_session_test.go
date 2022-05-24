@@ -80,21 +80,21 @@ func TestValidate(t *testing.T) {
 		// Valid
 		{
 			name:    "valid - keygen",
-			giveMsg: types.NewJoinKeygenSessionMessage(types.KeygenSessionID{}),
+			giveMsg: types.NewJoinKeygenSessionMessage("peerid", types.KeygenSessionID{}),
 			errArgs: errArgs{
 				expectPass: true,
 			},
 		},
 		{
 			name:    "valid - signing",
-			giveMsg: types.NewJoinSigningSessionMessage(common.Hash{}, types.PeerSessionIDPart{}),
+			giveMsg: types.NewJoinSigningSessionMessage("peerid", common.Hash{}, types.SigningSessionIDPart{}),
 			errArgs: errArgs{
 				expectPass: true,
 			},
 		},
 		{
 			name:    "valid - resharing",
-			giveMsg: types.NewJoinReSharingSessionMessage(types.ReSharingSessionID{}),
+			giveMsg: types.NewJoinReSharingSessionMessage("peerid", types.ReSharingSessionID{}),
 			errArgs: errArgs{
 				expectPass: true,
 			},

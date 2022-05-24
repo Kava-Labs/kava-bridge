@@ -9,10 +9,17 @@ option (gogoproto.goproto_getters_all) = false;
 
 // JoinSessionMessage is used to create a new signing session.
 message JoinSessionMessage {
+  // Peer ID that sent this message, set by sender and validated by receiver.
+  string peer_id = 1 [
+    (gogoproto.nullable)   = false,
+    (gogoproto.customtype) = "github.com/libp2p/go-libp2p-core/peer.ID",
+    (gogoproto.customname) = "PeerID"
+  ];
+
   oneof session {
-    JoinSigningSessionMessage   join_signing_session_message   = 1;
-    JoinKeygenSessionMessage    join_keygen_session_message    = 2;
-    JoinReSharingSessionMessage join_resharing_session_message = 3;
+    JoinSigningSessionMessage   join_signing_session_message   = 2;
+    JoinKeygenSessionMessage    join_keygen_session_message    = 3;
+    JoinReSharingSessionMessage join_resharing_session_message = 4;
   }
 }
 
