@@ -16,7 +16,8 @@ import (
 func TestSelectLeader(t *testing.T) {
 	txHash := common.BytesToHash([]byte("hello there"))
 
-	expectedLeader := session.GetLeader(txHash, testutil.TestPeerIDs, 0)
+	expectedLeader, err := session.GetLeader(txHash, testutil.TestPeerIDs, 0)
+	require.NoError(t, err)
 
 	for i := 0; i < len(testutil.TestPeerIDs); i++ {
 		// Make a copy of the slice so we can freely mutate it.
@@ -28,7 +29,8 @@ func TestSelectLeader(t *testing.T) {
 			randomSortedPeerIDs[i], randomSortedPeerIDs[j] = randomSortedPeerIDs[j], randomSortedPeerIDs[i]
 		})
 
-		leader := session.GetLeader(txHash, randomSortedPeerIDs, 0)
+		leader, err := session.GetLeader(txHash, randomSortedPeerIDs, 0)
+		require.NoError(t, err)
 		require.Equal(t, expectedLeader, leader, "leader should be the same for any order of input peers")
 	}
 }
@@ -43,7 +45,8 @@ func TestSelectLeader_CorrectIndex(t *testing.T) {
 		txHash := common.BigToHash(big.NewInt(int64(i)))
 
 		// Sorts TestPeerIDs in place, TestPeerIDs is in order after this
-		leader := session.GetLeader(txHash, sorted, 0)
+		leader, err := session.GetLeader(txHash, sorted, 0)
+		require.NoError(t, err)
 
 		// use i % len(peerIDs) to get the index of the leader
 		require.Equal(
@@ -65,7 +68,8 @@ func TestSelectLeader_Offset(t *testing.T) {
 		txHash := common.BigToHash(big.NewInt(0))
 
 		// Sorts TestPeerIDs in place, TestPeerIDs is in order after this
-		leader := session.GetLeader(txHash, sorted, int64(i))
+		leader, err := session.GetLeader(txHash, sorted, int64(i))
+		require.NoError(t, err)
 
 		// use i % len(peerIDs) to get the index of the leader
 		require.Equal(
@@ -75,4 +79,18 @@ func TestSelectLeader_Offset(t *testing.T) {
 			"leader should be the correct index based on hash offset",
 		)
 	}
+}
+
+func TestSelectLeader_NoPeerIDs(t *testing.T) {
+	hash := common.BigToHash(big.NewInt(0))
+	_, err := session.GetLeader(hash, nil, 0)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "no peers provided")
+}
+
+func TestSelectLeader_InvalidOffset(t *testing.T) {
+	hash := common.BigToHash(big.NewInt(0))
+	_, err := session.GetLeader(hash, testutil.TestPeerIDs, -3)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "offset must be >= 0")
 }
