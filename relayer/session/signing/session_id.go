@@ -1,6 +1,7 @@
 package signing
 
 import (
+	"bytes"
 	"fmt"
 	"sort"
 
@@ -8,11 +9,13 @@ import (
 	mp_tss_types "github.com/kava-labs/kava-bridge/relayer/mp_tss/types"
 )
 
+type AggregateSigningSessionID []byte
+
 // GetAggregateSigningSessionID returns the aggregate session ID for the given
 // signing session.
 func GetAggregateSigningSessionID(
 	joinMsgs mp_tss_types.JoinSessionMessages,
-) ([]byte, error) {
+) (AggregateSigningSessionID, error) {
 	if len(joinMsgs) == 0 {
 		return nil, fmt.Errorf("no join messages provided")
 	}
@@ -47,4 +50,22 @@ func GetAggregateSigningSessionID(
 	}
 
 	return sessionID, nil
+}
+
+// IsPeerParticipant returns true if the given peer is a signer for the given
+// aggregate session ID.
+func IsPeerParticipant(
+	peer_session_id_part mp_tss_types.SigningSessionIDPart,
+	sessionID AggregateSigningSessionID,
+) bool {
+	for i := 0; i < len(sessionID); i += mp_tss_types.SigningSessionIDPartLength {
+		chunk := sessionID[i : i+mp_tss_types.SigningSessionIDPartLength]
+
+		// If the current peer's session ID part is contained in the aggregate
+		if bytes.Equal(chunk, peer_session_id_part[:]) {
+			return true
+		}
+	}
+
+	return false
 }

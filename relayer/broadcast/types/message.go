@@ -13,6 +13,6 @@ type PeerMessage interface {
 	// doesn't require access to any other information.
 	ValidateBasic() error
 
-	// GetSenderPeerID returns the peer ID of the peer must send the message.
+	// GetSenderPeerID returns the peer ID of the peer that must send the message.
 	GetSenderPeerID() peer.ID
 }
