@@ -14,7 +14,7 @@ import (
 type AggregateSigningSessionID []byte
 
 // NewAggregateSigningSessionID returns the aggregate session ID for the given
-// signing session.
+// signing session. This is only run by the leader.
 func NewAggregateSigningSessionID(
 	joinMsgs mp_tss_types.JoinSessionMessages,
 ) (AggregateSigningSessionID, error) {
