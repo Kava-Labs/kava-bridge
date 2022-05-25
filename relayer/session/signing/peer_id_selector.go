@@ -9,9 +9,9 @@ import (
 
 // PeerIDSelector defines an interface that selects t + 1 peers for signing.
 type PeerIDSelector interface {
-	// GetSigners returns the t + 1 slice of peers that are picked to sign a
+	// GetParticipants returns the t + 1 slice of peers that are picked to sign a
 	// message.
-	GetSigners(threshold int, allPeerIDs peer.IDSlice) (peer.IDSlice, error)
+	GetParticipants(threshold int, allPeerIDs peer.IDSlice) (peer.IDSlice, error)
 }
 
 // RandomPeerIDSelector is a PeerIDSelector that picks random t + 1 peers.
@@ -19,8 +19,8 @@ type RandomPeerIDSelector struct{}
 
 var _ PeerIDSelector = (*RandomPeerIDSelector)(nil)
 
-// GetSigners returns a random slice of t + 1 peers to sign a message.
-func (s *RandomPeerIDSelector) GetSigners(
+// GetParticipants returns a random slice of t + 1 peers to sign a message.
+func (s *RandomPeerIDSelector) GetParticipants(
 	threshold int,
 	allPeerIDs peer.IDSlice,
 ) (peer.IDSlice, error) {

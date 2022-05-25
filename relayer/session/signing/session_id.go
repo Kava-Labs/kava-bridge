@@ -9,11 +9,13 @@ import (
 	mp_tss_types "github.com/kava-labs/kava-bridge/relayer/mp_tss/types"
 )
 
+// AggregateSigningSessionID is a signing session ID, consisting of sorted and
+// concatenated session ID parts from each participating peer.
 type AggregateSigningSessionID []byte
 
-// GetAggregateSigningSessionID returns the aggregate session ID for the given
+// NewAggregateSigningSessionID returns the aggregate session ID for the given
 // signing session.
-func GetAggregateSigningSessionID(
+func NewAggregateSigningSessionID(
 	joinMsgs mp_tss_types.JoinSessionMessages,
 ) (AggregateSigningSessionID, error) {
 	if len(joinMsgs) == 0 {
@@ -52,14 +54,23 @@ func GetAggregateSigningSessionID(
 	return sessionID, nil
 }
 
+// Validate returns an error if the session ID is an invalid length.
+func (sid AggregateSigningSessionID) Validate() bool {
+	return len(sid)%mp_tss_types.SigningSessionIDPartLength == 0
+}
+
+// Bytes returns the byte representation of the aggregate signing session ID.
+func (sid AggregateSigningSessionID) Bytes() []byte {
+	return sid[:]
+}
+
 // IsPeerParticipant returns true if the given peer is a signer for the given
 // aggregate session ID.
-func IsPeerParticipant(
+func (asid AggregateSigningSessionID) IsPeerParticipant(
 	peer_session_id_part mp_tss_types.SigningSessionIDPart,
-	sessionID AggregateSigningSessionID,
 ) bool {
-	for i := 0; i < len(sessionID); i += mp_tss_types.SigningSessionIDPartLength {
-		chunk := sessionID[i : i+mp_tss_types.SigningSessionIDPartLength]
+	for i := 0; i < len(asid); i += mp_tss_types.SigningSessionIDPartLength {
+		chunk := asid[i : i+mp_tss_types.SigningSessionIDPartLength]
 
 		// If the current peer's session ID part is contained in the aggregate
 		if bytes.Equal(chunk, peer_session_id_part[:]) {

@@ -7,6 +7,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/kava-labs/kava-bridge/relayer/mp_tss/types"
 	"github.com/kava-labs/kava-bridge/relayer/session/signing"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -49,12 +50,12 @@ func TestGetAggregateSigningSessionID_Invalid(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			sessionID, err := signing.GetAggregateSigningSessionID(tc.messages)
+			sessionID, err := signing.NewAggregateSigningSessionID(tc.messages)
 
 			if tc.errArgs.expectPass {
 				require.NoError(t, err)
 				require.NotNil(t, sessionID)
-				require.Equal(t, tc.wantSessionID, sessionID)
+				require.Equal(t, tc.wantSessionID, sessionID.Bytes())
 			} else {
 				require.Error(t, err)
 				require.Contains(t, err.Error(), tc.errArgs.contains)
@@ -107,13 +108,40 @@ func TestGetAggregateSigningSessionID_Order(t *testing.T) {
 		})
 
 		// Make sure each shuffled order produces the same result
-		sessionID, err := signing.GetAggregateSigningSessionID(msgs)
+		sessionID, err := signing.NewAggregateSigningSessionID(msgs)
 		require.NoError(t, err)
 
-		require.Equal(t, expectedSessionID, sessionID)
+		require.True(t, sessionID.Validate())
+
+		require.Equal(t, expectedSessionID, sessionID.Bytes())
 	}
 }
 
+func TestIsPeerParticipant(t *testing.T) {
+	sessionID := signing.AggregateSigningSessionID(
+		AppendSlices(
+			types.SigningSessionIDPart{1}.Bytes(),
+			types.SigningSessionIDPart{2}.Bytes(),
+			types.SigningSessionIDPart{3}.Bytes(),
+			types.SigningSessionIDPart{4}.Bytes(),
+			types.SigningSessionIDPart{5}.Bytes(),
+		),
+	)
+
+	require.True(t, sessionID.Validate())
+
+	for i := 1; i <= 10; i++ {
+		isParticipant := sessionID.IsPeerParticipant(types.SigningSessionIDPart{byte(i)})
+
+		if i <= 5 {
+			assert.True(t, isParticipant)
+		} else {
+			assert.False(t, isParticipant)
+		}
+	}
+}
+
+// AppendSlices concatenates all the given slices.
 func AppendSlices(slices ...[]byte) []byte {
 	var result []byte
 	for _, slice := range slices {
