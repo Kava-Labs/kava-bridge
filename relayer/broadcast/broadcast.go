@@ -388,6 +388,7 @@ func (b *Broadcaster) handleNewStream(s network.Stream) {
 			PeerID:           s.Conn().RemotePeer(),
 		}
 
+		// TODO: Redundant unpack, when payload is used it will be unpacked again
 		var broadcastMsg types.PeerMessage
 		peerMsg.BroadcastMessage.UnpackPayload(broadcastMsg)
 
