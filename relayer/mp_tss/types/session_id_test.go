@@ -202,6 +202,40 @@ func TestGetAggregateSigningSessionID_Order(t *testing.T) {
 	}
 }
 
+func TestGetSessionID_InvalidThreshold(t *testing.T) {
+	msgs := types.JoinSessionMessages{
+		types.NewJoinSigningSessionMessage(
+			"peer1",
+			common.BytesToHash([]byte{0}),
+			types.SigningSessionIDPart{1},
+		),
+		types.NewJoinSigningSessionMessage(
+			"peer2",
+			common.BytesToHash([]byte{0}),
+			types.SigningSessionIDPart{2},
+		),
+		types.NewJoinSigningSessionMessage(
+			"peer3",
+			common.BytesToHash([]byte{0}),
+			types.SigningSessionIDPart{3},
+		),
+		types.NewJoinSigningSessionMessage(
+			"peer4",
+			common.BytesToHash([]byte{0}),
+			types.SigningSessionIDPart{4},
+		),
+		types.NewJoinSigningSessionMessage(
+			"peer5",
+			common.BytesToHash([]byte{0}),
+			types.SigningSessionIDPart{5},
+		),
+	}
+
+	_, _, err := msgs.GetSessionID(0)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "invalid threshold")
+}
+
 func TestIsPeerParticipant(t *testing.T) {
 	sessionID := types.AggregateSigningSessionID(
 		AppendSlices(

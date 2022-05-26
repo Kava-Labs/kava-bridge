@@ -251,24 +251,13 @@ func (jMsgs JoinSessionMessages) GetSessionID(threshold int) (
 	// Sort the join messages by their peer IDs.
 	sort.Sort(pickedMsgs)
 
-	var txHash *common.Hash
 	var sessionID []byte
 	pickedPeerIDs := make(peer.IDSlice, 0, len(pickedMsgs))
 
 	for _, msg := range pickedMsgs {
-		// Only for signing messages
+		// Only for signing messages, same hash for all messages already
+		// already validated in ValidateBasic()
 		signingMsg := msg.GetJoinSigningSessionMessage()
-		if signingMsg == nil {
-			return nil, nil, fmt.Errorf("invalid join message type: %T", msg)
-		}
-
-		// All signing messages must have the same tx hash
-		if txHash == nil {
-			msgTxHash := signingMsg.GetTxHash()
-			txHash = &msgTxHash
-		} else if *txHash != signingMsg.GetTxHash() {
-			return nil, nil, fmt.Errorf("mismatch tx hash")
-		}
 
 		// Append the session ID
 		sessionID = append(sessionID, signingMsg.PeerSessionIDPart...)
