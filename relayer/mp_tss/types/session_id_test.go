@@ -1,4 +1,4 @@
-package signing_test
+package types_test
 
 import (
 	"math/rand"
@@ -6,12 +6,11 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/kava-labs/kava-bridge/relayer/mp_tss/types"
-	"github.com/kava-labs/kava-bridge/relayer/session/signing"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func TestGetAggregateSigningSessionID_Invalid(t *testing.T) {
+func TestGetSessionID_Invalid(t *testing.T) {
 	type errArgs struct {
 		expectPass bool
 		contains   string
@@ -29,11 +28,11 @@ func TestGetAggregateSigningSessionID_Invalid(t *testing.T) {
 			nil,
 			errArgs{
 				expectPass: false,
-				contains:   "no join messages provided",
+				contains:   "empty join session messages",
 			},
 		},
 		{
-			"valid - 1 item",
+			"invalid - 1 msg",
 			types.JoinSessionMessages{
 				types.NewJoinSigningSessionMessage(
 					"peerid",
@@ -41,20 +40,104 @@ func TestGetAggregateSigningSessionID_Invalid(t *testing.T) {
 					types.SigningSessionIDPart{1},
 				),
 			},
-			types.SigningSessionIDPart{1}.Bytes(),
+			nil,
 			errArgs{
-				expectPass: true,
+				expectPass: false,
+				contains:   "not enough peers to select participants, 1 (peers) < 2 (t + 1)",
+			},
+		},
+		{
+			"invalid - session message type",
+			types.JoinSessionMessages{
+				types.NewJoinKeygenSessionMessage(
+					"peerid",
+					types.KeygenSessionID{0},
+				),
+			},
+			nil,
+			errArgs{
+				expectPass: false,
+				contains:   "invalid join session type",
+			},
+		},
+		{
+			"invalid - 2 msgs same peerid",
+			types.JoinSessionMessages{
+				types.NewJoinSigningSessionMessage(
+					"peerid",
+					common.BytesToHash([]byte{0}),
+					types.SigningSessionIDPart{1},
+				),
+				types.NewJoinSigningSessionMessage(
+					"peerid",
+					common.BytesToHash([]byte{0}),
+					types.SigningSessionIDPart{2},
+				),
+			},
+			nil,
+			errArgs{
+				expectPass: false,
+				contains:   "duplicate peer ID",
+			},
+		},
+		{
+			"invalid - different txhash",
+			types.JoinSessionMessages{
+				types.NewJoinSigningSessionMessage(
+					"peerid1",
+					common.BytesToHash([]byte{0}),
+					types.SigningSessionIDPart{1},
+				),
+				types.NewJoinSigningSessionMessage(
+					"peerid2",
+					common.BytesToHash([]byte{1}),
+					types.SigningSessionIDPart{2},
+				),
+				types.NewJoinSigningSessionMessage(
+					"peerid3",
+					common.BytesToHash([]byte{1}),
+					types.SigningSessionIDPart{3},
+				),
+			},
+			nil,
+			errArgs{
+				expectPass: false,
+				contains:   "different tx hashes",
+			},
+		},
+		{
+			"invalid - duplicate id part",
+			types.JoinSessionMessages{
+				types.NewJoinSigningSessionMessage(
+					"peerid1",
+					common.BytesToHash([]byte{0}),
+					types.SigningSessionIDPart{1},
+				),
+				types.NewJoinSigningSessionMessage(
+					"peerid2",
+					common.BytesToHash([]byte{0}),
+					types.SigningSessionIDPart{2},
+				),
+				types.NewJoinSigningSessionMessage(
+					"peerid3",
+					common.BytesToHash([]byte{0}),
+					types.SigningSessionIDPart{2},
+				),
+			},
+			nil,
+			errArgs{
+				expectPass: false,
+				contains:   "duplicate peer session ID part",
 			},
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			sessionID, err := signing.NewAggregateSigningSessionID(tc.messages)
+			sessionID, _, err := tc.messages.GetSessionID(1)
 
 			if tc.errArgs.expectPass {
 				require.NoError(t, err)
-				require.NotNil(t, sessionID)
 				require.Equal(t, tc.wantSessionID, sessionID.Bytes())
 			} else {
 				require.Error(t, err)
@@ -107,18 +190,20 @@ func TestGetAggregateSigningSessionID_Order(t *testing.T) {
 			msgs[i], msgs[j] = msgs[j], msgs[i]
 		})
 
+		threshold := 4
+
 		// Make sure each shuffled order produces the same result
-		sessionID, err := signing.NewAggregateSigningSessionID(msgs)
+		sessionID, participantPeerIDs, err := msgs.GetSessionID(threshold)
 		require.NoError(t, err)
 
-		require.True(t, sessionID.Validate())
-
-		require.Equal(t, expectedSessionID, sessionID.Bytes())
+		require.Len(t, participantPeerIDs, threshold+1, "there should be t+1 participants")
+		require.True(t, sessionID.Validate(), "session id should be valid")
+		require.Equal(t, expectedSessionID, sessionID.Bytes(), "session id should match expected")
 	}
 }
 
 func TestIsPeerParticipant(t *testing.T) {
-	sessionID := signing.AggregateSigningSessionID(
+	sessionID := types.AggregateSigningSessionID(
 		AppendSlices(
 			types.SigningSessionIDPart{1}.Bytes(),
 			types.SigningSessionIDPart{2}.Bytes(),
