@@ -5,7 +5,6 @@ import (
 	"strings"
 	"time"
 
-	proto "github.com/gogo/protobuf/proto"
 	prototypes "github.com/gogo/protobuf/types"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/multiformats/go-multibase"
@@ -18,7 +17,7 @@ const (
 
 // NewBroadcastMessage creates a new BroadcastMessage with the payload marshaled as Any.
 func NewBroadcastMessage(
-	payload proto.Message,
+	payload PeerMessage,
 	hostID peer.ID,
 	recipientsPeerIDs []peer.ID,
 	TTLSeconds uint64,
@@ -85,9 +84,19 @@ func (msg *BroadcastMessage) Validate() error {
 	return nil
 }
 
-// UnpackPayload unmarshals the payload message into the given proto.Message.
-func (msg *BroadcastMessage) UnpackPayload(pb proto.Message) error {
-	return prototypes.UnmarshalAny(&msg.Payload, pb)
+// UnpackPayload unmarshals the payload message into a PeerMessage.
+func (msg *BroadcastMessage) UnpackPayload() (PeerMessage, error) {
+	var payloadDyn prototypes.DynamicAny
+	err := prototypes.UnmarshalAny(&msg.Payload, payloadDyn)
+	if err != nil {
+		return nil, err
+	}
+
+	if msg, ok := payloadDyn.Message.(PeerMessage); ok {
+		return msg, nil
+	}
+
+	return nil, fmt.Errorf("invalid payload type: %T", payloadDyn.Message)
 }
 
 // Expired returns true if the TTL is exceeded since created time.

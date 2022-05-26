@@ -474,6 +474,7 @@ BroadcastMessage is used between peers to wrap messages for each protocol
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
+| `peer_id` | [string](#string) |  | Peer ID that sent this message, set by sender and validated by receiver. |
 | `message` | [string](#string) |  |  |
 
 

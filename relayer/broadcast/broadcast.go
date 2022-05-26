@@ -160,7 +160,7 @@ func (b *Broadcaster) processLoop(ctx context.Context) {
 // and it to all connected peers.
 func (b *Broadcaster) BroadcastMessage(
 	ctx context.Context,
-	pb proto.Message,
+	pb types.PeerMessage,
 	recipients []peer.ID,
 	TTLSeconds uint64,
 ) error {
@@ -389,8 +389,8 @@ func (b *Broadcaster) handleNewStream(s network.Stream) {
 		}
 
 		// TODO: Redundant unpack, when payload is used it will be unpacked again
-		var broadcastMsg types.PeerMessage
-		if err := peerMsg.BroadcastMessage.UnpackPayload(broadcastMsg); err != nil {
+		broadcastMsg, err := peerMsg.BroadcastMessage.UnpackPayload()
+		if err != nil {
 			log.Warnf("error unpacking payload for message %s from peer %s: %s", msg.ID, s.Conn().RemotePeer(), err)
 
 			return
