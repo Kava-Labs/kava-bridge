@@ -390,7 +390,11 @@ func (b *Broadcaster) handleNewStream(s network.Stream) {
 
 		// TODO: Redundant unpack, when payload is used it will be unpacked again
 		var broadcastMsg types.PeerMessage
-		peerMsg.BroadcastMessage.UnpackPayload(broadcastMsg)
+		if err := peerMsg.BroadcastMessage.UnpackPayload(broadcastMsg); err != nil {
+			log.Warnf("error unpacking payload for message %s from peer %s: %s", msg.ID, s.Conn().RemotePeer(), err)
+
+			return
+		}
 
 		if err := broadcastMsg.ValidateBasic(); err != nil {
 			log.Warnf("invalid message from peer %s: %s", s.Conn().RemotePeer(), err)
