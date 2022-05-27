@@ -402,12 +402,6 @@ func (b *Broadcaster) handleNewStream(s network.Stream) {
 			continue
 		}
 
-		if broadcastMsg.GetSenderPeerID() != s.Conn().RemotePeer() {
-			log.Warnf("invalid sender peer ID on message from peer %s", s.Conn().RemotePeer())
-
-			continue
-		}
-
 		log.Debugf("received message from peer: %s", peerMsg.PeerID)
 
 		select {

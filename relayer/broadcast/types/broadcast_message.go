@@ -84,19 +84,23 @@ func (msg *BroadcastMessage) Validate() error {
 	return nil
 }
 
-// UnpackPayload unmarshals the payload message into a PeerMessage.
+// UnpackPayload unpacks the broadcast message payload into a PeerMessage.
 func (msg *BroadcastMessage) UnpackPayload() (PeerMessage, error) {
 	var payloadDyn prototypes.DynamicAny
-	err := prototypes.UnmarshalAny(&msg.Payload, payloadDyn)
+	err := prototypes.UnmarshalAny(&msg.Payload, &payloadDyn)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("could not unmarshal payload any: %w", err)
 	}
 
-	if msg, ok := payloadDyn.Message.(PeerMessage); ok {
-		return msg, nil
+	peerMsg, ok := payloadDyn.Message.(PeerMessage)
+	if !ok {
+		return nil, fmt.Errorf(
+			"payload does not implement PeerMessage interface, got invalid payload type: %T",
+			payloadDyn.Message,
+		)
 	}
 
-	return nil, fmt.Errorf("invalid payload type: %T", payloadDyn.Message)
+	return peerMsg, nil
 }
 
 // Expired returns true if the TTL is exceeded since created time.

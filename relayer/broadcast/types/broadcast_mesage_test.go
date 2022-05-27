@@ -117,6 +117,7 @@ func TestMarshalUnmarshalPayload(t *testing.T) {
 		{
 			"regular",
 			&types.HelloRequest{
+				PeerID:  testutil.TestPeerIDs[0],
 				Message: "hello world",
 			},
 		},

@@ -311,6 +311,7 @@ func (suite *BroadcasterTestSuite) TestBroadcast_TTL() {
 	err = suite.Broadcasters[0].BroadcastMessage(
 		context.Background(),
 		&types.HelloRequest{
+			PeerID:  suite.Hosts[0].ID(),
 			Message: "hello world",
 		},
 		allPeerIDs,
