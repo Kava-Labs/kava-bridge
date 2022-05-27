@@ -110,15 +110,34 @@ func TestMessageExpired_Future(t *testing.T) {
 }
 
 func TestMarshalUnmarshalPayload(t *testing.T) {
+	type errArgs struct {
+		expectPass bool
+		contains   string
+	}
+
 	tests := []struct {
 		name    string
 		payload types.PeerMessage
+		errArgs errArgs
 	}{
 		{
 			"regular",
 			&types.HelloRequest{
 				PeerID:  testutil.TestPeerIDs[0],
 				Message: "hello world",
+			},
+			errArgs{
+				expectPass: true,
+			},
+		},
+		{
+			"unpack error",
+			&types.HelloRequest{
+				Message: "hello world",
+			},
+			errArgs{
+				expectPass: false,
+				contains:   "could not unmarshal payload any: multihash too short.",
 			},
 		},
 	}
@@ -129,9 +148,16 @@ func TestMarshalUnmarshalPayload(t *testing.T) {
 			require.NoError(t, err)
 
 			unpacked, err := msg.UnpackPayload()
-			require.NoError(t, err)
 
-			require.Equal(t, tc.payload, unpacked, "unpacked message should match original")
+			if tc.errArgs.expectPass {
+
+				require.NoError(t, err)
+
+				require.Equal(t, tc.payload, unpacked, "unpacked message should match original")
+			} else {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tc.errArgs.contains)
+			}
 		})
 	}
 }
