@@ -35,5 +35,5 @@ message HelloRequest {
     (gogoproto.customname) = "PeerID"
   ];
 
-  string message = 2;
+  string node_moniker = 2;
 }

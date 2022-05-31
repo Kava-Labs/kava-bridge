@@ -93,11 +93,6 @@ func (msg *JoinSessionMessage) ValidateBasic() error {
 	return nil
 }
 
-// GetSenderPeerID returns the peer ID of the sender.
-func (msg *JoinSessionMessage) GetSenderPeerID() peer.ID {
-	return msg.PeerID
-}
-
 // ValidateBasic does a simple validation check that doesn't require access to
 // any other information.
 func (msg *JoinSigningSessionMessage) ValidateBasic() error {

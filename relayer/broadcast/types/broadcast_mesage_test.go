@@ -123,8 +123,8 @@ func TestMarshalUnmarshalPayload(t *testing.T) {
 		{
 			"regular",
 			&types.HelloRequest{
-				PeerID:  testutil.TestPeerIDs[0],
-				Message: "hello world",
+				PeerID:      testutil.TestPeerIDs[0],
+				NodeMoniker: "hello world",
 			},
 			errArgs{
 				expectPass: true,
@@ -133,7 +133,7 @@ func TestMarshalUnmarshalPayload(t *testing.T) {
 		{
 			"unpack error",
 			&types.HelloRequest{
-				Message: "hello world",
+				NodeMoniker: "hello world",
 			},
 			errArgs{
 				expectPass: false,

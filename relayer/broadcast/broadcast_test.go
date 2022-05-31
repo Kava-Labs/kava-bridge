@@ -251,8 +251,8 @@ func (suite *BroadcasterTestSuite) TestBroadcast_Responses() {
 			err = suite.Broadcasters[0].BroadcastMessage(
 				context.Background(),
 				&types.HelloRequest{
-					PeerID:  suite.Hosts[0].ID(),
-					Message: "hello world",
+					PeerID:      suite.Hosts[0].ID(),
+					NodeMoniker: "hello world",
 				},
 				tc.recipients,
 				8, // TTL
@@ -311,8 +311,8 @@ func (suite *BroadcasterTestSuite) TestBroadcast_TTL() {
 	err = suite.Broadcasters[0].BroadcastMessage(
 		context.Background(),
 		&types.HelloRequest{
-			PeerID:  suite.Hosts[0].ID(),
-			Message: "hello world",
+			PeerID:      suite.Hosts[0].ID(),
+			NodeMoniker: "hello world",
 		},
 		allPeerIDs,
 		// Takes a few seconds for other peers to receive the message
