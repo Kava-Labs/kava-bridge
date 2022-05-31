@@ -474,7 +474,8 @@ BroadcastMessage is used between peers to wrap messages for each protocol
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `message` | [string](#string) |  |  |
+| `peer_id` | [string](#string) |  | Peer ID that sent this message, set by sender and validated by receiver. |
+| `node_moniker` | [string](#string) |  |  |
 
 
 
@@ -535,6 +536,7 @@ JoinSessionMessage is used to create a new signing session.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
+| `peer_id` | [string](#string) |  | Peer ID that sent this message, set by sender and validated by receiver. |
 | `join_signing_session_message` | [JoinSigningSessionMessage](#tss.v1beta1.JoinSigningSessionMessage) |  |  |
 | `join_keygen_session_message` | [JoinKeygenSessionMessage](#tss.v1beta1.JoinKeygenSessionMessage) |  |  |
 | `join_resharing_session_message` | [JoinReSharingSessionMessage](#tss.v1beta1.JoinReSharingSessionMessage) |  |  |

@@ -37,7 +37,7 @@ func TestUniquePeerMessages(t *testing.T) {
 						BroadcastMessage: types.BroadcastMessage{
 							ID: "msg id 1",
 							Payload: *mustMarshalAny(&types.HelloRequest{
-								Message: "hello world",
+								NodeMoniker: "hello world",
 							}),
 						},
 						PeerID: "peer1",
@@ -56,7 +56,7 @@ func TestUniquePeerMessages(t *testing.T) {
 						BroadcastMessage: types.BroadcastMessage{
 							ID: "msg id 1",
 							Payload: *mustMarshalAny(&types.HelloRequest{
-								Message: "hello world",
+								NodeMoniker: "hello world",
 							}),
 						},
 						PeerID: "peer1",
@@ -65,7 +65,7 @@ func TestUniquePeerMessages(t *testing.T) {
 						BroadcastMessage: types.BroadcastMessage{
 							ID: "msg id 1",
 							Payload: *mustMarshalAny(&types.HelloRequest{
-								Message: "hello world",
+								NodeMoniker: "hello world",
 							}),
 						},
 						PeerID: "peer2",
@@ -84,7 +84,7 @@ func TestUniquePeerMessages(t *testing.T) {
 						BroadcastMessage: types.BroadcastMessage{
 							ID: "msg id 1",
 							Payload: *mustMarshalAny(&types.HelloRequest{
-								Message: "hello world",
+								NodeMoniker: "hello world",
 							}),
 						},
 						PeerID: "peer1",
@@ -93,7 +93,7 @@ func TestUniquePeerMessages(t *testing.T) {
 						BroadcastMessage: types.BroadcastMessage{
 							ID: "msg id 2",
 							Payload: *mustMarshalAny(&types.HelloRequest{
-								Message: "hello world",
+								NodeMoniker: "hello world",
 							}),
 						},
 						PeerID: "peer2",
@@ -115,7 +115,7 @@ func TestUniquePeerMessages(t *testing.T) {
 						BroadcastMessage: types.BroadcastMessage{
 							ID: "msg id 1",
 							Payload: *mustMarshalAny(&types.HelloRequest{
-								Message: "hello world",
+								NodeMoniker: "hello world",
 							}),
 						},
 						PeerID: "peer1",
@@ -124,7 +124,7 @@ func TestUniquePeerMessages(t *testing.T) {
 						BroadcastMessage: types.BroadcastMessage{
 							ID: "msg id 1",
 							Payload: *mustMarshalAny(&types.HelloRequest{
-								Message: "goodbye world",
+								NodeMoniker: "goodbye world",
 							}),
 						},
 						PeerID: "peer2",

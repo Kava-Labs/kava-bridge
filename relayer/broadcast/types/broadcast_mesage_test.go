@@ -4,7 +4,6 @@ import (
 	"testing"
 	"time"
 
-	proto "github.com/gogo/protobuf/proto"
 	prototypes "github.com/gogo/protobuf/types"
 	"github.com/kava-labs/kava-bridge/relayer/broadcast/types"
 	"github.com/kava-labs/kava-bridge/relayer/testutil"
@@ -13,7 +12,7 @@ import (
 )
 
 func MustNewBroadcastMessage(
-	payload proto.Message,
+	payload types.PeerMessage,
 	hostPeerID peer.ID,
 	recipients []peer.ID,
 	TTLSeconds uint64,
@@ -38,14 +37,14 @@ func TestValidateMessage(t *testing.T) {
 	}{
 		{
 			"valid",
-			MustNewBroadcastMessage(&prototypes.Empty{}, testutil.TestPeerIDs[0], []peer.ID{testutil.TestPeerIDs[1]}, 1),
+			MustNewBroadcastMessage(&types.HelloRequest{}, testutil.TestPeerIDs[0], []peer.ID{testutil.TestPeerIDs[1]}, 1),
 			errArgs{
 				expectPass: true,
 			},
 		},
 		{
 			"invalid - empty recipients",
-			MustNewBroadcastMessage(&prototypes.Empty{}, testutil.TestPeerIDs[0], []peer.ID{}, 1),
+			MustNewBroadcastMessage(&types.HelloRequest{}, testutil.TestPeerIDs[0], []peer.ID{}, 1),
 			errArgs{
 				expectPass: false,
 				contains:   types.ErrMsgInsufficientRecipients.Error(),
@@ -53,7 +52,7 @@ func TestValidateMessage(t *testing.T) {
 		},
 		{
 			"invalid - empty host ID",
-			MustNewBroadcastMessage(&prototypes.Empty{}, "", []peer.ID{testutil.TestPeerIDs[0]}, 1),
+			MustNewBroadcastMessage(&types.HelloRequest{}, "", []peer.ID{testutil.TestPeerIDs[0]}, 1),
 			errArgs{
 				expectPass: false,
 				contains:   peer.ErrEmptyPeerID.Error(),
@@ -61,7 +60,7 @@ func TestValidateMessage(t *testing.T) {
 		},
 		{
 			"invalid - 0 TTL",
-			MustNewBroadcastMessage(&prototypes.Empty{}, testutil.TestPeerIDs[0], []peer.ID{testutil.TestPeerIDs[1]}, 0),
+			MustNewBroadcastMessage(&types.HelloRequest{}, testutil.TestPeerIDs[0], []peer.ID{testutil.TestPeerIDs[1]}, 0),
 			errArgs{
 				expectPass: false,
 				contains:   types.ErrMsgTTLTooShort.Error(),
@@ -84,7 +83,7 @@ func TestValidateMessage(t *testing.T) {
 }
 
 func TestMessageExpired(t *testing.T) {
-	msg := MustNewBroadcastMessage(&prototypes.Empty{}, testutil.TestPeerIDs[0], testutil.TestPeerIDs[1:2], 1)
+	msg := MustNewBroadcastMessage(&types.HelloRequest{}, testutil.TestPeerIDs[0], testutil.TestPeerIDs[1:2], 1)
 	require.False(t, msg.Expired())
 
 	// 2 seconds to be > TTL and not >= TTL
@@ -111,19 +110,35 @@ func TestMessageExpired_Future(t *testing.T) {
 }
 
 func TestMarshalUnmarshalPayload(t *testing.T) {
+	type errArgs struct {
+		expectPass bool
+		contains   string
+	}
+
 	tests := []struct {
 		name    string
-		payload proto.Message
+		payload types.PeerMessage
+		errArgs errArgs
 	}{
 		{
 			"regular",
 			&types.HelloRequest{
-				Message: "hello world",
+				PeerID:      testutil.TestPeerIDs[0],
+				NodeMoniker: "hello world",
+			},
+			errArgs{
+				expectPass: true,
 			},
 		},
 		{
-			"empty",
-			&prototypes.Empty{},
+			"unpack error",
+			&types.HelloRequest{
+				NodeMoniker: "hello world",
+			},
+			errArgs{
+				expectPass: false,
+				contains:   "could not unmarshal payload any: multihash too short.",
+			},
 		},
 	}
 
@@ -132,11 +147,17 @@ func TestMarshalUnmarshalPayload(t *testing.T) {
 			msg, err := types.NewBroadcastMessage(tc.payload, testutil.TestPeerIDs[0], nil, 1)
 			require.NoError(t, err)
 
-			var unpacked prototypes.DynamicAny
-			err = msg.UnpackPayload(&unpacked)
-			require.NoError(t, err)
+			unpacked, err := msg.UnpackPayload()
 
-			require.Equal(t, tc.payload, unpacked.Message, "unpacked message should match original")
+			if tc.errArgs.expectPass {
+
+				require.NoError(t, err)
+
+				require.Equal(t, tc.payload, unpacked, "unpacked message should match original")
+			} else {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tc.errArgs.contains)
+			}
 		})
 	}
 }

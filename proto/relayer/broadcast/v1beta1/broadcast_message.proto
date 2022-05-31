@@ -28,5 +28,12 @@ message BroadcastMessage {
 }
 
 message HelloRequest {
-  string message = 1;
+  // Peer ID that sent this message, set by sender and validated by receiver.
+  string peer_id = 1 [
+    (gogoproto.nullable)   = false,
+    (gogoproto.customtype) = "github.com/libp2p/go-libp2p-core/peer.ID",
+    (gogoproto.customname) = "PeerID"
+  ];
+
+  string node_moniker = 2;
 }

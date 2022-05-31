@@ -4,64 +4,70 @@ import (
 	fmt "fmt"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/kava-labs/kava-bridge/relayer/broadcast/types"
+	"github.com/libp2p/go-libp2p-core/peer"
 )
-
-const (
-	PeerSessionIDPartLength  = 32
-	KeygenSessionIDLength    = 32
-	ReSharingSessionIDLength = 32
-)
-
-// PeerSessionIDPart is a peer part of signing session ID.
-type PeerSessionIDPart [PeerSessionIDPartLength]byte
-
-// KeygenSessionID is the ID for a keygen session.
-type KeygenSessionID [KeygenSessionIDLength]byte
-
-// ReSharingSessionID is the ID for a resharing session.
-type ReSharingSessionID [ReSharingSessionIDLength]byte
 
 var (
-	_ TssMsg = (*JoinSessionMessage)(nil)
-	_ TssMsg = (*JoinSigningSessionMessage)(nil)
-	_ TssMsg = (*JoinKeygenSessionMessage)(nil)
-	_ TssMsg = (*JoinReSharingSessionMessage)(nil)
+	_ types.PeerMessage = (*JoinSessionMessage)(nil)
 )
 
 // NewJoinSessionMessage creates a new JoinSessionMessage.
-func NewJoinSessionMessage(session isJoinSessionMessage_Session) JoinSessionMessage {
-	return JoinSessionMessage{Session: session}
+func NewJoinSessionMessage(
+	peerID peer.ID,
+	session isJoinSessionMessage_Session,
+) JoinSessionMessage {
+	return JoinSessionMessage{
+		PeerID:  peerID,
+		Session: session,
+	}
 }
 
 // NewJoinSigningSessionMessage creates a new signing JoinSessionMessage.
 func NewJoinSigningSessionMessage(
+	peerID peer.ID,
 	tx_hash common.Hash,
-	session_id_part PeerSessionIDPart,
+	session_id_part SigningSessionIDPart,
 ) JoinSessionMessage {
-	return NewJoinSessionMessage(&JoinSessionMessage_JoinSigningSessionMessage{
-		JoinSigningSessionMessage: &JoinSigningSessionMessage{
-			TxHash:            tx_hash.Bytes(),
-			PeerSessionIDPart: session_id_part[:],
+	return NewJoinSessionMessage(
+		peerID,
+		&JoinSessionMessage_JoinSigningSessionMessage{
+			JoinSigningSessionMessage: &JoinSigningSessionMessage{
+				TxHash:            tx_hash.Bytes(),
+				PeerSessionIDPart: session_id_part[:],
+			},
 		},
-	})
+	)
 }
 
 // NewJoinKeygenSessionMessage creates a new keygen JoinSessionMessage.
-func NewJoinKeygenSessionMessage(keygen_session_id KeygenSessionID) JoinSessionMessage {
-	return NewJoinSessionMessage(&JoinSessionMessage_JoinKeygenSessionMessage{
-		JoinKeygenSessionMessage: &JoinKeygenSessionMessage{
-			KeygenSessionID: keygen_session_id[:],
+func NewJoinKeygenSessionMessage(
+	peerID peer.ID,
+	keygen_session_id KeygenSessionID,
+) JoinSessionMessage {
+	return NewJoinSessionMessage(
+		peerID,
+		&JoinSessionMessage_JoinKeygenSessionMessage{
+			JoinKeygenSessionMessage: &JoinKeygenSessionMessage{
+				KeygenSessionID: keygen_session_id[:],
+			},
 		},
-	})
+	)
 }
 
 // NewJoinReSharingSessionMessage creates a new resharing JoinSessionMessage.
-func NewJoinReSharingSessionMessage(resharing_session_id ReSharingSessionID) JoinSessionMessage {
-	return NewJoinSessionMessage(&JoinSessionMessage_JoinResharingSessionMessage{
-		JoinResharingSessionMessage: &JoinReSharingSessionMessage{
-			ReSharingSessionID: resharing_session_id[:],
+func NewJoinReSharingSessionMessage(
+	peerID peer.ID,
+	resharing_session_id ReSharingSessionID,
+) JoinSessionMessage {
+	return NewJoinSessionMessage(
+		peerID,
+		&JoinSessionMessage_JoinResharingSessionMessage{
+			JoinResharingSessionMessage: &JoinReSharingSessionMessage{
+				ReSharingSessionID: resharing_session_id[:],
+			},
 		},
-	})
+	)
 }
 
 // ValidateBasic does a simple validation check that doesn't require access to
@@ -98,10 +104,10 @@ func (msg *JoinSigningSessionMessage) ValidateBasic() error {
 		)
 	}
 
-	if len(msg.PeerSessionIDPart) != PeerSessionIDPartLength {
+	if len(msg.PeerSessionIDPart) != SigningSessionIDPartLength {
 		return fmt.Errorf(
 			"invalid peer session ID part length: expected %d, got %d",
-			PeerSessionIDPartLength,
+			SigningSessionIDPartLength,
 			len(msg.PeerSessionIDPart),
 		)
 	}
@@ -112,6 +118,14 @@ func (msg *JoinSigningSessionMessage) ValidateBasic() error {
 // GetTxHash returns the transaction hash.
 func (msg *JoinSigningSessionMessage) GetTxHash() common.Hash {
 	return common.BytesToHash(msg.TxHash)
+}
+
+// GetPeerSessionIDPart returns the SigningSessionIDPart
+func (msg *JoinSigningSessionMessage) GetPeerSessionIDPart() SigningSessionIDPart {
+	sessionPart := SigningSessionIDPart{}
+	copy(sessionPart[:], msg.PeerSessionIDPart)
+
+	return sessionPart
 }
 
 // ValidateBasic does a simple validation check that doesn't require access to
