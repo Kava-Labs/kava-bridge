@@ -9,6 +9,7 @@ import (
 	"github.com/binance-chain/tss-lib/test"
 	"github.com/binance-chain/tss-lib/tss"
 	"github.com/kava-labs/kava-bridge/relayer/mp_tss"
+	"github.com/kava-labs/kava-bridge/relayer/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -26,7 +27,7 @@ func TestReshare(t *testing.T) {
 	// require.NoError(t, err)
 
 	// 1. Get t+1 current keys
-	oldKeys, oldPartyIDs := GetTestKeys(threshold + 1)
+	oldKeys, oldPartyIDs := testutil.GetTestTssKeys(threshold + 1)
 	require.Equal(t, keygen.TestThreshold+1, len(oldKeys))
 	require.Equal(t, keygen.TestThreshold+1, len(oldPartyIDs))
 
@@ -69,7 +70,7 @@ func TestReshare(t *testing.T) {
 
 		save := keygen.NewLocalPartySaveData(len(newPartyIDs))
 		// Reuse fixture pre-generated preparams
-		save.LocalPreParams = ReadTestKey(i).LocalPreParams
+		save.LocalPreParams = testutil.ReadTestKey(i).LocalPreParams
 
 		outputCh, errCh := mp_tss.RunReshare(params, save, newTransports[i])
 

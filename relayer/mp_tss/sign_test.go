@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/kava-labs/kava-bridge/relayer/mp_tss"
+	"github.com/kava-labs/kava-bridge/relayer/testutil"
 
 	"github.com/binance-chain/tss-lib/common"
 	"github.com/binance-chain/tss-lib/ecdsa/keygen"
@@ -22,7 +23,7 @@ func TestSign(t *testing.T) {
 	// require.NoError(t, err)
 
 	// 1. Get party keys from file
-	keys, signPIDs := GetTestKeys(threshold + 1)
+	keys, signPIDs := testutil.GetTestTssKeys(threshold + 1)
 	require.Len(t, keys, threshold+1)
 
 	// 2. Create and connect transport between peers

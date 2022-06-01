@@ -2,6 +2,7 @@ package types
 
 import (
 	"bytes"
+	"encoding/hex"
 )
 
 // AggregateSigningSessionID is a signing session ID, consisting of sorted and
@@ -16,6 +17,11 @@ func (sid AggregateSigningSessionID) Validate() bool {
 // Bytes returns the byte representation of the aggregate signing session ID.
 func (sid AggregateSigningSessionID) Bytes() []byte {
 	return sid[:]
+}
+
+// String returns the hex representation of the aggregate signing session ID.
+func (sid AggregateSigningSessionID) String() string {
+	return hex.EncodeToString(sid)
 }
 
 // IsPeerParticipant returns true if the given peer is a signer for the given

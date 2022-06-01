@@ -1,4 +1,4 @@
-package mp_tss_test
+package testutil
 
 import (
 	"encoding/json"
@@ -8,13 +8,14 @@ import (
 	"testing"
 
 	"github.com/binance-chain/tss-lib/ecdsa/keygen"
+	"github.com/binance-chain/tss-lib/test"
 	"github.com/binance-chain/tss-lib/tss"
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/tendermint/libs/os"
 )
 
 func KeyPath(index int) string {
-	return path.Join("test-fixtures", fmt.Sprintf("localparty-savedata%d.json", index))
+	return path.Join("..", "testutil", "test-fixtures", fmt.Sprintf("localparty-savedata%d.json", index))
 }
 
 func ReadTestKey(index int) keygen.LocalPartySaveData {
@@ -30,7 +31,7 @@ func ReadTestKey(index int) keygen.LocalPartySaveData {
 	return key
 }
 
-func GetTestKeys(count int) ([]keygen.LocalPartySaveData, tss.SortedPartyIDs) {
+func GetTestTssKeys(count int) ([]keygen.LocalPartySaveData, tss.SortedPartyIDs) {
 	var keys []keygen.LocalPartySaveData
 	for i := 0; i < count; i++ {
 		key := ReadTestKey(i)
@@ -56,7 +57,7 @@ func WriteTestKey(index int, bz []byte) {
 }
 
 func TestLoadKey(t *testing.T) {
-	for i := 0; i < partyCount; i++ {
+	for i := 0; i < test.TestParticipants; i++ {
 		key := ReadTestKey(i)
 		require.True(t, key.Validate(), "test-fixture keys should be valid")
 	}
