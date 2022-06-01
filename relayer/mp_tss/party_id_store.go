@@ -10,13 +10,15 @@ import (
 
 // PartyIDStore keeps track of the party IDs of all libp2p peers.
 type PartyIDStore struct {
-	partyIDs map[peer.ID]*tss.PartyID
+	partyIDs map[peer.ID]*tss.PartyID // peer.ID -> PartyID
+	peerIDs  map[*tss.PartyID]peer.ID // PartyID -> peer.ID
 }
 
 // NewPartyIDStore creates a new PartyIDStore.
 func NewPartyIDStore() *PartyIDStore {
 	return &PartyIDStore{
 		partyIDs: make(map[peer.ID]*tss.PartyID),
+		peerIDs:  make(map[*tss.PartyID]peer.ID),
 	}
 }
 
@@ -37,7 +39,11 @@ func (s *PartyIDStore) AddPeer(peerID peer.ID, moniker string) error {
 	}
 
 	key := new(big.Int).SetBytes(raw)
-	s.partyIDs[peerID] = tss.NewPartyID(peerID.String(), moniker, key)
+	partyID := tss.NewPartyID(peerID.String(), moniker, key)
+
+	// Set both directions
+	s.partyIDs[peerID] = partyID
+	s.peerIDs[partyID] = peerID
 
 	return nil
 }
@@ -52,4 +58,9 @@ func (s *PartyIDStore) GetPartyID(peerID peer.ID) (*tss.PartyID, error) {
 	}
 
 	return s.partyIDs[peerID], nil
+}
+
+func (s *PartyIDStore) GetPeerID(partyID *tss.PartyID) (peer.ID, bool) {
+	peerID, ok := s.peerIDs[partyID]
+	return peerID, ok
 }

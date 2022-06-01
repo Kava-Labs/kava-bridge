@@ -3,6 +3,7 @@ package types
 import (
 	"bytes"
 	"encoding/hex"
+	fmt "fmt"
 )
 
 // AggregateSigningSessionID is a signing session ID, consisting of sorted and
@@ -10,8 +11,12 @@ import (
 type AggregateSigningSessionID []byte
 
 // Validate returns an error if the session ID is an invalid length.
-func (sid AggregateSigningSessionID) Validate() bool {
-	return len(sid)%SigningSessionIDPartLength == 0
+func (sid AggregateSigningSessionID) Validate() error {
+	if len(sid)%SigningSessionIDPartLength != 0 {
+		return fmt.Errorf("invalid session ID length: %d", len(sid))
+	}
+
+	return nil
 }
 
 // Bytes returns the byte representation of the aggregate signing session ID.
