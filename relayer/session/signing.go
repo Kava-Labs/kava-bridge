@@ -196,7 +196,7 @@ func (s *SigningSession) UpdateAddCandidateEvent(
 	// Broadcast StartSignerEvent with picked peers
 
 	// Transition to signing state
-	s.state = NewSigningState()
+	s.state = NewSigningState(state.transport)
 
 	return nil
 }
@@ -222,6 +222,20 @@ func (s *SigningSession) UpdateStartSignerEvent(
 
 	// Transition CandidatesWaitingForLeaderState -> signing state
 	s.state = newState
+
+	// Monitor output and error channels
+	go func() {
+		// TODO: Do we need a mutex here?
+		// This runs concurrently but in the signing state, there will be no
+		// other state changes other than from here.
+
+		select {
+		case sig := <-newState.outputChan:
+			s.state = NewDoneState(sig)
+		case err := <-newState.errChan:
+			s.state = NewErrorState(err)
+		}
+	}()
 
 	return nil
 }
@@ -287,6 +301,9 @@ type LeaderWaitingForCandidatesState struct {
 	threshold int
 	localPart types.SigningSessionIDPart
 	parts     map[peer.ID]types.SigningSessionIDPart
+
+	// Not actually used in this state, but passed to SigningState
+	transport mp_tss.Transporter
 }
 
 type CandidateWaitingForLeaderState struct {
@@ -343,6 +360,18 @@ func NewSigningState(transport mp_tss.Transporter) *SigningState {
 		transport:  transport,
 		outputChan: make(chan tss_common.SignatureData),
 		errChan:    make(chan *tss.Error),
+	}
+}
+
+func NewDoneState(signature tss_common.SignatureData) *DoneState {
+	return &DoneState{
+		signature: signature,
+	}
+}
+
+func NewErrorState(err *tss.Error) *ErrorState {
+	return &ErrorState{
+		err: err,
 	}
 }
 
@@ -444,7 +473,8 @@ func NewStartSignerEvent(
 	}
 }
 
-func NewAddSigningPartEvent(from peer.ID,
+func NewAddSigningPartEvent(
+	from *tss.PartyID,
 	data []byte,
 	isBroadcast bool,
 ) *AddSigningPartEvent {

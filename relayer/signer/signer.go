@@ -184,9 +184,16 @@ func (s *Signer) HandleSigningPartMessage(
 		return
 	}
 
+	fromPartyID, err := s.partyIDStore.GetPartyID(broadcastMsg.From)
+	if err != nil {
+		log.Errorf("failed to get party id for peer %v: %v", broadcastMsg.From, err)
+
+		return
+	}
+
 	// Update session with signing part
 	event := session.NewAddSigningPartEvent(
-		broadcastMsg.From,
+		fromPartyID,
 		msg.Data,
 		msg.IsBroadcast,
 	)
