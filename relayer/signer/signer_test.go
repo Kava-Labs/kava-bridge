@@ -30,7 +30,7 @@ func TestSigner(t *testing.T) {
 
 	peerIDs := testutil.PeerIDsFromKeys(node_keys)
 
-	tss_keys, _ := testutil.GetTestTssKeys(numPeers)
+	tss_keys, partyIDs := testutil.GetTestTssKeys(numPeers)
 	require.Len(t, tss_keys, numPeers)
 
 	signers := make([]*signer.Signer, numPeers)
@@ -45,9 +45,12 @@ func TestSigner(t *testing.T) {
 		node, err := p2p.NewNode(ctx, opts, done)
 		require.NoError(t, err)
 
+		params := mp_tss.CreateParams(partyIDs.ToUnSorted(), partyIDs[i], threshold)
+
 		signers[i] = signer.NewSigner(
 			node,
 			fmt.Sprintf("node-%v", i),
+			params,
 			tss_keys[i],
 			threshold,
 		)

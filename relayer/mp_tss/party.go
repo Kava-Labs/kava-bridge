@@ -68,18 +68,18 @@ func RunParty(
 					log.Debugw(
 						"received message",
 						"partyID", party.PartyID(),
-						"from partyID", incomingMsg.from,
-						"isBroadcast", incomingMsg.isBroadcast,
-						"len(bytes)", len(incomingMsg.wireBytes),
+						"from partyID", incomingMsg.From,
+						"isBroadcast", incomingMsg.IsBroadcast,
+						"len(bytes)", len(incomingMsg.WireBytes),
 					)
 
 					// The first return value `ok` is false only when there is
 					// an error. This should be fine to ignore as we handle err
 					// instead.
 					_, err := party.UpdateFromBytes(
-						incomingMsg.wireBytes,
-						incomingMsg.from,
-						incomingMsg.isBroadcast,
+						incomingMsg.WireBytes,
+						incomingMsg.From,
+						incomingMsg.IsBroadcast,
 					)
 					if err != nil {
 						log.Errorw("failed to update from bytes", "err", err)

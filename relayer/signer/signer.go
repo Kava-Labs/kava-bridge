@@ -82,7 +82,9 @@ func (s *Signer) SignMessage(
 		return tss_common.SignatureData{}, fmt.Errorf("failed to create signing session: %w", err)
 	}
 
-	return session.WaitForSignature()
+	session.TryGetSignature()
+
+	return tss_common.SignatureData{}, nil
 }
 
 func (s *Signer) HandleBroadcastMessage(broadcastMsg types.BroadcastMessage) {
@@ -209,7 +211,7 @@ func (mt *SessionTransport) Send(data []byte, routing *tss.MessageRouting, isRes
 	return nil
 }
 
-func (mt *SessionTransport) Receive() <-chan mp_tss.ReceivedPartyState {
+func (mt *SessionTransport) Receive() chan mp_tss.ReceivedPartyState {
 	return mt.recvChan
 }
 

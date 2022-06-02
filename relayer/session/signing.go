@@ -211,7 +211,7 @@ func (s *SigningSession) UpdateStartSignerEvent(
 		return fmt.Errorf("unexpected state type: %T", s.state)
 	}
 
-	newState := NewSigningState()
+	newState := NewSigningState(ev.transport)
 
 	newState.outputChan, newState.errChan = mp_tss.RunSign(
 		s.MsgToSign,
@@ -226,6 +226,33 @@ func (s *SigningSession) UpdateStartSignerEvent(
 	return nil
 }
 
+func (s *SigningSession) AddSigningPartEvent(
+	ev *AddSigningPartEvent,
+) error {
+	state, ok := s.state.(*SigningState)
+	if !ok {
+		return fmt.Errorf("unexpected state type: got %T, expected %T", s.state, &SigningState{})
+	}
+
+	// Receive signing part to transport
+	state.transport.Receive() <- mp_tss.NewReceivedPartyState(
+		ev.Data,
+		ev.From,
+		ev.IsBroadcast,
+	)
+
+	return nil
+}
+
+func (s *SigningSession) TryGetSignature() (tss_common.SignatureData, error) {
+	state, ok := s.state.(*DoneState)
+	if !ok {
+		return tss_common.SignatureData{}, fmt.Errorf("unexpected state type: %T", s.state)
+	}
+
+	return state.signature, nil
+}
+
 // -----------------------------------------------------------------------------
 // States
 
@@ -236,6 +263,8 @@ const (
 	SigningSessionStateType_LeaderWaitingForCandidates
 	SigningSessionStateType_CandidateWaitingForLeader
 	SigningSessionStateType_Signing
+	SigningSessionStateType_Done
+	SigningSessionStateType_Error
 )
 
 type SigningSessionState interface {
@@ -246,6 +275,8 @@ var _ SigningSessionState = (*PickingLeaderState)(nil)
 var _ SigningSessionState = (*LeaderWaitingForCandidatesState)(nil)
 var _ SigningSessionState = (*CandidateWaitingForLeaderState)(nil)
 var _ SigningSessionState = (*SigningState)(nil)
+var _ SigningSessionState = (*DoneState)(nil)
+var _ SigningSessionState = (*ErrorState)(nil)
 
 type PickingLeaderState struct {
 	// If picked leader is offline or unresponsive, this is incremented
@@ -263,8 +294,18 @@ type CandidateWaitingForLeaderState struct {
 }
 
 type SigningState struct {
+	transport mp_tss.Transporter
+
 	outputChan chan tss_common.SignatureData
 	errChan    chan *tss.Error
+}
+
+type DoneState struct {
+	signature tss_common.SignatureData
+}
+
+type ErrorState struct {
+	err *tss.Error
 }
 
 func NewPickingLeaderState() *PickingLeaderState {
@@ -297,8 +338,9 @@ func NewCandidateWaitingForLeaderState() (*CandidateWaitingForLeaderState, error
 	}, nil
 }
 
-func NewSigningState() *SigningState {
+func NewSigningState(transport mp_tss.Transporter) *SigningState {
 	return &SigningState{
+		transport:  transport,
 		outputChan: make(chan tss_common.SignatureData),
 		errChan:    make(chan *tss.Error),
 	}
@@ -318,6 +360,14 @@ func (s *CandidateWaitingForLeaderState) State() SigningSessionStateType {
 
 func (s *SigningState) State() SigningSessionStateType {
 	return SigningSessionStateType_Signing
+}
+
+func (s *DoneState) State() SigningSessionStateType {
+	return SigningSessionStateType_Done
+}
+
+func (s *ErrorState) State() SigningSessionStateType {
+	return SigningSessionStateType_Error
 }
 
 // -----------------------------------------------------------------------------
@@ -352,7 +402,7 @@ type StartSignerEvent struct {
 }
 
 type AddSigningPartEvent struct {
-	From        peer.ID
+	From        *tss.PartyID
 	Data        []byte
 	IsBroadcast bool
 }
