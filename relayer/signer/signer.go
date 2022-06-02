@@ -55,7 +55,8 @@ func (s *Signer) Start() error {
 	return nil
 }
 
-// SignMessage signs a message with a corresponding txHash.
+// SignMessage signs a message with a corresponding txHash. This creates a
+// signing session.
 func (s *Signer) SignMessage(
 	txHash eth_common.Hash,
 	msgHash *big.Int,
@@ -69,12 +70,7 @@ func (s *Signer) SignMessage(
 	// Create new signing session
 	session := s.sessions.Signing.NewSession(txHash)
 
-	// Start signing session
-	if err := session.Start(); err != nil {
-		return tss_common.SignatureData{}, err
-	}
-
-	return tss_common.SignatureData{}, nil
+	return session.WaitForSignature()
 }
 
 func (s *Signer) HandleBroadcastMessage(broadcastMsg types.BroadcastMessage) {
@@ -103,6 +99,15 @@ func (s *Signer) HandleBroadcastMessage(broadcastMsg types.BroadcastMessage) {
 			// discarded
 			if !found {
 				log.Errorf("received JoinSigningSessionMessage for unknown txHash %v", txHash)
+
+				return
+			}
+
+			// Add potential participant, once we get enough to join, pick
+			// actual participants.
+			sessionIDPart := sessionMsg.JoinSigningSessionMessage.GetPeerSessionIDPart()
+			if err := session.AddPotentialParticipant(msg.PeerID, sessionIDPart); err != nil {
+				log.Errorf("failed to add peer to signing session: %v", err)
 
 				return
 			}
@@ -138,11 +143,21 @@ func (s *Signer) HandleBroadcastMessage(broadcastMsg types.BroadcastMessage) {
 		}
 
 		// Update session
+		if err := session.AddSigningPart(
+			broadcastMsg.From, // TODO: We are missing the From *tss.PartyID... add to broadcaster
+			msg.Data,
+			msg.IsBroadcast,
+		); err != nil {
+			log.Errorf("failed to add signing part: %w", err)
+
+			return
+		}
 	default:
 		panic("unhandled message type")
 	}
 }
 
+// SessionTransport is a transport for a specific session.
 type SessionTransport struct {
 	sessionID mp_tss_types.AggregateSigningSessionID
 
@@ -152,7 +167,6 @@ type SessionTransport struct {
 var _ mp_tss.Transporter = (*SessionTransport)(nil)
 
 func (mt *SessionTransport) Send(data []byte, routing *tss.MessageRouting, isResharing bool) error {
-
 	return nil
 }
 
@@ -163,6 +177,6 @@ func (mt *SessionTransport) Receive() <-chan mp_tss.ReceivedPartyState {
 func NewSessionTransport(sessionID mp_tss_types.AggregateSigningSessionID) mp_tss.Transporter {
 	return &SessionTransport{
 		sessionID: sessionID,
-		recvChan:  make(chan mp_tss.ReceivedPartyState),
+		recvChan:  make(chan mp_tss.ReceivedPartyState, 1),
 	}
 }
