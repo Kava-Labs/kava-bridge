@@ -1,6 +1,11 @@
 package types
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/libp2p/go-libp2p-core/peer"
+)
 
 func (m *SigningPartMessage) GetSessionID() AggregateSigningSessionID {
 	return m.SessionID
@@ -21,6 +26,19 @@ func (m *SigningPartMessage) ValidateBasic() error {
 	}
 
 	return nil
+}
+
+// NewSigningPartyStartMessage returns a new SigningPartyStartMessage.
+func NewSigningPartyStartMessage(
+	txHash common.Hash,
+	sessionID AggregateSigningSessionID,
+	participatingPeerIDs []peer.ID,
+) *SigningPartyStartMessage {
+	return &SigningPartyStartMessage{
+		TxHash:               txHash.Bytes(),
+		SessionId:            sessionID,
+		ParticipatingPeerIDs: participatingPeerIDs,
+	}
 }
 
 func (m *SigningPartyStartMessage) GetSessionID() AggregateSigningSessionID {

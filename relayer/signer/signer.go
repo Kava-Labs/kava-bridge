@@ -75,6 +75,7 @@ func (s *Signer) SignMessage(
 		s.node.Broadcaster,
 		txHash,
 		msgHash,
+		s.threshold,
 		s.node.Host.ID(),
 		s.node.PeerList,
 	)
@@ -95,23 +96,23 @@ func (s *Signer) HandleBroadcastMessage(broadcastMsg types.BroadcastMessage) {
 		return
 	}
 
-	switch msg := payload.(type) {
+	switch payload := payload.(type) {
 	case *mp_tss_types.JoinSessionMessage:
-		switch sessionMsg := msg.Session.(type) {
+		switch sessionMsg := payload.Session.(type) {
 		case *mp_tss_types.JoinSessionMessage_JoinKeygenSessionMessage:
 			panic("unimplemented")
 		case *mp_tss_types.JoinSessionMessage_JoinResharingSessionMessage:
 			panic("unimplemented")
 		case *mp_tss_types.JoinSessionMessage_JoinSigningSessionMessage:
-			s.HandleJoinSigningSessionMessage(broadcastMsg, sessionMsg)
+			s.HandleJoinSigningSessionMessage(broadcastMsg, payload, sessionMsg)
 		default:
 			panic("unknown session type")
 		}
 
 	case *mp_tss_types.SigningPartyStartMessage:
-		s.HandleSigningPartyStartMessage(broadcastMsg, msg)
+		s.HandleSigningPartyStartMessage(broadcastMsg, payload)
 	case *mp_tss_types.SigningPartMessage:
-		s.HandleSigningPartMessage(broadcastMsg, msg)
+		s.HandleSigningPartMessage(broadcastMsg, payload)
 	default:
 		panic("unhandled message type")
 	}
@@ -119,6 +120,7 @@ func (s *Signer) HandleBroadcastMessage(broadcastMsg types.BroadcastMessage) {
 
 func (s *Signer) HandleJoinSigningSessionMessage(
 	broadcastMsg types.BroadcastMessage,
+	payload *mp_tss_types.JoinSessionMessage,
 	sessionMsg *mp_tss_types.JoinSessionMessage_JoinSigningSessionMessage,
 ) {
 	// Only the leader receives this message
@@ -137,9 +139,7 @@ func (s *Signer) HandleJoinSigningSessionMessage(
 
 	// Add potential participant, once we get enough to join, pick
 	// actual participants.
-	sessionIDPart := sessionMsg.JoinSigningSessionMessage.GetPeerSessionIDPart()
-
-	event := session.NewAddCandidateEvent(s.tssParams.PartyID(), s.node.Host.ID(), sessionIDPart)
+	event := session.NewAddCandidateEvent(s.tssParams.PartyID(), *payload)
 	if err := sess.Update(event); err != nil {
 		log.Errorf("failed to add peer to signing session: %v", err)
 
@@ -149,10 +149,10 @@ func (s *Signer) HandleJoinSigningSessionMessage(
 
 func (s *Signer) HandleSigningPartyStartMessage(
 	broadcastMsg types.BroadcastMessage,
-	msg *mp_tss_types.SigningPartyStartMessage,
+	payload *mp_tss_types.SigningPartyStartMessage,
 ) {
 	// Start signing sessions
-	sessionID := msg.GetSessionID()
+	sessionID := payload.GetSessionID()
 	sess, found := s.sessions.Signing.GetSessionFromID(sessionID)
 	if !found {
 		log.Errorf("received SigningPartyStartMessage for unknown sessionID %v", sessionID)
@@ -173,9 +173,9 @@ func (s *Signer) HandleSigningPartyStartMessage(
 
 func (s *Signer) HandleSigningPartMessage(
 	broadcastMsg types.BroadcastMessage,
-	msg *mp_tss_types.SigningPartMessage,
+	payload *mp_tss_types.SigningPartMessage,
 ) {
-	sessionID := msg.GetSessionID()
+	sessionID := payload.GetSessionID()
 
 	sess, found := s.sessions.Signing.GetSessionFromID(sessionID)
 	if !found {
@@ -194,8 +194,8 @@ func (s *Signer) HandleSigningPartMessage(
 	// Update session with signing part
 	event := session.NewAddSigningPartEvent(
 		fromPartyID,
-		msg.Data,
-		msg.IsBroadcast,
+		payload.Data,
+		payload.IsBroadcast,
 	)
 
 	if err := sess.Update(event); err != nil {

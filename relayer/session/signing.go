@@ -38,15 +38,15 @@ func (s *SigningSessionStore) NewSession(
 	broadcaster *broadcast.Broadcaster,
 	txHash eth_common.Hash,
 	msgToSign *big.Int,
+	threshold int,
 	currentPeerID peer.ID,
 	peerIDs peer.IDSlice,
 ) (*SigningSession, error) {
-	session := &SigningSession{}
-
 	session, err := NewSigningSession(
 		broadcaster,
 		txHash,
 		msgToSign,
+		threshold,
 		currentPeerID,
 		peerIDs,
 	)
@@ -79,6 +79,7 @@ type SigningSession struct {
 	broadcaster *broadcast.Broadcaster
 	TxHash      eth_common.Hash
 	MsgToSign   *big.Int
+	threshold   int
 
 	currentPeerID peer.ID
 	peerIDs       peer.IDSlice
@@ -91,6 +92,7 @@ func NewSigningSession(
 	broadcaster *broadcast.Broadcaster,
 	txHash eth_common.Hash,
 	msgToSign *big.Int,
+	threshold int,
 	currentPeerID peer.ID,
 	peerIDs peer.IDSlice,
 ) (*SigningSession, error) {
@@ -100,6 +102,7 @@ func NewSigningSession(
 		broadcaster:   broadcaster,
 		TxHash:        txHash,
 		MsgToSign:     msgToSign,
+		threshold:     threshold,
 		currentPeerID: currentPeerID,
 		peerIDs:       peerIDs,
 		state:         state,
@@ -178,22 +181,38 @@ func (s *SigningSession) UpdateAddCandidateEvent(
 		return fmt.Errorf("unexpected state type: %T", s.state)
 	}
 
-	// Update state
-	_, found := state.parts[ev.peerID]
-	if found {
-		return fmt.Errorf("already added candidate")
+	signingMsg := ev.joinMsg.GetJoinSigningSessionMessage()
+	if signingMsg == nil {
+		return fmt.Errorf("unexpected join session type: %T", ev.joinMsg)
 	}
 
-	state.parts[ev.peerID] = ev.sessionIDPart
+	// Update state
+	state.joinMsgs = append(state.joinMsgs, ev.joinMsg)
 
-	if len(state.parts) <= state.threshold {
+	if len(state.joinMsgs) <= state.threshold {
 		// Do nothing more, wait for more candidates
 		return nil
 	}
 
-	// Greater than threshold, pick peers to participate in the signing session
+	// Greater than threshold, create aggregate session ID and pick peers to
+	// participate in the signing session
+	aggSessionID, participantPeerIDs, err := state.joinMsgs.GetSessionID(state.threshold)
+	if err != nil {
+		return fmt.Errorf("failed to create session ID and pick participants: %w", err)
+	}
 
 	// Broadcast StartSignerEvent with picked peers
+	msg := types.NewSigningPartyStartMessage(
+		s.TxHash,
+		aggSessionID,
+		participantPeerIDs,
+	)
+	s.broadcaster.BroadcastMessage(
+		context.Background(),
+		msg,
+		s.peerIDs, // All peers
+		30,
+	)
 
 	// Transition to signing state
 	s.state = NewSigningState(state.transport)
@@ -300,7 +319,7 @@ type PickingLeaderState struct {
 type LeaderWaitingForCandidatesState struct {
 	threshold int
 	localPart types.SigningSessionIDPart
-	parts     map[peer.ID]types.SigningSessionIDPart
+	joinMsgs  types.JoinSessionMessages
 
 	// Not actually used in this state, but passed to SigningState
 	transport mp_tss.Transporter
@@ -338,9 +357,8 @@ func NewLeaderWaitingForCandidatesState() (*LeaderWaitingForCandidatesState, err
 	}
 
 	return &LeaderWaitingForCandidatesState{
-		threshold: 0,
 		localPart: localPart,
-		parts:     make(map[peer.ID]types.SigningSessionIDPart),
+		joinMsgs:  nil,
 	}, nil
 }
 
@@ -419,9 +437,9 @@ var _ SigningSessionEvent = (*StartSignerEvent)(nil)
 var _ SigningSessionEvent = (*AddSigningPartEvent)(nil)
 
 type AddCandidateEvent struct {
-	partyID       *tss.PartyID
-	peerID        peer.ID
-	sessionIDPart types.SigningSessionIDPart
+	partyID *tss.PartyID
+
+	joinMsg types.JoinSessionMessage
 }
 
 type StartSignerEvent struct {
@@ -451,13 +469,11 @@ func (e *AddSigningPartEvent) EventType() SigningSessionEventType {
 
 func NewAddCandidateEvent(
 	partyID *tss.PartyID,
-	peerID peer.ID,
-	sessionIDPart types.SigningSessionIDPart,
+	joinMsg types.JoinSessionMessage,
 ) *AddCandidateEvent {
 	return &AddCandidateEvent{
-		partyID:       partyID,
-		peerID:        peerID,
-		sessionIDPart: sessionIDPart,
+		partyID: partyID,
+		joinMsg: joinMsg,
 	}
 }
 
