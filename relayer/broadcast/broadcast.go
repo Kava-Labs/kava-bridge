@@ -261,6 +261,9 @@ func (b *Broadcaster) handleIncomingRawMsg(msg *pending_store.MessageWithPeerMet
 		// Rebroadcast to all other peers when first time seeing this message.
 		// Run in a goroutine to avoid blocking the incoming message handler.
 		go func() {
+			// Update IsBroadcaster for re-broadcasts
+			msg.BroadcastMessage.IsBroadcaster = false
+
 			// Send Payload, NOT the BroadcastMessage, as SendProtoMessage wraps it in a Message.
 			if err := b.broadcastRawMessage(
 				context.Background(),
@@ -386,6 +389,16 @@ func (b *Broadcaster) handleNewStream(s network.Stream) {
 		peerMsg := pending_store.MessageWithPeerMetadata{
 			BroadcastMessage: msg,
 			PeerID:           s.Conn().RemotePeer(),
+		}
+
+		if msg.IsBroadcaster && msg.From != s.Conn().RemotePeer() {
+			log.Warnf(
+				"broadcast message from does not match sender: got %s, expected %s",
+				msg.From,
+				s.Conn().RemotePeer(),
+			)
+
+			continue
 		}
 
 		// TODO: Redundant unpack, when payload is used it will be unpacked again

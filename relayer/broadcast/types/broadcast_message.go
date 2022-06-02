@@ -37,6 +37,8 @@ func NewBroadcastMessage(
 
 	return BroadcastMessage{
 		ID:               messageID,
+		From:             hostID,
+		IsBroadcaster:    true,
 		Payload:          *anyPayload,
 		RecipientPeerIDs: allPeerIDs,
 		Created:          time.Now().UTC(),
@@ -53,6 +55,10 @@ func (msg *BroadcastMessage) Validate() error {
 	_, _, err := multibase.Decode(msg.ID)
 	if err != nil {
 		return fmt.Errorf("invalid message ID: %w", err)
+	}
+
+	if err := msg.From.Validate(); err != nil {
+		return fmt.Errorf("invalid from peer.ID: %w", err)
 	}
 
 	if len(msg.RecipientPeerIDs) <= 1 {

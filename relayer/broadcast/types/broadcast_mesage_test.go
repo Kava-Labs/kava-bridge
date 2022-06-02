@@ -96,6 +96,8 @@ func TestMessageExpired_Future(t *testing.T) {
 	// Message 5 seconds in future, ie. peers with out of sync times
 	msg := types.BroadcastMessage{
 		MustNewBroadcastMessageID(),
+		testutil.TestPeerIDs[0],
+		true,
 		testutil.TestPeerIDs[:2],
 		prototypes.Any{},
 		time.Now().Add(time.Second),
