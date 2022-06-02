@@ -1,6 +1,7 @@
 package session
 
 import (
+	"context"
 	"fmt"
 	"math/big"
 
@@ -8,6 +9,7 @@ import (
 	"github.com/binance-chain/tss-lib/ecdsa/keygen"
 	"github.com/binance-chain/tss-lib/tss"
 	eth_common "github.com/ethereum/go-ethereum/common"
+	"github.com/kava-labs/kava-bridge/relayer/broadcast"
 	"github.com/kava-labs/kava-bridge/relayer/mp_tss"
 	"github.com/kava-labs/kava-bridge/relayer/mp_tss/types"
 	"github.com/libp2p/go-libp2p-core/peer"
@@ -32,12 +34,29 @@ func NewSigningSessionStore() *SigningSessionStore {
 	}
 }
 
-func (s *SigningSessionStore) NewSession(txHash eth_common.Hash) *SigningSession {
+func (s *SigningSessionStore) NewSession(
+	broadcaster *broadcast.Broadcaster,
+	txHash eth_common.Hash,
+	msgToSign *big.Int,
+	currentPeerID peer.ID,
+	peerIDs peer.IDSlice,
+) (*SigningSession, error) {
 	session := &SigningSession{}
+
+	session, err := NewSigningSession(
+		broadcaster,
+		txHash,
+		msgToSign,
+		currentPeerID,
+		peerIDs,
+	)
+	if err != nil {
+		return nil, err
+	}
 
 	s.sessions[txHash] = session
 
-	return session
+	return session, nil
 }
 
 func (s *SigningSessionStore) GetSessionFromTxHash(txHash eth_common.Hash) (*SigningSession, bool) {
@@ -57,68 +76,92 @@ func (s *SigningSessionStore) GetSessionFromID(
 }
 
 type SigningSession struct {
-	// Randomly locally generated ID part that is sent to leader
-	LocalIDPart types.SigningSessionIDPart
+	broadcaster *broadcast.Broadcaster
+	TxHash      eth_common.Hash
+	MsgToSign   *big.Int
 
-	tssParams *tss.Parameters
+	currentPeerID peer.ID
+	peerIDs       peer.IDSlice
 
-	TxHash    eth_common.Hash
-	MsgToSign *big.Int
-
-	transport mp_tss.Transporter
-
-	outputChan chan tss_common.SignatureData
-	errChan    chan *tss.Error
+	// FSM
+	state SigningSessionState
 }
 
-func (s *SigningSession) Initialize() {
+func NewSigningSession(
+	broadcaster *broadcast.Broadcaster,
+	txHash eth_common.Hash,
+	msgToSign *big.Int,
+	currentPeerID peer.ID,
+	peerIDs peer.IDSlice,
+) (*SigningSession, error) {
+	state := NewPickingLeaderState()
+
+	session := &SigningSession{
+		broadcaster:   broadcaster,
+		TxHash:        txHash,
+		MsgToSign:     msgToSign,
+		currentPeerID: currentPeerID,
+		peerIDs:       peerIDs,
+		state:         state,
+	}
+
 	// Generate a random session ID part
 
 	// Pick leader
+	leaderPeerID, err := GetLeader(session.TxHash, session.peerIDs, state.leaderOffset)
+	if err != nil {
+		return nil, err
+	}
 
-	// If not leader send the session ID part to leader
+	// Leader is the current peer, transition to LeaderWaitingForCandidatesState
+	// No broadcast necessary, other peers know the leader too.
+	if leaderPeerID == session.currentPeerID {
+		session.state, err = NewLeaderWaitingForCandidatesState()
+		if err != nil {
+			return nil, err
+		}
 
-	// If leader, wait for all parties to send their session ID parts
-}
+		return session, nil
+	}
 
-// Start starts the session in the background once the leader broadcasts a
-// SigningPartyStartMessage.
-func (s *SigningSession) StartSigner(
-	key keygen.LocalPartySaveData,
-	transport mp_tss.Transporter,
-) error {
-	s.transport = transport
+	// Not leader - send the session ID part to leader and transition to
+	// CandidateWaitingForLeaderState
+	newState, err := NewCandidateWaitingForLeaderState()
+	if err != nil {
+		return nil, err
+	}
 
-	outputChan, errChan := mp_tss.RunSign(
-		s.MsgToSign,
-		s.tssParams,
-		key,
-		transport,
+	session.state = newState
+
+	msg := types.NewJoinSigningSessionMessage(
+		currentPeerID,
+		session.TxHash,
+		newState.localPart,
 	)
 
-	s.outputChan = outputChan
-	s.errChan = errChan
+	err = session.broadcaster.BroadcastMessage(
+		context.Background(),
+		&msg,                    // join signing session message
+		[]peer.ID{leaderPeerID}, // send to leader
+		30,                      // ttl seconds
+	)
 
-	return nil
-}
-
-// WaitForSignature returns the signature data from the session when completed.
-func (s *SigningSession) WaitForSignature() (tss_common.SignatureData, error) {
-	select {
-	case sigData := <-s.outputChan:
-		return sigData, nil
-	case err := <-s.errChan:
-		return tss_common.SignatureData{}, err
+	if err != nil {
+		return nil, fmt.Errorf("failed to broadcast JoinSigningSessionMessage: %w", err)
 	}
+
+	return session, nil
 }
 
-/// --- fsm
+// -----------------------------------------------------------------------------
+// FSM
 
 func (s *SigningSession) Update(event SigningSessionEvent) error {
 	switch ev := event.(type) {
 	case *AddCandidateEvent:
-		ev.Candidate
+		return s.UpdateAddCandidateEvent(ev)
 	case *StartSignerEvent:
+		return s.UpdateStartSignerEvent(ev)
 	case *AddSigningPartEvent:
 	default:
 		return fmt.Errorf("unexpected event type: %T", event)
@@ -127,40 +170,157 @@ func (s *SigningSession) Update(event SigningSessionEvent) error {
 	return nil
 }
 
+func (s *SigningSession) UpdateAddCandidateEvent(
+	ev *AddCandidateEvent,
+) error {
+	state, ok := s.state.(*LeaderWaitingForCandidatesState)
+	if !ok {
+		return fmt.Errorf("unexpected state type: %T", s.state)
+	}
+
+	// Update state
+	_, found := state.parts[ev.peerID]
+	if found {
+		return fmt.Errorf("already added candidate")
+	}
+
+	state.parts[ev.peerID] = ev.sessionIDPart
+
+	if len(state.parts) <= state.threshold {
+		// Do nothing more, wait for more candidates
+		return nil
+	}
+
+	// Greater than threshold, pick peers to participate in the signing session
+
+	// Broadcast StartSignerEvent with picked peers
+
+	// Transition to signing state
+	s.state = NewSigningState()
+
+	return nil
+}
+
+func (s *SigningSession) UpdateStartSignerEvent(
+	ev *StartSignerEvent,
+) error {
+	// Only candidates receive this event, leader should not receive it and
+	// will transition by itself.
+	_, ok := s.state.(*CandidateWaitingForLeaderState)
+	if !ok {
+		return fmt.Errorf("unexpected state type: %T", s.state)
+	}
+
+	newState := NewSigningState()
+
+	newState.outputChan, newState.errChan = mp_tss.RunSign(
+		s.MsgToSign,
+		ev.tssParams,
+		ev.key,
+		ev.transport,
+	)
+
+	// Transition CandidatesWaitingForLeaderState -> signing state
+	s.state = newState
+
+	return nil
+}
+
+// -----------------------------------------------------------------------------
 // States
 
 type SigningSessionStateType int
 
 const (
-	SigningSessionStateType_LeaderWaitingForCandidates SigningSessionStateType = iota + 1
+	SigningSessionStateType_PickingLeader SigningSessionStateType = iota + 1
+	SigningSessionStateType_LeaderWaitingForCandidates
 	SigningSessionStateType_CandidateWaitingForLeader
+	SigningSessionStateType_Signing
 )
 
 type SigningSessionState interface {
 	State() SigningSessionStateType
 }
 
+var _ SigningSessionState = (*PickingLeaderState)(nil)
 var _ SigningSessionState = (*LeaderWaitingForCandidatesState)(nil)
-var _ SigningSessionState = (*LeaderWaitingForCandidatesState)(nil)
-var _ SigningSessionState = (*LeaderWaitingForCandidatesState)(nil)
+var _ SigningSessionState = (*CandidateWaitingForLeaderState)(nil)
+var _ SigningSessionState = (*SigningState)(nil)
+
+type PickingLeaderState struct {
+	// If picked leader is offline or unresponsive, this is incremented
+	leaderOffset int64
+}
 
 type LeaderWaitingForCandidatesState struct {
 	threshold int
+	localPart types.SigningSessionIDPart
 	parts     map[peer.ID]types.SigningSessionIDPart
+}
+
+type CandidateWaitingForLeaderState struct {
+	localPart types.SigningSessionIDPart
+}
+
+type SigningState struct {
+	outputChan chan tss_common.SignatureData
+	errChan    chan *tss.Error
+}
+
+func NewPickingLeaderState() *PickingLeaderState {
+	return &PickingLeaderState{
+		leaderOffset: 0,
+	}
+}
+
+func NewLeaderWaitingForCandidatesState() (*LeaderWaitingForCandidatesState, error) {
+	localPart, err := types.NewSigningSessionIDPart()
+	if err != nil {
+		return nil, err
+	}
+
+	return &LeaderWaitingForCandidatesState{
+		threshold: 0,
+		localPart: localPart,
+		parts:     make(map[peer.ID]types.SigningSessionIDPart),
+	}, nil
+}
+
+func NewCandidateWaitingForLeaderState() (*CandidateWaitingForLeaderState, error) {
+	localPart, err := types.NewSigningSessionIDPart()
+	if err != nil {
+		return nil, err
+	}
+
+	return &CandidateWaitingForLeaderState{
+		localPart: localPart,
+	}, nil
+}
+
+func NewSigningState() *SigningState {
+	return &SigningState{
+		outputChan: make(chan tss_common.SignatureData),
+		errChan:    make(chan *tss.Error),
+	}
+}
+
+func (s *PickingLeaderState) State() SigningSessionStateType {
+	return SigningSessionStateType_PickingLeader
 }
 
 func (s *LeaderWaitingForCandidatesState) State() SigningSessionStateType {
 	return SigningSessionStateType_LeaderWaitingForCandidates
 }
 
-type CandidatesWaitingForLeaderState struct {
-	part types.SigningSessionIDPart
-}
-
-func (s *CandidatesWaitingForLeaderState) State() SigningSessionStateType {
+func (s *CandidateWaitingForLeaderState) State() SigningSessionStateType {
 	return SigningSessionStateType_CandidateWaitingForLeader
 }
 
+func (s *SigningState) State() SigningSessionStateType {
+	return SigningSessionStateType_Signing
+}
+
+// -----------------------------------------------------------------------------
 // Events
 
 type SigningSessionEventType int
@@ -180,21 +340,15 @@ var _ SigningSessionEvent = (*StartSignerEvent)(nil)
 var _ SigningSessionEvent = (*AddSigningPartEvent)(nil)
 
 type AddCandidateEvent struct {
-	Candidate *tss.PartyID
-}
-
-// EventType
-func (e *AddCandidateEvent) EventType() SigningSessionEventType {
-	return SigningSessionEventType_AddCandidate
+	partyID       *tss.PartyID
+	peerID        peer.ID
+	sessionIDPart types.SigningSessionIDPart
 }
 
 type StartSignerEvent struct {
+	tssParams *tss.Parameters
 	key       keygen.LocalPartySaveData
 	transport mp_tss.Transporter
-}
-
-func (e *StartSignerEvent) EventType() SigningSessionEventType {
-	return SigningSessionEventType_StartSigner
 }
 
 type AddSigningPartEvent struct {
@@ -203,6 +357,50 @@ type AddSigningPartEvent struct {
 	IsBroadcast bool
 }
 
+// EventType
+func (e *AddCandidateEvent) EventType() SigningSessionEventType {
+	return SigningSessionEventType_AddCandidate
+}
+
+func (e *StartSignerEvent) EventType() SigningSessionEventType {
+	return SigningSessionEventType_StartSigner
+}
+
 func (e *AddSigningPartEvent) EventType() SigningSessionEventType {
 	return SigningSessionEventType_AddSigningPart
+}
+
+func NewAddCandidateEvent(
+	partyID *tss.PartyID,
+	peerID peer.ID,
+	sessionIDPart types.SigningSessionIDPart,
+) *AddCandidateEvent {
+	return &AddCandidateEvent{
+		partyID:       partyID,
+		peerID:        peerID,
+		sessionIDPart: sessionIDPart,
+	}
+}
+
+func NewStartSignerEvent(
+	tssParams *tss.Parameters,
+	key keygen.LocalPartySaveData,
+	transport mp_tss.Transporter,
+) *StartSignerEvent {
+	return &StartSignerEvent{
+		tssParams: tssParams,
+		key:       key,
+		transport: transport,
+	}
+}
+
+func NewAddSigningPartEvent(from peer.ID,
+	data []byte,
+	isBroadcast bool,
+) *AddSigningPartEvent {
+	return &AddSigningPartEvent{
+		From:        from,
+		Data:        data,
+		IsBroadcast: isBroadcast,
+	}
 }

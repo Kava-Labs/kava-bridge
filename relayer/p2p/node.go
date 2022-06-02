@@ -24,7 +24,8 @@ var log = logging.Logger("p2p")
 
 type Node struct {
 	Host        host.Host
-	broadcaster *broadcast.Broadcaster
+	Broadcaster *broadcast.Broadcaster
+	PeerList    []peer.ID
 
 	EchoService *service.EchoService
 	done        chan bool
@@ -55,7 +56,8 @@ func NewNode(ctx context.Context, options NodeOptions, done chan bool) (*Node, e
 
 	node := &Node{
 		Host:        host,
-		broadcaster: broadcaster,
+		Broadcaster: broadcaster,
+		PeerList:    options.PeerList,
 		// Sets stream handler
 		EchoService: service.NewEchoService(host, done, options.EchoRequiredPeers),
 		done:        done,

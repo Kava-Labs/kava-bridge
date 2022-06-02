@@ -28,7 +28,7 @@ be used. This is saved to disk and will be used in the next keygen phase.
 kava-relayer key precompute-preparams
 ```
 
-1. Start the relayer, connect to other peers.
+4. Start the relayer, connect to other peers.
 
 ```bash
 # Connect to p2p network

@@ -26,6 +26,7 @@ type Signer struct {
 	node         *p2p.Node
 	partyIDStore *mp_tss.PartyIDStore
 	sessions     *session.SessionStore
+	tssParams    *tss.Parameters
 	key          keygen.LocalPartySaveData
 	threshold    int
 }
@@ -34,6 +35,7 @@ type Signer struct {
 func NewSigner(
 	node *p2p.Node,
 	moniker string,
+	tssParams *tss.Parameters,
 	key keygen.LocalPartySaveData,
 	threshold int,
 ) *Signer {
@@ -41,6 +43,7 @@ func NewSigner(
 		node:         node,
 		partyIDStore: mp_tss.NewPartyIDStore(),
 		sessions:     session.NewSessionStore(),
+		tssParams:    tssParams,
 		key:          key,
 		threshold:    threshold,
 	}
@@ -68,7 +71,16 @@ func (s *Signer) SignMessage(
 	}
 
 	// Create new signing session
-	session := s.sessions.Signing.NewSession(txHash)
+	session, err := s.sessions.Signing.NewSession(
+		s.node.Broadcaster,
+		txHash,
+		msgHash,
+		s.node.Host.ID(),
+		s.node.PeerList,
+	)
+	if err != nil {
+		return tss_common.SignatureData{}, fmt.Errorf("failed to create signing session: %w", err)
+	}
 
 	return session.WaitForSignature()
 }
@@ -89,71 +101,98 @@ func (s *Signer) HandleBroadcastMessage(broadcastMsg types.BroadcastMessage) {
 		case *mp_tss_types.JoinSessionMessage_JoinResharingSessionMessage:
 			panic("unimplemented")
 		case *mp_tss_types.JoinSessionMessage_JoinSigningSessionMessage:
-			// Only the leader receives this message
-			txHash := sessionMsg.JoinSigningSessionMessage.GetTxHash()
-
-			session, found := s.sessions.Signing.GetSessionFromTxHash(txHash)
-
-			// TODO: Possible race condition if another peer sends join message
-			// before leader creates their own session, this message would be
-			// discarded
-			if !found {
-				log.Errorf("received JoinSigningSessionMessage for unknown txHash %v", txHash)
-
-				return
-			}
-
-			// Add potential participant, once we get enough to join, pick
-			// actual participants.
-			sessionIDPart := sessionMsg.JoinSigningSessionMessage.GetPeerSessionIDPart()
-			if err := session.AddPotentialParticipant(msg.PeerID, sessionIDPart); err != nil {
-				log.Errorf("failed to add peer to signing session: %v", err)
-
-				return
-			}
-
+			s.HandleJoinSigningSessionMessage(broadcastMsg, sessionMsg)
 		default:
 			panic("unknown session type")
 		}
 
 	case *mp_tss_types.SigningPartyStartMessage:
-		// Start signing sessions
-		sessionID := msg.GetSessionID()
-		session, found := s.sessions.Signing.GetSessionFromID(sessionID)
-		if !found {
-			log.Errorf("received SigningPartyStartMessage for unknown sessionID %v", sessionID)
-
-			return
-		}
-
-		transport := NewSessionTransport(sessionID)
-		if err := session.StartSigner(s.key, transport); err != nil {
-			log.Errorf("failed to start signer: %w", err)
-
-			return
-		}
+		s.HandleSigningPartyStartMessage(broadcastMsg, msg)
 	case *mp_tss_types.SigningPartMessage:
-		sessionID := msg.GetSessionID()
-
-		session, found := s.sessions.Signing.GetSessionFromID(sessionID)
-		if !found {
-			log.Errorf("signing session not found for session id %v", sessionID)
-
-			return
-		}
-
-		// Update session
-		if err := session.AddSigningPart(
-			broadcastMsg.From, // TODO: We are missing the From *tss.PartyID... add to broadcaster
-			msg.Data,
-			msg.IsBroadcast,
-		); err != nil {
-			log.Errorf("failed to add signing part: %w", err)
-
-			return
-		}
+		s.HandleSigningPartMessage(broadcastMsg, msg)
 	default:
 		panic("unhandled message type")
+	}
+}
+
+func (s *Signer) HandleJoinSigningSessionMessage(
+	broadcastMsg types.BroadcastMessage,
+	sessionMsg *mp_tss_types.JoinSessionMessage_JoinSigningSessionMessage,
+) {
+	// Only the leader receives this message
+	txHash := sessionMsg.JoinSigningSessionMessage.GetTxHash()
+
+	sess, found := s.sessions.Signing.GetSessionFromTxHash(txHash)
+
+	// TODO: Possible race condition if another peer sends join message
+	// before leader creates their own session, this message would be
+	// discarded
+	if !found {
+		log.Errorf("received JoinSigningSessionMessage for unknown txHash %v", txHash)
+
+		return
+	}
+
+	// Add potential participant, once we get enough to join, pick
+	// actual participants.
+	sessionIDPart := sessionMsg.JoinSigningSessionMessage.GetPeerSessionIDPart()
+
+	event := session.NewAddCandidateEvent(s.tssParams.PartyID(), s.node.Host.ID(), sessionIDPart)
+	if err := sess.Update(event); err != nil {
+		log.Errorf("failed to add peer to signing session: %v", err)
+
+		return
+	}
+}
+
+func (s *Signer) HandleSigningPartyStartMessage(
+	broadcastMsg types.BroadcastMessage,
+	msg *mp_tss_types.SigningPartyStartMessage,
+) {
+	// Start signing sessions
+	sessionID := msg.GetSessionID()
+	sess, found := s.sessions.Signing.GetSessionFromID(sessionID)
+	if !found {
+		log.Errorf("received SigningPartyStartMessage for unknown sessionID %v", sessionID)
+
+		return
+	}
+
+	transport := NewSessionTransport(sessionID)
+
+	// Start signer event
+	event := session.NewStartSignerEvent(s.tssParams, s.key, transport)
+	if err := sess.Update(event); err != nil {
+		log.Errorf("failed to start signer: %w", err)
+
+		return
+	}
+}
+
+func (s *Signer) HandleSigningPartMessage(
+	broadcastMsg types.BroadcastMessage,
+	msg *mp_tss_types.SigningPartMessage,
+) {
+	sessionID := msg.GetSessionID()
+
+	sess, found := s.sessions.Signing.GetSessionFromID(sessionID)
+	if !found {
+		log.Errorf("signing session not found for session id %v", sessionID)
+
+		return
+	}
+
+	// Update session with signing part
+	event := session.NewAddSigningPartEvent(
+		broadcastMsg.From,
+		msg.Data,
+		msg.IsBroadcast,
+	)
+
+	if err := sess.Update(event); err != nil {
+		log.Errorf("failed to add signing part: %w", err)
+
+		return
 	}
 }
 

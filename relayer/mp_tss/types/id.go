@@ -1,5 +1,7 @@
 package types
 
+import "math/rand"
+
 const (
 	SigningSessionIDPartLength = 32
 	KeygenSessionIDLength      = 32
@@ -8,6 +10,19 @@ const (
 
 // SigningSessionIDPart is a peer part of signing session ID.
 type SigningSessionIDPart [SigningSessionIDPartLength]byte
+
+// NewSigningSessionIDPart returns a new random SigningSessionIDPart.
+func NewSigningSessionIDPart() (SigningSessionIDPart, error) {
+	bytes := make([]byte, SigningSessionIDPartLength)
+	if _, err := rand.Read(bytes); err != nil {
+		return SigningSessionIDPart{}, err
+	}
+
+	var part SigningSessionIDPart
+	copy(part[:], bytes)
+
+	return part, nil
+}
 
 // Bytes returns the bytes of the SigningSessionIDPart.
 func (s SigningSessionIDPart) Bytes() []byte {
