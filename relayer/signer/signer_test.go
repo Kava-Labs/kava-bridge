@@ -7,6 +7,8 @@ import (
 	"math/big"
 	"testing"
 
+	logging "github.com/ipfs/go-log/v2"
+
 	tss_common "github.com/binance-chain/tss-lib/common"
 	"github.com/binance-chain/tss-lib/test"
 	"github.com/ethereum/go-ethereum/common"
@@ -20,6 +22,9 @@ import (
 )
 
 func TestSigner(t *testing.T) {
+	err := logging.SetLogLevel("*", "info")
+	require.NoError(t, err)
+
 	numPeers := test.TestParticipants
 	threshold := test.TestThreshold
 

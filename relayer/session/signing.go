@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"math/big"
 
+	logging "github.com/ipfs/go-log/v2"
+	"go.uber.org/zap"
+
 	tss_common "github.com/binance-chain/tss-lib/common"
 	"github.com/binance-chain/tss-lib/tss"
 	eth_common "github.com/ethereum/go-ethereum/common"
@@ -13,6 +16,8 @@ import (
 	"github.com/kava-labs/kava-bridge/relayer/mp_tss/types"
 	"github.com/libp2p/go-libp2p-core/peer"
 )
+
+var log = logging.Logger("SigningSession")
 
 // tx_hash -> session ID
 type TssSessions map[eth_common.Hash]*SigningSession
@@ -91,6 +96,8 @@ type SigningSession struct {
 
 	resultChan chan SigningSessionResult
 
+	logger *zap.SugaredLogger
+
 	// FSM
 	state SigningSessionState
 }
@@ -106,6 +113,8 @@ func NewSigningSession(
 	resultChan := make(chan SigningSessionResult, 1)
 	state := NewPickingLeaderState()
 
+	logger := log.Named(txHash.String())
+
 	session := &SigningSession{
 		broadcaster:   broadcaster,
 		TxHash:        txHash,
@@ -114,6 +123,7 @@ func NewSigningSession(
 		currentPeerID: currentPeerID,
 		peerIDs:       peerIDs,
 		resultChan:    resultChan,
+		logger:        logger,
 		state:         state,
 	}
 
@@ -125,9 +135,12 @@ func NewSigningSession(
 		return nil, nil, err
 	}
 
+	logger.Infow("Leader picked", "leaderPeerID", leaderPeerID, "isLeader", currentPeerID == leaderPeerID)
+
 	// Leader is the current peer, transition to LeaderWaitingForCandidatesState
 	// No broadcast necessary, other peers know the leader too.
 	if leaderPeerID == session.currentPeerID {
+		logger.Infow("Leader is current peer, transition to LeaderWaitingForCandidatesState")
 		session.state, err = NewLeaderWaitingForCandidatesState()
 		if err != nil {
 			return nil, nil, err
@@ -143,6 +156,7 @@ func NewSigningSession(
 		return nil, nil, err
 	}
 
+	logger.Infow("Not leader, transition to CandidateWaitingForLeaderState")
 	session.state = newState
 
 	msg := types.NewJoinSigningSessionMessage(
@@ -151,6 +165,7 @@ func NewSigningSession(
 		newState.localPart,
 	)
 
+	logger.Infow("Sending JoinSigningSessionMessage to leader", "leaderPeerID", leaderPeerID)
 	err = session.broadcaster.BroadcastMessage(
 		context.Background(),
 		&msg,                    // join signing session message
@@ -169,6 +184,8 @@ func NewSigningSession(
 // FSM
 
 func (s *SigningSession) Update(event SigningSessionEvent) error {
+	s.logger.Infow("Session event received", "type", event.EventType(), "event", event)
+
 	switch ev := event.(type) {
 	case *AddCandidateEvent:
 		return s.UpdateAddCandidateEvent(ev)
