@@ -209,8 +209,14 @@ func (b *Broadcaster) broadcastRawMessage(
 
 		ch, ok := b.outboundStreams[peerID]
 		if !ok {
-			// TODO: Try to open a new stream to this peer.
-			return fmt.Errorf("no outbound stream for peer: %v", peerID)
+			// Try to open a new stream to this peer.
+			s, err := b.host.NewStream(b.ctx, peerID, ProtocolID)
+			if err != nil {
+				return fmt.Errorf("failed to open new stream to peer %s: %w", peerID, err)
+			}
+
+			b.outboundStreams[peerID] = s
+			ch = s
 		}
 
 		// Avoid capturing loop variable

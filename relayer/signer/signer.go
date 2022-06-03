@@ -23,7 +23,7 @@ var log = logging.Logger("signer")
 // Signer is a multi-party signer that handles messages between multiple peers
 // for keygen, signing, and resharing.
 type Signer struct {
-	node         *p2p.Node
+	Node         *p2p.Node
 	partyIDStore *mp_tss.PartyIDStore
 	sessions     *session.SessionStore
 	tssParams    *tss.Parameters
@@ -40,7 +40,7 @@ func NewSigner(
 	threshold int,
 ) *Signer {
 	return &Signer{
-		node:         node,
+		Node:         node,
 		partyIDStore: mp_tss.NewPartyIDStore(),
 		sessions:     session.NewSessionStore(),
 		tssParams:    tssParams,
@@ -63,29 +63,29 @@ func (s *Signer) Start() error {
 func (s *Signer) SignMessage(
 	txHash eth_common.Hash,
 	msgHash *big.Int,
-) (tss_common.SignatureData, error) {
+) (*tss_common.SignatureData, error) {
 	// Check if already signed
 	_, found := s.sessions.Signing.GetSessionFromTxHash(txHash)
 	if found {
-		return tss_common.SignatureData{}, fmt.Errorf("signing session already exists for txHash %v", txHash)
+		return nil, fmt.Errorf("signing session already exists for txHash %v", txHash)
 	}
 
 	// Create new signing session
-	session, err := s.sessions.Signing.NewSession(
-		s.node.Broadcaster,
+	_, resultChan, err := s.sessions.Signing.NewSession(
+		s.Node.Broadcaster,
 		txHash,
 		msgHash,
 		s.threshold,
-		s.node.Host.ID(),
-		s.node.PeerList,
+		s.Node.Host.ID(),
+		s.Node.PeerList,
 	)
 	if err != nil {
-		return tss_common.SignatureData{}, fmt.Errorf("failed to create signing session: %w", err)
+		return nil, fmt.Errorf("failed to create signing session: %w", err)
 	}
 
-	session.TryGetSignature()
+	res := <-resultChan
 
-	return tss_common.SignatureData{}, nil
+	return res.Signature, res.Err
 }
 
 func (s *Signer) HandleBroadcastMessage(broadcastMsg types.BroadcastMessage) {

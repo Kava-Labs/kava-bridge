@@ -6,6 +6,7 @@ import (
 	"math/big"
 
 	tss_common "github.com/binance-chain/tss-lib/common"
+	"github.com/binance-chain/tss-lib/tss"
 	eth_common "github.com/ethereum/go-ethereum/common"
 	"github.com/kava-labs/kava-bridge/relayer/broadcast"
 	"github.com/kava-labs/kava-bridge/relayer/mp_tss"
@@ -39,8 +40,8 @@ func (s *SigningSessionStore) NewSession(
 	threshold int,
 	currentPeerID peer.ID,
 	peerIDs peer.IDSlice,
-) (*SigningSession, error) {
-	session, err := NewSigningSession(
+) (*SigningSession, <-chan SigningSessionResult, error) {
+	session, resultChan, err := NewSigningSession(
 		broadcaster,
 		txHash,
 		msgToSign,
@@ -49,12 +50,12 @@ func (s *SigningSessionStore) NewSession(
 		peerIDs,
 	)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	s.sessions[txHash] = session
 
-	return session, nil
+	return session, resultChan, nil
 }
 
 func (s *SigningSessionStore) GetSessionFromTxHash(txHash eth_common.Hash) (*SigningSession, bool) {
@@ -73,6 +74,12 @@ func (s *SigningSessionStore) GetSessionFromID(
 	return s.GetSessionFromTxHash(txHash)
 }
 
+// SigningSessionResult is the result of a signing session.
+type SigningSessionResult struct {
+	Signature *tss_common.SignatureData
+	Err       *tss.Error
+}
+
 type SigningSession struct {
 	broadcaster *broadcast.Broadcaster
 	TxHash      eth_common.Hash
@@ -81,6 +88,8 @@ type SigningSession struct {
 
 	currentPeerID peer.ID
 	peerIDs       peer.IDSlice
+
+	resultChan chan SigningSessionResult
 
 	// FSM
 	state SigningSessionState
@@ -93,7 +102,8 @@ func NewSigningSession(
 	threshold int,
 	currentPeerID peer.ID,
 	peerIDs peer.IDSlice,
-) (*SigningSession, error) {
+) (*SigningSession, <-chan SigningSessionResult, error) {
+	resultChan := make(chan SigningSessionResult, 1)
 	state := NewPickingLeaderState()
 
 	session := &SigningSession{
@@ -103,6 +113,7 @@ func NewSigningSession(
 		threshold:     threshold,
 		currentPeerID: currentPeerID,
 		peerIDs:       peerIDs,
+		resultChan:    resultChan,
 		state:         state,
 	}
 
@@ -111,7 +122,7 @@ func NewSigningSession(
 	// Pick leader
 	leaderPeerID, err := GetLeader(session.TxHash, session.peerIDs, state.leaderOffset)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	// Leader is the current peer, transition to LeaderWaitingForCandidatesState
@@ -119,17 +130,17 @@ func NewSigningSession(
 	if leaderPeerID == session.currentPeerID {
 		session.state, err = NewLeaderWaitingForCandidatesState()
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 
-		return session, nil
+		return session, resultChan, nil
 	}
 
 	// Not leader - send the session ID part to leader and transition to
 	// CandidateWaitingForLeaderState
 	newState, err := NewCandidateWaitingForLeaderState()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	session.state = newState
@@ -148,10 +159,10 @@ func NewSigningSession(
 	)
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to broadcast JoinSigningSessionMessage: %w", err)
+		return nil, nil, fmt.Errorf("failed to broadcast JoinSigningSessionMessage: %w", err)
 	}
 
-	return session, nil
+	return session, resultChan, nil
 }
 
 // -----------------------------------------------------------------------------
@@ -249,8 +260,14 @@ func (s *SigningSession) UpdateStartSignerEvent(
 		select {
 		case sig := <-newState.outputChan:
 			s.state = NewDoneState(sig)
+			s.resultChan <- SigningSessionResult{
+				Signature: &sig,
+			}
 		case err := <-newState.errChan:
 			s.state = NewErrorState(err)
+			s.resultChan <- SigningSessionResult{
+				Err: err,
+			}
 		}
 	}()
 
@@ -275,11 +292,19 @@ func (s *SigningSession) AddSigningPartEvent(
 	return nil
 }
 
-func (s *SigningSession) TryGetSignature() (tss_common.SignatureData, error) {
-	state, ok := s.state.(*DoneState)
-	if !ok {
-		return tss_common.SignatureData{}, fmt.Errorf("unexpected state type: %T", s.state)
+// TryGetSignature returns the signature or error if the session is done
+func (s *SigningSession) TryGetSignature() (
+	signature tss_common.SignatureData,
+	done bool,
+	err *tss.Error,
+) {
+	switch state := s.state.(type) {
+	case *DoneState:
+		return state.signature, true, nil
+	case *ErrorState:
+		return tss_common.SignatureData{}, false, state.err
+	default:
+		// Not ready yet
+		return tss_common.SignatureData{}, false, nil
 	}
-
-	return state.signature, nil
 }

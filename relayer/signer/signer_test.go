@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	tss_common "github.com/binance-chain/tss-lib/common"
+	"github.com/binance-chain/tss-lib/test"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/kava-labs/kava-bridge/relayer/mp_tss"
 	"github.com/kava-labs/kava-bridge/relayer/p2p"
@@ -19,8 +20,8 @@ import (
 )
 
 func TestSigner(t *testing.T) {
-	numPeers := 5
-	threshold := 3
+	numPeers := test.TestParticipants
+	threshold := test.TestThreshold
 
 	ctx := context.Background()
 	done := make(chan bool)
@@ -37,7 +38,7 @@ func TestSigner(t *testing.T) {
 	for i := 0; i < numPeers; i++ {
 		opts := p2p.NodeOptions{
 			Port:              0,
-			NetworkPrivateKey: []byte("network-private-key"),
+			NetworkPrivateKey: make([]byte, 32), // must be 32 bytes
 			NodePrivateKey:    node_keys[i],
 			PeerList:          peerIDs,
 		}
@@ -47,13 +48,26 @@ func TestSigner(t *testing.T) {
 
 		params := mp_tss.CreateParams(partyIDs.ToUnSorted(), partyIDs[i], threshold)
 
-		signers[i] = signer.NewSigner(
+		s := signer.NewSigner(
 			node,
 			fmt.Sprintf("node-%v", i),
 			params,
 			tss_keys[i],
 			threshold,
 		)
+
+		signers[i] = s
+	}
+
+	for _, s := range signers {
+		for _, s2 := range signers {
+			if s == s2 {
+				continue
+			}
+
+			err := s.Node.Host.Connect(context.Background(), s2.Node.Host.Peerstore().PeerInfo(s2.Node.Host.ID()))
+			require.NoError(t, err)
+		}
 	}
 
 	for _, signer := range signers {
@@ -76,7 +90,7 @@ func TestSigner(t *testing.T) {
 					return err
 				}
 
-				sigs = append(sigs, sig)
+				sigs = append(sigs, *sig)
 
 				return nil
 			})
