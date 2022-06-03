@@ -65,7 +65,7 @@ func (pm *PendingMessagesStore) ContainsGroup(msgID string) bool {
 
 // TryNewGroup creates a new PeerMessageGroup for the given message ID and returns
 // true if it was created. Returns false if the group already exists.
-func (pm *PendingMessagesStore) TryNewGroup(msgID string, isSender bool) bool {
+func (pm *PendingMessagesStore) TryNewGroup(msgID string) bool {
 	pm.pendingMessagesLock.Lock()
 	defer pm.pendingMessagesLock.Unlock()
 
@@ -74,7 +74,7 @@ func (pm *PendingMessagesStore) TryNewGroup(msgID string, isSender bool) bool {
 		return false
 	}
 
-	pm.pendingMessages[msgID] = NewPeerMessageGroup(isSender)
+	pm.pendingMessages[msgID] = NewPeerMessageGroup()
 
 	return true
 }
@@ -125,24 +125,24 @@ func (pm *PendingMessagesStore) GroupIsCompleted(
 	msgID string,
 	hostID peer.ID,
 	recipients []peer.ID,
-) (msg types.BroadcastMessage, isSender bool, isComplete bool) {
+) (types.BroadcastMessage, bool) {
 	pm.pendingMessagesLock.RLock()
 	defer pm.pendingMessagesLock.RUnlock()
 
 	peerMsgGroup, found := pm.pendingMessages[msgID]
 	if !found {
-		return types.BroadcastMessage{}, false, false
+		return types.BroadcastMessage{}, false
 	}
 
 	if !peerMsgGroup.Completed(hostID, recipients) {
-		return types.BroadcastMessage{}, peerMsgGroup.IsSender, false
+		return types.BroadcastMessage{}, false
 	}
 
 	msgData, found := peerMsgGroup.GetMessageData()
 	if !found {
 		log.DPanicf("message data not found for completed message ID %s", msgID)
-		return types.BroadcastMessage{}, peerMsgGroup.IsSender, false
+		return types.BroadcastMessage{}, false
 	}
 
-	return msgData, peerMsgGroup.IsSender, true
+	return msgData, true
 }

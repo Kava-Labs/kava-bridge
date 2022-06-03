@@ -10,14 +10,12 @@ import (
 // PeerMessageGroup is a group of the same message from different peers to be
 // validated.
 type PeerMessageGroup struct {
-	IsSender bool
 	Messages map[peer.ID]*MessageWithPeerMetadata
 }
 
 // NewPeerMessageGroup returns a new PeerMessageGroup
-func NewPeerMessageGroup(isSender bool) *PeerMessageGroup {
+func NewPeerMessageGroup() *PeerMessageGroup {
 	return &PeerMessageGroup{
-		IsSender: isSender,
 		Messages: make(map[peer.ID]*MessageWithPeerMetadata),
 	}
 }

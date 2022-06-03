@@ -24,7 +24,7 @@ func TestUniquePeerMessages(t *testing.T) {
 	}{
 		{
 			"valid - empty",
-			pending_store.NewPeerMessageGroup(true),
+			pending_store.NewPeerMessageGroup(),
 			errArgs{
 				expectPass: true,
 			},

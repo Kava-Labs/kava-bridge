@@ -177,7 +177,7 @@ func (b *Broadcaster) BroadcastMessage(
 	// Add the message to the pending messages map to keep track of responses
 	// and to prevent re-broadcasting.
 	// Does not block receiving messages while broadcasting
-	created := b.pendingMessagesStore.TryNewGroup(msg.ID, true)
+	created := b.pendingMessagesStore.TryNewGroup(msg.ID)
 	if !created {
 		return fmt.Errorf("cannot broadcast message that is is already pending")
 	}
@@ -258,9 +258,8 @@ func (b *Broadcaster) handleIncomingRawMsg(msg *pending_store.MessageWithPeerMet
 	// testing purposes.
 	go b.handler.RawMessage(*msg)
 
-	// Create new group if it doesn't exist already. Received messages are not
-	// from self if this is a new group.
-	created := b.pendingMessagesStore.TryNewGroup(msg.BroadcastMessage.ID, false)
+	// Create new group if it doesn't exist already.
+	created := b.pendingMessagesStore.TryNewGroup(msg.BroadcastMessage.ID)
 	// First time we see this message, re-broadcast
 	if created {
 		log.Debugf("new message ID %s from peer %s, creating new pending group", msg.BroadcastMessage.ID, msg.PeerID)
@@ -302,17 +301,14 @@ func (b *Broadcaster) handleIncomingRawMsg(msg *pending_store.MessageWithPeerMet
 		return
 	}
 
-	if msgData, isSender, completed := b.pendingMessagesStore.GroupIsCompleted(
+	if msgData, completed := b.pendingMessagesStore.GroupIsCompleted(
 		msg.BroadcastMessage.ID,
 		b.host.ID(),
 		msg.BroadcastMessage.RecipientPeerIDs,
 	); completed {
 		// All peers have responded with the same message, send it to the valid
 		// message channel to be handled.
-		// Prevent "receiving" a message this peer sent.
-		if !isSender {
-			b.incomingValidatedMessages <- msgData
-		}
+		b.incomingValidatedMessages <- msgData
 
 		// Remove from pending messages
 		if err := b.pendingMessagesStore.DeleteGroup(msg.BroadcastMessage.ID); err != nil {

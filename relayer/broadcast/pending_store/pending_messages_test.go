@@ -19,7 +19,7 @@ func TestContainsGroup(t *testing.T) {
 	found := store.ContainsGroup(msgID)
 	require.False(t, found, "should not find a group that doesn't exist")
 
-	created := store.TryNewGroup(msgID, true)
+	created := store.TryNewGroup(msgID)
 	require.True(t, created)
 
 	found = store.ContainsGroup(msgID)
@@ -31,10 +31,10 @@ func TestTryNewGroup(t *testing.T) {
 
 	msgID := "test-msg-id"
 
-	created := store.TryNewGroup(msgID, true)
+	created := store.TryNewGroup(msgID)
 	require.True(t, created)
 
-	created = store.TryNewGroup(msgID, true)
+	created = store.TryNewGroup(msgID)
 	require.False(t, created, "should not be able to create a group that already exists")
 }
 
@@ -43,7 +43,7 @@ func TestDeleteGroup(t *testing.T) {
 
 	msgID := "test-msg-id"
 
-	created := store.TryNewGroup(msgID, true)
+	created := store.TryNewGroup(msgID)
 	require.True(t, created)
 
 	err := store.DeleteGroup(msgID)
@@ -74,7 +74,7 @@ func TestAddMessage_GroupExists(t *testing.T) {
 	msgID, err := types.NewBroadcastMessageID()
 	require.NoError(t, err)
 
-	created := store.TryNewGroup(msgID, true)
+	created := store.TryNewGroup(msgID)
 	require.True(t, created)
 
 	err = store.AddMessage(pending_store.MessageWithPeerMetadata{
@@ -92,7 +92,7 @@ func TestAddMessage_InvalidMessage(t *testing.T) {
 	msgID, err := types.NewBroadcastMessageID()
 	require.NoError(t, err)
 
-	created := store.TryNewGroup(msgID, true)
+	created := store.TryNewGroup(msgID)
 	require.True(t, created)
 
 	err = store.AddMessage(pending_store.MessageWithPeerMetadata{
@@ -120,7 +120,7 @@ func TestGroupIsCompleted_NotExist(t *testing.T) {
 	msgID, err := types.NewBroadcastMessageID()
 	require.NoError(t, err)
 
-	_, _, complete := store.GroupIsCompleted(msgID, testutil.TestPeerIDs[0], testutil.TestPeerIDs[1:2])
+	_, complete := store.GroupIsCompleted(msgID, testutil.TestPeerIDs[0], testutil.TestPeerIDs[1:2])
 	require.False(t, complete, "should not be complete if group doesn't exist")
 }
 
@@ -130,7 +130,7 @@ func TestGroupIsCompleted_Incomplete(t *testing.T) {
 	msgID, err := types.NewBroadcastMessageID()
 	require.NoError(t, err)
 
-	created := store.TryNewGroup(msgID, true)
+	created := store.TryNewGroup(msgID)
 	require.True(t, created)
 
 	err = store.AddMessage(pending_store.MessageWithPeerMetadata{
@@ -142,7 +142,7 @@ func TestGroupIsCompleted_Incomplete(t *testing.T) {
 	require.NoError(t, err)
 
 	// Requires 2
-	_, _, complete := store.GroupIsCompleted(msgID, testutil.TestPeerIDs[0], testutil.TestPeerIDs[1:2])
+	_, complete := store.GroupIsCompleted(msgID, testutil.TestPeerIDs[0], testutil.TestPeerIDs[1:2])
 	require.False(t, complete, "should not be complete if group is incomplete")
 
 	err = store.AddMessage(pending_store.MessageWithPeerMetadata{
@@ -153,7 +153,7 @@ func TestGroupIsCompleted_Incomplete(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	_, _, complete = store.GroupIsCompleted(msgID, testutil.TestPeerIDs[0], testutil.TestPeerIDs[1:2])
+	_, complete = store.GroupIsCompleted(msgID, testutil.TestPeerIDs[0], testutil.TestPeerIDs[1:2])
 	require.True(t, complete, "should not be complete when host + recipients match num messages")
 }
 
@@ -163,7 +163,7 @@ func TestRemovesExpiredGroups(t *testing.T) {
 	msgID, err := types.NewBroadcastMessageID()
 	require.NoError(t, err)
 
-	created := store.TryNewGroup(msgID, true)
+	created := store.TryNewGroup(msgID)
 	require.True(t, created)
 
 	err = store.AddMessage(pending_store.MessageWithPeerMetadata{
@@ -191,7 +191,7 @@ func TestKeepsNonExpiredGroups(t *testing.T) {
 	msgID, err := types.NewBroadcastMessageID()
 	require.NoError(t, err)
 
-	created := store.TryNewGroup(msgID, true)
+	created := store.TryNewGroup(msgID)
 	require.True(t, created)
 
 	err = store.AddMessage(pending_store.MessageWithPeerMetadata{
