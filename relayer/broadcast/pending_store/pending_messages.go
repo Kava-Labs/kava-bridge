@@ -134,13 +134,6 @@ func (pm *PendingMessagesStore) GroupIsCompleted(
 		return types.BroadcastMessage{}, false, false
 	}
 
-	log.Warnw(
-		"GroupIsCompleted()",
-		"msgID", msgID,
-		"hostID", hostID,
-		"isSender", peerMsgGroup.IsSender,
-	)
-
 	if !peerMsgGroup.Completed(hostID, recipients) {
 		return types.BroadcastMessage{}, peerMsgGroup.IsSender, false
 	}

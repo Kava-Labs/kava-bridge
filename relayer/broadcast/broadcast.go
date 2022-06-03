@@ -192,7 +192,7 @@ func (b *Broadcaster) broadcastRawMessage(
 	pb proto.Message,
 	recipients []peer.ID,
 ) error {
-	log.Debugf("broadcast sending raw proto message: %s", pb.String())
+	log.Debugw("broadcast sending raw proto message", "recipients", recipients)
 
 	b.outboundStreamsLock.Lock()
 	defer b.outboundStreamsLock.Unlock()
@@ -258,7 +258,8 @@ func (b *Broadcaster) handleIncomingRawMsg(msg *pending_store.MessageWithPeerMet
 	// testing purposes.
 	go b.handler.RawMessage(*msg)
 
-	// Create new group if it doesn't exist already.
+	// Create new group if it doesn't exist already. Received messages are not
+	// from self if this is a new group.
 	created := b.pendingMessagesStore.TryNewGroup(msg.BroadcastMessage.ID, false)
 	// First time we see this message, re-broadcast
 	if created {
@@ -308,12 +309,10 @@ func (b *Broadcaster) handleIncomingRawMsg(msg *pending_store.MessageWithPeerMet
 	); completed {
 		// All peers have responded with the same message, send it to the valid
 		// message channel to be handled.
-		// Prevent "receiving" a sent message
+		// Prevent "receiving" a message this peer sent.
 		if !isSender {
 			b.incomingValidatedMessages <- msgData
 		}
-
-		log.Warnw("group completed", "isSender", isSender)
 
 		// Remove from pending messages
 		if err := b.pendingMessagesStore.DeleteGroup(msg.BroadcastMessage.ID); err != nil {
@@ -327,7 +326,12 @@ func (b *Broadcaster) handleIncomingRawMsg(msg *pending_store.MessageWithPeerMet
 }
 
 func (b *Broadcaster) handleIncomingValidatedMsg(msg types.BroadcastMessage) {
-	log.Infof("received validated message: %v", msg.String())
+	if msg.From == b.host.ID() {
+		log.Debugf("ignoring message from self")
+		return
+	}
+
+	log.Infow("received validated message", "ID", msg.ID, "From", msg.From, "To", msg.RecipientPeerIDs)
 
 	go b.handler.ValidatedMessage(msg)
 }
