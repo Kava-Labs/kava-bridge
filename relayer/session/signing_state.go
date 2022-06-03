@@ -18,6 +18,25 @@ const (
 	SigningSessionStateType_Error
 )
 
+func (t SigningSessionStateType) String() string {
+	switch t {
+	case SigningSessionStateType_PickingLeader:
+		return "PickingLeader"
+	case SigningSessionStateType_LeaderWaitingForCandidates:
+		return "LeaderWaitingForCandidates"
+	case SigningSessionStateType_CandidateWaitingForLeader:
+		return "CandidateWaitingForLeader"
+	case SigningSessionStateType_Signing:
+		return "Signing"
+	case SigningSessionStateType_Done:
+		return "Done"
+	case SigningSessionStateType_Error:
+		return "Error"
+	default:
+		return "Unknown"
+	}
+}
+
 type SigningSessionState interface {
 	State() SigningSessionStateType
 }
@@ -35,15 +54,17 @@ type PickingLeaderState struct {
 }
 
 type LeaderWaitingForCandidatesState struct {
-	threshold int
+	// Leader's local part of the signing session ID
 	localPart types.SigningSessionIDPart
-	joinMsgs  types.JoinSessionMessages
+	// Join messages received from other parties
+	joinMsgs types.JoinSessionMessages
 
 	// Not actually used in this state, but passed to SigningState
 	transport mp_tss.Transporter
 }
 
 type CandidateWaitingForLeaderState struct {
+	// Local part of the signing session ID
 	localPart types.SigningSessionIDPart
 }
 
@@ -61,6 +82,8 @@ type DoneState struct {
 type ErrorState struct {
 	err *tss.Error
 }
+
+// New State methods
 
 func NewPickingLeaderState() *PickingLeaderState {
 	return &PickingLeaderState{
@@ -110,6 +133,8 @@ func NewErrorState(err *tss.Error) *ErrorState {
 		err: err,
 	}
 }
+
+// SigningSessionState interface implementations
 
 func (s *PickingLeaderState) State() SigningSessionStateType {
 	return SigningSessionStateType_PickingLeader
