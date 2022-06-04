@@ -1,6 +1,7 @@
 package signer
 
 import (
+	"context"
 	"fmt"
 	"math/big"
 
@@ -11,6 +12,7 @@ import (
 	"github.com/binance-chain/tss-lib/tss"
 	eth_common "github.com/ethereum/go-ethereum/common"
 
+	"github.com/kava-labs/kava-bridge/relayer/broadcast"
 	"github.com/kava-labs/kava-bridge/relayer/broadcast/types"
 	"github.com/kava-labs/kava-bridge/relayer/mp_tss"
 	mp_tss_types "github.com/kava-labs/kava-bridge/relayer/mp_tss/types"
@@ -24,6 +26,7 @@ var log = logging.Logger("signer")
 // for keygen, signing, and resharing.
 type Signer struct {
 	Node         *p2p.Node
+	broadcaster  *broadcast.Broadcaster
 	partyIDStore *mp_tss.PartyIDStore
 	sessions     *session.SessionStore
 	tssParams    *tss.Parameters
@@ -38,24 +41,29 @@ func NewSigner(
 	tssParams *tss.Parameters,
 	key keygen.LocalPartySaveData,
 	threshold int,
-) *Signer {
-	return &Signer{
+) (*Signer, error) {
+	signer := &Signer{
 		Node:         node,
+		broadcaster:  nil,
 		partyIDStore: mp_tss.NewPartyIDStore(),
 		sessions:     session.NewSessionStore(),
 		tssParams:    tssParams,
 		key:          key,
 		threshold:    threshold,
 	}
-}
 
-// Start starts the signer.
-func (s *Signer) Start() error {
-	// Connect to peers
+	broadcaster, err := broadcast.NewBroadcaster(
+		context.Background(),
+		node.Host,
+		broadcast.WithHandler(NewBroadcastHandler(signer)),
+	)
+	if err != nil {
+		return nil, err
+	}
 
-	// Start listening for messages
+	signer.broadcaster = broadcaster
 
-	return nil
+	return signer, nil
 }
 
 // SignMessage signs a message with a corresponding txHash. This creates a
@@ -64,7 +72,7 @@ func (s *Signer) SignMessage(
 	txHash eth_common.Hash,
 	msgHash *big.Int,
 ) (*tss_common.SignatureData, error) {
-	// Check if already signed
+	// Check if there's already a session for the txHash
 	_, found := s.sessions.Signing.GetSessionFromTxHash(txHash)
 	if found {
 		return nil, fmt.Errorf("signing session already exists for txHash %v", txHash)
@@ -88,7 +96,7 @@ func (s *Signer) SignMessage(
 	return res.Signature, res.Err
 }
 
-func (s *Signer) HandleBroadcastMessage(broadcastMsg types.BroadcastMessage) {
+func (s *Signer) handleBroadcastMessage(broadcastMsg types.BroadcastMessage) {
 	payload, err := broadcastMsg.UnpackPayload()
 	if err != nil {
 		log.Errorf("failed to unpack received broadcast message: %w", err)
@@ -104,21 +112,21 @@ func (s *Signer) HandleBroadcastMessage(broadcastMsg types.BroadcastMessage) {
 		case *mp_tss_types.JoinSessionMessage_JoinResharingSessionMessage:
 			panic("unimplemented")
 		case *mp_tss_types.JoinSessionMessage_JoinSigningSessionMessage:
-			s.HandleJoinSigningSessionMessage(broadcastMsg, payload, sessionMsg)
+			s.handleJoinSigningSessionMessage(broadcastMsg, payload, sessionMsg)
 		default:
 			panic("unknown session type")
 		}
 
 	case *mp_tss_types.SigningPartyStartMessage:
-		s.HandleSigningPartyStartMessage(broadcastMsg, payload)
+		s.handleSigningPartyStartMessage(broadcastMsg, payload)
 	case *mp_tss_types.SigningPartMessage:
-		s.HandleSigningPartMessage(broadcastMsg, payload)
+		s.handleSigningPartMessage(broadcastMsg, payload)
 	default:
 		panic("unhandled message type")
 	}
 }
 
-func (s *Signer) HandleJoinSigningSessionMessage(
+func (s *Signer) handleJoinSigningSessionMessage(
 	broadcastMsg types.BroadcastMessage,
 	payload *mp_tss_types.JoinSessionMessage,
 	sessionMsg *mp_tss_types.JoinSessionMessage_JoinSigningSessionMessage,
@@ -147,7 +155,7 @@ func (s *Signer) HandleJoinSigningSessionMessage(
 	}
 }
 
-func (s *Signer) HandleSigningPartyStartMessage(
+func (s *Signer) handleSigningPartyStartMessage(
 	broadcastMsg types.BroadcastMessage,
 	payload *mp_tss_types.SigningPartyStartMessage,
 ) {
@@ -160,10 +168,15 @@ func (s *Signer) HandleSigningPartyStartMessage(
 		return
 	}
 
-	transport := NewSessionTransport(sessionID)
+	transport := session.NewSessionTransport(s.Node.Broadcaster, sessionID)
 
 	// Start signer event
-	event := session.NewStartSignerEvent(s.tssParams, s.key, transport)
+	event := session.NewStartSignerEvent(
+		s.tssParams,                  // tss parameters
+		s.key,                        // tss key part
+		transport,                    // broadcast transport
+		payload.ParticipatingPeerIDs, // list of participating peer IDs in session
+	)
 	if err := sess.Update(event); err != nil {
 		log.Errorf("failed to start signer: %w", err)
 
@@ -171,7 +184,7 @@ func (s *Signer) HandleSigningPartyStartMessage(
 	}
 }
 
-func (s *Signer) HandleSigningPartMessage(
+func (s *Signer) handleSigningPartMessage(
 	broadcastMsg types.BroadcastMessage,
 	payload *mp_tss_types.SigningPartMessage,
 ) {
@@ -202,29 +215,5 @@ func (s *Signer) HandleSigningPartMessage(
 		log.Errorf("failed to add signing part: %w", err)
 
 		return
-	}
-}
-
-// SessionTransport is a transport for a specific session.
-type SessionTransport struct {
-	sessionID mp_tss_types.AggregateSigningSessionID
-
-	recvChan chan mp_tss.ReceivedPartyState
-}
-
-var _ mp_tss.Transporter = (*SessionTransport)(nil)
-
-func (mt *SessionTransport) Send(data []byte, routing *tss.MessageRouting, isResharing bool) error {
-	return nil
-}
-
-func (mt *SessionTransport) Receive() chan mp_tss.ReceivedPartyState {
-	return mt.recvChan
-}
-
-func NewSessionTransport(sessionID mp_tss_types.AggregateSigningSessionID) mp_tss.Transporter {
-	return &SessionTransport{
-		sessionID: sessionID,
-		recvChan:  make(chan mp_tss.ReceivedPartyState, 1),
 	}
 }

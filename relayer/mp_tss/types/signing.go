@@ -7,6 +7,18 @@ import (
 	"github.com/libp2p/go-libp2p-core/peer"
 )
 
+func NewSigningPartMessage(
+	sessionID AggregateSigningSessionID,
+	data []byte,
+	isBroadcast bool,
+) SigningPartMessage {
+	return SigningPartMessage{
+		SessionID:   sessionID,
+		Data:        data,
+		IsBroadcast: isBroadcast,
+	}
+}
+
 func (m *SigningPartMessage) GetSessionID() AggregateSigningSessionID {
 	return m.SessionID
 }

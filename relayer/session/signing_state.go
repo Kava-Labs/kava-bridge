@@ -58,9 +58,6 @@ type LeaderWaitingForCandidatesState struct {
 	localPart types.SigningSessionIDPart
 	// Join messages received from other parties
 	joinMsgs types.JoinSessionMessages
-
-	// Not actually used in this state, but passed to SigningState
-	transport mp_tss.Transporter
 }
 
 type CandidateWaitingForLeaderState struct {

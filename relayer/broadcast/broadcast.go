@@ -209,6 +209,8 @@ func (b *Broadcaster) broadcastRawMessage(
 
 		ch, ok := b.outboundStreams[peerID]
 		if !ok {
+			log.Debugf("no outbound stream for peer %v, opening new one", peerID)
+
 			// Try to open a new stream to this peer.
 			s, err := b.host.NewStream(b.ctx, peerID, ProtocolID)
 			if err != nil {

@@ -135,16 +135,22 @@ func NewSigningSession(
 		return nil, nil, err
 	}
 
-	logger.Infow("Leader picked", "leaderPeerID", leaderPeerID, "isLeader", currentPeerID == leaderPeerID)
+	logger.Debugw("Leader picked", "leaderPeerID", leaderPeerID, "isLeader", currentPeerID == leaderPeerID)
 
 	// Leader is the current peer, transition to LeaderWaitingForCandidatesState
 	// No broadcast necessary, other peers know the leader too.
 	if leaderPeerID == session.currentPeerID {
-		logger.Infow("Leader is current peer, transition to LeaderWaitingForCandidatesState")
-		session.state, err = NewLeaderWaitingForCandidatesState()
+		logger.Debugw(
+			"IS leader, transition to LeaderWaitingForCandidatesState",
+			"peerID",
+			leaderPeerID,
+		)
+		newState, err := NewLeaderWaitingForCandidatesState()
 		if err != nil {
 			return nil, nil, err
 		}
+
+		session.state = newState
 
 		return session, resultChan, nil
 	}
@@ -156,7 +162,7 @@ func NewSigningSession(
 		return nil, nil, err
 	}
 
-	logger.Infow("Not leader, transition to CandidateWaitingForLeaderState")
+	logger.Debugw("NOT leader, transition to CandidateWaitingForLeaderState")
 	session.state = newState
 
 	msg := types.NewJoinSigningSessionMessage(
@@ -165,7 +171,7 @@ func NewSigningSession(
 		newState.localPart,
 	)
 
-	logger.Infow("Sending JoinSigningSessionMessage to leader", "leaderPeerID", leaderPeerID)
+	logger.Debugw("Sending JoinSigningSessionMessage to leader", "leaderPeerID", leaderPeerID)
 	err = session.broadcaster.BroadcastMessage(
 		context.Background(),
 		&msg,                    // join signing session message
@@ -184,7 +190,12 @@ func NewSigningSession(
 // FSM
 
 func (s *SigningSession) Update(event SigningSessionEvent) error {
-	s.logger.Infow("Session event received", "type", event.EventType(), "event", event)
+	s.logger.Debugw(
+		"SigningSessionEvent received",
+		"peerID", s.currentPeerID,
+		"type", event.EventType(),
+		"event", event,
+	)
 
 	switch ev := event.(type) {
 	case *AddCandidateEvent:
@@ -192,11 +203,10 @@ func (s *SigningSession) Update(event SigningSessionEvent) error {
 	case *StartSignerEvent:
 		return s.UpdateStartSignerEvent(ev)
 	case *AddSigningPartEvent:
+		return s.UpdateAddSigningPartEvent(ev)
 	default:
 		return fmt.Errorf("unexpected event type: %T", event)
 	}
-
-	return nil
 }
 
 func (s *SigningSession) UpdateAddCandidateEvent(
@@ -204,7 +214,18 @@ func (s *SigningSession) UpdateAddCandidateEvent(
 ) error {
 	state, ok := s.state.(*LeaderWaitingForCandidatesState)
 	if !ok {
-		return fmt.Errorf("unexpected state type: %T", s.state)
+		s.logger.Errorw(
+			"invalid state for AddCandidateEvent",
+			"current state", s.state.State(),
+			"from", ev.joinMsg.PeerID,
+			"currentPeerID", s.currentPeerID,
+		)
+
+		return fmt.Errorf(
+			"unexpected state type: got %T, expected %T",
+			s.state,
+			&LeaderWaitingForCandidatesState{},
+		)
 	}
 
 	signingMsg := ev.joinMsg.GetJoinSigningSessionMessage()
@@ -215,14 +236,14 @@ func (s *SigningSession) UpdateAddCandidateEvent(
 	// Update state
 	state.joinMsgs = append(state.joinMsgs, ev.joinMsg)
 
-	if len(state.joinMsgs) <= state.threshold {
+	if len(state.joinMsgs) <= s.threshold {
 		// Do nothing more, wait for more candidates
 		return nil
 	}
 
 	// Greater than threshold, create aggregate session ID and pick peers to
 	// participate in the signing session
-	aggSessionID, participantPeerIDs, err := state.joinMsgs.GetSessionID(state.threshold)
+	aggSessionID, participantPeerIDs, err := state.joinMsgs.GetSessionID(s.threshold)
 	if err != nil {
 		return fmt.Errorf("failed to create session ID and pick participants: %w", err)
 	}
@@ -241,7 +262,8 @@ func (s *SigningSession) UpdateAddCandidateEvent(
 	)
 
 	// Transition to signing state
-	s.state = NewSigningState(state.transport)
+	transport := NewSessionTransport(s.broadcaster, aggSessionID)
+	s.state = NewSigningState(transport)
 
 	return nil
 }
@@ -254,6 +276,19 @@ func (s *SigningSession) UpdateStartSignerEvent(
 	_, ok := s.state.(*CandidateWaitingForLeaderState)
 	if !ok {
 		return fmt.Errorf("unexpected state type: %T", s.state)
+	}
+
+	isParticipant := false
+	for _, participant := range ev.participants {
+		if participant == s.currentPeerID {
+			isParticipant = true
+			break
+		}
+	}
+
+	if !isParticipant {
+		// TODO: transition to DoneNotParticipantState
+		return fmt.Errorf("current peer is not in the list of participants")
 	}
 
 	newState := NewSigningState(ev.transport)
@@ -270,9 +305,9 @@ func (s *SigningSession) UpdateStartSignerEvent(
 
 	// Monitor output and error channels
 	go func() {
-		// TODO: Do we need a mutex here?
+		// TODO: Do we need a state mutex?
 		// This runs concurrently but in the signing state, there will be no
-		// other state changes other than from here.
+		// other state transitions other than from here.
 
 		select {
 		case sig := <-newState.outputChan:
@@ -291,7 +326,7 @@ func (s *SigningSession) UpdateStartSignerEvent(
 	return nil
 }
 
-func (s *SigningSession) AddSigningPartEvent(
+func (s *SigningSession) UpdateAddSigningPartEvent(
 	ev *AddSigningPartEvent,
 ) error {
 	state, ok := s.state.(*SigningState)
@@ -317,11 +352,13 @@ func (s *SigningSession) TryGetSignature() (
 ) {
 	switch state := s.state.(type) {
 	case *DoneState:
+		// sig, done, no error
 		return state.signature, true, nil
 	case *ErrorState:
-		return tss_common.SignatureData{}, false, state.err
+		// no sig, done, error
+		return tss_common.SignatureData{}, true, state.err
 	default:
-		// Not ready yet
+		// no sig, not done, no error
 		return tss_common.SignatureData{}, false, nil
 	}
 }

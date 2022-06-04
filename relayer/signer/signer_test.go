@@ -22,10 +22,10 @@ import (
 )
 
 func TestSigner(t *testing.T) {
-	err := logging.SetLogLevel("*", "info")
+	err := logging.SetLogLevel("*", "debug")
 	require.NoError(t, err)
 
-	numPeers := test.TestParticipants
+	numPeers := test.TestThreshold + 1
 	threshold := test.TestThreshold
 
 	ctx := context.Background()
@@ -53,13 +53,14 @@ func TestSigner(t *testing.T) {
 
 		params := mp_tss.CreateParams(partyIDs.ToUnSorted(), partyIDs[i], threshold)
 
-		s := signer.NewSigner(
+		s, err := signer.NewSigner(
 			node,
 			fmt.Sprintf("node-%v", i),
 			params,
 			tss_keys[i],
 			threshold,
 		)
+		require.NoError(t, err)
 
 		signers[i] = s
 	}
@@ -73,10 +74,6 @@ func TestSigner(t *testing.T) {
 			err := s.Node.Host.Connect(context.Background(), s2.Node.Host.Peerstore().PeerInfo(s2.Node.Host.ID()))
 			require.NoError(t, err)
 		}
-	}
-
-	for _, signer := range signers {
-		require.NoError(t, signer.Start())
 	}
 
 	txHash := common.BigToHash(big.NewInt(1))

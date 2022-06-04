@@ -5,6 +5,7 @@ import (
 	"github.com/binance-chain/tss-lib/tss"
 	"github.com/kava-labs/kava-bridge/relayer/mp_tss"
 	"github.com/kava-labs/kava-bridge/relayer/mp_tss/types"
+	"github.com/libp2p/go-libp2p-core/peer"
 )
 
 type SigningSessionEventType int
@@ -14,6 +15,19 @@ const (
 	SigningSessionEventType_StartSigner
 	SigningSessionEventType_AddSigningPart
 )
+
+func (e SigningSessionEventType) String() string {
+	switch e {
+	case SigningSessionEventType_AddCandidate:
+		return "AddCandidate"
+	case SigningSessionEventType_StartSigner:
+		return "StartSigner"
+	case SigningSessionEventType_AddSigningPart:
+		return "AddSigningPart"
+	default:
+		return "Unknown"
+	}
+}
 
 type SigningSessionEvent interface {
 	EventType() SigningSessionEventType
@@ -30,9 +44,10 @@ type AddCandidateEvent struct {
 }
 
 type StartSignerEvent struct {
-	tssParams *tss.Parameters
-	key       keygen.LocalPartySaveData
-	transport mp_tss.Transporter
+	tssParams    *tss.Parameters
+	key          keygen.LocalPartySaveData
+	transport    mp_tss.Transporter
+	participants []peer.ID
 }
 
 type AddSigningPartEvent struct {
@@ -68,11 +83,13 @@ func NewStartSignerEvent(
 	tssParams *tss.Parameters,
 	key keygen.LocalPartySaveData,
 	transport mp_tss.Transporter,
+	participants []peer.ID,
 ) *StartSignerEvent {
 	return &StartSignerEvent{
-		tssParams: tssParams,
-		key:       key,
-		transport: transport,
+		tssParams:    tssParams,
+		key:          key,
+		transport:    transport,
+		participants: participants,
 	}
 }
 

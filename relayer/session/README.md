@@ -8,15 +8,26 @@ States per signing session. There may be multiple sessions running in parallel.
 ```mermaid
 stateDiagram-v2
     state if_leader_state <<choice>>
-    [*] --> IsLeader
-    IsLeader --> if_leader_state
+    state "Is leader?" as IsLeader
+
+    [*] --> IsLeader: Start signing session
+    IsLeader --> if_leader_state: pick leader
     if_leader_state --> LeaderWaitingForCandidatesState: is leader
-    if_leader_state --> CandidatesWaitingForLeaderState: not leader
+    if_leader_state --> CandidateWaitingForLeaderState: not leader
     LeaderWaitingForCandidatesState --> LeaderWaitingForCandidatesState: AddCandidateEvent
-    LeaderWaitingForCandidatesState --> Signing: t + 1 picked
-    CandidatesWaitingForLeaderState --> Signing: StartSignerEvent
-    Signing --> Signing: AddSigningPartEvent
-    Signing --> Done: Signing output
+
+    state if_participant_state <<choice>>
+    state "Is participant?" as IsParticipant
+
+    LeaderWaitingForCandidatesState --> SigningState: t + 1 picked
+    CandidateWaitingForLeaderState --> IsParticipant: StartSignerEvent
+    IsParticipant --> if_participant_state
+    if_participant_state --> SigningState: true
+    if_participant_state --> DoneWithoutSignatureState: false
+
+    SigningState --> SigningState: AddSigningPartEvent
+    SigningState --> DoneWithSignatureState: Signing done
+    SigningState --> ErrorState: Signing error
 ```
 
 ### 1. PickLeader
