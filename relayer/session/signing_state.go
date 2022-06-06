@@ -1,6 +1,8 @@
 package session
 
 import (
+	"sync"
+
 	tss_common "github.com/binance-chain/tss-lib/common"
 	"github.com/binance-chain/tss-lib/tss"
 	"github.com/kava-labs/kava-bridge/relayer/mp_tss"
@@ -57,7 +59,9 @@ type LeaderWaitingForCandidatesState struct {
 	// Leader's local part of the signing session ID
 	localPart types.SigningSessionIDPart
 	// Join messages received from other parties
-	joinMsgs types.JoinSessionMessages
+
+	joinMsgsLock *sync.Mutex
+	joinMsgs     types.JoinSessionMessages
 }
 
 type CandidateWaitingForLeaderState struct {
@@ -95,8 +99,9 @@ func NewLeaderWaitingForCandidatesState() (*LeaderWaitingForCandidatesState, err
 	}
 
 	return &LeaderWaitingForCandidatesState{
-		localPart: localPart,
-		joinMsgs:  nil,
+		localPart:    localPart,
+		joinMsgsLock: &sync.Mutex{},
+		joinMsgs:     nil,
 	}, nil
 }
 

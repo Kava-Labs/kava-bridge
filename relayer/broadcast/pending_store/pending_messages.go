@@ -70,7 +70,7 @@ func (pm *PendingMessagesStore) TryNewGroup(msgID string) bool {
 	defer pm.pendingMessagesLock.Unlock()
 
 	if _, found := pm.pendingMessages[msgID]; found {
-		log.Debug("message group already exists", "msgID", msgID)
+		log.Debugw("message group already exists", "msgID", msgID)
 		return false
 	}
 

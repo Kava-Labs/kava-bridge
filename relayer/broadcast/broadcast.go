@@ -9,6 +9,7 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
+	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 
 	logging "github.com/ipfs/go-log/v2"
@@ -67,6 +68,8 @@ type Broadcaster struct {
 	broadcasterHook BroadcasterHook
 
 	ctx context.Context
+
+	log *zap.SugaredLogger
 }
 
 // NewBroadcaster returns a new Broadcaster
@@ -91,6 +94,7 @@ func NewBroadcaster(
 		handler:                   &NoOpBroadcastHandler{},
 		broadcasterHook:           &noOpBroadcasterHook{},
 		ctx:                       ctx,
+		log:                       log.Named(host.ID().ShortString()),
 	}
 
 	for _, opt := range options {
@@ -150,7 +154,7 @@ func (b *Broadcaster) processLoop(ctx context.Context) {
 		case newValidatedMsg := <-b.incomingValidatedMessages:
 			b.handleIncomingValidatedMsg(newValidatedMsg)
 		case <-ctx.Done():
-			log.Info("broadcast handler loop shutting down")
+			b.log.Info("broadcast handler loop shutting down")
 			return
 		}
 	}
@@ -195,7 +199,7 @@ func (b *Broadcaster) broadcastRawMessage(
 	pb proto.Message,
 	recipients []peer.ID,
 ) error {
-	log.Debugw("broadcast sending raw proto message", "recipients", recipients)
+	b.log.Debugw("broadcast sending raw proto message", "recipients", recipients)
 
 	b.outboundStreamsLock.Lock()
 	defer b.outboundStreamsLock.Unlock()
@@ -212,7 +216,7 @@ func (b *Broadcaster) broadcastRawMessage(
 
 		ch, ok := b.outboundStreams[peerID]
 		if !ok {
-			log.Debugf("no outbound stream for peer %v, opening new one", peerID)
+			b.log.Debugf("no outbound stream for peer %v, opening new one", peerID)
 
 			// Try to open a new stream to this peer.
 			// s, err := b.host.NewStream(b.ctx, peerID, ProtocolID)
@@ -222,6 +226,7 @@ func (b *Broadcaster) broadcastRawMessage(
 			//
 			// b.outboundStreams[peerID] = s
 			// ch = s
+			panic("no outbound stream")
 		}
 
 		// Avoid capturing loop variable
@@ -232,10 +237,10 @@ func (b *Broadcaster) broadcastRawMessage(
 				// Check if still connected to peer
 				// TODO: Reconnect if not connected to peer.
 				if b.host.Network().Connectedness(peerID) != network.Connected {
-					return fmt.Errorf("peer %v is not connected", peerID)
+					return fmt.Errorf("peer %v is not connected", peerID.ShortString())
 				}
 
-				log.Debugf("sending message to peer: %s", peerID)
+				b.log.Debugf("sending message to peer: %s", peerID.ShortString())
 
 				// NewUint32DelimitedWriter has an internal buffer, bufio.NewWriter()
 				// should not be necessary.
@@ -254,10 +259,10 @@ func (b *Broadcaster) broadcastRawMessage(
 // handleIncomingRawMsg handles all raw messages from other peers. This is
 // before messages are verified to be received from all peers.
 func (b *Broadcaster) handleIncomingRawMsg(msg *pending_store.MessageWithPeerMetadata) {
-	log.Debugw("received raw message", "peer", msg.PeerID)
+	b.log.Debugw("received raw message", "peer", msg.PeerID)
 
 	if err := msg.BroadcastMessage.Validate(); err != nil {
-		log.Warnf("invalid message received from peer: %s", err)
+		b.log.Warnf("invalid message received from peer: %s", err)
 		return
 	}
 
@@ -269,21 +274,21 @@ func (b *Broadcaster) handleIncomingRawMsg(msg *pending_store.MessageWithPeerMet
 	created := b.pendingMessagesStore.TryNewGroup(msg.BroadcastMessage.ID)
 	// First time we see this message, re-broadcast
 	if created {
-		log.Debugf("new message ID %s from peer %s, creating new pending group", msg.BroadcastMessage.ID, msg.PeerID)
+		b.log.Debugf("new message ID %s from peer %s, creating new pending group", msg.BroadcastMessage.ID, msg.PeerID)
+
+		// Update IsBroadcaster for re-broadcasts
+		msg.BroadcastMessage.IsBroadcaster = false
 
 		// Rebroadcast to all other peers when first time seeing this message.
 		// Run in a goroutine to avoid blocking the incoming message handler.
 		go func() {
-			// Update IsBroadcaster for re-broadcasts
-			msg.BroadcastMessage.IsBroadcaster = false
-
 			// Send Payload, NOT the BroadcastMessage, as SendProtoMessage wraps it in a Message.
 			if err := b.broadcastRawMessage(
 				context.Background(),
 				&msg.BroadcastMessage,
 				msg.BroadcastMessage.RecipientPeerIDs,
 			); err != nil {
-				log.DPanic(
+				b.log.DPanic(
 					"error rebroadcasting message %s: %s",
 					msg.BroadcastMessage.ID,
 					err,
@@ -293,12 +298,12 @@ func (b *Broadcaster) handleIncomingRawMsg(msg *pending_store.MessageWithPeerMet
 	}
 
 	if err := b.pendingMessagesStore.AddMessage(*msg); err != nil {
-		log.Errorf("error adding message %s to pending messages store: %s", msg.BroadcastMessage.ID, err)
+		b.log.Errorf("error adding message %s to pending messages store: %s", msg.BroadcastMessage.ID, err)
 
 		// Remove from pending messages -- if there is 1 invalid message then
 		// the message should be cancelled
 		if err := b.pendingMessagesStore.DeleteGroup(msg.BroadcastMessage.ID); err != nil {
-			log.Warnw(
+			b.log.Warnw(
 				"failed to remove invalid message group from pending messages store",
 				"msgId", msg.BroadcastMessage.ID,
 				"err", err,
@@ -319,7 +324,7 @@ func (b *Broadcaster) handleIncomingRawMsg(msg *pending_store.MessageWithPeerMet
 
 		// Remove from pending messages
 		if err := b.pendingMessagesStore.DeleteGroup(msg.BroadcastMessage.ID); err != nil {
-			log.Warnw(
+			b.log.Warnw(
 				"failed to remove completed message group from pending messages store",
 				"msgId", msg.BroadcastMessage.ID,
 				"err", err,
@@ -330,11 +335,11 @@ func (b *Broadcaster) handleIncomingRawMsg(msg *pending_store.MessageWithPeerMet
 
 func (b *Broadcaster) handleIncomingValidatedMsg(msg types.BroadcastMessage) {
 	if msg.From == b.host.ID() {
-		log.Debugf("ignoring message from self")
+		b.log.Debugf("ignoring message from self")
 		return
 	}
 
-	log.Infow("received validated message", "ID", msg.ID, "From", msg.From, "To", msg.RecipientPeerIDs)
+	b.log.Infow("received validated message", "ID", msg.ID, "From", msg.From, "To", msg.RecipientPeerIDs)
 
 	go b.handler.ValidatedMessage(msg)
 }
@@ -346,12 +351,12 @@ func (b *Broadcaster) handleIncomingValidatedMsg(msg types.BroadcastMessage) {
 func (b *Broadcaster) handleNewPeer(ctx context.Context, pid peer.ID) {
 	s, err := b.host.NewStream(b.ctx, pid, ProtocolID)
 	if err != nil {
-		log.Errorf("failed to open new stream to peer %s: %v", pid, err)
+		b.log.Errorf("failed to open new stream to peer %s: %v", pid, err)
 
 		return
 	}
 
-	log.Debugw("opened new stream to peer", "PeerID", pid)
+	b.log.Debugw("opened new stream to peer", "PeerID", pid)
 
 	b.outboundStreamsLock.Lock()
 	b.outboundStreams[pid] = s
@@ -364,17 +369,17 @@ func (b *Broadcaster) handleNewPeer(ctx context.Context, pid peer.ID) {
 
 // handleNewStream handles a new incoming stream, initiated when a peer is connected.
 func (b *Broadcaster) handleNewStream(s network.Stream) {
-	log.Debugf("incoming stream from peer: %s", s.Conn().RemotePeer())
+	b.log.Debugf("incoming stream from peer: %s", s.Conn().RemotePeer().ShortString())
 	peer := s.Conn().RemotePeer()
 
 	// Ensure only 1 incoming stream from the peer
 	b.inboundStreamsLock.Lock()
 	other, dup := b.inboundStreams[peer]
 	if dup {
-		log.Debugf("duplicate inbound stream from %s; resetting other stream", peer)
+		b.log.Debugf("duplicate inbound stream from %s; resetting other stream", peer.ShortString())
 
 		if err := other.Reset(); err != nil {
-			log.Warnf("error resetting other stream: %s", err)
+			b.log.Warnf("error resetting other stream: %s", err)
 		}
 	}
 	b.inboundStreams[peer] = s
@@ -389,7 +394,7 @@ func (b *Broadcaster) handleNewStream(s network.Stream) {
 		b.inboundStreamsLock.Unlock()
 	}()
 
-	log.Debugf("starting stream reader for peer: %s", s.Conn().RemotePeer())
+	b.log.Debugf("starting stream reader for peer: %s", s.Conn().RemotePeer())
 
 	// Iterate over all messages, unmarshalling all as types.MessageData
 	r := stream.NewProtoMessageReader(s)
@@ -397,7 +402,7 @@ func (b *Broadcaster) handleNewStream(s network.Stream) {
 		var msg types.BroadcastMessage
 		if err := r.ReadMsg(&msg); err != nil {
 			// Error when closing stream
-			log.Warnf("error reading stream message from peer %s: %s", s.Conn().RemotePeer(), err)
+			b.log.Warnf("error reading stream message from peer %s: %s", s.Conn().RemotePeer(), err)
 			_ = s.Reset()
 
 			return
@@ -409,7 +414,7 @@ func (b *Broadcaster) handleNewStream(s network.Stream) {
 		ctx = otel.GetTextMapPropagator().Extract(ctx, carrier)
 		ctx, span := types.Tracer.Start(ctx, "receive message")
 
-		log.Infow("trace context", "carrier", carrier, "span.IsRecording()", span.IsRecording())
+		b.log.Infow("trace context", "carrier", carrier, "span.IsRecording()", span.IsRecording())
 
 		// Attach additional peer metadata to the message
 		peerMsg := pending_store.MessageWithPeerMetadata{
@@ -419,7 +424,7 @@ func (b *Broadcaster) handleNewStream(s network.Stream) {
 		}
 
 		if msg.IsBroadcaster && msg.From != s.Conn().RemotePeer() {
-			log.Warnf(
+			b.log.Warnf(
 				"broadcast message from does not match sender: got %s, expected %s",
 				msg.From,
 				s.Conn().RemotePeer(),
@@ -431,18 +436,18 @@ func (b *Broadcaster) handleNewStream(s network.Stream) {
 		// TODO: Redundant unpack, when payload is used it will be unpacked again
 		broadcastMsg, err := peerMsg.BroadcastMessage.UnpackPayload()
 		if err != nil {
-			log.Warnf("error unpacking payload for message %s from peer %s: %s", msg.ID, s.Conn().RemotePeer(), err)
+			b.log.Warnf("error unpacking payload for message %s from peer %s: %s", msg.ID, s.Conn().RemotePeer(), err)
 
 			return
 		}
 
 		if err := broadcastMsg.ValidateBasic(); err != nil {
-			log.Warnf("invalid message from peer %s: %s", s.Conn().RemotePeer(), err)
+			b.log.Warnf("invalid message from peer %s: %s", s.Conn().RemotePeer(), err)
 
 			continue
 		}
 
-		log.Debugf("received message from peer: %s", peerMsg.PeerID)
+		b.log.Debugf("received message from peer: %s", peerMsg.PeerID)
 
 		span.AddEvent("Message Received", trace.WithAttributes(
 			attribute.String("Sender", peer.ShortString()),

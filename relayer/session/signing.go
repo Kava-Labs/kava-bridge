@@ -255,8 +255,10 @@ func (s *SigningSession) UpdateAddCandidateEvent(
 		return fmt.Errorf("unexpected join session type: %T", ev.joinMsg)
 	}
 
-	// Update state
+	// Update state -- requires mutex as there may be concurrent updates
+	state.joinMsgsLock.Lock()
 	state.joinMsgs = append(state.joinMsgs, ev.joinMsg)
+	state.joinMsgsLock.Unlock()
 
 	span.AddEvent(
 		"Add new candidate",
