@@ -12,6 +12,7 @@ import (
 	tss_common "github.com/binance-chain/tss-lib/common"
 	"github.com/binance-chain/tss-lib/test"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/kava-labs/kava-bridge/relayer/broadcast"
 	"github.com/kava-labs/kava-bridge/relayer/mp_tss"
 	"github.com/kava-labs/kava-bridge/relayer/p2p"
 	"github.com/kava-labs/kava-bridge/relayer/signer"
@@ -59,6 +60,7 @@ func TestSigner(t *testing.T) {
 			params,
 			tss_keys[i],
 			threshold,
+			broadcast.WithTracer("http://localhost:14268/api/traces"),
 		)
 		require.NoError(t, err)
 

@@ -5,6 +5,8 @@ import "gogoproto/gogo.proto";
 import "google/protobuf/any.proto";
 import "google/protobuf/timestamp.proto";
 
+import "relayer/broadcast/v1beta1/trace.proto";
+
 option go_package = "github.com/kava-labs/kava-bridge/relayer/broadcast/types";
 
 // BroadcastMessage is used between peers to wrap messages for each protocol
@@ -34,6 +36,8 @@ message BroadcastMessage {
   // Seconds after created time until the message expires. This requires
   // roughly synced times between peers
   uint64 ttl_seconds = 7 [(gogoproto.customname) = "TTLSeconds"];
+  // Trace is used to track the message with opentelemetry.
+  TraceContext trace_context = 8 [(gogoproto.nullable) = true];
 }
 
 message HelloRequest {

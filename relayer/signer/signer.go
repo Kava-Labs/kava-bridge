@@ -41,6 +41,7 @@ func NewSigner(
 	tssParams *tss.Parameters,
 	key keygen.LocalPartySaveData,
 	threshold int,
+	broadcasterOptions ...broadcast.BroadcasterOption,
 ) (*Signer, error) {
 	signer := &Signer{
 		Node:         node,
@@ -55,7 +56,7 @@ func NewSigner(
 	broadcaster, err := broadcast.NewBroadcaster(
 		context.Background(),
 		node.Host,
-		broadcast.WithHandler(NewBroadcastHandler(signer)),
+		append(broadcasterOptions, broadcast.WithHandler(NewBroadcastHandler(signer)))...,
 	)
 	if err != nil {
 		return nil, err

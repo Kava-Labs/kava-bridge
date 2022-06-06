@@ -6,6 +6,7 @@ import (
 	"math/big"
 
 	logging "github.com/ipfs/go-log/v2"
+	"go.opentelemetry.io/otel"
 	"go.uber.org/zap"
 
 	tss_common "github.com/binance-chain/tss-lib/common"
@@ -18,6 +19,7 @@ import (
 )
 
 var log = logging.Logger("SigningSession")
+var tracer = otel.Tracer("SigningSession")
 
 // tx_hash -> session ID
 type TssSessions map[eth_common.Hash]*SigningSession
@@ -100,6 +102,10 @@ type SigningSession struct {
 
 	// FSM
 	state SigningSessionState
+
+	// Context for the tracing span that lives for the entire duration of the
+	// signing session
+	context context.Context
 }
 
 func NewSigningSession(
@@ -110,7 +116,13 @@ func NewSigningSession(
 	currentPeerID peer.ID,
 	peerIDs peer.IDSlice,
 ) (*SigningSession, <-chan SigningSessionResult, error) {
+	tracer := otel.Tracer("NewSigningSession")
+	ctx, span := tracer.Start(context.Background(), "new signing session")
+	defer span.End()
+
 	resultChan := make(chan SigningSessionResult, 1)
+
+	span.AddEvent("Transition to PickingLeaderState")
 	state := NewPickingLeaderState()
 
 	logger := log.Named(txHash.String())
@@ -125,6 +137,7 @@ func NewSigningSession(
 		resultChan:    resultChan,
 		logger:        logger,
 		state:         state,
+		context:       ctx,
 	}
 
 	// Generate a random session ID part
@@ -150,6 +163,7 @@ func NewSigningSession(
 			return nil, nil, err
 		}
 
+		span.AddEvent("Transition to LeaderWaitingForCandidateState")
 		session.state = newState
 
 		return session, resultChan, nil
@@ -163,6 +177,7 @@ func NewSigningSession(
 	}
 
 	logger.Debugw("NOT leader, transition to CandidateWaitingForLeaderState")
+	span.AddEvent("Transition to CandidateWaitingForLeaderState")
 	session.state = newState
 
 	msg := types.NewJoinSigningSessionMessage(
@@ -173,7 +188,7 @@ func NewSigningSession(
 
 	logger.Debugw("Sending JoinSigningSessionMessage to leader", "leaderPeerID", leaderPeerID)
 	err = session.broadcaster.BroadcastMessage(
-		context.Background(),
+		ctx,
 		&msg,                    // join signing session message
 		[]peer.ID{leaderPeerID}, // send to leader
 		30,                      // ttl seconds
@@ -227,6 +242,9 @@ func (s *SigningSession) UpdateAddCandidateEvent(
 			&LeaderWaitingForCandidatesState{},
 		)
 	}
+
+	_, span := tracer.Start(s.context, "AddCandidateEvent")
+	defer span.End()
 
 	signingMsg := ev.joinMsg.GetJoinSigningSessionMessage()
 	if signingMsg == nil {

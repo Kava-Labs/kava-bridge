@@ -1,6 +1,7 @@
 package types
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -9,7 +10,11 @@ import (
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/multiformats/go-multibase"
 	"github.com/pkg/errors"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
 )
+
+var Tracer = otel.Tracer("Broadcaster")
 
 const (
 	MinimumTTLSeconds = 1
@@ -17,6 +22,7 @@ const (
 
 // NewBroadcastMessage creates a new BroadcastMessage with the payload marshaled as Any.
 func NewBroadcastMessage(
+	ctx context.Context,
 	payload PeerMessage,
 	hostID peer.ID,
 	recipientsPeerIDs []peer.ID,
@@ -35,6 +41,18 @@ func NewBroadcastMessage(
 	allPeerIDs := append(recipientsPeerIDs, hostID)
 	allPeerIDs = dedupPeerIDs(allPeerIDs)
 
+	ctx, span := Tracer.Start(ctx, "NewBroadcastMessage")
+	defer span.End()
+
+	span.SetAttributes(
+		attribute.String("typeUrl", anyPayload.GetTypeUrl()),
+		attribute.String("message_id", messageID),
+		attribute.String("from_peer_id", hostID.String()),
+	)
+
+	traceCtx := NewTraceContext()
+	traceCtx.Inject(ctx)
+
 	return BroadcastMessage{
 		ID:               messageID,
 		From:             hostID,
@@ -43,6 +61,7 @@ func NewBroadcastMessage(
 		RecipientPeerIDs: allPeerIDs,
 		Created:          time.Now().UTC(),
 		TTLSeconds:       TTLSeconds,
+		TraceContext:     traceCtx,
 	}, nil
 }
 

@@ -6,6 +6,9 @@ import (
 	"sync"
 
 	"github.com/gogo/protobuf/proto"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
 
 	logging "github.com/ipfs/go-log/v2"
@@ -165,7 +168,7 @@ func (b *Broadcaster) BroadcastMessage(
 	TTLSeconds uint64,
 ) error {
 	// Wrap the proto message in the MessageData type.
-	msg, err := types.NewBroadcastMessage(pb, b.host.ID(), recipients, TTLSeconds)
+	msg, err := types.NewBroadcastMessage(ctx, pb, b.host.ID(), recipients, TTLSeconds)
 	if err != nil {
 		return err
 	}
@@ -212,13 +215,13 @@ func (b *Broadcaster) broadcastRawMessage(
 			log.Debugf("no outbound stream for peer %v, opening new one", peerID)
 
 			// Try to open a new stream to this peer.
-			s, err := b.host.NewStream(b.ctx, peerID, ProtocolID)
-			if err != nil {
-				return fmt.Errorf("failed to open new stream to peer %s: %w", peerID, err)
-			}
-
-			b.outboundStreams[peerID] = s
-			ch = s
+			// s, err := b.host.NewStream(b.ctx, peerID, ProtocolID)
+			// if err != nil {
+			// 	return fmt.Errorf("failed to open new stream to peer %s: %w", peerID, err)
+			// }
+			//
+			// b.outboundStreams[peerID] = s
+			// ch = s
 		}
 
 		// Avoid capturing loop variable
@@ -251,6 +254,8 @@ func (b *Broadcaster) broadcastRawMessage(
 // handleIncomingRawMsg handles all raw messages from other peers. This is
 // before messages are verified to be received from all peers.
 func (b *Broadcaster) handleIncomingRawMsg(msg *pending_store.MessageWithPeerMetadata) {
+	log.Debugw("received raw message", "peer", msg.PeerID)
+
 	if err := msg.BroadcastMessage.Validate(); err != nil {
 		log.Warnf("invalid message received from peer: %s", err)
 		return
@@ -398,10 +403,19 @@ func (b *Broadcaster) handleNewStream(s network.Stream) {
 			return
 		}
 
+		ctx := context.Background()
+
+		carrier := msg.TraceContext.GetCarrier()
+		ctx = otel.GetTextMapPropagator().Extract(ctx, carrier)
+		ctx, span := types.Tracer.Start(ctx, "receive message")
+
+		log.Infow("trace context", "carrier", carrier, "span.IsRecording()", span.IsRecording())
+
 		// Attach additional peer metadata to the message
 		peerMsg := pending_store.MessageWithPeerMetadata{
 			BroadcastMessage: msg,
 			PeerID:           s.Conn().RemotePeer(),
+			Context:          ctx,
 		}
 
 		if msg.IsBroadcaster && msg.From != s.Conn().RemotePeer() {
@@ -429,6 +443,14 @@ func (b *Broadcaster) handleNewStream(s network.Stream) {
 		}
 
 		log.Debugf("received message from peer: %s", peerMsg.PeerID)
+
+		span.AddEvent("Message Received", trace.WithAttributes(
+			attribute.String("Sender", peer.ShortString()),
+			attribute.String("Receiver", b.host.ID().ShortString()),
+			attribute.String("TypeUrl", peerMsg.BroadcastMessage.Payload.TypeUrl),
+		))
+
+		span.End()
 
 		select {
 		case b.incomingRawMessages <- &peerMsg:

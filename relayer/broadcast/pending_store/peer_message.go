@@ -1,6 +1,8 @@
 package pending_store
 
 import (
+	"context"
+
 	"github.com/kava-labs/kava-bridge/relayer/broadcast/types"
 	"github.com/libp2p/go-libp2p-core/peer"
 )
@@ -11,4 +13,6 @@ type MessageWithPeerMetadata struct {
 
 	// Not transmitted over wire, added when received.
 	PeerID peer.ID
+
+	Context context.Context
 }
