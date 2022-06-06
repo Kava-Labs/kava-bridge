@@ -2,7 +2,6 @@ package broadcast
 
 import (
 	"github.com/libp2p/go-libp2p-core/peer"
-	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/jaeger"
 	"go.opentelemetry.io/otel/sdk/resource"
 	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
@@ -11,8 +10,7 @@ import (
 )
 
 const (
-	service     = "kava-relayer"
-	environment = "production"
+	service = "kava-relayer"
 )
 
 func tracerProvider(url string, peerID peer.ID) (*tracesdk.TracerProvider, error) {
@@ -28,8 +26,6 @@ func tracerProvider(url string, peerID peer.ID) (*tracesdk.TracerProvider, error
 		tracesdk.WithResource(resource.NewWithAttributes(
 			semconv.SchemaURL,
 			semconv.ServiceNameKey.String(service),
-			attribute.String("environment", environment),
-			attribute.String("PeerID", peerID.ShortString()),
 		)),
 	)
 

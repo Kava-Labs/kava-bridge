@@ -7,6 +7,8 @@ import (
 
 	logging "github.com/ipfs/go-log/v2"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 
 	tss_common "github.com/binance-chain/tss-lib/common"
@@ -117,12 +119,14 @@ func NewSigningSession(
 	peerIDs peer.IDSlice,
 ) (*SigningSession, <-chan SigningSessionResult, error) {
 	tracer := otel.Tracer("NewSigningSession")
-	ctx, span := tracer.Start(context.Background(), "new signing session")
-	defer span.End()
+	ctx, _ := tracer.Start(context.Background(), "new signing session")
+
+	_, subSpan := tracer.Start(ctx, "picking leader")
+	defer subSpan.End()
 
 	resultChan := make(chan SigningSessionResult, 1)
 
-	span.AddEvent("Transition to PickingLeaderState")
+	subSpan.AddEvent("Transition to PickingLeaderState")
 	state := NewPickingLeaderState()
 
 	logger := log.Named(txHash.String())
@@ -163,7 +167,7 @@ func NewSigningSession(
 			return nil, nil, err
 		}
 
-		span.AddEvent("Transition to LeaderWaitingForCandidateState")
+		subSpan.AddEvent("Transition to LeaderWaitingForCandidateState")
 		session.state = newState
 
 		return session, resultChan, nil
@@ -177,7 +181,7 @@ func NewSigningSession(
 	}
 
 	logger.Debugw("NOT leader, transition to CandidateWaitingForLeaderState")
-	span.AddEvent("Transition to CandidateWaitingForLeaderState")
+	subSpan.AddEvent("Transition to CandidateWaitingForLeaderState")
 	session.state = newState
 
 	msg := types.NewJoinSigningSessionMessage(
@@ -243,7 +247,7 @@ func (s *SigningSession) UpdateAddCandidateEvent(
 		)
 	}
 
-	_, span := tracer.Start(s.context, "AddCandidateEvent")
+	_, span := tracer.Start(s.context, "add candidate to leader")
 	defer span.End()
 
 	signingMsg := ev.joinMsg.GetJoinSigningSessionMessage()
@@ -254,8 +258,24 @@ func (s *SigningSession) UpdateAddCandidateEvent(
 	// Update state
 	state.joinMsgs = append(state.joinMsgs, ev.joinMsg)
 
+	span.AddEvent(
+		"Add new candidate",
+		trace.WithAttributes(
+			attribute.String("candidate peerID", ev.joinMsg.PeerID.ShortString()),
+			attribute.String("candidate session part", signingMsg.GetPeerSessionIDPart().String()),
+		),
+	)
+
 	if len(state.joinMsgs) <= s.threshold {
 		// Do nothing more, wait for more candidates
+		span.AddEvent(
+			"Wait for more candidates",
+			trace.WithAttributes(
+				attribute.Int("current candidates", len(state.joinMsgs)),
+				attribute.Int("threshold", s.threshold),
+			),
+		)
+
 		return nil
 	}
 

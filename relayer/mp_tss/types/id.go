@@ -1,6 +1,9 @@
 package types
 
-import "math/rand"
+import (
+	"encoding/hex"
+	"math/rand"
+)
 
 const (
 	SigningSessionIDPartLength = 32
@@ -27,6 +30,11 @@ func NewSigningSessionIDPart() (SigningSessionIDPart, error) {
 // Bytes returns the bytes of the SigningSessionIDPart.
 func (s SigningSessionIDPart) Bytes() []byte {
 	return s[:]
+}
+
+// String returns the hex string of the SigningSessionIDPart.
+func (s SigningSessionIDPart) String() string {
+	return hex.EncodeToString(s[:])
 }
 
 // KeygenSessionID is the ID for a keygen session.
