@@ -87,7 +87,7 @@ func NewBroadcaster(
 		peersLock:                 sync.RWMutex{},
 		peers:                     make(map[peer.ID]struct{}),
 		newPeers:                  make(chan peer.ID),
-		incomingRawMessages:       make(chan *pending_store.MessageWithPeerMetadata),
+		incomingRawMessages:       make(chan *pending_store.MessageWithPeerMetadata, 1),
 		incomingValidatedMessages: make(chan types.BroadcastMessage, 1),
 		pendingMessagesStore:      pending_store.NewPendingMessagesStore(pending_store.DEFAULT_CLEAR_EXPIRED_INTERVAL),
 		outgoing:                  make(chan *types.BroadcastMessage),
@@ -288,7 +288,7 @@ func (b *Broadcaster) handleIncomingRawMsg(msg *pending_store.MessageWithPeerMet
 				&msg.BroadcastMessage,
 				msg.BroadcastMessage.RecipientPeerIDs,
 			); err != nil {
-				b.log.DPanic(
+				b.log.DPanicf(
 					"error rebroadcasting message %s: %s",
 					msg.BroadcastMessage.ID,
 					err,
@@ -394,7 +394,7 @@ func (b *Broadcaster) handleNewStream(s network.Stream) {
 		b.inboundStreamsLock.Unlock()
 	}()
 
-	b.log.Debugf("starting stream reader for peer: %s", s.Conn().RemotePeer())
+	b.log.Debugf("starting stream reader for peer: %s", s.Conn().RemotePeer().ShortString())
 
 	// Iterate over all messages, unmarshalling all as types.MessageData
 	r := stream.NewProtoMessageReader(s)
@@ -402,7 +402,7 @@ func (b *Broadcaster) handleNewStream(s network.Stream) {
 		var msg types.BroadcastMessage
 		if err := r.ReadMsg(&msg); err != nil {
 			// Error when closing stream
-			b.log.Warnf("error reading stream message from peer %s: %s", s.Conn().RemotePeer(), err)
+			b.log.Warnf("error reading stream message from peer %s: %s", s.Conn().RemotePeer().ShortString(), err)
 			_ = s.Reset()
 
 			return
@@ -413,8 +413,6 @@ func (b *Broadcaster) handleNewStream(s network.Stream) {
 		carrier := msg.TraceContext.GetCarrier()
 		ctx = otel.GetTextMapPropagator().Extract(ctx, carrier)
 		ctx, span := types.Tracer.Start(ctx, "receive message")
-
-		b.log.Infow("trace context", "carrier", carrier, "span.IsRecording()", span.IsRecording())
 
 		// Attach additional peer metadata to the message
 		peerMsg := pending_store.MessageWithPeerMetadata{
@@ -447,7 +445,7 @@ func (b *Broadcaster) handleNewStream(s network.Stream) {
 			continue
 		}
 
-		b.log.Debugf("received message from peer: %s", peerMsg.PeerID)
+		b.log.Debugf("received message from peer: %s", peerMsg.PeerID.ShortString())
 
 		span.AddEvent("Message Received", trace.WithAttributes(
 			attribute.String("Sender", peer.ShortString()),

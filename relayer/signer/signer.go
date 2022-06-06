@@ -87,6 +87,7 @@ func (s *Signer) SignMessage(
 		s.threshold,
 		s.Node.Host.ID(),
 		s.Node.PeerList,
+		s.partyIDStore,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create signing session: %w", err)
@@ -161,15 +162,23 @@ func (s *Signer) handleSigningPartyStartMessage(
 	payload *mp_tss_types.SigningPartyStartMessage,
 ) {
 	// Start signing sessions
+	txHash := payload.GetTxHash()
 	sessionID := payload.GetSessionID()
-	sess, found := s.sessions.Signing.GetSessionFromID(sessionID)
+	sess, found := s.sessions.Signing.GetSessionFromTxHash(txHash)
 	if !found {
-		log.Errorf("received SigningPartyStartMessage for unknown sessionID %v", sessionID)
+		log.Errorf("received SigningPartyStartMessage for unknown txHash %v", txHash)
 
 		return
 	}
 
-	transport := session.NewSessionTransport(s.Node.Broadcaster, sessionID)
+	s.sessions.Signing.SetSessionID(txHash, sessionID)
+
+	transport := session.NewSessionTransport(
+		s.Node.Broadcaster,
+		sessionID,
+		s.partyIDStore,
+		payload.ParticipatingPeerIDs,
+	)
 
 	// Start signer event
 	event := session.NewStartSignerEvent(

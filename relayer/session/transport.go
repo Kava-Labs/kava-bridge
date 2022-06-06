@@ -77,10 +77,14 @@ func (mt *SessionTransport) Receive() chan mp_tss.ReceivedPartyState {
 func NewSessionTransport(
 	broadcaster *broadcast.Broadcaster,
 	sessionID mp_tss_types.AggregateSigningSessionID,
+	partyIDStore *mp_tss.PartyIDStore,
+	participants []peer.ID,
 ) mp_tss.Transporter {
 	return &SessionTransport{
-		broadcaster: broadcaster,
-		sessionID:   sessionID,
-		recvChan:    make(chan mp_tss.ReceivedPartyState, 1),
+		broadcaster:  broadcaster,
+		sessionID:    sessionID,
+		partyIDStore: partyIDStore,
+		participants: participants,
+		recvChan:     make(chan mp_tss.ReceivedPartyState, 1),
 	}
 }

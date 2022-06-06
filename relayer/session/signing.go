@@ -49,6 +49,7 @@ func (s *SigningSessionStore) NewSession(
 	threshold int,
 	currentPeerID peer.ID,
 	peerIDs peer.IDSlice,
+	partyIDStore *mp_tss.PartyIDStore,
 ) (*SigningSession, <-chan SigningSessionResult, error) {
 	session, resultChan, err := NewSigningSession(
 		broadcaster,
@@ -57,6 +58,7 @@ func (s *SigningSessionStore) NewSession(
 		threshold,
 		currentPeerID,
 		peerIDs,
+		partyIDStore,
 	)
 	if err != nil {
 		return nil, nil, err
@@ -70,6 +72,10 @@ func (s *SigningSessionStore) NewSession(
 func (s *SigningSessionStore) GetSessionFromTxHash(txHash eth_common.Hash) (*SigningSession, bool) {
 	session, ok := s.sessions[txHash]
 	return session, ok
+}
+
+func (s *SigningSessionStore) SetSessionID(txHash eth_common.Hash, sessID types.AggregateSigningSessionID) {
+	s.sessionIDToTxHash[sessID.String()] = txHash
 }
 
 func (s *SigningSessionStore) GetSessionFromID(
@@ -90,10 +96,11 @@ type SigningSessionResult struct {
 }
 
 type SigningSession struct {
-	broadcaster *broadcast.Broadcaster
-	TxHash      eth_common.Hash
-	MsgToSign   *big.Int
-	threshold   int
+	broadcaster  *broadcast.Broadcaster
+	TxHash       eth_common.Hash
+	MsgToSign    *big.Int
+	threshold    int
+	partyIDStore *mp_tss.PartyIDStore
 
 	currentPeerID peer.ID
 	peerIDs       peer.IDSlice
@@ -117,6 +124,7 @@ func NewSigningSession(
 	threshold int,
 	currentPeerID peer.ID,
 	peerIDs peer.IDSlice,
+	partyIDStore *mp_tss.PartyIDStore,
 ) (*SigningSession, <-chan SigningSessionResult, error) {
 	tracer := otel.Tracer("NewSigningSession")
 	ctx, _ := tracer.Start(context.Background(), "new signing session")
@@ -132,10 +140,12 @@ func NewSigningSession(
 	logger := log.Named(txHash.String())
 
 	session := &SigningSession{
-		broadcaster:   broadcaster,
-		TxHash:        txHash,
-		MsgToSign:     msgToSign,
-		threshold:     threshold,
+		broadcaster:  broadcaster,
+		TxHash:       txHash,
+		MsgToSign:    msgToSign,
+		threshold:    threshold,
+		partyIDStore: partyIDStore,
+
 		currentPeerID: currentPeerID,
 		peerIDs:       peerIDs,
 		resultChan:    resultChan,
@@ -302,7 +312,13 @@ func (s *SigningSession) UpdateAddCandidateEvent(
 	)
 
 	// Transition to signing state
-	transport := NewSessionTransport(s.broadcaster, aggSessionID)
+	transport := NewSessionTransport(
+		s.broadcaster,
+		aggSessionID,
+		s.partyIDStore,
+		participantPeerIDs,
+	)
+
 	s.state = NewSigningState(transport)
 
 	return nil

@@ -57,6 +57,10 @@ func (m *SigningPartyStartMessage) GetSessionID() AggregateSigningSessionID {
 	return m.SessionId
 }
 
+func (m *SigningPartyStartMessage) GetTxHash() common.Hash {
+	return common.BytesToHash(m.TxHash)
+}
+
 func (m *SigningPartyStartMessage) ValidateBasic() error {
 	if m.TxHash == nil {
 		return fmt.Errorf("txHash is nil")

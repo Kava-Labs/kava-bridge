@@ -6,11 +6,12 @@ import (
 	"fmt"
 	"math/big"
 	"testing"
+	"time"
 
 	logging "github.com/ipfs/go-log/v2"
+	"github.com/libp2p/go-libp2p-core/peerstore"
 
 	tss_common "github.com/binance-chain/tss-lib/common"
-	"github.com/binance-chain/tss-lib/test"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/kava-labs/kava-bridge/relayer/broadcast"
 	"github.com/kava-labs/kava-bridge/relayer/mp_tss"
@@ -26,8 +27,8 @@ func TestSigner(t *testing.T) {
 	err := logging.SetLogLevel("*", "debug")
 	require.NoError(t, err)
 
-	numPeers := test.TestThreshold + 1
-	threshold := test.TestThreshold
+	numPeers := 3
+	threshold := 1
 
 	ctx := context.Background()
 	done := make(chan bool)
@@ -36,6 +37,7 @@ func TestSigner(t *testing.T) {
 	require.NoError(t, err)
 
 	peerIDs := testutil.PeerIDsFromKeys(node_keys)
+	require.Len(t, peerIDs, numPeers)
 
 	tss_keys, partyIDs := testutil.GetTestTssKeys(numPeers)
 	require.Len(t, tss_keys, numPeers)
@@ -73,10 +75,16 @@ func TestSigner(t *testing.T) {
 				continue
 			}
 
-			err := s.Node.Host.Connect(context.Background(), s2.Node.Host.Peerstore().PeerInfo(s2.Node.Host.ID()))
+			s.Node.Host.Peerstore().AddAddrs(s2.Node.Host.ID(), s2.Node.Host.Addrs(), peerstore.ConnectedAddrTTL)
+
+			addrInfo := s2.Node.Host.Peerstore().PeerInfo(s2.Node.Host.ID())
+			err := s.Node.Host.Connect(context.Background(), addrInfo)
 			require.NoError(t, err)
 		}
 	}
+
+	time.Sleep(time.Second * 2)
+	t.Log("Starting signing sessions")
 
 	txHash := common.BigToHash(big.NewInt(1))
 	msgHash := big.NewInt(2)
