@@ -23,74 +23,6 @@ import (
 var log = logging.Logger("SigningSession")
 var tracer = otel.Tracer("SigningSession")
 
-// tx_hash -> session ID
-type TssSessions map[eth_common.Hash]*SigningSession
-
-// session -> tx_hash to get a session from session ID instead of tx_hash
-type SessionIDToTxHash map[string]eth_common.Hash
-
-// SigningSessionStore keeps track of signing sessions.
-type SigningSessionStore struct {
-	sessions          TssSessions
-	sessionIDToTxHash SessionIDToTxHash
-}
-
-func NewSigningSessionStore() *SigningSessionStore {
-	return &SigningSessionStore{
-		sessions:          make(TssSessions),
-		sessionIDToTxHash: make(SessionIDToTxHash),
-	}
-}
-
-func (s *SigningSessionStore) NewSession(
-	ctx context.Context,
-	broadcaster *broadcast.Broadcaster,
-	txHash eth_common.Hash,
-	msgToSign *big.Int,
-	threshold int,
-	currentPeerID peer.ID,
-	peerIDs peer.IDSlice,
-	partyIDStore *mp_tss.PartyIDStore,
-) (*SigningSession, <-chan SigningSessionResult, error) {
-	session, resultChan, err := NewSigningSession(
-		ctx,
-		broadcaster,
-		txHash,
-		msgToSign,
-		threshold,
-		currentPeerID,
-		peerIDs,
-		partyIDStore,
-	)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	s.sessions[txHash] = session
-
-	return session, resultChan, nil
-}
-
-func (s *SigningSessionStore) GetSessionFromTxHash(txHash eth_common.Hash) (*SigningSession, bool) {
-	session, ok := s.sessions[txHash]
-	return session, ok
-}
-
-func (s *SigningSessionStore) SetSessionID(txHash eth_common.Hash, sessID types.AggregateSigningSessionID) {
-	s.sessionIDToTxHash[sessID.String()] = txHash
-}
-
-func (s *SigningSessionStore) GetSessionFromID(
-	sessID types.AggregateSigningSessionID,
-) (*SigningSession, bool) {
-	txHash, ok := s.sessionIDToTxHash[sessID.String()]
-	if !ok {
-		return nil, false
-	}
-
-	return s.GetSessionFromTxHash(txHash)
-}
-
 // SigningSessionResult is the result of a signing session.
 type SigningSessionResult struct {
 	Signature *tss_common.SignatureData
@@ -337,6 +269,8 @@ func (s *SigningSession) UpdateAddCandidateEvent(
 		participantPeerIDs,
 	)
 
+	// TODO: Not necessarily a participant, either make leader always a participant
+	// or check if leader is a participant and transition accordingly.
 	s.state = NewSigningState(transport)
 
 	return nil
@@ -362,6 +296,12 @@ func (s *SigningSession) UpdateStartSignerEvent(
 			attribute.String("event", "StartSignerEvent"),
 			attribute.String("peerID", s.currentPeerID.ShortString()),
 		))
+
+	s.logger.Debugw(
+		"StartSignerEvent received",
+		"peerID", s.currentPeerID,
+		"participantPeerIDs", ev.participants,
+	)
 
 	isParticipant := false
 	for _, participant := range ev.participants {
@@ -450,6 +390,9 @@ func (s *SigningSession) UpdateStartSignerEvent(
 				Signature: nil,
 				Err:       err,
 			}
+		case <-s.context.Done():
+			s.logger.Debugw("signing session context done, no longer waiting for output")
+			// TODO: Transition to err? or nah
 		}
 
 		span.End()   // local start span

@@ -2,6 +2,7 @@ package session
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
 
 	"github.com/binance-chain/tss-lib/tss"
@@ -48,7 +49,7 @@ func (mt *SessionTransport) Send(data []byte, routing *tss.MessageRouting, isRes
 	for _, to := range routing.To {
 		peerID, found := mt.partyIDStore.GetPeerID(to)
 		if !found {
-			return fmt.Errorf("peer %s not found", to)
+			return fmt.Errorf("peer %s not found (key %v)", to, hex.EncodeToString(to.Key))
 		}
 
 		g.Go(func() error {
