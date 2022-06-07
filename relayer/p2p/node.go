@@ -7,8 +7,6 @@ import (
 
 	logging "github.com/ipfs/go-log/v2"
 	"github.com/kava-labs/kava-bridge/relayer/allowlist"
-	"github.com/kava-labs/kava-bridge/relayer/broadcast"
-	"github.com/kava-labs/kava-bridge/relayer/p2p/service"
 	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p-core/host"
 	"github.com/libp2p/go-libp2p-core/network"
@@ -23,12 +21,10 @@ import (
 var log = logging.Logger("p2p")
 
 type Node struct {
-	Host        host.Host
-	Broadcaster *broadcast.Broadcaster
-	PeerList    []peer.ID
+	Host     host.Host
+	PeerList []peer.ID
 
-	EchoService *service.EchoService
-	done        chan bool
+	done chan bool
 }
 
 func NewNode(ctx context.Context, options NodeOptions, done chan bool) (*Node, error) {
@@ -49,22 +45,11 @@ func NewNode(ctx context.Context, options NodeOptions, done chan bool) (*Node, e
 		return nil, err
 	}
 
-	broadcaster, err := broadcast.NewBroadcaster(ctx, host)
-	if err != nil {
-		return nil, err
-	}
-
 	node := &Node{
-		Host:        host,
-		Broadcaster: broadcaster,
-		PeerList:    options.PeerList,
-		// Sets stream handler
-		EchoService: service.NewEchoService(host, done, options.EchoRequiredPeers),
-		done:        done,
+		Host:     host,
+		PeerList: options.PeerList,
+		done:     done,
 	}
-
-	service.NewEchoService(host, done, options.EchoRequiredPeers)
-	registerNotifiees(host)
 
 	return node, nil
 }
@@ -98,26 +83,6 @@ func (n Node) ConnectToPeers(ctx context.Context, peerAddrInfos []*peer.AddrInfo
 		if err != nil {
 			return err
 		}
-	}
-
-	return nil
-}
-
-func (n Node) EchoPeers(ctx context.Context) error {
-	log.Debugf("sending echo to %d peers", len(n.Host.Peerstore().Peers())-1)
-
-	for _, peerID := range n.Host.Peerstore().Peers() {
-		// Skip self
-		if n.Host.ID() == peerID {
-			continue
-		}
-
-		res, err := n.EchoService.Echo(ctx, peerID, "hello world!\n")
-		if err != nil {
-			return err
-		}
-
-		log.Info("received echo response: ", res)
 	}
 
 	return nil
