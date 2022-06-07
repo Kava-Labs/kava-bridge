@@ -91,6 +91,7 @@ func (s *Signer) SignMessage(
 
 	// Create new signing session
 	_, resultChan, err := s.sessions.Signing.NewSession(
+		ctx,
 		s.broadcaster,
 		txHash,
 		msgHash,

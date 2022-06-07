@@ -43,6 +43,7 @@ func NewSigningSessionStore() *SigningSessionStore {
 }
 
 func (s *SigningSessionStore) NewSession(
+	ctx context.Context,
 	broadcaster *broadcast.Broadcaster,
 	txHash eth_common.Hash,
 	msgToSign *big.Int,
@@ -52,6 +53,7 @@ func (s *SigningSessionStore) NewSession(
 	partyIDStore *mp_tss.PartyIDStore,
 ) (*SigningSession, <-chan SigningSessionResult, error) {
 	session, resultChan, err := NewSigningSession(
+		ctx,
 		broadcaster,
 		txHash,
 		msgToSign,
@@ -118,6 +120,7 @@ type SigningSession struct {
 }
 
 func NewSigningSession(
+	ctx context.Context,
 	broadcaster *broadcast.Broadcaster,
 	txHash eth_common.Hash,
 	msgToSign *big.Int,
@@ -127,7 +130,7 @@ func NewSigningSession(
 	partyIDStore *mp_tss.PartyIDStore,
 ) (*SigningSession, <-chan SigningSessionResult, error) {
 	tracer := otel.Tracer("NewSigningSession")
-	ctx, _ := tracer.Start(context.Background(), "new signing session")
+	ctx, _ = tracer.Start(ctx, "new signing session")
 
 	_, subSpan := tracer.Start(ctx, "picking leader")
 	defer subSpan.End()
