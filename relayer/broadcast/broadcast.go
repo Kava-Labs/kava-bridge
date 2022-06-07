@@ -339,7 +339,13 @@ func (b *Broadcaster) handleIncomingValidatedMsg(msg types.BroadcastMessage) {
 		return
 	}
 
-	b.log.Infow("received validated message", "ID", msg.ID, "From", msg.From, "To", msg.RecipientPeerIDs)
+	b.log.Infow(
+		"received validated message",
+		"ID", msg.ID,
+		"From", msg.From,
+		"To", msg.RecipientPeerIDs,
+		"typeUrl", msg.Payload.TypeUrl,
+	)
 
 	go b.handler.ValidatedMessage(msg)
 }
@@ -349,16 +355,30 @@ func (b *Broadcaster) handleIncomingValidatedMsg(msg types.BroadcastMessage) {
 
 // handleNewPeer opens a new stream with a newly connected peer.
 func (b *Broadcaster) handleNewPeer(ctx context.Context, pid peer.ID) {
-	s, err := b.host.NewStream(b.ctx, pid, ProtocolID)
-	if err != nil {
-		b.log.Errorf("failed to open new stream to peer %s: %v", pid, err)
+	if b.host.Network().Connectedness(pid) != network.Connected {
+		return
+	}
+
+	// TODO: Why are there duplicate calls with the same pid?
+	b.outboundStreamsLock.Lock()
+	if _, found := b.outboundStreams[pid]; found {
+		b.outboundStreamsLock.Unlock()
+		b.log.Debugf("peer %s is already connected, skip opening new stream", pid.ShortString())
 
 		return
 	}
 
-	b.log.Debugw("opened new stream to peer", "PeerID", pid)
+	s, err := b.host.NewStream(b.ctx, pid, ProtocolID)
+	if err != nil {
+		b.log.Errorf("failed to open new stream to peer %s: %v", pid.ShortString(), err)
 
-	b.outboundStreamsLock.Lock()
+		b.outboundStreamsLock.Unlock()
+		return
+	}
+
+	b.log.Debugw("opened new stream to peer", "PeerID", pid.ShortString())
+
+	// Locked earlier
 	b.outboundStreams[pid] = s
 	b.outboundStreamsLock.Unlock()
 
@@ -369,8 +389,13 @@ func (b *Broadcaster) handleNewPeer(ctx context.Context, pid peer.ID) {
 
 // handleNewStream handles a new incoming stream, initiated when a peer is connected.
 func (b *Broadcaster) handleNewStream(s network.Stream) {
-	b.log.Debugf("incoming stream from peer: %s", s.Conn().RemotePeer().ShortString())
 	peer := s.Conn().RemotePeer()
+
+	b.log.Debugf(
+		"incoming stream from peer: %s (%v)",
+		peer.ShortString(),
+		s.Protocol(),
+	)
 
 	// Ensure only 1 incoming stream from the peer
 	b.inboundStreamsLock.Lock()
@@ -394,7 +419,11 @@ func (b *Broadcaster) handleNewStream(s network.Stream) {
 		b.inboundStreamsLock.Unlock()
 	}()
 
-	b.log.Debugf("starting stream reader for peer: %s", s.Conn().RemotePeer().ShortString())
+	b.log.Debugf(
+		"starting stream reader from peer %s for protocol %s",
+		s.Conn().RemotePeer().ShortString(),
+		s.Protocol(),
+	)
 
 	// Iterate over all messages, unmarshalling all as types.MessageData
 	r := stream.NewProtoMessageReader(s)
@@ -447,12 +476,14 @@ func (b *Broadcaster) handleNewStream(s network.Stream) {
 
 		b.log.Debugf("received message from peer: %s", peerMsg.PeerID.ShortString())
 
-		span.AddEvent("Message Received", trace.WithAttributes(
+		span.AddEvent("Message received", trace.WithAttributes(
 			attribute.String("Sender", peer.ShortString()),
 			attribute.String("Receiver", b.host.ID().ShortString()),
-			attribute.String("TypeUrl", peerMsg.BroadcastMessage.Payload.TypeUrl),
+			attribute.Bool("IsRebroadcast", msg.IsBroadcaster),
+			attribute.String("Payload.TypeUrl", peerMsg.BroadcastMessage.Payload.TypeUrl),
 		))
 
+		// TODO: Memory leak if something fails prior to this
 		span.End()
 
 		select {

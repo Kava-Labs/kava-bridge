@@ -62,6 +62,15 @@ func NewSigner(
 		return nil, err
 	}
 
+	// TODO: Use configured monikers that should reside along with peer IDs
+	// to keep track of them easier.
+	for i, peer := range node.PeerList {
+		err := signer.partyIDStore.AddPeer(peer, fmt.Sprintf("%v", i))
+		if err != nil {
+			return nil, fmt.Errorf("failed to add peer to partyID store: %w", err)
+		}
+	}
+
 	signer.broadcaster = broadcaster
 
 	return signer, nil
@@ -81,7 +90,7 @@ func (s *Signer) SignMessage(
 
 	// Create new signing session
 	_, resultChan, err := s.sessions.Signing.NewSession(
-		s.Node.Broadcaster,
+		s.broadcaster,
 		txHash,
 		msgHash,
 		s.threshold,
@@ -174,7 +183,7 @@ func (s *Signer) handleSigningPartyStartMessage(
 	s.sessions.Signing.SetSessionID(txHash, sessionID)
 
 	transport := session.NewSessionTransport(
-		s.Node.Broadcaster,
+		s.broadcaster,
 		sessionID,
 		s.partyIDStore,
 		payload.ParticipatingPeerIDs,
@@ -222,7 +231,7 @@ func (s *Signer) handleSigningPartMessage(
 	)
 
 	if err := sess.Update(event); err != nil {
-		log.Errorf("failed to add signing part: %w", err)
+		log.Errorf("failed to add signing part: %s", err)
 
 		return
 	}

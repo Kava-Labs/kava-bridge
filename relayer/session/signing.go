@@ -251,7 +251,8 @@ func (s *SigningSession) UpdateAddCandidateEvent(
 		)
 
 		return fmt.Errorf(
-			"unexpected state type: got %T, expected %T",
+			"unexpected event %T for state: is currently %T, but event applies to %T",
+			ev,
 			s.state,
 			&LeaderWaitingForCandidatesState{},
 		)
@@ -331,8 +332,19 @@ func (s *SigningSession) UpdateStartSignerEvent(
 	// will transition by itself.
 	_, ok := s.state.(*CandidateWaitingForLeaderState)
 	if !ok {
-		return fmt.Errorf("unexpected state type: %T", s.state)
+		return fmt.Errorf(
+			"unexpected event %T for state: is currently %T, but event applies to %T",
+			ev,
+			s.state,
+			&CandidateWaitingForLeaderState{},
+		)
 	}
+
+	_, span := tracer.Start(s.context, "start signing",
+		trace.WithAttributes(
+			attribute.String("event", "StartSignerEvent"),
+			attribute.String("peerID", s.currentPeerID.ShortString()),
+		))
 
 	isParticipant := false
 	for _, participant := range ev.participants {
@@ -343,9 +355,24 @@ func (s *SigningSession) UpdateStartSignerEvent(
 	}
 
 	if !isParticipant {
+		span.AddEvent(
+			"Peer is not a participant",
+			trace.WithAttributes(
+				attribute.String("peerID", s.currentPeerID.ShortString()),
+			),
+		)
+		span.End()
+
 		// TODO: transition to DoneNotParticipantState
 		return fmt.Errorf("current peer is not in the list of participants")
 	}
+
+	span.AddEvent(
+		"Peer is a participant",
+		trace.WithAttributes(
+			attribute.String("peerID", s.currentPeerID.ShortString()),
+		),
+	)
 
 	newState := NewSigningState(ev.transport)
 
@@ -367,16 +394,46 @@ func (s *SigningSession) UpdateStartSignerEvent(
 
 		select {
 		case sig := <-newState.outputChan:
+			s.logger.Infow(
+				"done signing message",
+				"txHash", s.TxHash.String(),
+				"signature", sig.String(),
+			)
+
+			span.AddEvent(
+				"done signing",
+				trace.WithAttributes(
+					attribute.String("txHash", s.TxHash.String()),
+					attribute.String("Signature", sig.String()),
+				),
+			)
+
 			s.state = NewDoneState(sig)
 			s.resultChan <- SigningSessionResult{
 				Signature: &sig,
 			}
 		case err := <-newState.errChan:
+			s.logger.Errorw(
+				"error signing message",
+				"txHash", s.TxHash.String(),
+				"error", err.Error(),
+			)
+
+			span.RecordError(
+				err,
+				trace.WithAttributes(
+					attribute.String("txHash", s.TxHash.String()),
+					attribute.String("culprits", s.currentPeerID.ShortString()),
+				),
+			)
+
 			s.state = NewErrorState(err)
 			s.resultChan <- SigningSessionResult{
 				Err: err,
 			}
 		}
+
+		span.End()
 	}()
 
 	return nil
@@ -387,8 +444,22 @@ func (s *SigningSession) UpdateAddSigningPartEvent(
 ) error {
 	state, ok := s.state.(*SigningState)
 	if !ok {
-		return fmt.Errorf("unexpected state type: got %T, expected %T", s.state, &SigningState{})
+		return fmt.Errorf(
+			"unexpected event %T for state: is currently %T, but event applies to %T",
+			ev,
+			s.state,
+			&SigningState{},
+		)
 	}
+
+	_, span := tracer.Start(s.context, "add signing part",
+		trace.WithAttributes(
+			attribute.String("event", "AddSigningPartEvent"),
+			attribute.String("peerID", s.currentPeerID.ShortString()),
+			attribute.String("From", ev.From.String()),
+			attribute.Bool("IsBroadcast", ev.IsBroadcast),
+		))
+	defer span.End()
 
 	// Receive signing part to transport
 	state.transport.Receive() <- mp_tss.NewReceivedPartyState(

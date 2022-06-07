@@ -27,7 +27,10 @@ func TestSigner(t *testing.T) {
 	err := logging.SetLogLevel("*", "debug")
 	require.NoError(t, err)
 
-	numPeers := 3
+	// numPeers := test.TestThreshold + 1
+	// threshold := test.TestThreshold
+
+	numPeers := 2 + 1
 	threshold := 1
 
 	ctx := context.Background()

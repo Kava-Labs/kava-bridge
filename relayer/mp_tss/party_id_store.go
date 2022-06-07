@@ -34,9 +34,10 @@ func (s *PartyIDStore) AddPeer(peerID peer.ID, moniker string) error {
 		return fmt.Errorf("could not get raw pubkey bytes: %w", err)
 	}
 
-	if len(raw) != 32 {
-		return fmt.Errorf("pubkey raw bytes are not 32 bytes: %d", len(raw))
-	}
+	// TODO: Bytes are actually 33 long
+	// if len(raw) != 32 {
+	// 	return fmt.Errorf("pubkey raw bytes are not 32 bytes: actual %d, %x", len(raw), raw)
+	// }
 
 	key := new(big.Int).SetBytes(raw)
 	partyID := tss.NewPartyID(peerID.String(), moniker, key)
