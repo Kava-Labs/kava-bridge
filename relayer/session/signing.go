@@ -117,6 +117,7 @@ type SigningSession struct {
 	// Context for the tracing span that lives for the entire duration of the
 	// signing session
 	context context.Context
+	span    trace.Span
 }
 
 func NewSigningSession(
@@ -130,7 +131,7 @@ func NewSigningSession(
 	partyIDStore *mp_tss.PartyIDStore,
 ) (*SigningSession, <-chan SigningSessionResult, error) {
 	tracer := otel.Tracer("NewSigningSession")
-	ctx, _ = tracer.Start(ctx, "new signing session")
+	ctx, span := tracer.Start(ctx, "new signing session")
 
 	_, subSpan := tracer.Start(ctx, "picking leader")
 	defer subSpan.End()
@@ -155,6 +156,7 @@ func NewSigningSession(
 		logger:        logger,
 		state:         state,
 		context:       ctx,
+		span:          span,
 	}
 
 	// Generate a random session ID part
@@ -282,7 +284,8 @@ func (s *SigningSession) UpdateAddCandidateEvent(
 		),
 	)
 
-	if len(state.joinMsgs) <= s.threshold {
+	// Waits for t, not t+1 because the leader is also a candidate in the next step.
+	if len(state.joinMsgs) < s.threshold {
 		// Do nothing more, wait for more candidates
 		span.AddEvent(
 			"Wait for more candidates",
@@ -294,6 +297,17 @@ func (s *SigningSession) UpdateAddCandidateEvent(
 
 		return nil
 	}
+
+	// Add self to the list of candidates
+	selfJoinMsg := types.NewJoinSigningSessionMessage(
+		s.currentPeerID,
+		s.TxHash,
+		state.localPart,
+	)
+
+	state.joinMsgsLock.Lock()
+	state.joinMsgs = append(state.joinMsgs, selfJoinMsg)
+	state.joinMsgsLock.Unlock()
 
 	// Greater than threshold, create aggregate session ID and pick peers to
 	// participate in the signing session
@@ -438,7 +452,8 @@ func (s *SigningSession) UpdateStartSignerEvent(
 			}
 		}
 
-		span.End()
+		span.End()   // local start span
+		s.span.End() // entire session span
 	}()
 
 	return nil
