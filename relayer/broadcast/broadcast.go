@@ -359,7 +359,6 @@ func (b *Broadcaster) handleNewPeer(ctx context.Context, pid peer.ID) {
 		return
 	}
 
-	// TODO: Why are there duplicate calls with the same pid?
 	b.outboundStreamsLock.Lock()
 	if _, found := b.outboundStreams[pid]; found {
 		b.outboundStreamsLock.Unlock()

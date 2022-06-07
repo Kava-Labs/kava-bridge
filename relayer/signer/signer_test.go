@@ -92,7 +92,7 @@ func TestSigner(t *testing.T) {
 	txHash := common.BigToHash(big.NewInt(1))
 	msgHash := big.NewInt(2)
 
-	g := new(errgroup.Group)
+	g, ctx := errgroup.WithContext(ctx)
 	sigs := make([]tss_common.SignatureData, numPeers)
 
 	for _, s := range signers {
@@ -100,20 +100,24 @@ func TestSigner(t *testing.T) {
 			g.Go(func() error {
 				// The relayer will call this when there is a new signing output from
 				// block syncing.
-				sig, err := signer.SignMessage(txHash, msgHash)
+				sig, err := signer.SignMessage(ctx, txHash, msgHash)
+
 				if err != nil {
 					return err
 				}
 
 				sigs = append(sigs, *sig)
-
 				return nil
 			})
 		}(s)
 	}
 
+	t.Log("signers started")
+
 	err = g.Wait()
 	require.NoError(t, err)
+
+	t.Log("signers done")
 
 	for _, sig := range sigs {
 		require.NotNil(t, sig)

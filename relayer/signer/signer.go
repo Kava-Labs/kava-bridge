@@ -79,6 +79,7 @@ func NewSigner(
 // SignMessage signs a message with a corresponding txHash. This creates a
 // signing session.
 func (s *Signer) SignMessage(
+	ctx context.Context,
 	txHash eth_common.Hash,
 	msgHash *big.Int,
 ) (*tss_common.SignatureData, error) {
@@ -102,9 +103,12 @@ func (s *Signer) SignMessage(
 		return nil, fmt.Errorf("failed to create signing session: %w", err)
 	}
 
-	res := <-resultChan
-
-	return res.Signature, res.Err
+	select {
+	case res := <-resultChan:
+		return res.Signature, res.Err
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	}
 }
 
 func (s *Signer) handleBroadcastMessage(broadcastMsg types.BroadcastMessage) {

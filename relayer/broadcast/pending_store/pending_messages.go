@@ -113,7 +113,11 @@ func (pm *PendingMessagesStore) AddMessage(msg MessageWithPeerMetadata) error {
 		return fmt.Errorf("invalid message: %w", err)
 	}
 
-	log.Debugw("added message to pending message group", "msgID", msg.BroadcastMessage.ID)
+	log.Debugw(
+		"added message to pending message group",
+		"msgID", msg.BroadcastMessage.ID,
+		"len", peerMsgGroup.Len(),
+	)
 	pm.pendingMessages[msg.BroadcastMessage.ID] = peerMsgGroup
 
 	return nil

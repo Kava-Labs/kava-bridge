@@ -411,6 +411,7 @@ func (s *SigningSession) UpdateStartSignerEvent(
 			s.state = NewDoneState(sig)
 			s.resultChan <- SigningSessionResult{
 				Signature: &sig,
+				Err:       nil,
 			}
 		case err := <-newState.errChan:
 			s.logger.Errorw(
@@ -429,7 +430,8 @@ func (s *SigningSession) UpdateStartSignerEvent(
 
 			s.state = NewErrorState(err)
 			s.resultChan <- SigningSessionResult{
-				Err: err,
+				Signature: nil,
+				Err:       err,
 			}
 		}
 
