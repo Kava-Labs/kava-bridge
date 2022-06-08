@@ -1,6 +1,8 @@
 package mp_tss
 
 import (
+	"time"
+
 	"github.com/binance-chain/tss-lib/tss"
 )
 
@@ -18,6 +20,14 @@ func RunParty(
 		log.Debug("Starting party")
 		if err := party.Start(); err != nil {
 			errCh <- err
+		}
+	}()
+
+	go func() {
+		for {
+			log.Debugf("party waiting for %v", party.WaitingFor())
+
+			time.Sleep(10 * time.Second)
 		}
 	}()
 

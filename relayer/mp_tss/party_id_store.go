@@ -1,6 +1,7 @@
 package mp_tss
 
 import (
+	"encoding/hex"
 	"fmt"
 	"math/big"
 
@@ -11,14 +12,14 @@ import (
 // PartyIDStore keeps track of the party IDs of all libp2p peers.
 type PartyIDStore struct {
 	partyIDs map[peer.ID]*tss.PartyID // peer.ID -> PartyID
-	peerIDs  map[*tss.PartyID]peer.ID // PartyID -> peer.ID
+	peerIDs  map[string]peer.ID       // PartyID -> peer.ID
 }
 
 // NewPartyIDStore creates a new PartyIDStore.
 func NewPartyIDStore() *PartyIDStore {
 	return &PartyIDStore{
 		partyIDs: make(map[peer.ID]*tss.PartyID),
-		peerIDs:  make(map[*tss.PartyID]peer.ID),
+		peerIDs:  make(map[string]peer.ID),
 	}
 }
 
@@ -44,7 +45,7 @@ func (s *PartyIDStore) AddPeer(peerID peer.ID, moniker string) error {
 
 	// Set both directions
 	s.partyIDs[peerID] = partyID
-	s.peerIDs[partyID] = peerID
+	s.peerIDs[hex.EncodeToString(partyID.Key)] = peerID
 
 	return nil
 }
@@ -62,6 +63,31 @@ func (s *PartyIDStore) GetPartyID(peerID peer.ID) (*tss.PartyID, error) {
 }
 
 func (s *PartyIDStore) GetPeerID(partyID *tss.PartyID) (peer.ID, bool) {
-	peerID, ok := s.peerIDs[partyID]
+	peerID, ok := s.peerIDs[hex.EncodeToString(partyID.Key)]
 	return peerID, ok
+}
+
+func (s *PartyIDStore) String() string {
+	str := "PartyIDStore{\npartyIDs:\n"
+
+	for peerID, partyID := range s.partyIDs {
+		str += fmt.Sprintf(
+			" - %v -> {Index: %v, Id: %v, Moniker: %v, Key: %v}\n",
+			peerID.ShortString(),
+			partyID.Index,
+			partyID.Id,
+			partyID.Moniker,
+			hex.EncodeToString(partyID.Key),
+		)
+	}
+
+	str += "peerIDs:\n"
+
+	for partyIDKey, peerID := range s.peerIDs {
+		str += fmt.Sprintf(" - %v -> %v\n", partyIDKey, peerID.ShortString())
+	}
+
+	str += "}"
+
+	return str
 }

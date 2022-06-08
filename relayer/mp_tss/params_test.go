@@ -13,7 +13,7 @@ import (
 )
 
 func PreParamPath(index int) string {
-	return path.Join("test-fixtures", fmt.Sprintf("pre-params%d.json", index))
+	return path.Join("..", "testutil", "test-fixtures", fmt.Sprintf("pre-params%d.json", index))
 }
 
 func LoadTestPreParam(index int) *keygen.LocalPreParams {
