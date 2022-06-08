@@ -10,14 +10,15 @@ import (
 
 	logging "github.com/ipfs/go-log/v2"
 	"github.com/libp2p/go-libp2p-core/peerstore"
+	"go.opentelemetry.io/otel"
 
 	tss_common "github.com/binance-chain/tss-lib/common"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/kava-labs/kava-bridge/relayer/broadcast"
 	"github.com/kava-labs/kava-bridge/relayer/mp_tss"
 	"github.com/kava-labs/kava-bridge/relayer/p2p"
 	"github.com/kava-labs/kava-bridge/relayer/signer"
 	"github.com/kava-labs/kava-bridge/relayer/testutil"
+	"github.com/kava-labs/kava-bridge/relayer/tracing"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/sync/errgroup"
@@ -34,9 +35,31 @@ func TestSigner(t *testing.T) {
 	threshold := 1
 
 	ctx := context.Background()
+
+	tp, err := tracing.TracerProvider("http://localhost:14268/api/traces", false)
+	require.NoError(t, err)
+
+	tracing.RegisterProvider(tp)
+
+	t.Cleanup(func() {
+		ctx, cancel := context.WithTimeout(ctx, time.Second*5)
+		defer cancel()
+
+		t.Log("closing tracer provider")
+		if err := tp.Shutdown(ctx); err != nil {
+			t.Error(err)
+		}
+	})
+
 	done := make(chan bool)
 
+	tracer := otel.Tracer("signer_test")
+	ctx, span := tracer.Start(ctx, "GetTest keys")
+
 	node_keys, peerIDs, tss_keys, partyIDs := testutil.GetTestKeys(t, numPeers)
+	span.AddEvent("got keys")
+
+	span.End()
 
 	signers := make([]*signer.Signer, numPeers)
 	for i := 0; i < numPeers; i++ {
@@ -65,7 +88,7 @@ func TestSigner(t *testing.T) {
 			params,
 			tss_keys[i],
 			threshold,
-			broadcast.WithTracer("http://localhost:14268/api/traces"),
+			// broadcast.WithTracer("http://localhost:14268/api/traces"),
 		)
 		require.NoError(t, err)
 
@@ -101,8 +124,6 @@ func TestSigner(t *testing.T) {
 				// The relayer will call this when there is a new signing output from
 				// block syncing.
 				sig, err := signer.SignMessage(ctx, txHash, msgHash)
-				t.Logf("SignMessage output: sig: %v \terr: %v", sig, err)
-
 				if err != nil {
 					return err
 				}

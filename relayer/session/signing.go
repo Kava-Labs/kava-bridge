@@ -70,10 +70,9 @@ func NewSigningSession(
 	partyIDStore *mp_tss.PartyIDStore,
 	sessionStore *SigningSessionStore,
 ) (*SigningSession, <-chan SigningSessionResult, error) {
-	tracer := otel.Tracer("NewSigningSession")
-	ctx, span := tracer.Start(ctx, "new signing session")
+	signingCtx, span := tracer.Start(ctx, "new signing session")
 
-	_, subSpan := tracer.Start(ctx, "picking leader")
+	ctx, subSpan := tracer.Start(signingCtx, "picking leader")
 	defer subSpan.End()
 
 	outputEventsChan := make(chan SigningSessionOutputEvent, 1)
@@ -101,7 +100,7 @@ func NewSigningSession(
 
 		logger:  logger,
 		state:   state,
-		context: ctx,
+		context: signingCtx,
 		span:    span,
 	}
 
@@ -408,9 +407,8 @@ func (s *SigningSession) UpdateStartSignerEvent(
 		select {
 		case sig := <-newState.outputChan:
 			s.logger.Infow(
-				"done signing message",
+				"done signing message!",
 				"txHash", s.TxHash.String(),
-				"signature", sig.String(),
 			)
 
 			span.AddEvent(

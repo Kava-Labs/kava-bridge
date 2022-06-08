@@ -2,7 +2,6 @@ package mp_tss_test
 
 import (
 	"fmt"
-	"sort"
 	"testing"
 
 	"github.com/binance-chain/tss-lib/ecdsa/keygen"
@@ -75,10 +74,6 @@ func TestKeygen(t *testing.T) {
 			assert.Truef(t, key.ECDSAPub.Equals(key2.ECDSAPub), "key %v != %v", i, j)
 		}
 	}
-
-	sort.Slice(keys, func(i, j int) bool {
-		return partyIDs[i].KeyInt().Cmp(partyIDs[j].KeyInt()) > 0
-	})
 
 	// Write keys to file for test fixtures for signing
 	// Must be in the same order as PartyIDs
