@@ -26,6 +26,11 @@ type SessionTransport struct {
 var _ mp_tss.Transporter = (*SessionTransport)(nil)
 
 func (mt *SessionTransport) Send(data []byte, routing *tss.MessageRouting, isResharing bool) error {
+	log.Debugw(
+		"sending message",
+		"routing", routing,
+	)
+
 	// TODO: Implement broadcast resharing
 	if isResharing {
 		return nil
@@ -49,7 +54,10 @@ func (mt *SessionTransport) Send(data []byte, routing *tss.MessageRouting, isRes
 	for _, to := range routing.To {
 		peerID, found := mt.partyIDStore.GetPeerID(to)
 		if !found {
-			return fmt.Errorf("peer %s not found (key %v)", to, hex.EncodeToString(to.Key))
+			return fmt.Errorf(
+				"peer %s not found (key %v), this may happen if the party IDs do not match the key savedata",
+				to, hex.EncodeToString(to.Key),
+			)
 		}
 
 		g.Go(func() error {

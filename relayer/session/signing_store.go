@@ -3,6 +3,7 @@ package session
 import (
 	"context"
 	"math/big"
+	"sync"
 
 	eth_common "github.com/ethereum/go-ethereum/common"
 	"github.com/kava-labs/kava-bridge/relayer/broadcast"
@@ -19,12 +20,14 @@ type SessionIDToTxHash map[string]eth_common.Hash
 
 // SigningSessionStore keeps track of signing sessions.
 type SigningSessionStore struct {
+	mu                *sync.Mutex
 	sessions          TssSessions
 	sessionIDToTxHash SessionIDToTxHash
 }
 
 func NewSigningSessionStore() *SigningSessionStore {
 	return &SigningSessionStore{
+		mu:                &sync.Mutex{},
 		sessions:          make(TssSessions),
 		sessionIDToTxHash: make(SessionIDToTxHash),
 	}
@@ -49,6 +52,7 @@ func (s *SigningSessionStore) NewSession(
 		currentPeerID,
 		peerIDs,
 		partyIDStore,
+		s,
 	)
 	if err != nil {
 		return nil, nil, err
@@ -60,18 +64,28 @@ func (s *SigningSessionStore) NewSession(
 }
 
 func (s *SigningSessionStore) GetSessionFromTxHash(txHash eth_common.Hash) (*SigningSession, bool) {
+	s.mu.Lock()
+	// Session is returned as pointer, still possible for concurrent access to
+	// specific sessions.
 	session, ok := s.sessions[txHash]
+	s.mu.Unlock()
+
 	return session, ok
 }
 
 func (s *SigningSessionStore) SetSessionID(txHash eth_common.Hash, sessID types.AggregateSigningSessionID) {
+	s.mu.Lock()
 	s.sessionIDToTxHash[sessID.String()] = txHash
+	s.mu.Unlock()
 }
 
 func (s *SigningSessionStore) GetSessionFromID(
 	sessID types.AggregateSigningSessionID,
 ) (*SigningSession, bool) {
+	s.mu.Lock()
 	txHash, ok := s.sessionIDToTxHash[sessID.String()]
+	s.mu.Unlock()
+
 	if !ok {
 		return nil, false
 	}

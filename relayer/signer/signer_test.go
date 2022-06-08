@@ -30,20 +30,24 @@ func TestSigner(t *testing.T) {
 	// numPeers := test.TestThreshold + 1
 	// threshold := test.TestThreshold
 
-	numPeers := 3
+	numPeers := 2
 	threshold := 1
 
 	ctx := context.Background()
 	done := make(chan bool)
 
+	// Saved private libp2p keys
 	node_keys := testutil.GetTestP2pNodeKeys(numPeers)
 	require.Len(t, node_keys, numPeers)
 
+	// Peer ID derived from private libp2p key
 	peerIDs := testutil.PeerIDsFromKeys(node_keys)
 	require.Len(t, peerIDs, numPeers)
 
-	// Party ID Key is the set as the peer ID in TestGenerateNodeKeys
-	tss_keys, partyIDs := testutil.GetTestTssKeys(numPeers)
+	// Party ID derived from peer ID public key
+	partyIDs := testutil.PartyIDsFromPeerIDs(peerIDs)
+
+	tss_keys, _ := testutil.GetTestTssKeys(numPeers)
 	require.Len(t, tss_keys, numPeers)
 	require.Len(t, partyIDs, numPeers)
 
@@ -59,8 +63,8 @@ func TestSigner(t *testing.T) {
 		node, err := p2p.NewNode(ctx, opts, done)
 		require.NoError(t, err)
 
-		t.Logf("param party IDs: %+v, threshold: %v", partyIDs.ToUnSorted(), threshold)
-		params := mp_tss.CreateParams(partyIDs.ToUnSorted(), partyIDs[i], threshold)
+		params := mp_tss.CreateParams(partyIDs, partyIDs[i], threshold)
+		t.Logf("param party IDs: %+v, threshold: %v", partyIDs, threshold)
 
 		s, err := signer.NewSigner(
 			node,

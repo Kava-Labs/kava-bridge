@@ -45,7 +45,8 @@ type SigningSession struct {
 	currentPeerID peer.ID
 	peerIDs       peer.IDSlice
 
-	resultChan chan SigningSessionResult
+	outputEventsChan chan SigningSessionOutputEvent
+	resultChan       chan SigningSessionResult
 
 	logger *zap.SugaredLogger
 
@@ -75,6 +76,7 @@ func NewSigningSession(
 	_, subSpan := tracer.Start(ctx, "picking leader")
 	defer subSpan.End()
 
+	outputEventsChan := make(chan SigningSessionOutputEvent, 1)
 	resultChan := make(chan SigningSessionResult, 1)
 
 	subSpan.AddEvent("Transition to PickingLeaderState")
@@ -93,11 +95,14 @@ func NewSigningSession(
 
 		currentPeerID: currentPeerID,
 		peerIDs:       peerIDs,
-		resultChan:    resultChan,
-		logger:        logger,
-		state:         state,
-		context:       ctx,
-		span:          span,
+
+		outputEventsChan: outputEventsChan,
+		resultChan:       resultChan,
+
+		logger:  logger,
+		state:   state,
+		context: ctx,
+		span:    span,
 	}
 
 	// Generate a random session ID part
@@ -159,6 +164,10 @@ func NewSigningSession(
 	}
 
 	return session, resultChan, nil
+}
+
+func (s *SigningSession) GetOutputEventsChan() <-chan SigningSessionOutputEvent {
+	return s.outputEventsChan
 }
 
 // -----------------------------------------------------------------------------
@@ -309,19 +318,14 @@ func (s *SigningSession) UpdateAddCandidateEvent(
 		30,
 	)
 
-	span.AddEvent("Transition leader to SigningState")
+	span.AddEvent("leader done")
 
-	// Transition to signing state
-	transport := NewSessionTransport(
-		s.broadcaster,
+	// Output back to signer which will send a StartSignerEvent
+	s.outputEventsChan <- NewLeaderDoneOutputEvent(
+		s.TxHash,
 		aggSessionID,
-		s.partyIDStore,
 		participantPeerIDs,
 	)
-
-	// TODO: Not necessarily a participant, either make leader always a participant
-	// or check if leader is a participant and transition accordingly.
-	s.state = NewSigningState(transport)
 
 	return nil
 }
@@ -329,15 +333,17 @@ func (s *SigningSession) UpdateAddCandidateEvent(
 func (s *SigningSession) UpdateStartSignerEvent(
 	ev *StartSignerEvent,
 ) error {
-	// Only candidates receive this event, leader should not receive it and
-	// will transition by itself.
-	_, ok := s.state.(*CandidateWaitingForLeaderState)
-	if !ok {
+	// Both leader and candidate will receive this event
+	switch s.state.(type) {
+	case *LeaderWaitingForCandidatesState:
+	case *CandidateWaitingForLeaderState:
+	default:
 		return fmt.Errorf(
-			"unexpected event %T for state: is currently %T, but event applies to %T",
+			"unexpected event %T for state: is currently %T, but event applies to %T or %T",
 			ev,
 			s.state,
 			&CandidateWaitingForLeaderState{},
+			&LeaderWaitingForCandidatesState{},
 		)
 	}
 

@@ -6,6 +6,7 @@ import (
 	"math/big"
 
 	logging "github.com/ipfs/go-log/v2"
+	"go.uber.org/zap"
 
 	tss_common "github.com/binance-chain/tss-lib/common"
 	"github.com/binance-chain/tss-lib/ecdsa/keygen"
@@ -32,6 +33,8 @@ type Signer struct {
 	tssParams    *tss.Parameters
 	key          keygen.LocalPartySaveData
 	threshold    int
+
+	logger *zap.SugaredLogger
 }
 
 // NewSigner returns a new Signer.
@@ -51,6 +54,7 @@ func NewSigner(
 		tssParams:    tssParams,
 		key:          key,
 		threshold:    threshold,
+		logger:       log.Named(node.Host.ID().ShortString()),
 	}
 
 	broadcaster, err := broadcast.NewBroadcaster(
@@ -66,7 +70,7 @@ func NewSigner(
 	for i, peerID := range node.PeerList {
 		// TODO: Use configured monikers that should reside along with peer IDs
 		// to keep track of them easier.
-		pMoniker := fmt.Sprintf("%d", i)
+		pMoniker := fmt.Sprintf("%q", rune('A'+i))
 		peerMetas = append(peerMetas, mp_tss.NewPeerMetadata(peerID, pMoniker))
 	}
 
@@ -74,7 +78,7 @@ func NewSigner(
 		return nil, err
 	}
 
-	log.Infof("signer initialized with partyIDStore: %v", signer.partyIDStore)
+	signer.logger.Infof("signer initialized with partyIDStore: %v", signer.partyIDStore)
 
 	signer.broadcaster = broadcaster
 
@@ -95,7 +99,7 @@ func (s *Signer) SignMessage(
 	}
 
 	// Create new signing session
-	_, resultChan, err := s.sessions.Signing.NewSession(
+	session, resultChan, err := s.sessions.Signing.NewSession(
 		ctx,
 		s.broadcaster,
 		txHash,
@@ -109,6 +113,12 @@ func (s *Signer) SignMessage(
 		return nil, fmt.Errorf("failed to create signing session: %w", err)
 	}
 
+	go func() {
+		for outputEvent := range session.GetOutputEventsChan() {
+			s.handleOutputEvent(outputEvent)
+		}
+	}()
+
 	select {
 	case res := <-resultChan:
 		return res.Signature, res.Err
@@ -117,10 +127,53 @@ func (s *Signer) SignMessage(
 	}
 }
 
+func (s *Signer) handleOutputEvent(outputEvent session.SigningSessionOutputEvent) {
+	s.logger.Debugf("received signing session output event: %v", outputEvent)
+
+	switch ev := outputEvent.(type) {
+	case *session.LeaderDoneOutputEvent:
+		s.handleLeaderDoneOutputEvent(ev)
+	default:
+		s.logger.Debugf("received unknown output event: %T", ev)
+	}
+}
+
+func (s *Signer) handleLeaderDoneOutputEvent(outputEvent *session.LeaderDoneOutputEvent) {
+	// Start signing session for the leader
+	sess, found := s.sessions.Signing.GetSessionFromTxHash(outputEvent.TxHash)
+	if !found {
+		s.logger.Errorf("received SigningPartyStartMessage for unknown txHash %v", outputEvent.TxHash)
+
+		return
+	}
+
+	s.sessions.Signing.SetSessionID(outputEvent.TxHash, outputEvent.AggregateSigningSessionID)
+
+	transport := session.NewSessionTransport(
+		s.broadcaster,
+		outputEvent.AggregateSigningSessionID,
+		s.partyIDStore,
+		outputEvent.Participants,
+	)
+
+	// Start signer event
+	event := session.NewStartSignerEvent(
+		s.tssParams,              // tss parameters
+		s.key,                    // tss key part
+		transport,                // broadcast transport
+		outputEvent.Participants, // list of participating peer IDs in session
+	)
+	if err := sess.Update(event); err != nil {
+		s.logger.Errorf("failed to start signer: %v", err)
+
+		return
+	}
+}
+
 func (s *Signer) handleBroadcastMessage(broadcastMsg types.BroadcastMessage) {
 	payload, err := broadcastMsg.UnpackPayload()
 	if err != nil {
-		log.Errorf("failed to unpack received broadcast message: %w", err)
+		s.logger.Errorf("failed to unpack received broadcast message: %w", err)
 
 		return
 	}
@@ -161,7 +214,7 @@ func (s *Signer) handleJoinSigningSessionMessage(
 	// before leader creates their own session, this message would be
 	// discarded
 	if !found {
-		log.Errorf("received JoinSigningSessionMessage for unknown txHash %v", txHash)
+		s.logger.Errorf("received JoinSigningSessionMessage for unknown txHash %v", txHash)
 
 		return
 	}
@@ -170,7 +223,7 @@ func (s *Signer) handleJoinSigningSessionMessage(
 	// actual participants.
 	event := session.NewAddCandidateEvent(s.tssParams.PartyID(), *payload)
 	if err := sess.Update(event); err != nil {
-		log.Errorf("failed to add peer to signing session: %v", err)
+		s.logger.Errorf("failed to add peer to signing session: %v", err)
 
 		return
 	}
@@ -185,7 +238,7 @@ func (s *Signer) handleSigningPartyStartMessage(
 	sessionID := payload.GetSessionID()
 	sess, found := s.sessions.Signing.GetSessionFromTxHash(txHash)
 	if !found {
-		log.Errorf("received SigningPartyStartMessage for unknown txHash %v", txHash)
+		s.logger.Errorf("received SigningPartyStartMessage for unknown txHash %v", txHash)
 
 		return
 	}
@@ -207,7 +260,7 @@ func (s *Signer) handleSigningPartyStartMessage(
 		payload.ParticipatingPeerIDs, // list of participating peer IDs in session
 	)
 	if err := sess.Update(event); err != nil {
-		log.Errorf("failed to start signer: %v", err)
+		s.logger.Errorf("failed to start signer: %v", err)
 
 		return
 	}
@@ -221,14 +274,14 @@ func (s *Signer) handleSigningPartMessage(
 
 	sess, found := s.sessions.Signing.GetSessionFromID(sessionID)
 	if !found {
-		log.Errorf("signing session not found for session id %v", sessionID)
+		s.logger.Errorf("signing session not found for session id %v", sessionID)
 
 		return
 	}
 
 	fromPartyID, err := s.partyIDStore.GetPartyID(broadcastMsg.From)
 	if err != nil {
-		log.Errorf("failed to get party id for peer %v: %v", broadcastMsg.From, err)
+		s.logger.Errorf("failed to get party id for peer %v: %v", broadcastMsg.From, err)
 
 		return
 	}
@@ -241,7 +294,7 @@ func (s *Signer) handleSigningPartMessage(
 	)
 
 	if err := sess.Update(event); err != nil {
-		log.Errorf("failed to add signing part: %s", err)
+		s.logger.Errorf("failed to add signing part: %s", err)
 
 		return
 	}
