@@ -30,18 +30,18 @@ func TestSigner(t *testing.T) {
 	// numPeers := test.TestThreshold + 1
 	// threshold := test.TestThreshold
 
-	numPeers := 2 + 1
+	numPeers := 2
 	threshold := 1
 
 	ctx := context.Background()
 	done := make(chan bool)
 
-	node_keys, err := testutil.GenerateNodeKeys(numPeers)
-	require.NoError(t, err)
+	node_keys := testutil.GetTestP2pNodeKeys(numPeers)
 
 	peerIDs := testutil.PeerIDsFromKeys(node_keys)
 	require.Len(t, peerIDs, numPeers)
 
+	// Party ID Key is the set as the peer ID in TestGenerateNodeKeys
 	tss_keys, partyIDs := testutil.GetTestTssKeys(numPeers)
 	require.Len(t, tss_keys, numPeers)
 

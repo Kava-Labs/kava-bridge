@@ -71,6 +71,8 @@ func NewSigner(
 		}
 	}
 
+	log.Infof("signer initialized with partyIDStore: %v", signer.partyIDStore)
+
 	signer.broadcaster = broadcaster
 
 	return signer, nil
