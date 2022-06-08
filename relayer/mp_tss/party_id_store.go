@@ -23,29 +23,35 @@ func NewPartyIDStore() *PartyIDStore {
 	}
 }
 
-// AddPeer adds a peer.ID and moniker to the store.
-func (s *PartyIDStore) AddPeer(peerID peer.ID, moniker string) error {
-	pubkey, err := peerID.ExtractPublicKey()
-	if err != nil {
-		return fmt.Errorf("could not extract peer.ID pubkey: %w", err)
+// AddPeers adds a list of peer.IDs and monikers to the store.
+func (s *PartyIDStore) AddPeers(
+	peers []*PeerMetadata,
+) error {
+	var partyIDs tss.UnSortedPartyIDs
+	// PartyID.Key -> PeerMetadata
+	partyIDMap := make(map[string]*PeerMetadata)
+
+	for _, peer := range peers {
+		partyID, err := peer.GetUnsortedPartyID()
+		if err != nil {
+			return err
+		}
+		partyIDs = append(partyIDs, partyID)
+		partyIDMap[hex.EncodeToString(partyID.Key)] = peer
 	}
 
-	raw, err := pubkey.Raw()
-	if err != nil {
-		return fmt.Errorf("could not get raw pubkey bytes: %w", err)
+	sortedPartyIDs := tss.SortPartyIDs(partyIDs)
+
+	for _, partyID := range sortedPartyIDs {
+		peer := partyIDMap[hex.EncodeToString(partyID.Key)]
+		if err := peer.SetSortedPartyID(partyID); err != nil {
+			return err
+		}
+
+		// Set store with sorted partyID
+		s.partyIDs[peer.PeerID] = partyID
+		s.peerIDs[hex.EncodeToString(partyID.Key)] = peer.PeerID
 	}
-
-	// TODO: Bytes are actually 33 long
-	// if len(raw) != 32 {
-	// 	return fmt.Errorf("pubkey raw bytes are not 32 bytes: actual %d, %x", len(raw), raw)
-	// }
-
-	key := new(big.Int).SetBytes(raw)
-	partyID := tss.NewPartyID(peerID.String(), moniker, key)
-
-	// Set both directions
-	s.partyIDs[peerID] = partyID
-	s.peerIDs[hex.EncodeToString(partyID.Key)] = peerID
 
 	return nil
 }
@@ -90,4 +96,60 @@ func (s *PartyIDStore) String() string {
 	str += "}"
 
 	return str
+}
+
+// 1. GetPartyID() from all parties
+// 2. Sort party IDs
+// 3. Update PartyID in each PeerMetadata to have the correct index
+type PeerMetadata struct {
+	PeerID  peer.ID
+	Moniker string
+
+	// partyIDCache is a cached partyID, set when GetPartyID is first called.
+	partyIDCache *tss.PartyID
+}
+
+func NewPeerMetadata(peerID peer.ID, moniker string) *PeerMetadata {
+	return &PeerMetadata{
+		PeerID:  peerID,
+		Moniker: moniker,
+	}
+}
+
+// GetUnsortedPartyID get's the partyID of a with the partyID key set to the
+// peerID's pubkey.
+func (pm *PeerMetadata) GetUnsortedPartyID() (*tss.PartyID, error) {
+	if pm.partyIDCache != nil {
+		return pm.partyIDCache, nil
+	}
+
+	pubkey, err := pm.PeerID.ExtractPublicKey()
+	if err != nil {
+		return nil, fmt.Errorf("could not extract peer.ID pubkey: %w", err)
+	}
+
+	raw, err := pubkey.Raw()
+	if err != nil {
+		return nil, fmt.Errorf("could not get raw pubkey bytes: %w", err)
+	}
+
+	key := new(big.Int).SetBytes(raw)
+
+	pm.partyIDCache = tss.NewPartyID(pm.Moniker, pm.Moniker, key)
+	return pm.partyIDCache, nil
+}
+
+// SetSortedPartyID sets the partyID of a with the partyID key set to the
+func (pm *PeerMetadata) SetSortedPartyID(partyID *tss.PartyID) error {
+	if partyID.KeyInt().Cmp(pm.partyIDCache.KeyInt()) != 0 {
+		return fmt.Errorf("partyID key does not match peerID pubkey")
+	}
+
+	if partyID.Index < 0 {
+		return fmt.Errorf("partyID index is negative, must be sorted")
+	}
+
+	pm.partyIDCache = partyID
+
+	return nil
 }

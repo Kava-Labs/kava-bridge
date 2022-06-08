@@ -62,13 +62,16 @@ func NewSigner(
 		return nil, err
 	}
 
-	// TODO: Use configured monikers that should reside along with peer IDs
-	// to keep track of them easier.
-	for i, peer := range node.PeerList {
-		err := signer.partyIDStore.AddPeer(peer, fmt.Sprintf("%v", i))
-		if err != nil {
-			return nil, fmt.Errorf("failed to add peer to partyID store: %w", err)
-		}
+	var peerMetas []*mp_tss.PeerMetadata
+	for i, peerID := range node.PeerList {
+		// TODO: Use configured monikers that should reside along with peer IDs
+		// to keep track of them easier.
+		pMoniker := fmt.Sprintf("%d", i)
+		peerMetas = append(peerMetas, mp_tss.NewPeerMetadata(peerID, pMoniker))
+	}
+
+	if err := signer.partyIDStore.AddPeers(peerMetas); err != nil {
+		return nil, err
 	}
 
 	log.Infof("signer initialized with partyIDStore: %v", signer.partyIDStore)
@@ -204,7 +207,7 @@ func (s *Signer) handleSigningPartyStartMessage(
 		payload.ParticipatingPeerIDs, // list of participating peer IDs in session
 	)
 	if err := sess.Update(event); err != nil {
-		log.Errorf("failed to start signer: %w", err)
+		log.Errorf("failed to start signer: %v", err)
 
 		return
 	}

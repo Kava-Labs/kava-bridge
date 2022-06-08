@@ -25,7 +25,11 @@ func RunParty(
 
 	go func() {
 		for {
-			log.Debugf("party waiting for %v", party.WaitingFor())
+			log.Debugf(
+				"party %v waiting for %v",
+				party.PartyID(),
+				party.WaitingFor(),
+			)
 
 			time.Sleep(10 * time.Second)
 		}

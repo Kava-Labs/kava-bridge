@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const partyCount = 2
+const partyCount = 3
 const threshold = 1
 
 func TestKeygen(t *testing.T) {
