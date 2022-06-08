@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math/big"
+	"sync"
 
 	logging "github.com/ipfs/go-log/v2"
 	"go.opentelemetry.io/otel"
@@ -29,12 +30,17 @@ type SigningSessionResult struct {
 	Err       *tss.Error
 }
 
+// SigningSession is a session for signing a message, consisting of all of the
+// states that are required to do so for 1 transaction.
 type SigningSession struct {
+	mu *sync.Mutex
+
 	broadcaster  *broadcast.Broadcaster
 	TxHash       eth_common.Hash
 	MsgToSign    *big.Int
 	threshold    int
 	partyIDStore *mp_tss.PartyIDStore
+	sessionStore *SigningSessionStore // signing session store to update self
 
 	currentPeerID peer.ID
 	peerIDs       peer.IDSlice
@@ -61,6 +67,7 @@ func NewSigningSession(
 	currentPeerID peer.ID,
 	peerIDs peer.IDSlice,
 	partyIDStore *mp_tss.PartyIDStore,
+	sessionStore *SigningSessionStore,
 ) (*SigningSession, <-chan SigningSessionResult, error) {
 	tracer := otel.Tracer("NewSigningSession")
 	ctx, span := tracer.Start(ctx, "new signing session")
@@ -76,11 +83,13 @@ func NewSigningSession(
 	logger := log.Named(txHash.String())
 
 	session := &SigningSession{
+		mu:           &sync.Mutex{},
 		broadcaster:  broadcaster,
 		TxHash:       txHash,
 		MsgToSign:    msgToSign,
 		threshold:    threshold,
 		partyIDStore: partyIDStore,
+		sessionStore: sessionStore,
 
 		currentPeerID: currentPeerID,
 		peerIDs:       peerIDs,
@@ -156,11 +165,14 @@ func NewSigningSession(
 // FSM
 
 func (s *SigningSession) Update(event SigningSessionEvent) error {
+	// Synchronous updates to prevent race conditions
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	s.logger.Debugw(
 		"SigningSessionEvent received",
 		"peerID", s.currentPeerID,
 		"type", event.EventType(),
-		"event", event,
 	)
 
 	switch ev := event.(type) {
@@ -208,12 +220,9 @@ func (s *SigningSession) UpdateAddCandidateEvent(
 	state.joinMsgs = append(state.joinMsgs, ev.joinMsg)
 	state.joinMsgsLock.Unlock()
 
-	span.AddEvent(
-		"Add new candidate",
-		trace.WithAttributes(
-			attribute.String("candidate peerID", ev.joinMsg.PeerID.ShortString()),
-			attribute.String("candidate session part", signingMsg.GetPeerSessionIDPart().String()),
-		),
+	s.logger.Debugw(
+		"Added candidate to leader list",
+		"candidate peerID", ev.joinMsg.PeerID.ShortString(),
 	)
 
 	// Waits for t, not t+1 because the leader is also a candidate in the next step.
@@ -227,10 +236,32 @@ func (s *SigningSession) UpdateAddCandidateEvent(
 			),
 		)
 
+		s.logger.Debugw(
+			"Wait for more candidates",
+			"current candidates", len(state.joinMsgs),
+			"threshold", s.threshold,
+		)
+
 		return nil
 	}
 
+	span.AddEvent(
+		"Adding self (leader) to candidates",
+		trace.WithAttributes(
+			attribute.String("candidate peerID", s.currentPeerID.ShortString()),
+			attribute.String("candidate session part", state.localPart.String()),
+		),
+	)
+
+	s.logger.Debugw(
+		"Adding self (leader) to candidates",
+		"candidate peerID", s.currentPeerID.ShortString(),
+	)
+
 	// Add self to the list of candidates
+	// TODO: why does this cause duplicate peer error when GetSessionID()?
+	// Possible race condition when there are two AddCandidateEvent at once?
+
 	selfJoinMsg := types.NewJoinSigningSessionMessage(
 		s.currentPeerID,
 		s.TxHash,
@@ -248,6 +279,23 @@ func (s *SigningSession) UpdateAddCandidateEvent(
 		return fmt.Errorf("failed to create session ID and pick participants: %w", err)
 	}
 
+	span.AddEvent(
+		"create aggregate session ID and pick participants",
+		trace.WithAttributes(
+			attribute.String("aggregate session ID", aggSessionID.String()),
+		),
+	)
+
+	s.logger.Debugw(
+		"aggregate session ID created",
+		"participants", participantPeerIDs,
+	)
+
+	// Set the aggregate session ID for the session in the "parent" store
+	// TODO: Probably refactor this so that we don't need to pass the parent
+	// store to the session?
+	s.sessionStore.SetSessionID(s.TxHash, aggSessionID)
+
 	// Broadcast StartSignerEvent with picked peers
 	msg := types.NewSigningPartyStartMessage(
 		s.TxHash,
@@ -260,6 +308,8 @@ func (s *SigningSession) UpdateAddCandidateEvent(
 		s.peerIDs, // All peers
 		30,
 	)
+
+	span.AddEvent("Transition leader to SigningState")
 
 	// Transition to signing state
 	transport := NewSessionTransport(
