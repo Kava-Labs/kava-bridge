@@ -80,7 +80,7 @@ func (msg *BroadcastMessage) Validate() error {
 		return fmt.Errorf("invalid from peer.ID: %w", err)
 	}
 
-	if len(msg.RecipientPeerIDs) <= 1 {
+	if len(msg.RecipientPeerIDs) < 1 {
 		return ErrMsgInsufficientRecipients
 	}
 

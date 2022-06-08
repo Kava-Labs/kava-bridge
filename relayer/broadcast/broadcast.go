@@ -144,15 +144,19 @@ func (b *Broadcaster) processLoop(ctx context.Context) {
 	}()
 
 	for {
-		// TODO: Are these fine in the same loop? Not handled concurrently.
+		// Validated messages have priority to not block when raw message pushes
+		// another incoming validated message.
+		select {
+		case newValidatedMsg := <-b.incomingValidatedMessages:
+			b.handleIncomingValidatedMsg(newValidatedMsg)
+		default:
+		}
 
 		select {
 		case newPeerID := <-b.newPeers:
 			b.handleNewPeer(ctx, newPeerID)
 		case newRawMsg := <-b.incomingRawMessages:
 			b.handleIncomingRawMsg(newRawMsg)
-		case newValidatedMsg := <-b.incomingValidatedMessages:
-			b.handleIncomingValidatedMsg(newValidatedMsg)
 		case <-ctx.Done():
 			b.log.Info("broadcast handler loop shutting down")
 			return
@@ -199,7 +203,7 @@ func (b *Broadcaster) broadcastRawMessage(
 	pb proto.Message,
 	recipients []peer.ID,
 ) error {
-	b.log.Debugw("broadcast sending raw proto message", "recipients", recipients)
+	b.log.Debugw("sending raw proto message", "recipients", recipients)
 
 	b.outboundStreamsLock.Lock()
 	defer b.outboundStreamsLock.Unlock()
@@ -248,6 +252,9 @@ func (b *Broadcaster) broadcastRawMessage(
 				if err != nil {
 					return fmt.Errorf("failed to write proto message to peer: %w", err)
 				}
+
+				b.log.Debugf("wrote message to peer stream: %s", peerID.ShortString())
+
 				return nil
 			})
 		}(peerID, ch)
@@ -259,7 +266,7 @@ func (b *Broadcaster) broadcastRawMessage(
 // handleIncomingRawMsg handles all raw messages from other peers. This is
 // before messages are verified to be received from all peers.
 func (b *Broadcaster) handleIncomingRawMsg(msg *pending_store.MessageWithPeerMetadata) {
-	b.log.Debugw("received raw message", "peer", msg.PeerID)
+	b.log.Debugf("received raw message from %v", msg.PeerID.ShortString())
 
 	if err := msg.BroadcastMessage.Validate(); err != nil {
 		b.log.Warnf("invalid message received from peer: %s", err)
@@ -274,7 +281,11 @@ func (b *Broadcaster) handleIncomingRawMsg(msg *pending_store.MessageWithPeerMet
 	created := b.pendingMessagesStore.TryNewGroup(msg.BroadcastMessage.ID)
 	// First time we see this message, re-broadcast
 	if created {
-		b.log.Debugf("new message ID %s from peer %s, creating new pending group", msg.BroadcastMessage.ID, msg.PeerID)
+		b.log.Debugf(
+			"new message ID %s from peer %s, creating new pending group",
+			msg.BroadcastMessage.ID,
+			msg.PeerID.ShortString(),
+		)
 
 		// Update IsBroadcaster for re-broadcasts
 		msg.BroadcastMessage.IsBroadcaster = false
@@ -462,7 +473,12 @@ func (b *Broadcaster) handleNewStream(s network.Stream) {
 		// TODO: Redundant unpack, when payload is used it will be unpacked again
 		broadcastMsg, err := peerMsg.BroadcastMessage.UnpackPayload()
 		if err != nil {
-			b.log.Warnf("error unpacking payload for message %s from peer %s: %s", msg.ID, s.Conn().RemotePeer(), err)
+			b.log.Warnf(
+				"error unpacking payload for message %s from peer %s: %s",
+				msg.ID,
+				s.Conn().RemotePeer(),
+				err,
+			)
 
 			return
 		}
@@ -472,8 +488,6 @@ func (b *Broadcaster) handleNewStream(s network.Stream) {
 
 			continue
 		}
-
-		b.log.Debugf("received message from peer: %s", peerMsg.PeerID.ShortString())
 
 		span.AddEvent("Message received", trace.WithAttributes(
 			attribute.String("Sender", peer.ShortString()),
@@ -485,6 +499,8 @@ func (b *Broadcaster) handleNewStream(s network.Stream) {
 		// TODO: Memory leak if something fails prior to this
 		span.End()
 
+		b.log.Debugw("b.incomingRawMessages <- &peerMsg", "ID", msg.ID)
+
 		select {
 		case b.incomingRawMessages <- &peerMsg:
 		case <-b.ctx.Done():
@@ -492,5 +508,7 @@ func (b *Broadcaster) handleNewStream(s network.Stream) {
 			_ = s.Reset()
 			return
 		}
+
+		b.log.Debugw("b.incomingRawMessages <- &peerMsg DONE", "ID", msg.ID)
 	}
 }

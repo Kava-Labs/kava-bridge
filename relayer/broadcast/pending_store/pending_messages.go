@@ -148,5 +148,11 @@ func (pm *PendingMessagesStore) GroupIsCompleted(
 		return types.BroadcastMessage{}, false
 	}
 
+	log.Debugw(
+		"message group completed",
+		"msgID", msgID,
+		"len", peerMsgGroup.Len(),
+	)
+
 	return msgData, true
 }
