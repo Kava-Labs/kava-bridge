@@ -1,6 +1,7 @@
 package mp_tss_test
 
 import (
+	"context"
 	"encoding/json"
 	"testing"
 
@@ -47,11 +48,14 @@ func TestReshare(t *testing.T) {
 	outputAgg := make(chan keygen.LocalPartySaveData)
 	errAgg := make(chan *tss.Error)
 
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	// Start old parties
 	for i, partyID := range oldPartyIDs {
 		params := mp_tss.CreateReShareParams(oldPartyIDs, newPartyIDs.ToUnSorted(), partyID, threshold, newThreshold)
 
-		outputCh, errCh := mp_tss.RunReshare(params, oldKeys[i], oldTransports[i])
+		outputCh, errCh := mp_tss.RunReshare(ctx, params, oldKeys[i], oldTransports[i])
 
 		go func(outputCh chan keygen.LocalPartySaveData, errCh chan *tss.Error) {
 			for {
@@ -74,7 +78,7 @@ func TestReshare(t *testing.T) {
 		// Reuse fixture pre-generated preparams
 		save.LocalPreParams = testutil.ReadTestKey(i).LocalPreParams
 
-		outputCh, errCh := mp_tss.RunReshare(params, save, newTransports[i])
+		outputCh, errCh := mp_tss.RunReshare(ctx, params, save, newTransports[i])
 
 		go func(outputCh chan keygen.LocalPartySaveData, errCh chan *tss.Error) {
 			for {

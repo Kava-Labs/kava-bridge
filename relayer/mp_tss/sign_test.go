@@ -2,6 +2,7 @@ package mp_tss_test
 
 import (
 	"bytes"
+	"context"
 	"crypto/ecdsa"
 	"encoding/json"
 	"math/big"
@@ -39,12 +40,15 @@ func TestSign(t *testing.T) {
 
 	msgHash := big.NewInt(1234)
 
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	for i := range signPIDs {
 		params := mp_tss.CreateParams(signPIDs, signPIDs[i], keygen.TestThreshold)
 		t.Log(params.PartyID())
 
 		// big.Int message, would be message hash converted to big int
-		outputCh, errCh := mp_tss.RunSign(msgHash, params, keys[i], transports[i])
+		outputCh, errCh := mp_tss.RunSign(ctx, msgHash, params, keys[i], transports[i])
 
 		go func(outputCh chan common.SignatureData, errCh chan *tss.Error) {
 			for {

@@ -25,7 +25,12 @@ type SessionTransport struct {
 
 var _ mp_tss.Transporter = (*SessionTransport)(nil)
 
-func (mt *SessionTransport) Send(data []byte, routing *tss.MessageRouting, isResharing bool) error {
+func (mt *SessionTransport) Send(
+	ctx context.Context,
+	data []byte,
+	routing *tss.MessageRouting,
+	isResharing bool,
+) error {
 	log.Debugw(
 		"sending message",
 		"routing", routing,
@@ -49,7 +54,7 @@ func (mt *SessionTransport) Send(data []byte, routing *tss.MessageRouting, isRes
 
 	// Point to point concurrently
 	// TODO: Might not be necessary, routing.To may only consist of one peer.
-	g, ctx := errgroup.WithContext(context.Background())
+	g, ctx := errgroup.WithContext(ctx)
 
 	for _, to := range routing.To {
 		peerID, found := mt.partyIDStore.GetPeerID(to)

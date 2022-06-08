@@ -1,6 +1,8 @@
 package mp_tss
 
 import (
+	"context"
+
 	logging "github.com/ipfs/go-log/v2"
 
 	"github.com/binance-chain/tss-lib/ecdsa/keygen"
@@ -12,6 +14,7 @@ var log = logging.Logger("mp_tss")
 // RunKeyGen starts the local keygen party and handles incoming and outgoing
 // messages to other parties.
 func RunKeyGen(
+	ctx context.Context,
 	preParams *keygen.LocalPreParams,
 	params *tss.Parameters,
 	transport Transporter,
@@ -27,7 +30,7 @@ func RunKeyGen(
 	party := keygen.NewLocalParty(params, outCh, endCh, *preParams)
 	log.Debugw("local party created", "partyID", party.PartyID())
 
-	RunParty(party, errCh, outCh, transport, false)
+	RunParty(ctx, party, errCh, outCh, transport, false)
 
 	return endCh, errCh
 }

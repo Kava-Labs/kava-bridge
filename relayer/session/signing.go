@@ -70,15 +70,18 @@ func NewSigningSession(
 	partyIDStore *mp_tss.PartyIDStore,
 	sessionStore *SigningSessionStore,
 ) (*SigningSession, <-chan SigningSessionResult, error) {
-	signingCtx, span := tracer.Start(ctx, "new signing session")
-
-	ctx, subSpan := tracer.Start(signingCtx, "picking leader")
-	defer subSpan.End()
+	ctx, span := tracer.Start(
+		ctx,
+		"new signing session",
+		trace.WithAttributes(
+			attribute.String("txHash", txHash.String()),
+			attribute.String("peerID", currentPeerID.ShortString()),
+		),
+	)
 
 	outputEventsChan := make(chan SigningSessionOutputEvent, 1)
 	resultChan := make(chan SigningSessionResult, 1)
 
-	subSpan.AddEvent("Transition to PickingLeaderState")
 	state := NewPickingLeaderState()
 
 	logger := log.Named(txHash.String())
@@ -100,7 +103,7 @@ func NewSigningSession(
 
 		logger:  logger,
 		state:   state,
-		context: signingCtx,
+		context: ctx,
 		span:    span,
 	}
 
@@ -127,7 +130,7 @@ func NewSigningSession(
 			return nil, nil, err
 		}
 
-		subSpan.AddEvent("Transition to LeaderWaitingForCandidateState")
+		span.AddEvent("Transition to LeaderWaitingForCandidateState")
 		session.state = newState
 
 		return session, resultChan, nil
@@ -141,7 +144,7 @@ func NewSigningSession(
 	}
 
 	logger.Debugw("NOT leader, transition to CandidateWaitingForLeaderState")
-	subSpan.AddEvent("Transition to CandidateWaitingForLeaderState")
+	span.AddEvent("Transition to CandidateWaitingForLeaderState")
 	session.state = newState
 
 	msg := types.NewJoinSigningSessionMessage(
@@ -311,7 +314,7 @@ func (s *SigningSession) UpdateAddCandidateEvent(
 		participantPeerIDs,
 	)
 	s.broadcaster.BroadcastMessage(
-		context.Background(),
+		s.context,
 		msg,
 		s.peerIDs, // All peers
 		30,
@@ -346,11 +349,12 @@ func (s *SigningSession) UpdateStartSignerEvent(
 		)
 	}
 
-	_, span := tracer.Start(s.context, "start signing",
+	ctx, span := tracer.Start(s.context, "start signing",
 		trace.WithAttributes(
 			attribute.String("event", "StartSignerEvent"),
 			attribute.String("peerID", s.currentPeerID.ShortString()),
 		))
+	defer span.End()
 
 	s.logger.Debugw(
 		"StartSignerEvent received",
@@ -389,6 +393,7 @@ func (s *SigningSession) UpdateStartSignerEvent(
 	newState := NewSigningState(ev.transport)
 
 	newState.outputChan, newState.errChan = mp_tss.RunSign(
+		ctx,
 		s.MsgToSign,
 		ev.tssParams,
 		ev.key,
@@ -449,7 +454,6 @@ func (s *SigningSession) UpdateStartSignerEvent(
 			// TODO: Transition to err? or nah
 		}
 
-		span.End()   // local start span
 		s.span.End() // entire session span
 	}()
 

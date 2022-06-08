@@ -1,6 +1,7 @@
 package mp_tss_test
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -28,12 +29,15 @@ func TestKeygen(t *testing.T) {
 	errAgg := make(chan *tss.Error)
 	outputAgg := make(chan keygen.LocalPartySaveData)
 
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	for i := range partyIDs {
 		// Load from disk to avoid re-generating
 		preParams := LoadTestPreParam(i)
 		params := mp_tss.CreateParams(partyIDs, partyIDs[i], threshold)
 
-		outputCh, errCh := mp_tss.RunKeyGen(preParams, params, transports[i])
+		outputCh, errCh := mp_tss.RunKeyGen(ctx, preParams, params, transports[i])
 		go func(outputCh chan keygen.LocalPartySaveData, errCh chan *tss.Error) {
 			for {
 				select {

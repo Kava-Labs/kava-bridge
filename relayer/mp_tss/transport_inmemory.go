@@ -1,6 +1,7 @@
 package mp_tss
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/binance-chain/tss-lib/tss"
@@ -31,7 +32,7 @@ func NewMemoryTransporter(partyID *tss.PartyID) *MemoryTransporter {
 	return ts
 }
 
-func (mt *MemoryTransporter) Send(data []byte, routing *tss.MessageRouting, isResharing bool) error {
+func (mt *MemoryTransporter) Send(ctx context.Context, data []byte, routing *tss.MessageRouting, isResharing bool) error {
 	if isResharing {
 		return mt.sendReSharing(data, routing)
 	}

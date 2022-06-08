@@ -23,6 +23,7 @@ import (
 )
 
 var log = logging.Logger("broadcast")
+var tracer = otel.Tracer("Broadcaster")
 
 const (
 	ProtocolID  = "/kava-relayer/broadcast/1.0.0"
@@ -144,8 +145,8 @@ func (b *Broadcaster) processLoop(ctx context.Context) {
 	}()
 
 	for {
-		// Validated messages have priority to not block when raw message pushes
-		// another incoming validated message.
+		// Validated messages have priority to not deadlock when raw message
+		// pushes more than 1 incoming validated message before handled.
 		select {
 		case newValidatedMsg := <-b.incomingValidatedMessages:
 			b.handleIncomingValidatedMsg(newValidatedMsg)
@@ -180,6 +181,16 @@ func (b *Broadcaster) BroadcastMessage(
 	if err != nil {
 		return err
 	}
+
+	ctx, span := tracer.Start(
+		ctx,
+		"broadcast message", trace.WithAttributes(
+			attribute.String("typeUrl", msg.Payload.TypeUrl),
+			attribute.String("messageID", msg.ID),
+			attribute.String("fromPeerID", b.host.ID().ShortString()),
+		),
+	)
+	defer span.End()
 
 	if err := msg.Validate(); err != nil {
 		return fmt.Errorf("invalid message: %w", err)
@@ -451,7 +462,7 @@ func (b *Broadcaster) handleNewStream(s network.Stream) {
 
 		carrier := msg.TraceContext.GetCarrier()
 		ctx = otel.GetTextMapPropagator().Extract(ctx, carrier)
-		ctx, span := types.Tracer.Start(ctx, "receive message")
+		ctx, span := tracer.Start(ctx, "receive message")
 
 		// Attach additional peer metadata to the message
 		peerMsg := pending_store.MessageWithPeerMetadata{

@@ -1,6 +1,7 @@
 package mp_tss
 
 import (
+	"context"
 	"encoding/hex"
 	"time"
 
@@ -10,6 +11,7 @@ import (
 // RunParty starts the local party in the background and handles incoming and
 // outgoing messages. Does **not** block.
 func RunParty(
+	ctx context.Context,
 	party tss.Party,
 	errCh chan<- *tss.Error,
 	outCh <-chan tss.Message,
@@ -69,7 +71,7 @@ func RunParty(
 				// if receive channels are full if not in goroutine.
 				go func() {
 					// send to other parties
-					if err := transport.Send(data, routing, isReSharing); err != nil {
+					if err := transport.Send(ctx, data, routing, isReSharing); err != nil {
 						log.Errorw(
 							"failed to send output message",
 							"from PartyID", party.PartyID(),
@@ -114,6 +116,8 @@ func RunParty(
 						incomingMsg.From,
 					)
 				}()
+			case <-ctx.Done():
+				return
 			}
 		}
 	}()

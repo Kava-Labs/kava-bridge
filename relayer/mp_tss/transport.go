@@ -1,11 +1,15 @@
 package mp_tss
 
-import "github.com/binance-chain/tss-lib/tss"
+import (
+	"context"
+
+	"github.com/binance-chain/tss-lib/tss"
+)
 
 // Transporter is the interface that defines the Send and Receive methods to
 // transfer lib-tss messages between parties.
 type Transporter interface {
-	Send([]byte, *tss.MessageRouting, bool) error
+	Send(context.Context, []byte, *tss.MessageRouting, bool) error
 	// Receive returns a channel that will be read by the local tss party. This
 	// consists of ReceivedPartyState messages received from other parties.
 	Receive() chan ReceivedPartyState
