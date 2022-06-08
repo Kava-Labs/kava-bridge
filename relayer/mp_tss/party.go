@@ -1,6 +1,7 @@
 package mp_tss
 
 import (
+	"encoding/hex"
 	"time"
 
 	"github.com/binance-chain/tss-lib/tss"
@@ -25,10 +26,16 @@ func RunParty(
 
 	go func() {
 		for {
+			var partyIDkeys []string
+
+			for _, partyID := range party.WaitingFor() {
+				partyIDkeys = append(partyIDkeys, hex.EncodeToString(partyID.Key))
+			}
+
 			log.Debugf(
 				"party %v waiting for %v",
 				party.PartyID(),
-				party.WaitingFor(),
+				partyIDkeys,
 			)
 
 			time.Sleep(10 * time.Second)
@@ -101,9 +108,10 @@ func RunParty(
 						return
 					}
 
-					log.Debugw(
-						"updated party from bytes",
-						"partyID", party.PartyID(),
+					log.Debugf(
+						"updated party %v from bytes from %v",
+						party.PartyID(),
+						incomingMsg.From,
 					)
 				}()
 			}

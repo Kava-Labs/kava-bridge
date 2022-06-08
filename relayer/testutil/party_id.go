@@ -35,5 +35,6 @@ func PartyIDsFromPeerIDs(peerIDs []peer.ID) tss.UnSortedPartyIDs {
 func GetTestPartyIDs(count int) tss.UnSortedPartyIDs {
 	nodeKeys := GetTestP2pNodeKeys(count)
 	peerIDs := PeerIDsFromKeys(nodeKeys)
+
 	return PartyIDsFromPeerIDs(peerIDs)
 }

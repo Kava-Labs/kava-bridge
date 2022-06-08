@@ -22,12 +22,16 @@ func TestSign(t *testing.T) {
 	// err := logging.SetLogLevel("*", "debug")
 	// require.NoError(t, err)
 
+	signPIDs := testutil.GetTestPartyIDs(threshold + 1)
+	require.Len(t, signPIDs, threshold+1)
+
 	// 1. Get party keys from file
-	keys, signPIDs := testutil.GetTestTssKeys(threshold + 1)
+	keys := testutil.GetTestTssKeys(threshold + 1)
 	require.Len(t, keys, threshold+1)
 
 	// 2. Create and connect transport between peers
 	transports := CreateAndConnectTransports(t, signPIDs)
+	require.Len(t, transports, threshold+1)
 
 	// 3. Start signing party for each peer
 	outputAgg := make(chan common.SignatureData, keygen.TestThreshold)
@@ -36,7 +40,7 @@ func TestSign(t *testing.T) {
 	msgHash := big.NewInt(1234)
 
 	for i := range signPIDs {
-		params := mp_tss.CreateParams(signPIDs.ToUnSorted(), signPIDs[i], keygen.TestThreshold)
+		params := mp_tss.CreateParams(signPIDs, signPIDs[i], keygen.TestThreshold)
 		t.Log(params.PartyID())
 
 		// big.Int message, would be message hash converted to big int

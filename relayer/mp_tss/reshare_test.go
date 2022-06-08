@@ -27,7 +27,9 @@ func TestReshare(t *testing.T) {
 	// require.NoError(t, err)
 
 	// 1. Get t+1 current keys
-	oldKeys, oldPartyIDs := testutil.GetTestTssKeys(threshold + 1)
+	oldPartyIDs := testutil.GetTestPartyIDs(partyCount)
+
+	oldKeys := testutil.GetTestTssKeys(threshold + 1)
 	require.Equal(t, keygen.TestThreshold+1, len(oldKeys))
 	require.Equal(t, keygen.TestThreshold+1, len(oldPartyIDs))
 
@@ -47,7 +49,7 @@ func TestReshare(t *testing.T) {
 
 	// Start old parties
 	for i, partyID := range oldPartyIDs {
-		params := mp_tss.CreateReShareParams(oldPartyIDs, newPartyIDs, partyID, threshold, newThreshold)
+		params := mp_tss.CreateReShareParams(oldPartyIDs, newPartyIDs.ToUnSorted(), partyID, threshold, newThreshold)
 
 		outputCh, errCh := mp_tss.RunReshare(params, oldKeys[i], oldTransports[i])
 
@@ -65,7 +67,7 @@ func TestReshare(t *testing.T) {
 
 	// Start new parties
 	for i, partyID := range newPartyIDs {
-		params := mp_tss.CreateReShareParams(oldPartyIDs, newPartyIDs, partyID, threshold, newThreshold)
+		params := mp_tss.CreateReShareParams(oldPartyIDs, newPartyIDs.ToUnSorted(), partyID, threshold, newThreshold)
 		t.Log(params.PartyID())
 
 		save := keygen.NewLocalPartySaveData(len(newPartyIDs))

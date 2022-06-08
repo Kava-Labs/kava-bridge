@@ -72,7 +72,10 @@ func PeerIDsFromKeys(keys []crypto.PrivKey) []peer.ID {
 	var out []peer.ID
 
 	for _, key := range keys {
-		id, _ := peer.IDFromPrivateKey(key)
+		id, err := peer.IDFromPrivateKey(key)
+		if err != nil {
+			panic(err)
+		}
 
 		out = append(out, id)
 	}
