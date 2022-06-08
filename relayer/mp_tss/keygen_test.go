@@ -1,7 +1,8 @@
 package mp_tss_test
 
 import (
-	"encoding/json"
+	"fmt"
+	"sort"
 	"testing"
 
 	"github.com/binance-chain/tss-lib/ecdsa/keygen"
@@ -9,7 +10,6 @@ import (
 	"github.com/kava-labs/kava-bridge/relayer/mp_tss"
 	"github.com/kava-labs/kava-bridge/relayer/testutil"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 const partyCount = 3
@@ -76,12 +76,24 @@ func TestKeygen(t *testing.T) {
 		}
 	}
 
-	// // Write keys to file for test fixtures for signing
-	for i, key := range keys {
-		bz, err := json.MarshalIndent(&key, "", "  ")
-		require.NoError(t, err)
-		t.Log(string(bz))
+	sort.Slice(keys, func(i, j int) bool {
+		return partyIDs[i].KeyInt().Cmp(partyIDs[j].KeyInt()) > 0
+	})
 
-		testutil.WriteTestKey(i, bz)
+	// Write keys to file for test fixtures for signing
+	// Must be in the same order as PartyIDs
+	for i, partyID := range partyIDs {
+		// Search key for this partyID
+		for _, key := range keys {
+			if key.ShareID.Cmp(partyID.KeyInt()) == 0 {
+				assert.Equal(t, partyIDs[i].KeyInt(), key.ShareID, "saved key part should match party id")
+
+				fmt.Printf("partyID = %v \n", partyID.KeyInt())
+				fmt.Printf("keyID   = %v \n", key.ShareID)
+
+				testutil.WriteTestKey(i, key)
+				break
+			}
+		}
 	}
 }

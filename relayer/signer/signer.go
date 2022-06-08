@@ -121,7 +121,11 @@ func (s *Signer) SignMessage(
 
 	select {
 	case res := <-resultChan:
-		return res.Signature, res.Err
+		if res.Err != nil {
+			return nil, fmt.Errorf("failed to sign message: %w", res.Err)
+		}
+
+		return res.Signature, nil
 	case <-ctx.Done():
 		return nil, ctx.Err()
 	}

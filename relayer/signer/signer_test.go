@@ -36,20 +36,7 @@ func TestSigner(t *testing.T) {
 	ctx := context.Background()
 	done := make(chan bool)
 
-	// Saved private libp2p keys
-	node_keys := testutil.GetTestP2pNodeKeys(numPeers)
-	require.Len(t, node_keys, numPeers)
-
-	// Peer ID derived from private libp2p key
-	peerIDs := testutil.PeerIDsFromKeys(node_keys)
-	require.Len(t, peerIDs, numPeers)
-
-	// Party ID derived from peer ID public key
-	partyIDs := testutil.PartyIDsFromPeerIDs(peerIDs)
-
-	tss_keys, _ := testutil.GetTestTssKeys(numPeers)
-	require.Len(t, tss_keys, numPeers)
-	require.Len(t, partyIDs, numPeers)
+	node_keys, peerIDs, tss_keys, partyIDs := testutil.GetTestKeys(t, numPeers)
 
 	signers := make([]*signer.Signer, numPeers)
 	for i := 0; i < numPeers; i++ {
@@ -65,6 +52,12 @@ func TestSigner(t *testing.T) {
 
 		params := mp_tss.CreateParams(partyIDs, partyIDs[i], threshold)
 		t.Logf("param party IDs: %+v, threshold: %v", partyIDs, threshold)
+
+		require.Equal(
+			t, partyIDs[i].KeyInt(),
+			tss_keys[i].ShareID,
+			"key id should match party id",
+		)
 
 		s, err := signer.NewSigner(
 			node,
@@ -108,6 +101,7 @@ func TestSigner(t *testing.T) {
 				// The relayer will call this when there is a new signing output from
 				// block syncing.
 				sig, err := signer.SignMessage(ctx, txHash, msgHash)
+				t.Logf("SignMessage output: sig: %v \terr: %v", sig, err)
 
 				if err != nil {
 					return err

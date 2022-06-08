@@ -4,9 +4,13 @@ import (
 	"crypto/rand"
 	"fmt"
 	"path"
+	"testing"
 
+	"github.com/binance-chain/tss-lib/ecdsa/keygen"
+	"github.com/binance-chain/tss-lib/tss"
 	"github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/libp2p/go-libp2p-core/peer"
+	"github.com/stretchr/testify/require"
 	"github.com/tendermint/tendermint/libs/os"
 )
 
@@ -81,4 +85,33 @@ func PeerIDsFromKeys(keys []crypto.PrivKey) []peer.ID {
 	}
 
 	return out
+}
+
+func GetTestKeys(t *testing.T, numPeers int) (
+	[]crypto.PrivKey,
+	peer.IDSlice,
+	[]keygen.LocalPartySaveData,
+	tss.UnSortedPartyIDs,
+) {
+	nodeKeys := GetTestP2pNodeKeys(numPeers)
+	require.Len(t, nodeKeys, numPeers)
+
+	// Peer ID derived from private libp2p key
+	peerIDs := PeerIDsFromKeys(nodeKeys)
+	require.Len(t, peerIDs, numPeers)
+
+	// Party ID derived from peer ID public key
+	partyIDs := PartyIDsFromPeerIDs(peerIDs)
+	require.Len(t, partyIDs, numPeers)
+
+	tss_keys := GetTestTssKeys(numPeers)
+	require.Len(t, tss_keys, numPeers)
+
+	for i := range tss_keys {
+		t.Logf("tss_keys[%d] = %+v", i, tss_keys[i].ShareID)
+		t.Logf("partyIDs[%d] = %+v", i, partyIDs[i].KeyInt())
+
+	}
+
+	return nodeKeys, peerIDs, tss_keys, partyIDs
 }

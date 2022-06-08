@@ -13,7 +13,7 @@ import (
 )
 
 func KeyPath(index int) string {
-	return path.Join("..", "testutil", "test-fixtures", fmt.Sprintf("localparty-savedata%d.json", index))
+	return path.Join("..", "testutil", "test-fixtures", fmt.Sprintf("localparty-savedata-%02d.json", index))
 }
 
 func ReadTestKey(index int) keygen.LocalPartySaveData {
@@ -39,7 +39,12 @@ func GetTestTssKeys(count int) []keygen.LocalPartySaveData {
 	return keys
 }
 
-func WriteTestKey(index int, bz []byte) {
+func WriteTestKey(index int, key keygen.LocalPartySaveData) {
+	bz, err := json.MarshalIndent(&key, "", "  ")
+	if err != nil {
+		panic(err)
+	}
+
 	os.MustWriteFile(KeyPath(index), bz, 0600)
 }
 

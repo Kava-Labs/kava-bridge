@@ -33,8 +33,9 @@ func PartyIDsFromPeerIDs(peerIDs []peer.ID) tss.UnSortedPartyIDs {
 // GetTestPartyIDs returns a list of party IDs derived from fixture libp2p
 // publickeys for testing.
 func GetTestPartyIDs(count int) tss.UnSortedPartyIDs {
-	nodeKeys := GetTestP2pNodeKeys(count)
-	peerIDs := PeerIDsFromKeys(nodeKeys)
+	nodeKeys := GetTestP2pNodeKeys(count)    // libp2p keys
+	peerIDs := PeerIDsFromKeys(nodeKeys)     // libp2p peer IDs
+	partyIDs := PartyIDsFromPeerIDs(peerIDs) // party IDs
 
-	return PartyIDsFromPeerIDs(peerIDs)
+	return partyIDs
 }

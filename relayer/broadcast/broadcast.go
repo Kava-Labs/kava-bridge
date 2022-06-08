@@ -499,8 +499,6 @@ func (b *Broadcaster) handleNewStream(s network.Stream) {
 		// TODO: Memory leak if something fails prior to this
 		span.End()
 
-		b.log.Debugw("b.incomingRawMessages <- &peerMsg", "ID", msg.ID)
-
 		select {
 		case b.incomingRawMessages <- &peerMsg:
 		case <-b.ctx.Done():
@@ -508,7 +506,5 @@ func (b *Broadcaster) handleNewStream(s network.Stream) {
 			_ = s.Reset()
 			return
 		}
-
-		b.log.Debugw("b.incomingRawMessages <- &peerMsg DONE", "ID", msg.ID)
 	}
 }
