@@ -5,6 +5,7 @@ import (
 	"crypto/ecdsa"
 	"fmt"
 	"math/big"
+	"sync"
 	"testing"
 	"time"
 
@@ -115,7 +116,8 @@ func TestSigner(t *testing.T) {
 
 	g, ctx := errgroup.WithContext(ctx)
 
-	sigsCh := make(chan tss_common.SignatureData, numPeers)
+	var sigLock sync.Mutex
+	var sigs []tss_common.SignatureData
 
 	for _, s := range signers {
 		func(signer *signer.Signer) {
@@ -132,7 +134,10 @@ func TestSigner(t *testing.T) {
 					return nil
 				}
 
-				sigsCh <- *sig
+				sigLock.Lock()
+				sigs = append(sigs, *sig)
+				sigLock.Unlock()
+
 				return nil
 			})
 		}(s)
@@ -144,20 +149,6 @@ func TestSigner(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Log("signers done")
-
-	var sigs []tss_common.SignatureData
-
-out:
-	for {
-		select {
-		case sig := <-sigsCh:
-			require.NotNil(t, sig)
-			sigs = append(sigs, sig)
-		default:
-			// No more signatures, exit loop
-			break out
-		}
-	}
 
 	// Verify signature
 	pkX, pkY := tss_keys[0].ECDSAPub.X(), tss_keys[0].ECDSAPub.Y()
