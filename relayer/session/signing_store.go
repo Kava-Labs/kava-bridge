@@ -57,7 +57,9 @@ func (s *SigningSessionStore) NewSession(
 		return nil, nil, err
 	}
 
+	s.mu.Lock()
 	s.sessions[txHash] = session
+	s.mu.Unlock()
 
 	return session, resultChan, nil
 }

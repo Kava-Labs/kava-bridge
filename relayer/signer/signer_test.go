@@ -117,7 +117,8 @@ func TestSigner(t *testing.T) {
 	msgHash := big.NewInt(2)
 
 	g, ctx := errgroup.WithContext(ctx)
-	var sigs []tss_common.SignatureData
+
+	sigsCh := make(chan tss_common.SignatureData, numPeers)
 
 	for _, s := range signers {
 		func(signer *signer.Signer) {
@@ -129,7 +130,7 @@ func TestSigner(t *testing.T) {
 					return err
 				}
 
-				sigs = append(sigs, *sig)
+				sigsCh <- *sig
 				return nil
 			})
 		}(s)
@@ -142,8 +143,12 @@ func TestSigner(t *testing.T) {
 
 	t.Log("signers done")
 
-	for _, sig := range sigs {
+	var sigs []tss_common.SignatureData
+
+	for i := 0; i < numPeers; i++ {
+		sig := <-sigsCh
 		require.NotNil(t, sig)
+		sigs = append(sigs, sig)
 	}
 
 	// Verify signature
