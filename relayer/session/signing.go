@@ -40,7 +40,6 @@ type SigningSession struct {
 	MsgToSign    *big.Int
 	threshold    int
 	partyIDStore *mp_tss.PartyIDStore
-	sessionStore *SigningSessionStore // signing session store to update self
 
 	currentPeerID peer.ID
 	peerIDs       peer.IDSlice
@@ -68,7 +67,6 @@ func NewSigningSession(
 	currentPeerID peer.ID,
 	peerIDs peer.IDSlice,
 	partyIDStore *mp_tss.PartyIDStore,
-	sessionStore *SigningSessionStore,
 ) (*SigningSession, <-chan SigningSessionResult, error) {
 	ctx, span := tracer.Start(
 		ctx,
@@ -93,7 +91,6 @@ func NewSigningSession(
 		MsgToSign:    msgToSign,
 		threshold:    threshold,
 		partyIDStore: partyIDStore,
-		sessionStore: sessionStore,
 
 		currentPeerID: currentPeerID,
 		peerIDs:       peerIDs,
@@ -301,11 +298,6 @@ func (s *SigningSession) UpdateAddCandidateEvent(
 		"aggregate session ID created",
 		"participants", participantPeerIDs,
 	)
-
-	// Set the aggregate session ID for the session in the "parent" store
-	// TODO: Probably refactor this so that we don't need to pass the parent
-	// store to the session?
-	s.sessionStore.SetSessionID(s.TxHash, aggSessionID)
 
 	// Broadcast StartSignerEvent with picked peers
 	msg := types.NewSigningPartyStartMessage(

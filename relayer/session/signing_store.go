@@ -52,7 +52,6 @@ func (s *SigningSessionStore) NewSession(
 		currentPeerID,
 		peerIDs,
 		partyIDStore,
-		s,
 	)
 	if err != nil {
 		return nil, nil, err
