@@ -42,12 +42,13 @@ func TestSigner(t *testing.T) {
 	tracing.RegisterProvider(tp)
 
 	t.Cleanup(func() {
-		ctx, cancel := context.WithTimeout(ctx, time.Second*5)
+		// Don't use parent ctx or Shutdown will fail due to context closed
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 		defer cancel()
 
 		t.Log("closing tracer provider")
 		if err := tp.Shutdown(ctx); err != nil {
-			t.Error(err)
+			t.Errorf("tracing provider shutdown failed: %v", err)
 		}
 	})
 
@@ -116,7 +117,7 @@ func TestSigner(t *testing.T) {
 	msgHash := big.NewInt(2)
 
 	g, ctx := errgroup.WithContext(ctx)
-	sigs := make([]tss_common.SignatureData, numPeers)
+	var sigs []tss_common.SignatureData
 
 	for _, s := range signers {
 		func(signer *signer.Signer) {
@@ -160,4 +161,6 @@ func TestSigner(t *testing.T) {
 		new(big.Int).SetBytes(sigs[0].S), // S
 	)
 	assert.True(t, ok, "ecdsa verify must pass")
+
+	t.Logf("ecdsa verify passed")
 }
