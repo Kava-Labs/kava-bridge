@@ -17,6 +17,8 @@ service Msg {
 
   // ConvertCoinToERC20 defines a method for converting sdk.Coin to Kava ERC20.
   rpc ConvertCoinToERC20(MsgConvertCoinToERC20) returns (MsgConvertCoinToERC20Response);
+
+  rpc ConvertERC20ToCoin(MsgConvertERC20ToCoin) returns (MsgConvertERC20ToCoinResponse);
 }
 
 // MsgBridgeEthereumToKava defines a ERC20 bridge transfer from Ethereum to Kava.
@@ -58,3 +60,24 @@ message MsgConvertCoinToERC20 {
 // MsgConvertCoinToERC20Response defines the response value from
 // Msg/ConvertCoinToERC20.
 message MsgConvertCoinToERC20Response {}
+
+// MsgConvertERC20ToCoin defines a conversion from Kava ERC20 to sdk.Coin.
+message MsgConvertERC20ToCoin {
+  // EVM 0x hex address initiating the conversion.
+  string initiator = 1;
+  // Kava bech32 address that will receive the converted sdk.Coin.
+  string receiver = 2;
+  // EVM 0x hex address of the ERC20 contract.
+  string kava_erc20_address = 3 [(gogoproto.customname) = "KavaERC20Address"];
+  // ERC20 token amount to convert.
+  string amount = 4 [
+    (cosmos_proto.scalar)  = "cosmos.Int",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable)   = false
+  ];
+}
+
+// MsgConvertERC20ToCoinResponse defines the response value from
+// Msg/MsgConvertERC20ToCoin.
+message MsgConvertERC20ToCoinResponse {}
+

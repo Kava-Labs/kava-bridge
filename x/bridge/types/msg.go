@@ -113,3 +113,55 @@ func (msg MsgConvertCoinToERC20) ValidateBasic() error {
 	// Checks for negative
 	return msg.Amount.Validate()
 }
+
+// NewMsgConvertERC20ToCoin returns a new MsgConvertERC20ToCoin
+func NewMsgConvertERC20ToCoin(
+	initiator InternalEVMAddress,
+	receiver sdk.AccAddress,
+	contractAddr InternalEVMAddress,
+	amount sdk.Int,
+) MsgConvertERC20ToCoin {
+	return MsgConvertERC20ToCoin{
+		Initiator:        initiator.String(),
+		Receiver:         receiver.String(),
+		KavaERC20Address: contractAddr.String(),
+		Amount:           amount,
+	}
+}
+
+// GetSigners returns the addresses of signers that must sign.
+func (msg MsgConvertERC20ToCoin) GetSigners() []sdk.AccAddress {
+	sender, err := sdk.AccAddressFromHex(msg.Initiator[2:])
+	if err != nil {
+		panic(err)
+	}
+	return []sdk.AccAddress{sender}
+}
+
+// ValidateBasic does a simple validation check that doesn't require access to any other information.
+func (msg MsgConvertERC20ToCoin) ValidateBasic() error {
+	if !common.IsHexAddress(msg.Initiator) {
+		return sdkerrors.Wrap(
+			sdkerrors.ErrInvalidAddress,
+			"initiator is not a valid hex address",
+		)
+	}
+
+	if !common.IsHexAddress(msg.KavaERC20Address) {
+		return sdkerrors.Wrap(
+			sdkerrors.ErrInvalidAddress,
+			"erc20 contract address is not a valid hex address",
+		)
+	}
+
+	_, err := sdk.AccAddressFromBech32(msg.Receiver)
+	if err != nil {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "receiver is not a valid bech32 address")
+	}
+
+	if msg.Amount.LTE(sdk.ZeroInt()) {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "amount cannot be zero or less")
+	}
+
+	return nil
+}
