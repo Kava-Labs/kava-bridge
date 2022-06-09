@@ -12,8 +12,6 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 
-	tss_common "github.com/binance-chain/tss-lib/common"
-	"github.com/binance-chain/tss-lib/tss"
 	eth_common "github.com/ethereum/go-ethereum/common"
 	"github.com/kava-labs/kava-bridge/relayer/broadcast"
 	"github.com/kava-labs/kava-bridge/relayer/mp_tss"
@@ -23,12 +21,6 @@ import (
 
 var log = logging.Logger("SigningSession")
 var tracer = otel.Tracer("SigningSession")
-
-// SigningSessionResult is the result of a signing session.
-type SigningSessionResult struct {
-	Signature *tss_common.SignatureData
-	Err       *tss.Error
-}
 
 // SigningSession is a session for signing a message, consisting of all of the
 // states that are required to do so for 1 transaction.
@@ -417,10 +409,7 @@ func (s *SigningSession) UpdateStartSignerEvent(
 			)
 
 			s.state = NewDoneState(sig)
-			s.resultChan <- SigningSessionResult{
-				Signature: &sig,
-				Err:       nil,
-			}
+			s.resultChan <- NewSigningSessionResult(&sig, nil)
 		case err := <-newState.errChan:
 			s.logger.Errorw(
 				"error signing message",
@@ -437,10 +426,7 @@ func (s *SigningSession) UpdateStartSignerEvent(
 			)
 
 			s.state = NewErrorState(err)
-			s.resultChan <- SigningSessionResult{
-				Signature: nil,
-				Err:       err,
-			}
+			s.resultChan <- NewSigningSessionResult(nil, err)
 		case <-s.context.Done():
 			s.logger.Debugw("signing session context done, no longer waiting for output")
 			// TODO: Transition to err? or nah
@@ -482,23 +468,4 @@ func (s *SigningSession) UpdateAddSigningPartEvent(
 	)
 
 	return nil
-}
-
-// TryGetSignature returns the signature or error if the session is done
-func (s *SigningSession) TryGetSignature() (
-	signature tss_common.SignatureData,
-	done bool,
-	err *tss.Error,
-) {
-	switch state := s.state.(type) {
-	case *DoneState:
-		// sig, done, no error
-		return state.signature, true, nil
-	case *ErrorState:
-		// no sig, done, error
-		return tss_common.SignatureData{}, true, state.err
-	default:
-		// no sig, not done, no error
-		return tss_common.SignatureData{}, false, nil
-	}
 }
