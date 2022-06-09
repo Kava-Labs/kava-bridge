@@ -45,7 +45,7 @@ func (mt *SessionTransport) Send(
 
 	if routing.IsBroadcast {
 		return mt.broadcaster.BroadcastMessage(
-			context.Background(),
+			ctx,
 			&msg,
 			mt.participants,
 			30,
