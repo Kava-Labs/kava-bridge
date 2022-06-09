@@ -11,6 +11,10 @@ type SigningSessionResult struct {
 	Err       *tss.Error
 }
 
+func (res *SigningSessionResult) HasSignature() bool {
+	return res.Signature != nil
+}
+
 // NewSigningSessionResult returns a new SigningSessionResult.
 func NewSigningSessionResult(
 	signature *tss_common.SignatureData,

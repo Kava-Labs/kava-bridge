@@ -16,7 +16,13 @@ func CreateParams(
 	parties := tss.SortPartyIDs(partyIDs)
 
 	ctx := tss.NewPeerContext(parties)
-	return tss.NewParameters(Curve, ctx, localPartyID, len(parties), threshold)
+	return tss.NewParameters(
+		Curve,                                    // secp256k1 curve
+		ctx,                                      // PeerContext
+		parties.FindByKey(localPartyID.KeyInt()), // Current party ID **after** sorted for correct Index
+		len(parties),                             // Party count
+		threshold,                                // Threshold
+	)
 }
 
 func CreateReShareParams(

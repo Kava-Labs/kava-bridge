@@ -14,9 +14,11 @@ type SigningSessionStateType int
 const (
 	SigningSessionStateType_PickingLeader SigningSessionStateType = iota + 1
 	SigningSessionStateType_LeaderWaitingForCandidates
+	SigningSessionStateType_LeaderWaitingToSign
 	SigningSessionStateType_CandidateWaitingForLeader
 	SigningSessionStateType_Signing
 	SigningSessionStateType_Done
+	SigningSessionStateType_DoneNonParticipant
 	SigningSessionStateType_Error
 )
 
@@ -26,12 +28,16 @@ func (t SigningSessionStateType) String() string {
 		return "PickingLeader"
 	case SigningSessionStateType_LeaderWaitingForCandidates:
 		return "LeaderWaitingForCandidates"
+	case SigningSessionStateType_LeaderWaitingToSign:
+		return "LeaderWaitingToSign"
 	case SigningSessionStateType_CandidateWaitingForLeader:
 		return "CandidateWaitingForLeader"
 	case SigningSessionStateType_Signing:
 		return "Signing"
 	case SigningSessionStateType_Done:
 		return "Done"
+	case SigningSessionStateType_DoneNonParticipant:
+		return "DoneNonParticipant"
 	case SigningSessionStateType_Error:
 		return "Error"
 	default:
@@ -45,9 +51,11 @@ type SigningSessionState interface {
 
 var _ SigningSessionState = (*PickingLeaderState)(nil)
 var _ SigningSessionState = (*LeaderWaitingForCandidatesState)(nil)
+var _ SigningSessionState = (*LeaderWaitingToSign)(nil)
 var _ SigningSessionState = (*CandidateWaitingForLeaderState)(nil)
 var _ SigningSessionState = (*SigningState)(nil)
 var _ SigningSessionState = (*DoneState)(nil)
+var _ SigningSessionState = (*DoneNonParticipantState)(nil)
 var _ SigningSessionState = (*ErrorState)(nil)
 
 type PickingLeaderState struct {
@@ -64,6 +72,9 @@ type LeaderWaitingForCandidatesState struct {
 	joinMsgs     types.JoinSessionMessages
 }
 
+type LeaderWaitingToSign struct {
+}
+
 type CandidateWaitingForLeaderState struct {
 	// Local part of the signing session ID
 	localPart types.SigningSessionIDPart
@@ -78,6 +89,9 @@ type SigningState struct {
 
 type DoneState struct {
 	signature tss_common.SignatureData
+}
+
+type DoneNonParticipantState struct {
 }
 
 type ErrorState struct {
@@ -105,6 +119,10 @@ func NewLeaderWaitingForCandidatesState() (*LeaderWaitingForCandidatesState, err
 	}, nil
 }
 
+func NewLeaderWaitingToSign() *LeaderWaitingToSign {
+	return &LeaderWaitingToSign{}
+}
+
 func NewCandidateWaitingForLeaderState() (*CandidateWaitingForLeaderState, error) {
 	localPart, err := types.NewSigningSessionIDPart()
 	if err != nil {
@@ -130,6 +148,10 @@ func NewDoneState(signature tss_common.SignatureData) *DoneState {
 	}
 }
 
+func NewDoneNonParticipantState() *DoneNonParticipantState {
+	return &DoneNonParticipantState{}
+}
+
 func NewErrorState(err *tss.Error) *ErrorState {
 	return &ErrorState{
 		err: err,
@@ -146,6 +168,10 @@ func (s *LeaderWaitingForCandidatesState) State() SigningSessionStateType {
 	return SigningSessionStateType_LeaderWaitingForCandidates
 }
 
+func (s *LeaderWaitingToSign) State() SigningSessionStateType {
+	return SigningSessionStateType_LeaderWaitingToSign
+}
+
 func (s *CandidateWaitingForLeaderState) State() SigningSessionStateType {
 	return SigningSessionStateType_CandidateWaitingForLeader
 }
@@ -156,6 +182,10 @@ func (s *SigningState) State() SigningSessionStateType {
 
 func (s *DoneState) State() SigningSessionStateType {
 	return SigningSessionStateType_Done
+}
+
+func (s *DoneNonParticipantState) State() SigningSessionStateType {
+	return SigningSessionStateType_DoneNonParticipant
 }
 
 func (s *ErrorState) State() SigningSessionStateType {

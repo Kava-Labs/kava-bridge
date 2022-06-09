@@ -68,6 +68,22 @@ func (s *PartyIDStore) GetPartyID(peerID peer.ID) (*tss.PartyID, error) {
 	return s.partyIDs[peerID], nil
 }
 
+// GetPartyIDs returns a list of sorted partyIDs for the provided peer IDs.
+func (s *PartyIDStore) GetPartyIDs(peerIDs peer.IDSlice) (tss.UnSortedPartyIDs, error) {
+	partyIDs := make(tss.UnSortedPartyIDs, len(peerIDs))
+
+	for i, peerID := range peerIDs {
+		partyID, err := s.GetPartyID(peerID)
+		if err != nil {
+			return nil, err
+		}
+
+		partyIDs[i] = partyID
+	}
+
+	return partyIDs, nil
+}
+
 func (s *PartyIDStore) GetPeerID(partyID *tss.PartyID) (peer.ID, bool) {
 	peerID, ok := s.peerIDs[hex.EncodeToString(partyID.Key)]
 	return peerID, ok

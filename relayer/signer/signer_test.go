@@ -31,7 +31,7 @@ func TestSigner(t *testing.T) {
 	// numPeers := test.TestThreshold + 1
 	// threshold := test.TestThreshold
 
-	numPeers := 2
+	numPeers := 3
 	threshold := 1
 
 	ctx := context.Background()
@@ -74,9 +74,6 @@ func TestSigner(t *testing.T) {
 		node, err := p2p.NewNode(ctx, opts, done)
 		require.NoError(t, err)
 
-		params := mp_tss.CreateParams(partyIDs, partyIDs[i], threshold)
-		t.Logf("param party IDs: %+v, threshold: %v", partyIDs, threshold)
-
 		require.Equal(
 			t, partyIDs[i].KeyInt(),
 			tss_keys[i].ShareID,
@@ -86,7 +83,7 @@ func TestSigner(t *testing.T) {
 		s, err := signer.NewSigner(
 			node,
 			fmt.Sprintf("node-%v", i),
-			params,
+			partyIDs[i],
 			tss_keys[i],
 			threshold,
 			// broadcast.WithTracer("http://localhost:14268/api/traces"),
@@ -130,6 +127,11 @@ func TestSigner(t *testing.T) {
 					return err
 				}
 
+				// Non-signer output
+				if sig == nil {
+					return nil
+				}
+
 				sigsCh <- *sig
 				return nil
 			})
@@ -145,10 +147,16 @@ func TestSigner(t *testing.T) {
 
 	var sigs []tss_common.SignatureData
 
-	for i := 0; i < numPeers; i++ {
-		sig := <-sigsCh
-		require.NotNil(t, sig)
-		sigs = append(sigs, sig)
+out:
+	for {
+		select {
+		case sig := <-sigsCh:
+			require.NotNil(t, sig)
+			sigs = append(sigs, sig)
+		default:
+			// No more signatures, exit loop
+			break out
+		}
 	}
 
 	// Verify signature

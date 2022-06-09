@@ -110,7 +110,6 @@ func GetTestKeys(t *testing.T, numPeers int) (
 	for i := range tss_keys {
 		t.Logf("tss_keys[%d] = %+v", i, tss_keys[i].ShareID)
 		t.Logf("partyIDs[%d] = %+v", i, partyIDs[i].KeyInt())
-
 	}
 
 	return nodeKeys, peerIDs, tss_keys, partyIDs

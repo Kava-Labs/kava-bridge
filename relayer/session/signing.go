@@ -190,6 +190,10 @@ func (s *SigningSession) Update(event SigningSessionEvent) error {
 func (s *SigningSession) UpdateAddCandidateEvent(
 	ev *AddCandidateEvent,
 ) error {
+	if _, notAccepting := s.state.(*LeaderWaitingToSign); notAccepting {
+		return fmt.Errorf("leader is no longer accepting candidate joins")
+	}
+
 	state, ok := s.state.(*LeaderWaitingForCandidatesState)
 	if !ok {
 		s.logger.Errorw(
@@ -262,6 +266,9 @@ func (s *SigningSession) UpdateAddCandidateEvent(
 	// TODO: why does this cause duplicate peer error when GetSessionID()?
 	// Possible race condition when there are two AddCandidateEvent at once?
 
+	// TODO: Should change to Signing state after this but there may be another
+	// joinsession message incoming.
+
 	selfJoinMsg := types.NewJoinSigningSessionMessage(
 		s.currentPeerID,
 		s.TxHash,
@@ -313,6 +320,10 @@ func (s *SigningSession) UpdateAddCandidateEvent(
 		participantPeerIDs,
 	)
 
+	// Transition state to LeaderWaitingToSign to reject any additional
+	// candidate join messages, as the state transition to signing is asynchronous
+	s.state = NewLeaderWaitingToSign()
+
 	return nil
 }
 
@@ -321,15 +332,15 @@ func (s *SigningSession) UpdateStartSignerEvent(
 ) error {
 	// Both leader and candidate will receive this event
 	switch s.state.(type) {
-	case *LeaderWaitingForCandidatesState:
+	case *LeaderWaitingToSign:
 	case *CandidateWaitingForLeaderState:
 	default:
 		return fmt.Errorf(
 			"unexpected event %T for state: is currently %T, but event applies to %T or %T",
 			ev,
 			s.state,
+			&LeaderWaitingToSign{},
 			&CandidateWaitingForLeaderState{},
-			&LeaderWaitingForCandidatesState{},
 		)
 	}
 
@@ -363,8 +374,11 @@ func (s *SigningSession) UpdateStartSignerEvent(
 		)
 		span.End()
 
-		// TODO: transition to DoneNotParticipantState
-		return fmt.Errorf("current peer is not in the list of participants")
+		// Transition to DoneNotParticipantState
+		s.state = NewDoneNonParticipantState()
+		// Output done with no data
+		s.resultChan <- NewSigningSessionResult(nil, nil)
+		return nil
 	}
 
 	span.AddEvent(

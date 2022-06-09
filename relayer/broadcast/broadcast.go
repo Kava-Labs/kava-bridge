@@ -306,7 +306,7 @@ func (b *Broadcaster) handleIncomingRawMsg(msg *pending_store.MessageWithPeerMet
 		go func() {
 			// Send Payload, NOT the BroadcastMessage, as SendProtoMessage wraps it in a Message.
 			if err := b.broadcastRawMessage(
-				context.Background(),
+				msg.Context,
 				&msg.BroadcastMessage,
 				msg.BroadcastMessage.RecipientPeerIDs,
 			); err != nil {

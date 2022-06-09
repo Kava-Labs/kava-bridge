@@ -6,6 +6,7 @@ import (
 	"math/big"
 
 	logging "github.com/ipfs/go-log/v2"
+	"github.com/libp2p/go-libp2p-core/peer"
 	"go.uber.org/zap"
 
 	tss_common "github.com/binance-chain/tss-lib/common"
@@ -30,9 +31,10 @@ type Signer struct {
 	broadcaster  *broadcast.Broadcaster
 	partyIDStore *mp_tss.PartyIDStore
 	sessions     *session.SessionStore
-	tssParams    *tss.Parameters
 	key          keygen.LocalPartySaveData
-	threshold    int
+
+	partyID   *tss.PartyID
+	threshold int
 
 	logger *zap.SugaredLogger
 }
@@ -41,7 +43,7 @@ type Signer struct {
 func NewSigner(
 	node *p2p.Node,
 	moniker string,
-	tssParams *tss.Parameters,
+	partyID *tss.PartyID,
 	key keygen.LocalPartySaveData,
 	threshold int,
 	broadcasterOptions ...broadcast.BroadcasterOption,
@@ -51,8 +53,8 @@ func NewSigner(
 		broadcaster:  nil,
 		partyIDStore: mp_tss.NewPartyIDStore(),
 		sessions:     session.NewSessionStore(),
-		tssParams:    tssParams,
 		key:          key,
+		partyID:      partyID,
 		threshold:    threshold,
 		logger:       log.Named(node.Host.ID().ShortString()),
 	}
@@ -160,9 +162,15 @@ func (s *Signer) handleLeaderDoneOutputEvent(outputEvent *session.LeaderDoneOutp
 		outputEvent.Participants,
 	)
 
+	params, err := s.GetParams(outputEvent.Participants)
+	if err != nil {
+		s.logger.Error(err)
+		return
+	}
+
 	// Start signer event
 	event := session.NewStartSignerEvent(
-		s.tssParams,              // tss parameters
+		params,                   // tss parameters
 		s.key,                    // tss key part
 		transport,                // broadcast transport
 		outputEvent.Participants, // list of participating peer IDs in session
@@ -225,7 +233,7 @@ func (s *Signer) handleJoinSigningSessionMessage(
 
 	// Add potential participant, once we get enough to join, pick
 	// actual participants.
-	event := session.NewAddCandidateEvent(s.tssParams.PartyID(), *payload)
+	event := session.NewAddCandidateEvent(s.partyID, *payload)
 	if err := sess.Update(event); err != nil {
 		s.logger.Errorf("failed to add peer to signing session: %v", err)
 
@@ -256,9 +264,15 @@ func (s *Signer) handleSigningPartyStartMessage(
 		payload.ParticipatingPeerIDs,
 	)
 
+	params, err := s.GetParams(payload.ParticipatingPeerIDs)
+	if err != nil {
+		s.logger.Error(err)
+		return
+	}
+
 	// Start signer event
 	event := session.NewStartSignerEvent(
-		s.tssParams,                  // tss parameters
+		params,                       // tss parameters
 		s.key,                        // tss key part
 		transport,                    // broadcast transport
 		payload.ParticipatingPeerIDs, // list of participating peer IDs in session
@@ -302,4 +316,15 @@ func (s *Signer) handleSigningPartMessage(
 
 		return
 	}
+}
+
+func (s *Signer) GetParams(participants []peer.ID) (*tss.Parameters, error) {
+	partyIDs, err := s.partyIDStore.GetPartyIDs(participants)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get party IDs: %w", err)
+	}
+
+	params := mp_tss.CreateParams(partyIDs, s.partyID, s.threshold)
+
+	return params, nil
 }
