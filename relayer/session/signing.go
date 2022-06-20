@@ -190,7 +190,7 @@ func (s *SigningSession) Update(event SigningSessionEvent) error {
 func (s *SigningSession) UpdateAddCandidateEvent(
 	ev *AddCandidateEvent,
 ) error {
-	if _, notAccepting := s.state.(*LeaderWaitingToSign); notAccepting {
+	if _, notAccepting := s.state.(*LeaderWaitingToSignState); notAccepting {
 		return fmt.Errorf("leader is no longer accepting candidate joins")
 	}
 
@@ -314,6 +314,8 @@ func (s *SigningSession) UpdateAddCandidateEvent(
 	span.AddEvent("leader done")
 
 	// Output back to signer which will send a StartSignerEvent
+	// TODO: Transition to signing state instead of waiting for StartSignerEvent
+	// to prevent the need of LeaderWaitingToSign fake state
 	s.outputEventsChan <- NewLeaderDoneOutputEvent(
 		s.TxHash,
 		aggSessionID,
@@ -332,14 +334,14 @@ func (s *SigningSession) UpdateStartSignerEvent(
 ) error {
 	// Both leader and candidate will receive this event
 	switch s.state.(type) {
-	case *LeaderWaitingToSign:
+	case *LeaderWaitingToSignState:
 	case *CandidateWaitingForLeaderState:
 	default:
 		return fmt.Errorf(
 			"unexpected event %T for state: is currently %T, but event applies to %T or %T",
 			ev,
 			s.state,
-			&LeaderWaitingToSign{},
+			&LeaderWaitingToSignState{},
 			&CandidateWaitingForLeaderState{},
 		)
 	}

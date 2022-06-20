@@ -51,7 +51,7 @@ type SigningSessionState interface {
 
 var _ SigningSessionState = (*PickingLeaderState)(nil)
 var _ SigningSessionState = (*LeaderWaitingForCandidatesState)(nil)
-var _ SigningSessionState = (*LeaderWaitingToSign)(nil)
+var _ SigningSessionState = (*LeaderWaitingToSignState)(nil)
 var _ SigningSessionState = (*CandidateWaitingForLeaderState)(nil)
 var _ SigningSessionState = (*SigningState)(nil)
 var _ SigningSessionState = (*DoneState)(nil)
@@ -72,7 +72,10 @@ type LeaderWaitingForCandidatesState struct {
 	joinMsgs     types.JoinSessionMessages
 }
 
-type LeaderWaitingToSign struct {
+// LeaderWaitingToSignState is the state when the leader has picked the
+// participants, generated the session ID, and is waiting to start. This is a
+// "fake" state to just prevent the leader from accepting any more candidates.
+type LeaderWaitingToSignState struct {
 }
 
 type CandidateWaitingForLeaderState struct {
@@ -119,8 +122,8 @@ func NewLeaderWaitingForCandidatesState() (*LeaderWaitingForCandidatesState, err
 	}, nil
 }
 
-func NewLeaderWaitingToSign() *LeaderWaitingToSign {
-	return &LeaderWaitingToSign{}
+func NewLeaderWaitingToSign() *LeaderWaitingToSignState {
+	return &LeaderWaitingToSignState{}
 }
 
 func NewCandidateWaitingForLeaderState() (*CandidateWaitingForLeaderState, error) {
@@ -168,7 +171,7 @@ func (s *LeaderWaitingForCandidatesState) State() SigningSessionStateType {
 	return SigningSessionStateType_LeaderWaitingForCandidates
 }
 
-func (s *LeaderWaitingToSign) State() SigningSessionStateType {
+func (s *LeaderWaitingToSignState) State() SigningSessionStateType {
 	return SigningSessionStateType_LeaderWaitingToSign
 }
 
