@@ -56,6 +56,7 @@ func (suite *ConversionHooksTestSuite) SetupTest() {
 			"Invald Token",
 			"IT",
 			18,
+			sdk.NewInt(10_000_000_000_000_000),
 		),
 	)
 	suite.Require().NoError(err)
@@ -116,6 +117,34 @@ func (suite *ConversionHooksTestSuite) TestConvertToCoin() {
 	amount := big.NewInt(100)
 
 	_ = suite.ConvertToCoin(suite.conversionPair.GetAddress(), toKavaAddr, amount)
+}
+
+func (suite *ConversionHooksTestSuite) TestConvertToCoin_BridgeDisabled() {
+	// Disable bridge
+	params := suite.Keeper.GetParams(suite.Ctx)
+	params.BridgeEnabled = false
+	suite.Keeper.SetParams(suite.Ctx, params)
+
+	toKavaAddr := sdk.AccAddress(suite.Key2.PubKey().Address())
+	amount := big.NewInt(100)
+
+	// Manually create tx and send
+	suite.Commit()
+
+	// method is lowercase but event is upper
+	data, err := suite.erc20Abi.Pack(
+		"convertToCoin",
+		common.BytesToAddress(toKavaAddr.Bytes()),
+		amount,
+	)
+	suite.Require().NoError(err)
+
+	res, err := suite.SendTx(suite.conversionPair.GetAddress(), suite.key1Addr, suite.Key1, data)
+	suite.Require().NoError(err)
+
+	suite.Require().True(res.Failed(), "evm tx should fail if bridge is disabled")
+	// Does not contain the BridgeDisabled error
+	suite.Require().Equal(evmtypes.ErrPostTxProcessing.Error(), res.VmError)
 }
 
 func (suite *ConversionHooksTestSuite) TestConvertToCoin_Events() {
@@ -256,4 +285,13 @@ func (suite *ConversionHooksTestSuite) TestConvertToCoin_NotEnabled() {
 	)
 
 	suite.EventsDoNotContain(suite.GetEvents(), types.EventTypeConvertERC20ToCoin)
+}
+
+func (suite *ConversionHooksTestSuite) TestConvertToCoin_NotEnabled_BridgeDisabled() {
+	params := suite.Keeper.GetParams(suite.Ctx)
+	params.BridgeEnabled = false
+	suite.Keeper.SetParams(suite.Ctx, params)
+
+	// Same behavior when bridge is disabled
+	suite.TestConvertToCoin_NotEnabled()
 }

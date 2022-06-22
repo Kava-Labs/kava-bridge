@@ -16,6 +16,12 @@
     - [Params](#bridge.v1beta1.Params)
   
 - [bridge/v1beta1/query.proto](#bridge/v1beta1/query.proto)
+    - [QueryConversionPairRequest](#bridge.v1beta1.QueryConversionPairRequest)
+    - [QueryConversionPairResponse](#bridge.v1beta1.QueryConversionPairResponse)
+    - [QueryConversionPairsRequest](#bridge.v1beta1.QueryConversionPairsRequest)
+    - [QueryConversionPairsResponse](#bridge.v1beta1.QueryConversionPairsResponse)
+    - [QueryERC20BridgePairRequest](#bridge.v1beta1.QueryERC20BridgePairRequest)
+    - [QueryERC20BridgePairResponse](#bridge.v1beta1.QueryERC20BridgePairResponse)
     - [QueryERC20BridgePairsRequest](#bridge.v1beta1.QueryERC20BridgePairsRequest)
     - [QueryERC20BridgePairsResponse](#bridge.v1beta1.QueryERC20BridgePairsResponse)
     - [QueryParamsRequest](#bridge.v1beta1.QueryParamsRequest)
@@ -30,6 +36,20 @@
     - [MsgConvertCoinToERC20Response](#bridge.v1beta1.MsgConvertCoinToERC20Response)
   
     - [Msg](#bridge.v1beta1.Msg)
+  
+- [relayer/broadcast/v1beta1/broadcast_message.proto](#relayer/broadcast/v1beta1/broadcast_message.proto)
+    - [BroadcastMessage](#relayer.v1beta1.BroadcastMessage)
+    - [HelloRequest](#relayer.v1beta1.HelloRequest)
+  
+- [relayer/tss/v1beta1/join_session.proto](#relayer/tss/v1beta1/join_session.proto)
+    - [JoinKeygenSessionMessage](#tss.v1beta1.JoinKeygenSessionMessage)
+    - [JoinReSharingSessionMessage](#tss.v1beta1.JoinReSharingSessionMessage)
+    - [JoinSessionMessage](#tss.v1beta1.JoinSessionMessage)
+    - [JoinSigningSessionMessage](#tss.v1beta1.JoinSigningSessionMessage)
+  
+- [relayer/tss/v1beta1/signing.proto](#relayer/tss/v1beta1/signing.proto)
+    - [SigningPartMessage](#tss.v1beta1.SigningPartMessage)
+    - [SigningPartyStartMessage](#tss.v1beta1.SigningPartyStartMessage)
   
 - [Scalar Value Types](#scalar-value-types)
 
@@ -119,6 +139,7 @@ EnabledERC20Token defines an external ERC20 that is allowed to be bridged to Kav
 | `name` | [string](#string) |  | Name of the token. |
 | `symbol` | [string](#string) |  | Symbol of the ERC20 token, usually a shorter version of the name. |
 | `decimals` | [uint32](#uint32) |  | Number of decimals the ERC20 uses to get its user representation. The max value is an unsigned 8 bit integer, but is an uint32 as the smallest protobuf integer type. |
+| `minimum_withdraw_amount` | [string](#string) |  | Minimum amount of the token that can be bridged back to Ethereum to prevent outgoing transfers that are much smaller than Ethereum gas costs. |
 
 
 
@@ -150,6 +171,7 @@ Params defines the bridge module params
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
+| `bridge_enabled` | [bool](#bool) |  | Flag for enabling incoming/outgoing bridge transactions AND Kava ERC20/sdk.Coin conversions. |
 | `enabled_erc20_tokens` | [EnabledERC20Token](#bridge.v1beta1.EnabledERC20Token) | repeated | List of ERC20Tokens that are allowed to be bridged to Kava |
 | `relayer` | [bytes](#bytes) |  | Permissioned relayer address that is allowed to submit bridge messages |
 | `enabled_conversion_pairs` | [ConversionPair](#bridge.v1beta1.ConversionPair) | repeated | enabled_conversion_pairs defines the list of conversion pairs allowed to be converted between Kava ERC20 and sdk.Coin |
@@ -175,6 +197,91 @@ Params defines the bridge module params
 
 
 
+<a name="bridge.v1beta1.QueryConversionPairRequest"></a>
+
+### QueryConversionPairRequest
+QueryConversionPairRequest defines the request type for querying a x/bridge conversion pair.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `address_or_denom` | [string](#string) |  | AddressOrDenom defines the ERC20 address or the sdk.Coin denom of the pair to search for. |
+
+
+
+
+
+
+<a name="bridge.v1beta1.QueryConversionPairResponse"></a>
+
+### QueryConversionPairResponse
+QueryConversionPairsResponse defines the response type for querying a x/bridge conversion pair.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `conversion_pair` | [ConversionPair](#bridge.v1beta1.ConversionPair) |  | ConversionPair defines the queried conversion pairs. |
+
+
+
+
+
+
+<a name="bridge.v1beta1.QueryConversionPairsRequest"></a>
+
+### QueryConversionPairsRequest
+QueryConversionPairsRequest defines the request type for querying x/bridge conversion pairs.
+
+
+
+
+
+
+<a name="bridge.v1beta1.QueryConversionPairsResponse"></a>
+
+### QueryConversionPairsResponse
+QueryConversionPairsResponse defines the response type for querying x/bridge conversion pairs.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `conversion_pairs` | [ConversionPair](#bridge.v1beta1.ConversionPair) | repeated | ConversionPairs defines the queried conversion pairs. |
+
+
+
+
+
+
+<a name="bridge.v1beta1.QueryERC20BridgePairRequest"></a>
+
+### QueryERC20BridgePairRequest
+QueryERC20BridgePairRequest defines the request type for querying x/bridge ERC20 pair.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `address` | [string](#string) |  | Address defines the internal or external address to query for. This is a string and not bytes as bytes in the query must be base64 encoded which is not ideal for addresses where we prefer hex encoding. |
+
+
+
+
+
+
+<a name="bridge.v1beta1.QueryERC20BridgePairResponse"></a>
+
+### QueryERC20BridgePairResponse
+QueryERC20BridgePairRequest defines the response type for querying x/bridge ERC20 pair.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `erc20_bridge_pair` | [ERC20BridgePair](#bridge.v1beta1.ERC20BridgePair) |  | ERC20BridgePair defines the queried bridged erc20 pair. |
+
+
+
+
+
+
 <a name="bridge.v1beta1.QueryERC20BridgePairsRequest"></a>
 
 ### QueryERC20BridgePairsRequest
@@ -193,7 +300,7 @@ QueryERC20BridgePairsRequest defines the response type for querying x/bridge ERC
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `erc20_bridge_pairs` | [ERC20BridgePair](#bridge.v1beta1.ERC20BridgePair) | repeated | erc20_bridge_pairs defines all of the currently bridged erc20 tokens. |
+| `erc20_bridge_pairs` | [ERC20BridgePair](#bridge.v1beta1.ERC20BridgePair) | repeated | ERC20BridgePairs defines all of the currently bridged erc20 tokens. |
 
 
 
@@ -239,7 +346,10 @@ Query defines the gRPC querier service for bridge module
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
 | `Params` | [QueryParamsRequest](#bridge.v1beta1.QueryParamsRequest) | [QueryParamsResponse](#bridge.v1beta1.QueryParamsResponse) | Params queries all parameters of the bridge module. | GET|/kava/bridge/v1beta1/params|
-| `ERC20BridgePairs` | [QueryERC20BridgePairsRequest](#bridge.v1beta1.QueryERC20BridgePairsRequest) | [QueryERC20BridgePairsResponse](#bridge.v1beta1.QueryERC20BridgePairsResponse) | ERC20BridgePairs queries the bridge address pairs | GET|/kava/bridge/v1beta1/bridge-erc20-pairs|
+| `ERC20BridgePairs` | [QueryERC20BridgePairsRequest](#bridge.v1beta1.QueryERC20BridgePairsRequest) | [QueryERC20BridgePairsResponse](#bridge.v1beta1.QueryERC20BridgePairsResponse) | ERC20BridgePairs queries the bridge address pairs. | GET|/kava/bridge/v1beta1/bridge-erc20-pairs|
+| `ERC20BridgePair` | [QueryERC20BridgePairRequest](#bridge.v1beta1.QueryERC20BridgePairRequest) | [QueryERC20BridgePairResponse](#bridge.v1beta1.QueryERC20BridgePairResponse) | ERC20BridgePair queries a bridge address pair with either internal or external address. | GET|/kava/bridge/v1beta1/bridge-erc20-pairs/{address}|
+| `ConversionPairs` | [QueryConversionPairsRequest](#bridge.v1beta1.QueryConversionPairsRequest) | [QueryConversionPairsResponse](#bridge.v1beta1.QueryConversionPairsResponse) | ConversionPairs queries the ERC20/sdk.Coin conversion pairs. | GET|/kava/bridge/v1beta1/conversion-pairs|
+| `ConversionPair` | [QueryConversionPairRequest](#bridge.v1beta1.QueryConversionPairRequest) | [QueryConversionPairResponse](#bridge.v1beta1.QueryConversionPairResponse) | ConversionPair queries a conversion pair with either the ERC20 address or sdk.Coin denom. | GET|/kava/bridge/v1beta1/conversion-pairs/{address_or_denom}|
 
  <!-- end services -->
 
@@ -325,6 +435,187 @@ Msg defines the bridge Msg service.
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
 | `BridgeEthereumToKava` | [MsgBridgeEthereumToKava](#bridge.v1beta1.MsgBridgeEthereumToKava) | [MsgBridgeEthereumToKavaResponse](#bridge.v1beta1.MsgBridgeEthereumToKavaResponse) | BridgeEthereumToKava defines a method for bridging ERC20 tokens from Ethereum to Kava. | |
 | `ConvertCoinToERC20` | [MsgConvertCoinToERC20](#bridge.v1beta1.MsgConvertCoinToERC20) | [MsgConvertCoinToERC20Response](#bridge.v1beta1.MsgConvertCoinToERC20Response) | ConvertCoinToERC20 defines a method for converting sdk.Coin to Kava ERC20. | |
+
+ <!-- end services -->
+
+
+
+<a name="relayer/broadcast/v1beta1/broadcast_message.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## relayer/broadcast/v1beta1/broadcast_message.proto
+
+
+
+<a name="relayer.v1beta1.BroadcastMessage"></a>
+
+### BroadcastMessage
+BroadcastMessage is used between peers to wrap messages for each protocol
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `id` | [string](#string) |  | Unique ID of this message. |
+| `recipient_peer_ids` | [string](#string) | repeated | Selected recipients of the message, to partially restrict the broadcast to a subset a peers. |
+| `payload` | [google.protobuf.Any](#google.protobuf.Any) |  | Customtype workaround for not having to use a separate protocgen.sh script |
+| `created` | [google.protobuf.Timestamp](#google.protobuf.Timestamp) |  | Timestamp when the message was broadcasted. |
+| `ttl_seconds` | [uint64](#uint64) |  | Seconds after created time until the message expires. This requires roughly synced times between peers |
+
+
+
+
+
+
+<a name="relayer.v1beta1.HelloRequest"></a>
+
+### HelloRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `peer_id` | [string](#string) |  | Peer ID that sent this message, set by sender and validated by receiver. |
+| `node_moniker` | [string](#string) |  |  |
+
+
+
+
+
+ <!-- end messages -->
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
+
+ <!-- end services -->
+
+
+
+<a name="relayer/tss/v1beta1/join_session.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## relayer/tss/v1beta1/join_session.proto
+
+
+
+<a name="tss.v1beta1.JoinKeygenSessionMessage"></a>
+
+### JoinKeygenSessionMessage
+JoinKeygenSessionMessage is used to create and join a new keygen session.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `keygen_session_id` | [bytes](#bytes) |  | Shared session ID, same for all peers. |
+
+
+
+
+
+
+<a name="tss.v1beta1.JoinReSharingSessionMessage"></a>
+
+### JoinReSharingSessionMessage
+JoinReSharingSessionMessage is used to create and join a new resharing session.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `resharing_session_id` | [bytes](#bytes) |  | Shared session ID, same for all peers. |
+
+
+
+
+
+
+<a name="tss.v1beta1.JoinSessionMessage"></a>
+
+### JoinSessionMessage
+JoinSessionMessage is used to create a new signing session.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `peer_id` | [string](#string) |  | Peer ID that sent this message, set by sender and validated by receiver. |
+| `join_signing_session_message` | [JoinSigningSessionMessage](#tss.v1beta1.JoinSigningSessionMessage) |  |  |
+| `join_keygen_session_message` | [JoinKeygenSessionMessage](#tss.v1beta1.JoinKeygenSessionMessage) |  |  |
+| `join_resharing_session_message` | [JoinReSharingSessionMessage](#tss.v1beta1.JoinReSharingSessionMessage) |  |  |
+
+
+
+
+
+
+<a name="tss.v1beta1.JoinSigningSessionMessage"></a>
+
+### JoinSigningSessionMessage
+JoinSigningSessionMessage is used to create and join a new signing session.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `tx_hash` | [bytes](#bytes) |  | Hash of the transaction that initiated the signing session. |
+| `peer_session_id_part` | [bytes](#bytes) |  | Random bytes different per peer to create an aggregated party session ID. |
+
+
+
+
+
+ <!-- end messages -->
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
+
+ <!-- end services -->
+
+
+
+<a name="relayer/tss/v1beta1/signing.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## relayer/tss/v1beta1/signing.proto
+
+
+
+<a name="tss.v1beta1.SigningPartMessage"></a>
+
+### SigningPartMessage
+SigningPartMessage is an outgoing message from lib-tss.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `session_id` | [bytes](#bytes) |  | Signing party session ID. |
+| `data` | [bytes](#bytes) |  | Bytes from lib-tss to send. |
+| `is_broadcast` | [bool](#bool) |  | If this message is broadcasted to all session peers. |
+
+
+
+
+
+
+<a name="tss.v1beta1.SigningPartyStartMessage"></a>
+
+### SigningPartyStartMessage
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `tx_hash` | [bytes](#bytes) |  | Hash of the transaction that initiated the signing session. |
+| `session_id` | [bytes](#bytes) |  | Aggregated party session ID. |
+| `participating_peer_ids` | [string](#string) | repeated | The peer IDs of the parties involved in the signing session. |
+
+
+
+
+
+ <!-- end messages -->
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
 
  <!-- end services -->
 

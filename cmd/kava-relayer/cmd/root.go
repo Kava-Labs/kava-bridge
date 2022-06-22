@@ -5,12 +5,18 @@ import (
 	"path"
 	"strings"
 
+	logging "github.com/ipfs/go-log/v2"
+
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+
+	"github.com/kava-labs/kava-bridge/cmd/kava-relayer/cmd/key"
+	"github.com/kava-labs/kava-bridge/cmd/kava-relayer/cmd/network"
 )
 
 var (
-	appDir string
+	appDir   string
+	logLevel string
 )
 
 const (
@@ -37,8 +43,11 @@ func NewRootCmd() (*cobra.Command, error) {
 
 	// TODO: allow configuration of config and data separately
 	rootCmd.PersistentFlags().StringVar(&appDir, "home", defaultAppDir, "Directory for config and data")
+	rootCmd.PersistentFlags().StringVar(&logLevel, "log_level", "info", "The logging level (trace|debug|info|warn|error|fatal|panic)")
 
 	rootCmd.AddCommand(newStartCmd())
+	rootCmd.AddCommand(network.GetNetworkCmd())
+	rootCmd.AddCommand(key.GetKeyCmd())
 
 	return rootCmd, nil
 }
@@ -56,4 +65,11 @@ func initConfig() {
 			cobra.CheckErr(err)
 		}
 	}
+
+	// Set the default log level to info, default level of go-log is debug
+	// TODO: Does not support log level per subsystem such as with `GOLOG_LOG_LEVEL`
+	logLevel, err := logging.LevelFromString(logLevel)
+	cobra.CheckErr(err)
+
+	logging.SetAllLoggers(logLevel)
 }

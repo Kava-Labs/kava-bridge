@@ -44,6 +44,12 @@ import (
 	"github.com/kava-labs/kava-bridge/x/bridge/types"
 )
 
+var (
+	MinWETHWithdrawAmount  = sdk.NewInt(10_000_000_000_000_000)
+	MinWKavaWithdrawAmount = sdk.NewInt(2_000_000)
+	MinUSDCWithdrawAmount  = sdk.NewInt(10_000_000)
+)
+
 type Suite struct {
 	suite.Suite
 
@@ -104,24 +110,28 @@ func (suite *Suite) SetupTest() {
 
 	bridgeGs := types.NewGenesisState(
 		types.NewParams(
+			true,
 			types.EnabledERC20Tokens{
 				types.NewEnabledERC20Token(
 					MustNewExternalEVMAddressFromString("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
 					"Wrapped Ether",
 					"WETH",
 					18,
+					MinWETHWithdrawAmount,
 				),
 				types.NewEnabledERC20Token(
 					MustNewExternalEVMAddressFromString("0x000000000000000000000000000000000000000A"),
 					"Wrapped Kava",
 					"WKAVA",
 					6,
+					MinWKavaWithdrawAmount,
 				),
 				types.NewEnabledERC20Token(
 					MustNewExternalEVMAddressFromString("0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"),
 					"USD Coin",
 					"USDC",
 					6,
+					MinUSDCWithdrawAmount,
 				),
 			},
 			suite.RelayerAddress,
@@ -234,6 +244,7 @@ func (suite *Suite) DeployERC20() types.InternalEVMAddress {
 		"Wrapped ETH",
 		"WETH",
 		18,
+		MinWETHWithdrawAmount,
 	)
 
 	contractAddr, err := suite.App.BridgeKeeper.DeployMintableERC20Contract(suite.Ctx, token)

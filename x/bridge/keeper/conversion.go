@@ -38,6 +38,11 @@ func (k Keeper) ConvertCoinToERC20(
 	receiverAccount types.InternalEVMAddress,
 	coin sdk.Coin,
 ) error {
+	params := k.GetParams(ctx)
+	if !params.BridgeEnabled {
+		return types.ErrBridgeDisabled
+	}
+
 	pair, err := k.GetEnabledConversionPairFromDenom(ctx, coin.Denom)
 	if err != nil {
 		// Coin not in enabled conversion pair list

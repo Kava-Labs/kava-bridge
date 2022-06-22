@@ -123,6 +123,88 @@ func (suite *MsgServerSuite) TestBridgeEthereumToKava() {
 	}
 }
 
+func (suite *MsgServerSuite) TestBridgeEthereumToKava_NilRelayer() {
+	// Set relayer to nil
+	params := suite.Keeper.GetParams(suite.Ctx)
+	params.Relayer = nil
+	suite.Keeper.SetParams(suite.Ctx, params)
+
+	msg := types.NewMsgBridgeEthereumToKava(
+		suite.RelayerAddress.String(),
+		"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+		sdk.NewInt(1234),
+		"0x4A59E9DDB116A04C5D40082D67C738D5C56DF124",
+		sdk.NewInt(1),
+	)
+
+	_, err := suite.msgServer.BridgeEthereumToKava(sdk.WrapSDKContext(suite.Ctx), &msg)
+
+	suite.Require().Error(err)
+	suite.Require().ErrorIs(err, types.ErrNoRelayer)
+}
+
+func (suite *MsgServerSuite) TestBridgeEthereumToKava_EmptyRelayer() {
+	// Set relayer to empty address
+	params := suite.Keeper.GetParams(suite.Ctx)
+	params.Relayer = sdk.AccAddress{}
+	suite.Keeper.SetParams(suite.Ctx, params)
+
+	msg := types.NewMsgBridgeEthereumToKava(
+		suite.RelayerAddress.String(),
+		"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+		sdk.NewInt(1234),
+		"0x4A59E9DDB116A04C5D40082D67C738D5C56DF124",
+		sdk.NewInt(1),
+	)
+
+	_, err := suite.msgServer.BridgeEthereumToKava(sdk.WrapSDKContext(suite.Ctx), &msg)
+
+	suite.Require().Error(err)
+	suite.Require().ErrorIs(err, types.ErrNoRelayer)
+}
+
+func (suite *MsgServerSuite) TestBridgeEthereumToKava_BridgeDisabled() {
+	// Disable bridge
+	params := suite.Keeper.GetParams(suite.Ctx)
+	params.BridgeEnabled = false
+	suite.Keeper.SetParams(suite.Ctx, params)
+
+	tests := []struct {
+		name string
+		msg  types.MsgBridgeEthereumToKava
+	}{
+		{
+			"authorized signer",
+			types.NewMsgBridgeEthereumToKava(
+				suite.RelayerAddress.String(),
+				"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+				sdk.NewInt(1234),
+				"0x4A59E9DDB116A04C5D40082D67C738D5C56DF124",
+				sdk.NewInt(1),
+			),
+		},
+		{
+			"unauthorized signer",
+			types.NewMsgBridgeEthereumToKava(
+				sdk.AccAddress(suite.Key1.PubKey().Address()).String(),
+				"0x000000000000000000000000000000000000000A",
+				sdk.NewInt(10),
+				"0x0000000000000000000000000000000000000001",
+				sdk.NewInt(0),
+			),
+		},
+	}
+
+	for _, tc := range tests {
+		suite.Run(tc.name, func() {
+			_, err := suite.msgServer.BridgeEthereumToKava(sdk.WrapSDKContext(suite.Ctx), &tc.msg)
+
+			suite.Require().Error(err)
+			suite.Require().ErrorIs(err, types.ErrBridgeDisabled)
+		})
+	}
+}
+
 func (suite *MsgServerSuite) TestMint() {
 	extContractAddr := "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"
 
@@ -301,4 +383,45 @@ func (suite *MsgServerSuite) TestConvertCoinToERC20() {
 			}
 		})
 	}
+}
+
+func (suite *MsgServerSuite) TestConvertCoinToERC20_BridgeDisabled() {
+	// Disable bridge
+	params := suite.Keeper.GetParams(suite.Ctx)
+	params.BridgeEnabled = false
+	suite.Keeper.SetParams(suite.Ctx, params)
+
+	invoker, err := sdk.AccAddressFromBech32("kava123fxg0l602etulhhcdm0vt7l57qya5wjcrwhzz")
+	suite.Require().NoError(err)
+
+	err = suite.App.FundAccount(suite.Ctx, invoker, sdk.NewCoins(sdk.NewCoin("erc20/usdc", sdk.NewInt(10000))))
+	suite.Require().NoError(err)
+
+	contractAddr := suite.DeployERC20()
+
+	pair := types.NewConversionPair(
+		contractAddr,
+		"erc20/usdc",
+	)
+
+	// Module account should have starting balance
+	pairStartingBal := big.NewInt(10000)
+	err = suite.App.BridgeKeeper.MintERC20(
+		suite.Ctx,
+		pair.GetAddress(), // contractAddr
+		types.NewInternalEVMAddress(types.ModuleEVMAddress), //receiver
+		pairStartingBal,
+	)
+	suite.Require().NoError(err)
+
+	msg := types.NewMsgConvertCoinToERC20(
+		invoker.String(),
+		"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+		sdk.NewCoin("erc20/usdc", sdk.NewInt(1234)),
+	)
+
+	_, err = suite.msgServer.ConvertCoinToERC20(sdk.WrapSDKContext(suite.Ctx), &msg)
+
+	suite.Require().Error(err)
+	suite.Require().ErrorIs(err, types.ErrBridgeDisabled)
 }

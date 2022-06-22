@@ -1,6 +1,7 @@
 syntax = "proto3";
 package bridge.v1beta1;
 
+import "bridge/v1beta1/conversion_pair.proto";
 import "bridge/v1beta1/erc20.proto";
 import "bridge/v1beta1/genesis.proto";
 import "gogoproto/gogo.proto";
@@ -17,9 +18,26 @@ service Query {
     option (google.api.http).get = "/kava/bridge/v1beta1/params";
   }
 
-  // ERC20BridgePairs queries the bridge address pairs
+  // ERC20BridgePairs queries the bridge address pairs.
   rpc ERC20BridgePairs(QueryERC20BridgePairsRequest) returns (QueryERC20BridgePairsResponse) {
     option (google.api.http).get = "/kava/bridge/v1beta1/bridge-erc20-pairs";
+  }
+
+  // ERC20BridgePair queries a bridge address pair with either internal or
+  // external address.
+  rpc ERC20BridgePair(QueryERC20BridgePairRequest) returns (QueryERC20BridgePairResponse) {
+    option (google.api.http).get = "/kava/bridge/v1beta1/bridge-erc20-pairs/{address}";
+  }
+
+  // ConversionPairs queries the ERC20/sdk.Coin conversion pairs.
+  rpc ConversionPairs(QueryConversionPairsRequest) returns (QueryConversionPairsResponse) {
+    option (google.api.http).get = "/kava/bridge/v1beta1/conversion-pairs";
+  }
+
+  // ConversionPair queries a conversion pair with either the ERC20 address or
+  // sdk.Coin denom.
+  rpc ConversionPair(QueryConversionPairRequest) returns (QueryConversionPairResponse) {
+    option (google.api.http).get = "/kava/bridge/v1beta1/conversion-pairs/{address_or_denom}";
   }
 }
 
@@ -36,10 +54,47 @@ message QueryERC20BridgePairsRequest {}
 
 // QueryERC20BridgePairsRequest defines the response type for querying x/bridge ERC20 pairs.
 message QueryERC20BridgePairsResponse {
-  // erc20_bridge_pairs defines all of the currently bridged erc20 tokens.
-  repeated ERC20BridgePair erc20_bridge_pairs = 2 [
+  // ERC20BridgePairs defines all of the currently bridged erc20 tokens.
+  repeated ERC20BridgePair erc20_bridge_pairs = 1 [
     (gogoproto.nullable)     = false,
     (gogoproto.castrepeated) = "ERC20BridgePairs",
     (gogoproto.customname)   = "ERC20BridgePairs"
   ];
+}
+
+// QueryERC20BridgePairRequest defines the request type for querying x/bridge ERC20 pair.
+message QueryERC20BridgePairRequest {
+  // Address defines the internal or external address to query for. This is a
+  // string and not bytes as bytes in the query must be base64 encoded which is
+  // not ideal for addresses where we prefer hex encoding.
+  string address = 1;
+}
+
+// QueryERC20BridgePairRequest defines the response type for querying x/bridge ERC20 pair.
+message QueryERC20BridgePairResponse {
+  // ERC20BridgePair defines the queried bridged erc20 pair.
+  ERC20BridgePair erc20_bridge_pair = 1 [(gogoproto.nullable) = false, (gogoproto.customname) = "ERC20BridgePair"];
+}
+
+// QueryConversionPairsRequest defines the request type for querying x/bridge conversion pairs.
+message QueryConversionPairsRequest {}
+
+// QueryConversionPairsResponse defines the response type for querying x/bridge conversion pairs.
+message QueryConversionPairsResponse {
+  // ConversionPairs defines the queried conversion pairs.
+  repeated ConversionPair conversion_pairs = 1
+      [(gogoproto.nullable) = false, (gogoproto.castrepeated) = "ConversionPairs"];
+}
+
+// QueryConversionPairRequest defines the request type for querying a x/bridge conversion pair.
+message QueryConversionPairRequest {
+  // AddressOrDenom defines the ERC20 address or the sdk.Coin denom of the pair
+  // to search for.
+  string address_or_denom = 1;
+}
+
+// QueryConversionPairsResponse defines the response type for querying a x/bridge conversion pair.
+message QueryConversionPairResponse {
+  // ConversionPair defines the queried conversion pairs.
+  ConversionPair conversion_pair = 1 [(gogoproto.nullable) = false];
 }

@@ -1,7 +1,6 @@
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-License-Identifier: GPL-3.0-or-later
 
 // Derived from https://github.com/gnosis/canonical-weth/blob/master/contracts/WETH9.sol
-// NOT INTENDED FOR USE IN PRODUCTION
 
 // Copyright (C) 2015, 2016, 2017 Dapphub
 

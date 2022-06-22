@@ -42,6 +42,7 @@ jobs:
   relayer:
     name: Test Relayer
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-go@v2
@@ -56,13 +57,14 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-
       - run: make build
-      - run: make vet
       - run: make test
   relayer-lint:
     name: Lint Relayer
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      # Re-enable when merged: https://github.com/bnb-chain/tss-lib/pull/167
+      # - run: make vet
       - uses: golangci/golangci-lint-action@v2
         with:
           args: --timeout 5m

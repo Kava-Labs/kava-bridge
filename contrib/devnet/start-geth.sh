@@ -18,10 +18,13 @@ geth --datadir $DATADIR \
      --mine \
      --allow-insecure-unlock \
      --http \
+     --http.addr 0.0.0.0 \
      --http.corsdomain '*' \
      --http.port 8555 \
      --http.api eth,net,rpc,web3,debug \
-     --ws.port 8556 &
+     --ws.addr 0.0.0.0 \
+     --ws.port 8556 \
+     --ws.origins '*' &
 
 # Deploy contracts after geth started
 sleep 5 \
