@@ -94,7 +94,10 @@ func (suite *BroadcasterTestSuite) TearDownTest() {
 	}
 }
 
-func (suite *BroadcasterTestSuite) CreateHostBroadcasters(n int, options ...broadcast.BroadcasterOption) {
+func (suite *BroadcasterTestSuite) CreateHostBroadcasters(
+	n int,
+	options ...broadcast.BroadcasterOption,
+) {
 	suite.Hosts = testutil.CreateHosts(suite.T(), suite.Ctx, n)
 
 	suite.CreateBroadcasterWithHosts(suite.Hosts, options...)
@@ -210,37 +213,37 @@ func (suite *BroadcasterTestSuite) TestBroadcast_Responses() {
 			"all including broadcaster",
 			allPeerIDs,
 			[]int{4, 4, 4, 4, 4},
-			[]int{1, 1, 1, 1, 1},
+			[]int{0, 1, 1, 1, 1},
 		},
 		{
 			"all excluding broadcaster",
 			allPeerIDs[1:],
 			[]int{4, 4, 4, 4, 4},
-			[]int{1, 1, 1, 1, 1},
+			[]int{0, 1, 1, 1, 1},
 		},
 		{
 			"partial including broadcaster",
 			allPeerIDs[:4],
 			[]int{3, 3, 3, 3, 0},
-			[]int{1, 1, 1, 1, 0},
+			[]int{0, 1, 1, 1, 0},
 		},
 		{
 			"partial excluding broadcaster",
 			allPeerIDs[1:4],
 			[]int{3, 3, 3, 3, 0},
-			[]int{1, 1, 1, 1, 0},
+			[]int{0, 1, 1, 1, 0},
 		},
 		{
 			"single including broadcaster",
 			allPeerIDs[:2],
 			[]int{1, 1, 0, 0, 0},
-			[]int{1, 1, 0, 0, 0},
+			[]int{0, 1, 0, 0, 0},
 		},
 		{
 			"single excluding broadcaster",
 			allPeerIDs[1:2],
 			[]int{1, 1, 0, 0, 0},
-			[]int{1, 1, 0, 0, 0},
+			[]int{0, 1, 0, 0, 0},
 		},
 	}
 
