@@ -8,6 +8,12 @@ other words, `t+1` out of `n` peers are required to sign.
 No more than `t+1` peers should participate in a signing party for optimal
 usage.
 
+## Session State
+
+<p align="center">
+  <img src="./images/signing_session.drawio.png">
+</p>
+
 ## Transaction Monitoring
 
 Relayer monitors transactions on both Ethereum and Kava blockchains for bridge
@@ -16,7 +22,8 @@ incrementing sequence used to determine the transaction order.
 
 ## Leader
 
-A leader is used for determining which peers participate in a signing party.
+A leader is used for determining which peers participate in a signing party and
+coordinating retries when peers may go offline.
 
 When a bridge transaction is found on either Ethereum or Kava, the transaction
 hash is used to deterministically pick a random leader.
@@ -70,6 +77,39 @@ unresponsive, signing rounds have a timeout in the reliable broadcast
 communication layer. When this timeout is reached without responses from all
 party peers, the leader will broadcast a message to all participating peers to
 stop the party and create a new one excluding the unresponsive node.
+
+## Party Timeouts
+
+Each signing session has a duration that it must finish by or it will be restarted
+with the peers that are pending (`party.WaitingFor()`). This can be a relatively
+short duration like 20 seconds.
+
+When a signing session stalls, it is due to one or more peers not sending their
+party messages to others. When the timeout is reached, each party sends the
+leader the other parties they are waiting on. The leader then can figure out
+which peer is not responding.
+
+### Cases
+
+1. Peer that gone offline.
+   1. If reported peer doesn't send the leader it's WaitingFor list, then the
+      signing session is restarted with the peer excluded.
+2. Malicious peer falsely reporting an unresponsive peer.
+    * If reported peer responds to the leader then its a fake report ? idk
+    * ???
+
+
+## Signing Errors
+
+lib-tss outputs a list of culprits when a signing has an error. This an be 
+reported to the leader to restart the session without the culprits.
+
+### Cases
+
+1. Peer that fails
+   * Session restarts and culprit excluded
+2. Malicious peer falsely reports culprit
+   * ???? Potential DOS if malicious peer keeps reporting culprits.
 
 ## Output
 

@@ -9,3 +9,5 @@ kava-relayer
 !kava-relayer/
 
 contrib/devnet/geth/data/geth
+
+.DS_Store
