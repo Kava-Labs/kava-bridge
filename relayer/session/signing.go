@@ -316,6 +316,11 @@ func (s *SigningSession) UpdateAddCandidateEvent(
 	// Output back to signer which will send a StartSignerEvent
 	// TODO: Transition to signing state instead of waiting for StartSignerEvent
 	// to prevent the need of LeaderWaitingToSign fake state
+
+	// Currently these are passed from the parent Signer after LeaderDoneOutputEvent
+	// is emitted, but we want to remove the need for emitting this event.
+	// - signing params
+	// - transport
 	s.outputEventsChan <- NewLeaderDoneOutputEvent(
 		s.TxHash,
 		aggSessionID,
