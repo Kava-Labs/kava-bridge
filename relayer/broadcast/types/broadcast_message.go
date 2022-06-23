@@ -34,9 +34,6 @@ func NewBroadcastMessage(
 		return BroadcastMessage{}, err
 	}
 
-	allPeerIDs := append(recipientsPeerIDs, hostID)
-	allPeerIDs = dedupPeerIDs(allPeerIDs)
-
 	// Add trace context to the message.
 	traceCtx := NewTraceContext()
 	traceCtx.Inject(ctx)
@@ -46,7 +43,7 @@ func NewBroadcastMessage(
 		From:             hostID,
 		IsBroadcaster:    true,
 		Payload:          *anyPayload,
-		RecipientPeerIDs: allPeerIDs,
+		RecipientPeerIDs: recipientsPeerIDs,
 		Created:          time.Now().UTC(),
 		TTLSeconds:       TTLSeconds,
 		TraceContext:     traceCtx,
@@ -95,6 +92,14 @@ func (msg *BroadcastMessage) Validate() error {
 	}
 
 	return nil
+}
+
+func (msg *BroadcastMessage) GetAllPeersIDs() []peer.ID {
+	recipientsAndSender := make([]peer.ID, len(msg.RecipientPeerIDs)+1)
+	copy(recipientsAndSender, msg.RecipientPeerIDs)
+	recipientsAndSender[len(msg.RecipientPeerIDs)] = msg.From
+
+	return dedupPeerIDs(recipientsAndSender)
 }
 
 // UnpackPayload unpacks the broadcast message payload into a PeerMessage.

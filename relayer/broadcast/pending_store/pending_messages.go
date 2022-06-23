@@ -88,6 +88,8 @@ func (pm *PendingMessagesStore) DeleteGroup(msgID string) error {
 		return ErrGroupNotFound
 	}
 
+	// TODO: This should not actually delete messages, but rather mark them as
+	// invalid or complete so that they will not be re-broadcasted.
 	delete(pm.pendingMessages, msgID)
 
 	return nil

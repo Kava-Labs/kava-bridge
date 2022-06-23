@@ -288,6 +288,9 @@ func (b *Broadcaster) handleIncomingRawMsg(msg *pending_store.MessageWithPeerMet
 	// testing purposes.
 	go b.handler.RawMessage(*msg)
 
+	// Create recipients list including the sender.
+	recipientsAndSender := msg.BroadcastMessage.GetAllPeersIDs()
+
 	// Create new group if it doesn't exist already.
 	created := b.pendingMessagesStore.TryNewGroup(msg.BroadcastMessage.ID)
 	// First time we see this message, re-broadcast
@@ -308,7 +311,7 @@ func (b *Broadcaster) handleIncomingRawMsg(msg *pending_store.MessageWithPeerMet
 			if err := b.broadcastRawMessage(
 				msg.Context,
 				&msg.BroadcastMessage,
-				msg.BroadcastMessage.RecipientPeerIDs,
+				recipientsAndSender,
 			); err != nil {
 				b.log.DPanicf(
 					"error rebroadcasting message %s: %s",
@@ -338,7 +341,7 @@ func (b *Broadcaster) handleIncomingRawMsg(msg *pending_store.MessageWithPeerMet
 	if msgData, completed := b.pendingMessagesStore.GroupIsCompleted(
 		msg.BroadcastMessage.ID,
 		b.host.ID(),
-		msg.BroadcastMessage.RecipientPeerIDs,
+		recipientsAndSender,
 	); completed {
 		// All peers have responded with the same message, send it to the valid
 		// message channel to be handled.
