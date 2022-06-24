@@ -170,7 +170,7 @@ Similar to how only ERC20 tokens that originate from Ethereum can be bridged
 from Kava to Ethereum, converting cosmos coins to Kava ERC20 can only be done
 with coins that originated from the Kava EVM. This means assets that are native
 Cosmos coins such as SWP, HARD, native KAVA, IBC tokens, etc. **cannot** be
-converted this way.
+converted this way. New token pairs must be added to the [params](https://github.com/Kava-Labs/kava-bridge/blob/main/x/bridge/spec/05_params.md) and added to the module via governance proposal.
 
 Conversions back to Kava ERC20 are as follows.
 
