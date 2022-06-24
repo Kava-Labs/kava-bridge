@@ -304,12 +304,14 @@ func (s *SigningSession) UpdateAddCandidateEvent(
 		aggSessionID,
 		participantPeerIDs,
 	)
-	s.broadcaster.BroadcastMessage(
+	if err := s.broadcaster.BroadcastMessage(
 		s.context,
 		msg,
 		s.peerIDs, // All peers
 		30,
-	)
+	); err != nil {
+		return fmt.Errorf("failed to broadcast StartSignerEvent: %w", err)
+	}
 
 	span.AddEvent("leader done")
 
