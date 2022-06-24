@@ -9,7 +9,6 @@ import (
 	"github.com/kava-labs/kava-bridge/relayer/allowlist"
 	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p-core/host"
-	"github.com/libp2p/go-libp2p-core/network"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/libp2p/go-libp2p-core/peerstore"
 	"github.com/libp2p/go-libp2p-core/pnet"
@@ -91,17 +90,4 @@ func (n Node) ConnectToPeers(ctx context.Context, peerAddrInfos []*peer.AddrInfo
 // Close cleans up and stops the node
 func (n Node) Close() error {
 	return n.Host.Close()
-}
-
-func registerNotifiees(host host.Host) {
-	var notifee network.NotifyBundle
-	notifee.ConnectedF = func(net network.Network, conn network.Conn) {
-		log.Info("connected to peer: ", conn.RemotePeer())
-	}
-
-	notifee.DisconnectedF = func(net network.Network, conn network.Conn) {
-		log.Info("disconnected from peer: ", conn.RemotePeer())
-	}
-
-	host.Network().Notify(&notifee)
 }
