@@ -448,6 +448,7 @@ func (suite *MsgServerSuite) TestConvertERC20ToCoin() {
 	invokerCosmosAddr, err := sdk.AccAddressFromHex(invoker.String()[2:])
 	suite.Require().NoError(err)
 
+	// create user account, otherwise `CallEVMWithData` will fail due to failing to get user account when finding its sequence.
 	err = suite.App.FundAccount(suite.Ctx, invokerCosmosAddr, sdk.NewCoins(sdk.NewCoin(pair.Denom, sdk.ZeroInt())))
 	suite.Require().NoError(err)
 
@@ -562,4 +563,46 @@ func (suite *MsgServerSuite) TestConvertERC20ToCoin() {
 			}
 		})
 	}
+}
+
+func (suite *MsgServerSuite) TestConvertERC20ToCoin_BridgeDisabled() {
+	// Disable bridge
+	params := suite.Keeper.GetParams(suite.Ctx)
+	params.BridgeEnabled = false
+	suite.Keeper.SetParams(suite.Ctx, params)
+
+	contractAddr := suite.DeployERC20()
+	pair := types.NewConversionPair(
+		contractAddr,
+		"erc20/usdc",
+	)
+
+	// give invoker account some erc20 usdc to begin with
+	invoker := testutil.MustNewInternalEVMAddressFromString("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2")
+	pairStartingBal := big.NewInt(10_000_000)
+	err := suite.App.BridgeKeeper.MintERC20(
+		suite.Ctx,
+		pair.GetAddress(), // contractAddr
+		invoker,           //receiver
+		pairStartingBal,
+	)
+	suite.Require().NoError(err)
+
+	invokerCosmosAddr, err := sdk.AccAddressFromHex(invoker.String()[2:])
+	suite.Require().NoError(err)
+
+	err = suite.App.FundAccount(suite.Ctx, invokerCosmosAddr, sdk.NewCoins(sdk.NewCoin(pair.Denom, sdk.ZeroInt())))
+	suite.Require().NoError(err)
+
+	msg := types.NewMsgConvertERC20ToCoin(
+		invoker,
+		invokerCosmosAddr,
+		contractAddr,
+		sdk.NewInt(10_000),
+	)
+
+	_, err = suite.msgServer.ConvertERC20ToCoin(sdk.WrapSDKContext(suite.Ctx), &msg)
+
+	suite.Require().Error(err)
+	suite.Require().ErrorIs(err, types.ErrBridgeDisabled)
 }

@@ -3,13 +3,16 @@ package types
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/cosmos/cosmos-sdk/x/auth/legacy/legacytx"
 	"github.com/ethereum/go-ethereum/common"
 )
 
 // ensure Msg interface compliance at compile time
 var (
-	_ sdk.Msg = &MsgBridgeEthereumToKava{}
-	_ sdk.Msg = &MsgConvertCoinToERC20{}
+	_ sdk.Msg            = &MsgBridgeEthereumToKava{}
+	_ sdk.Msg            = &MsgConvertCoinToERC20{}
+	_ sdk.Msg            = &MsgConvertERC20ToCoin{}
+	_ legacytx.LegacyMsg = &MsgConvertERC20ToCoin{}
 )
 
 // NewMsgBridgeEthereumToKava returns a new MsgBridgeEthereumToKava
@@ -164,4 +167,19 @@ func (msg MsgConvertERC20ToCoin) ValidateBasic() error {
 	}
 
 	return nil
+}
+
+// GetSignBytes implements the LegacyMsg.GetSignBytes method.
+func (msg MsgConvertERC20ToCoin) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&msg))
+}
+
+// Route implements the LegacyMsg.Route method.
+func (msg MsgConvertERC20ToCoin) Route() string {
+	return RouterKey
+}
+
+// Type implements the LegacyMsg.Type method.
+func (msg MsgConvertERC20ToCoin) Type() string {
+	return "bridge_convert_erc20_to_coin"
 }
