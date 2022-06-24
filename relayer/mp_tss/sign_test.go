@@ -12,8 +12,6 @@ import (
 	"github.com/kava-labs/kava-bridge/relayer/testutil"
 
 	"github.com/binance-chain/tss-lib/common"
-	"github.com/binance-chain/tss-lib/ecdsa/keygen"
-	"github.com/binance-chain/tss-lib/test"
 	"github.com/binance-chain/tss-lib/tss"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -23,20 +21,15 @@ func TestSign(t *testing.T) {
 	// err := logging.SetLogLevel("*", "debug")
 	// require.NoError(t, err)
 
-	signPIDs := testutil.GetTestPartyIDs(threshold + 1)
-	require.Len(t, signPIDs, threshold+1)
-
-	// 1. Get party keys from file
-	keys := testutil.GetTestTssKeys(threshold + 1)
-	require.Len(t, keys, threshold+1)
+	_, _, keys, signPIDs := testutil.GetTestKeys(t, threshold+1)
 
 	// 2. Create and connect transport between peers
 	transports := CreateAndConnectTransports(t, signPIDs)
 	require.Len(t, transports, threshold+1)
 
 	// 3. Start signing party for each peer
-	outputAgg := make(chan common.SignatureData, keygen.TestThreshold)
-	errAgg := make(chan *tss.Error, keygen.TestThreshold)
+	outputAgg := make(chan common.SignatureData, threshold)
+	errAgg := make(chan *tss.Error, threshold)
 
 	msgHash := big.NewInt(1234)
 
@@ -44,7 +37,7 @@ func TestSign(t *testing.T) {
 	defer cancel()
 
 	for i := range signPIDs {
-		params := mp_tss.CreateParams(signPIDs, signPIDs[i], keygen.TestThreshold)
+		params := mp_tss.CreateParams(signPIDs, signPIDs[i], threshold)
 		t.Log(params.PartyID())
 
 		// big.Int message, would be message hash converted to big int
@@ -82,7 +75,7 @@ func TestSign(t *testing.T) {
 		}
 	}
 
-	require.Len(t, signatures, test.TestThreshold+1, "each party should get a signature")
+	require.Len(t, signatures, threshold+1, "each party should get a signature")
 
 	//nolint:govet
 	for i, sig := range signatures {
