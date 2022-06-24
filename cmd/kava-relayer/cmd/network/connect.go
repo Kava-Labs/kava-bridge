@@ -87,13 +87,9 @@ func newConnectCmd() *cobra.Command {
 				return err
 			}
 
-			if err := node.EchoPeers(ctx); err != nil {
-				return err
-			}
+			// TODO: This just closes right after connecting to peers, does nothing else
+			time.Sleep(2 * time.Second)
 
-			log.Info("waiting for all echo requests")
-
-			<-done
 			log.Info("Done! exiting...")
 			return node.Close()
 		},
