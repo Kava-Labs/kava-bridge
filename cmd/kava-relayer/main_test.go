@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strings"
 	"testing"
 
 	"github.com/kava-labs/kava-bridge/cmd/kava-relayer/cmd/network"
@@ -98,13 +99,13 @@ func TestShowNodeMultiAddress(t *testing.T) {
 	out, err := cmd.CombinedOutput()
 	require.NoError(t, err, fmt.Sprintf("expected '%s' to return successful status code", cmd.String()))
 
-	actualPeerMultiAddress := string(out)
+	actualPeerMultiAddress := strings.TrimSpace(string(out))
 	_, err = ma.NewMultiaddr(actualPeerMultiAddress)
 	require.NoError(t, err)
 
-	testHostIPv4, err := network.GetHostIPv4()
+	testHostIPv4s, err := network.GetHostIPv4s()
 	require.NoError(t, err)
-	expectedPeerMultiAddress := fmt.Sprintf("/ip4/%s/tcp/8000/p2p/16Uiu2HAm9z3t15JpqBbPQJ1ZLHm6w1AXD6M2FXdCG3GLoY4iDcD9", testHostIPv4)
+	expectedPeerMultiAddress := fmt.Sprintf("/ip4/%s/tcp/8000/p2p/16Uiu2HAm9z3t15JpqBbPQJ1ZLHm6w1AXD6M2FXdCG3GLoY4iDcD9", testHostIPv4s[0])
 	assert.Equal(t, actualPeerMultiAddress, expectedPeerMultiAddress)
 }
 
