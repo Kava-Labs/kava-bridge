@@ -99,7 +99,7 @@ func TestShowNodeMultiAddress(t *testing.T) {
 	out, err := cmd.CombinedOutput()
 	require.NoError(t, err, fmt.Sprintf("expected '%s' to return successful status code", cmd.String()))
 
-	actualPeerMultiAddress := strings.TrimSpace(string(out))
+	actualPeerMultiAddress := strings.Split(string(out), "\n")[0]
 	_, err = ma.NewMultiaddr(actualPeerMultiAddress)
 	require.NoError(t, err)
 
