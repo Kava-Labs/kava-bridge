@@ -135,6 +135,7 @@ func TestSigner(t *testing.T) {
 				}
 
 				sigLock.Lock()
+				//nolint:govet
 				sigs = append(sigs, *sig)
 				sigLock.Unlock()
 

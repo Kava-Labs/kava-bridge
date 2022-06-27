@@ -145,8 +145,10 @@ func NewSigningState(transport mp_tss.Transporter) *SigningState {
 	}
 }
 
+//nolint:govet
 func NewDoneState(signature tss_common.SignatureData) *DoneState {
 	return &DoneState{
+		//nolint:govet
 		signature: signature,
 	}
 }

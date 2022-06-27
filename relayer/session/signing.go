@@ -417,6 +417,7 @@ func (s *SigningSession) UpdateStartSignerEvent(
 		// other state transitions other than from here.
 
 		select {
+		//nolint:govet // https://github.com/bnb-chain/tss-lib/pull/167
 		case sig := <-newState.outputChan:
 			s.logger.Infow(
 				"done signing message!",
@@ -431,6 +432,7 @@ func (s *SigningSession) UpdateStartSignerEvent(
 				),
 			)
 
+			//nolint:govet
 			s.state = NewDoneState(sig)
 			s.resultChan <- NewSigningSessionResult(&sig, nil)
 		case err := <-newState.errChan:
