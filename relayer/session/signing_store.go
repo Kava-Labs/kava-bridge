@@ -5,6 +5,7 @@ import (
 	"math/big"
 	"sync"
 
+	"github.com/binance-chain/tss-lib/ecdsa/keygen"
 	eth_common "github.com/ethereum/go-ethereum/common"
 	"github.com/kava-labs/kava-bridge/relayer/broadcast"
 	"github.com/kava-labs/kava-bridge/relayer/mp_tss"
@@ -42,6 +43,7 @@ func (s *SigningSessionStore) NewSession(
 	currentPeerID peer.ID,
 	peerIDs peer.IDSlice,
 	partyIDStore *mp_tss.PartyIDStore,
+	key keygen.LocalPartySaveData,
 ) (*SigningSession, <-chan SigningSessionResult, error) {
 	session, resultChan, err := NewSigningSession(
 		ctx,
@@ -52,6 +54,7 @@ func (s *SigningSessionStore) NewSession(
 		currentPeerID,
 		peerIDs,
 		partyIDStore,
+		key,
 	)
 	if err != nil {
 		return nil, nil, err

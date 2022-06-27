@@ -1,7 +1,6 @@
 package session
 
 import (
-	"github.com/binance-chain/tss-lib/ecdsa/keygen"
 	"github.com/binance-chain/tss-lib/tss"
 	"github.com/kava-labs/kava-bridge/relayer/mp_tss"
 	"github.com/kava-labs/kava-bridge/relayer/mp_tss/types"
@@ -45,7 +44,6 @@ type AddCandidateEvent struct {
 
 type StartSignerEvent struct {
 	tssParams    *tss.Parameters
-	key          keygen.LocalPartySaveData
 	transport    mp_tss.Transporter
 	participants []peer.ID
 }
@@ -81,13 +79,11 @@ func NewAddCandidateEvent(
 
 func NewStartSignerEvent(
 	tssParams *tss.Parameters,
-	key keygen.LocalPartySaveData,
 	transport mp_tss.Transporter,
 	participants []peer.ID,
 ) *StartSignerEvent {
 	return &StartSignerEvent{
 		tssParams:    tssParams,
-		key:          key,
 		transport:    transport,
 		participants: participants,
 	}

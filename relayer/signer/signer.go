@@ -110,6 +110,7 @@ func (s *Signer) SignMessage(
 		s.Node.Host.ID(),
 		s.Node.PeerList,
 		s.partyIDStore,
+		s.key,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create signing session: %w", err)
@@ -171,7 +172,6 @@ func (s *Signer) handleLeaderDoneOutputEvent(outputEvent *session.LeaderDoneOutp
 	// Start signer event
 	event := session.NewStartSignerEvent(
 		params,                   // tss parameters
-		s.key,                    // tss key part
 		transport,                // broadcast transport
 		outputEvent.Participants, // list of participating peer IDs in session
 	)
@@ -273,7 +273,6 @@ func (s *Signer) handleSigningPartyStartMessage(
 	// Start signer event
 	event := session.NewStartSignerEvent(
 		params,                       // tss parameters
-		s.key,                        // tss key part
 		transport,                    // broadcast transport
 		payload.ParticipatingPeerIDs, // list of participating peer IDs in session
 	)

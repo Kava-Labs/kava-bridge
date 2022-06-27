@@ -6,6 +6,7 @@ import (
 	"math/big"
 	"sync"
 
+	"github.com/binance-chain/tss-lib/ecdsa/keygen"
 	logging "github.com/ipfs/go-log/v2"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -32,6 +33,7 @@ type SigningSession struct {
 	MsgToSign    *big.Int
 	threshold    int
 	partyIDStore *mp_tss.PartyIDStore
+	key          keygen.LocalPartySaveData
 
 	currentPeerID peer.ID
 	peerIDs       peer.IDSlice
@@ -59,6 +61,7 @@ func NewSigningSession(
 	currentPeerID peer.ID,
 	peerIDs peer.IDSlice,
 	partyIDStore *mp_tss.PartyIDStore,
+	key keygen.LocalPartySaveData,
 ) (*SigningSession, <-chan SigningSessionResult, error) {
 	ctx, span := tracer.Start(
 		ctx,
@@ -83,6 +86,7 @@ func NewSigningSession(
 		MsgToSign:    msgToSign,
 		threshold:    threshold,
 		partyIDStore: partyIDStore,
+		key:          key,
 
 		currentPeerID: currentPeerID,
 		peerIDs:       peerIDs,
@@ -403,7 +407,7 @@ func (s *SigningSession) UpdateStartSignerEvent(
 		ctx,
 		s.MsgToSign,
 		ev.tssParams,
-		ev.key,
+		s.key,
 		ev.transport,
 	)
 
