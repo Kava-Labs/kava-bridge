@@ -1,4 +1,6 @@
-# Relayer
+# Keygen
+
+The relayer requires a TSS 
 
 ## Peer and network setup
 
@@ -7,7 +9,7 @@ Before we can run the keygen process, we need the following:
 1. Network secret
 2. Peer multiaddresses.
 
-### Generate network secret
+### Generate and Distribute Network Secret
 
 1. One peer is designated to generate and distribute the network secret (likely
    Kava Labs). This peer will be referenced as the "dealer."
@@ -93,16 +95,32 @@ Before we can run the keygen process, we need the following:
    gpg --decrypt ./path/to/psk.key.asc
    ```
 
-## Usage
+### Distribute multi-addresses
 
-1. Generate node key for each peer.
+Similar process to distributing the network secret, all peers should exchange
+public keys then encrypt and share their full multiaddress containing the
+address and peer ID.
+
+Multiaddresses are not sensitive data, but is still best to limit information on
+where peers are located. e.g. an external malicious actor knowing peer
+multiaddress(es) allows them to have specific servers to target.
+
+## Key Generation
+
+Requirements of key generation are:
+
+1. libp2p node key
+2. Pre-computed pre-parameters
+3. List of peer multiaddresses
+
+### Generate node key for each peer.
 
 ```bash
 kava-relayer network generate-node-key
 kava-relayer network show-node-id
 ```
 
-2. Pre-compute keygen pre-parameters.
+### Pre-compute keygen pre-parameters.
 
 Pre-compute 2 safe primes and Paillier secret required for the protocol. This is
 done separately before connecting to other peers as it may take some time and
@@ -113,12 +131,10 @@ be used. This is saved to disk and will be used in the next keygen phase.
 kava-relayer key precompute-preparams
 ```
 
-3. Start the relayer, connect to other peers.
+### Generate key
+
+TODO:
 
 ```bash
-# Connect to p2p network
-kava-relayer network connect
-
-# Start single signer relayer without P2P network
-kava-relayer start 
+kava-relayer join keygen
 ```
