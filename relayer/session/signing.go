@@ -314,9 +314,11 @@ func (s *SigningSession) UpdateAddCandidateEvent(
 
 	span.AddEvent("leader done")
 
+	// -------------------------------------------------------------------------
 	// Transition to SigningState via internal StartSignerEvent -- this directly
-	// calls the UpdateStartSignerEvent to be synchronous and prevent any
-	// AddCandidateEvents to cause any duplicate leader participants
+	// calls the UpdateStartSignerEvent to be synchronous without unlocking the
+	// session mutex to prevent any AddCandidateEvents to cause any duplicate
+	// leader participants
 
 	// Set the session ID in store
 	s.sessionStore.SetSessionID(s.TxHash, aggSessionID)
@@ -326,22 +328,18 @@ func (s *SigningSession) UpdateAddCandidateEvent(
 		return fmt.Errorf("failed to get party IDs: %w", err)
 	}
 
-	params := mp_tss.CreateParams(partyIDs, s.currentPartyID, s.threshold)
-
-	transport := NewSessionTransport(
-		s.broadcaster,
-		aggSessionID,
-		s.partyIDStore,
-		participantPeerIDs,
-	)
-
 	startSignerEvent := NewStartSignerEvent(
-		params,
-		transport,
+		mp_tss.CreateParams(partyIDs, s.currentPartyID, s.threshold),
+		NewSessionTransport(
+			s.broadcaster,
+			aggSessionID,
+			s.partyIDStore,
+			participantPeerIDs,
+		),
 		participantPeerIDs,
 	)
 
-	// Transition to signing state and start
+	// Transition to signing state and start signing without unlocking mutex.
 	return s.UpdateStartSignerEvent(startSignerEvent)
 }
 
