@@ -52,7 +52,7 @@ build: ## Run go build
 
 .PHONY: test
 test: ## Run go test
-	$(GO) test $(PKGS)
+	$(GO) test -race $(PKGS)
 
 .PHONY: test-integration
 test-integration: ## Run go integration tests
