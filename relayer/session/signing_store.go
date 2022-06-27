@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/binance-chain/tss-lib/ecdsa/keygen"
+	"github.com/binance-chain/tss-lib/tss"
 	eth_common "github.com/ethereum/go-ethereum/common"
 	"github.com/kava-labs/kava-bridge/relayer/broadcast"
 	"github.com/kava-labs/kava-bridge/relayer/mp_tss"
@@ -42,6 +43,7 @@ func (s *SigningSessionStore) NewSession(
 	threshold int,
 	currentPeerID peer.ID,
 	peerIDs peer.IDSlice,
+	currentPartyID *tss.PartyID,
 	partyIDStore *mp_tss.PartyIDStore,
 	key keygen.LocalPartySaveData,
 ) (*SigningSession, <-chan SigningSessionResult, error) {
@@ -53,6 +55,7 @@ func (s *SigningSessionStore) NewSession(
 		threshold,
 		currentPeerID,
 		peerIDs,
+		currentPartyID,
 		partyIDStore,
 		key,
 	)

@@ -14,7 +14,6 @@ type SigningSessionStateType int
 const (
 	SigningSessionStateType_PickingLeader SigningSessionStateType = iota + 1
 	SigningSessionStateType_LeaderWaitingForCandidates
-	SigningSessionStateType_LeaderWaitingToSign
 	SigningSessionStateType_CandidateWaitingForLeader
 	SigningSessionStateType_Signing
 	SigningSessionStateType_Done
@@ -28,8 +27,6 @@ func (t SigningSessionStateType) String() string {
 		return "PickingLeader"
 	case SigningSessionStateType_LeaderWaitingForCandidates:
 		return "LeaderWaitingForCandidates"
-	case SigningSessionStateType_LeaderWaitingToSign:
-		return "LeaderWaitingToSign"
 	case SigningSessionStateType_CandidateWaitingForLeader:
 		return "CandidateWaitingForLeader"
 	case SigningSessionStateType_Signing:
@@ -51,7 +48,6 @@ type SigningSessionState interface {
 
 var _ SigningSessionState = (*PickingLeaderState)(nil)
 var _ SigningSessionState = (*LeaderWaitingForCandidatesState)(nil)
-var _ SigningSessionState = (*LeaderWaitingToSignState)(nil)
 var _ SigningSessionState = (*CandidateWaitingForLeaderState)(nil)
 var _ SigningSessionState = (*SigningState)(nil)
 var _ SigningSessionState = (*DoneState)(nil)
@@ -70,12 +66,6 @@ type LeaderWaitingForCandidatesState struct {
 
 	joinMsgsLock *sync.Mutex
 	joinMsgs     types.JoinSessionMessages
-}
-
-// LeaderWaitingToSignState is the state when the leader has picked the
-// participants, generated the session ID, and is waiting to start. This is a
-// "fake" state to just prevent the leader from accepting any more candidates.
-type LeaderWaitingToSignState struct {
 }
 
 type CandidateWaitingForLeaderState struct {
@@ -120,10 +110,6 @@ func NewLeaderWaitingForCandidatesState() (*LeaderWaitingForCandidatesState, err
 		joinMsgsLock: &sync.Mutex{},
 		joinMsgs:     nil,
 	}, nil
-}
-
-func NewLeaderWaitingToSign() *LeaderWaitingToSignState {
-	return &LeaderWaitingToSignState{}
 }
 
 func NewCandidateWaitingForLeaderState() (*CandidateWaitingForLeaderState, error) {
@@ -171,10 +157,6 @@ func (s *PickingLeaderState) State() SigningSessionStateType {
 
 func (s *LeaderWaitingForCandidatesState) State() SigningSessionStateType {
 	return SigningSessionStateType_LeaderWaitingForCandidates
-}
-
-func (s *LeaderWaitingToSignState) State() SigningSessionStateType {
-	return SigningSessionStateType_LeaderWaitingToSign
 }
 
 func (s *CandidateWaitingForLeaderState) State() SigningSessionStateType {

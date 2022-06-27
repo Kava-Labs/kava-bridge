@@ -101,7 +101,7 @@ func (s *Signer) SignMessage(
 	}
 
 	// Create new signing session
-	session, resultChan, err := s.sessions.Signing.NewSession(
+	_, resultChan, err := s.sessions.Signing.NewSession(
 		ctx,
 		s.broadcaster,
 		txHash,
@@ -109,18 +109,13 @@ func (s *Signer) SignMessage(
 		s.threshold,
 		s.Node.Host.ID(),
 		s.Node.PeerList,
+		s.partyID,
 		s.partyIDStore,
 		s.key,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create signing session: %w", err)
 	}
-
-	go func() {
-		for outputEvent := range session.GetOutputEventsChan() {
-			s.handleOutputEvent(outputEvent)
-		}
-	}()
 
 	select {
 	case res := <-resultChan:
@@ -131,54 +126,6 @@ func (s *Signer) SignMessage(
 		return res.Signature, nil
 	case <-ctx.Done():
 		return nil, ctx.Err()
-	}
-}
-
-func (s *Signer) handleOutputEvent(outputEvent session.SigningSessionOutputEvent) {
-	s.logger.Debugf("received signing session output event: %v", outputEvent)
-
-	switch ev := outputEvent.(type) {
-	case *session.LeaderDoneOutputEvent:
-		s.handleLeaderDoneOutputEvent(ev)
-	default:
-		s.logger.Debugf("received unknown output event: %T", ev)
-	}
-}
-
-func (s *Signer) handleLeaderDoneOutputEvent(outputEvent *session.LeaderDoneOutputEvent) {
-	// Start signing session for the leader
-	sess, found := s.sessions.Signing.GetSessionFromTxHash(outputEvent.TxHash)
-	if !found {
-		s.logger.Errorf("received SigningPartyStartMessage for unknown txHash %v", outputEvent.TxHash)
-
-		return
-	}
-
-	s.sessions.Signing.SetSessionID(outputEvent.TxHash, outputEvent.AggregateSigningSessionID)
-
-	transport := session.NewSessionTransport(
-		s.broadcaster,
-		outputEvent.AggregateSigningSessionID,
-		s.partyIDStore,
-		outputEvent.Participants,
-	)
-
-	params, err := s.GetParams(outputEvent.Participants)
-	if err != nil {
-		s.logger.Error(err)
-		return
-	}
-
-	// Start signer event
-	event := session.NewStartSignerEvent(
-		params,                   // tss parameters
-		transport,                // broadcast transport
-		outputEvent.Participants, // list of participating peer IDs in session
-	)
-	if err := sess.Update(event); err != nil {
-		s.logger.Errorf("failed to start signer: %v", err)
-
-		return
 	}
 }
 
