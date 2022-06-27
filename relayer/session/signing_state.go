@@ -21,6 +21,7 @@ const (
 	SigningSessionStateType_Error
 )
 
+// String returns the string representation of the state.
 func (t SigningSessionStateType) String() string {
 	switch t {
 	case SigningSessionStateType_PickingLeader:
@@ -42,6 +43,7 @@ func (t SigningSessionStateType) String() string {
 	}
 }
 
+// SigningSessionState is the state of a signing session.
 type SigningSessionState interface {
 	State() SigningSessionStateType
 }
@@ -54,11 +56,15 @@ var _ SigningSessionState = (*DoneState)(nil)
 var _ SigningSessionState = (*DoneNonParticipantState)(nil)
 var _ SigningSessionState = (*ErrorState)(nil)
 
+// PickingLeaderState is the state of a signing session where each peer is
+// picking the leader.
 type PickingLeaderState struct {
 	// If picked leader is offline or unresponsive, this is incremented
 	leaderOffset int64
 }
 
+// LeaderWaitingForCandidatesState is the state of a signing session where the
+// leader is waiting for candidates to join.
 type LeaderWaitingForCandidatesState struct {
 	// Leader's local part of the signing session ID
 	localPart types.SigningSessionIDPart
@@ -68,11 +74,14 @@ type LeaderWaitingForCandidatesState struct {
 	joinMsgs     types.JoinSessionMessages
 }
 
+// CandidateWaitingForLeaderState is the state of a signing session where the
+// non-leaders wait for the leader to start the signing party.
 type CandidateWaitingForLeaderState struct {
 	// Local part of the signing session ID
 	localPart types.SigningSessionIDPart
 }
 
+// SigningState is the state of a signing session where all participants are signing.
 type SigningState struct {
 	transport mp_tss.Transporter
 
@@ -80,25 +89,32 @@ type SigningState struct {
 	errChan    chan *tss.Error
 }
 
+// DoneState is the state when the signing session is done and a signature is output.
 type DoneState struct {
 	signature tss_common.SignatureData
 }
 
+// DoneNonParticipantState is the state when the peer is not a participant and
+// thus has no signature.
 type DoneNonParticipantState struct {
 }
 
+// ErrorState is the state when an error during signing occurs.
 type ErrorState struct {
 	err *tss.Error
 }
 
+// -----------------------------------------------------------------------------
 // New State methods
 
+// NewPickingLeaderState returns a new PickingLeaderState.
 func NewPickingLeaderState() *PickingLeaderState {
 	return &PickingLeaderState{
 		leaderOffset: 0,
 	}
 }
 
+// NewLeaderWaitingForCandidatesState returns a new LeaderWaitingForCandidatesState.
 func NewLeaderWaitingForCandidatesState() (*LeaderWaitingForCandidatesState, error) {
 	localPart, err := types.NewSigningSessionIDPart()
 	if err != nil {
@@ -112,6 +128,7 @@ func NewLeaderWaitingForCandidatesState() (*LeaderWaitingForCandidatesState, err
 	}, nil
 }
 
+// NewCandidateWaitingForLeaderState returns a new CandidateWaitingForLeaderState.
 func NewCandidateWaitingForLeaderState() (*CandidateWaitingForLeaderState, error) {
 	localPart, err := types.NewSigningSessionIDPart()
 	if err != nil {
@@ -123,6 +140,7 @@ func NewCandidateWaitingForLeaderState() (*CandidateWaitingForLeaderState, error
 	}, nil
 }
 
+// NewSigningState returns a new SigningState.
 func NewSigningState(transport mp_tss.Transporter) *SigningState {
 	return &SigningState{
 		transport:  transport,
@@ -132,6 +150,7 @@ func NewSigningState(transport mp_tss.Transporter) *SigningState {
 }
 
 //nolint:govet
+// NewDoneState returns a new DoneState.
 func NewDoneState(signature tss_common.SignatureData) *DoneState {
 	return &DoneState{
 		//nolint:govet
@@ -139,42 +158,52 @@ func NewDoneState(signature tss_common.SignatureData) *DoneState {
 	}
 }
 
+// NewDoneNonParticipantState returns a new DoneNonParticipantState.
 func NewDoneNonParticipantState() *DoneNonParticipantState {
 	return &DoneNonParticipantState{}
 }
 
+// NewErrorState returns a new ErrorState.
 func NewErrorState(err *tss.Error) *ErrorState {
 	return &ErrorState{
 		err: err,
 	}
 }
 
+// -----------------------------------------------------------------------------
 // SigningSessionState interface implementations
 
+// State returns the state type of the session state.
 func (s *PickingLeaderState) State() SigningSessionStateType {
 	return SigningSessionStateType_PickingLeader
 }
 
+// State returns the state type of the session state.
 func (s *LeaderWaitingForCandidatesState) State() SigningSessionStateType {
 	return SigningSessionStateType_LeaderWaitingForCandidates
 }
 
+// State returns the state type of the session state.
 func (s *CandidateWaitingForLeaderState) State() SigningSessionStateType {
 	return SigningSessionStateType_CandidateWaitingForLeader
 }
 
+// State returns the state type of the session state.
 func (s *SigningState) State() SigningSessionStateType {
 	return SigningSessionStateType_Signing
 }
 
+// State returns the state type of the session state.
 func (s *DoneState) State() SigningSessionStateType {
 	return SigningSessionStateType_Done
 }
 
+// State returns the state type of the session state.
 func (s *DoneNonParticipantState) State() SigningSessionStateType {
 	return SigningSessionStateType_DoneNonParticipant
 }
 
+// State returns the state type of the session state.
 func (s *ErrorState) State() SigningSessionStateType {
 	return SigningSessionStateType_Error
 }
