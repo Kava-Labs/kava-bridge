@@ -29,6 +29,9 @@ var tracer = otel.Tracer("SigningSession")
 type SigningSession struct {
 	mu *sync.Mutex
 
+	// "Parent" session store that maps session IDs to SigningSessions (this)
+	// This is used to update the session ID for this session in the "parent" store
+	sessionStore   *SigningSessionStore
 	broadcaster    *broadcast.Broadcaster
 	TxHash         eth_common.Hash
 	MsgToSign      *big.Int
@@ -57,6 +60,7 @@ type SigningSession struct {
 
 func NewSigningSession(
 	ctx context.Context,
+	sessionStore *SigningSessionStore,
 	broadcaster *broadcast.Broadcaster,
 	txHash eth_common.Hash,
 	msgToSign *big.Int,
@@ -84,6 +88,7 @@ func NewSigningSession(
 
 	session := &SigningSession{
 		mu:             &sync.Mutex{},
+		sessionStore:   sessionStore,
 		broadcaster:    broadcaster,
 		TxHash:         txHash,
 		MsgToSign:      msgToSign,
@@ -196,7 +201,7 @@ func (s *SigningSession) UpdateAddCandidateEvent(
 ) error {
 	state, ok := s.state.(*LeaderWaitingForCandidatesState)
 	if !ok {
-		s.logger.Errorw(
+		s.logger.Warnw(
 			"invalid state for AddCandidateEvent",
 			"current state", s.state.State(),
 			"from", ev.joinMsg.PeerID,
@@ -312,6 +317,9 @@ func (s *SigningSession) UpdateAddCandidateEvent(
 	// Transition to SigningState via internal StartSignerEvent -- this directly
 	// calls the UpdateStartSignerEvent to be synchronous and prevent any
 	// AddCandidateEvents to cause any duplicate leader participants
+
+	// Set the session ID in store
+	s.sessionStore.SetSessionID(s.TxHash, aggSessionID)
 
 	partyIDs, err := s.partyIDStore.GetPartyIDs(participantPeerIDs)
 	if err != nil {

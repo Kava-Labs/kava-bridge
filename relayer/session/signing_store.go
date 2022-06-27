@@ -49,6 +49,7 @@ func (s *SigningSessionStore) NewSession(
 ) (*SigningSession, <-chan SigningSessionResult, error) {
 	session, resultChan, err := NewSigningSession(
 		ctx,
+		s,
 		broadcaster,
 		txHash,
 		msgToSign,
