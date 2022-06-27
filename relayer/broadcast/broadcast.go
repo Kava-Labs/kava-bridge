@@ -30,9 +30,9 @@ const (
 	ServiceName = "kava-relayer.broadcast"
 )
 
-// Broadcaster is a reliable broadcaster to ensure that all connected peers
+// P2PBroadcaster is a reliable broadcaster to ensure that all connected peers
 // receive the same message.
-type Broadcaster struct {
+type P2PBroadcaster struct {
 	host host.Host
 
 	inboundStreamsLock sync.Mutex
@@ -73,13 +73,15 @@ type Broadcaster struct {
 	log *zap.SugaredLogger
 }
 
+var _ Broadcaster = &P2PBroadcaster{}
+
 // NewBroadcaster returns a new Broadcaster
 func NewBroadcaster(
 	ctx context.Context,
 	host host.Host,
 	options ...BroadcasterOption,
-) (*Broadcaster, error) {
-	b := &Broadcaster{
+) (*P2PBroadcaster, error) {
+	b := &P2PBroadcaster{
 		host:                      host,
 		inboundStreamsLock:        sync.Mutex{},
 		inboundStreams:            make(map[peer.ID]network.Stream),
@@ -118,7 +120,7 @@ func NewBroadcaster(
 
 // GetPeerCount returns the number of peers connected to the broadcaster. This
 // does not include the current peer.
-func (b *Broadcaster) GetPeerCount() int {
+func (b *P2PBroadcaster) GetPeerCount() int {
 	b.peersLock.RLock()
 	defer b.peersLock.RUnlock()
 
@@ -126,7 +128,7 @@ func (b *Broadcaster) GetPeerCount() int {
 }
 
 // processLoop handles incoming channel inputs.
-func (b *Broadcaster) processLoop(ctx context.Context) {
+func (b *P2PBroadcaster) processLoop(ctx context.Context) {
 	defer func() {
 		b.inboundStreamsLock.Lock()
 		b.outboundStreamsLock.Lock()
@@ -170,7 +172,7 @@ func (b *Broadcaster) processLoop(ctx context.Context) {
 
 // BroadcastMessage marshals the proto.Message as Any, wraps it in MessageData,
 // and it to all connected peers.
-func (b *Broadcaster) BroadcastMessage(
+func (b *P2PBroadcaster) BroadcastMessage(
 	ctx context.Context,
 	pb types.PeerMessage,
 	recipients []peer.ID,
@@ -209,7 +211,7 @@ func (b *Broadcaster) BroadcastMessage(
 
 // broadcastRawMessage sends a proto message to all connected peers without any
 // marshalling or wrapping.
-func (b *Broadcaster) broadcastRawMessage(
+func (b *P2PBroadcaster) broadcastRawMessage(
 	ctx context.Context,
 	pb proto.Message,
 	recipients []peer.ID,
@@ -276,7 +278,7 @@ func (b *Broadcaster) broadcastRawMessage(
 
 // handleIncomingRawMsg handles all raw messages from other peers. This is
 // before messages are verified to be received from all peers.
-func (b *Broadcaster) handleIncomingRawMsg(msg *pending_store.MessageWithPeerMetadata) {
+func (b *P2PBroadcaster) handleIncomingRawMsg(msg *pending_store.MessageWithPeerMetadata) {
 	b.log.Debugf("received raw message from %v", msg.PeerID.ShortString())
 
 	if err := msg.BroadcastMessage.Validate(); err != nil {
@@ -358,7 +360,7 @@ func (b *Broadcaster) handleIncomingRawMsg(msg *pending_store.MessageWithPeerMet
 	}
 }
 
-func (b *Broadcaster) handleIncomingValidatedMsg(msg types.BroadcastMessage) {
+func (b *P2PBroadcaster) handleIncomingValidatedMsg(msg types.BroadcastMessage) {
 	if msg.From == b.host.ID() {
 		b.log.Debugf("ignoring message from self")
 		return
@@ -379,7 +381,7 @@ func (b *Broadcaster) handleIncomingValidatedMsg(msg types.BroadcastMessage) {
 // Stream handling
 
 // handleNewPeer opens a new stream with a newly connected peer.
-func (b *Broadcaster) handleNewPeer(ctx context.Context, pid peer.ID) {
+func (b *P2PBroadcaster) handleNewPeer(ctx context.Context, pid peer.ID) {
 	if b.host.Network().Connectedness(pid) != network.Connected {
 		return
 	}
@@ -412,7 +414,7 @@ func (b *Broadcaster) handleNewPeer(ctx context.Context, pid peer.ID) {
 }
 
 // handleNewStream handles a new incoming stream, initiated when a peer is connected.
-func (b *Broadcaster) handleNewStream(s network.Stream) {
+func (b *P2PBroadcaster) handleNewStream(s network.Stream) {
 	peer := s.Conn().RemotePeer()
 
 	b.log.Debugf(

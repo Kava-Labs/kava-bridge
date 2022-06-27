@@ -18,7 +18,7 @@ import (
 )
 
 type TestBroadcaster struct {
-	*broadcast.Broadcaster
+	*broadcast.P2PBroadcaster
 	handler *TestHandler
 }
 
@@ -41,8 +41,8 @@ func NewTestBroadcaster(
 	}
 
 	return &TestBroadcaster{
-		Broadcaster: b,
-		handler:     handler,
+		P2PBroadcaster: b,
+		handler:        handler,
 	}, nil
 }
 
@@ -286,7 +286,7 @@ func (suite *BroadcasterTestSuite) TestBroadcast_TTL() {
 	)
 
 	sleepTimeFn := func(
-		b *broadcast.Broadcaster,
+		b *broadcast.P2PBroadcaster,
 		target peer.ID,
 		pb *proto.Message,
 	) time.Duration {
@@ -363,7 +363,7 @@ func (h *TestHandler) MismatchMessage(msg pending_store.MessageWithPeerMetadata)
 // SleepyBroadcasterHook is a broadcasterHook that conditionally delays broadcasting raw messages
 type SleepyBroadcasterHook struct {
 	sleepTimeFn func(
-		b *broadcast.Broadcaster,
+		b *broadcast.P2PBroadcaster,
 		target peer.ID,
 		pb *proto.Message,
 	) time.Duration
@@ -372,7 +372,7 @@ type SleepyBroadcasterHook struct {
 var _ broadcast.BroadcasterHook = (*SleepyBroadcasterHook)(nil)
 
 func (h *SleepyBroadcasterHook) BeforeBroadcastRawMessage(
-	b *broadcast.Broadcaster,
+	b *broadcast.P2PBroadcaster,
 	target peer.ID,
 	pb *proto.Message,
 ) {

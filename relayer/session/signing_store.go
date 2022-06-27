@@ -14,10 +14,11 @@ import (
 	"github.com/libp2p/go-libp2p-core/peer"
 )
 
-// tx_hash -> session ID
+// TssSessions maps a transaction hash to signing session
 type TssSessions map[eth_common.Hash]*SigningSession
 
-// session -> tx_hash to get a session from session ID instead of tx_hash
+// SessionIDToTxHash maps session ID -> tx_hash, to get a session from session
+// ID instead of tx_hash
 type SessionIDToTxHash map[string]eth_common.Hash
 
 // SigningSessionStore keeps track of signing sessions.
@@ -27,6 +28,7 @@ type SigningSessionStore struct {
 	sessionIDToTxHash SessionIDToTxHash
 }
 
+// NewSigningSessionStore returns a new signing session store.
 func NewSigningSessionStore() *SigningSessionStore {
 	return &SigningSessionStore{
 		mu:                &sync.Mutex{},
@@ -35,9 +37,11 @@ func NewSigningSessionStore() *SigningSessionStore {
 	}
 }
 
+// NewSession adds and returns a new signing session. This session does not have
+// a session ID and must be set later with SetSessionID.
 func (s *SigningSessionStore) NewSession(
 	ctx context.Context,
-	broadcaster *broadcast.Broadcaster,
+	broadcaster broadcast.Broadcaster,
 	txHash eth_common.Hash,
 	msgToSign *big.Int,
 	threshold int,
@@ -71,6 +75,7 @@ func (s *SigningSessionStore) NewSession(
 	return session, resultChan, nil
 }
 
+// GetSessionFromTxHash returns the signing session for the given transaction hash.
 func (s *SigningSessionStore) GetSessionFromTxHash(txHash eth_common.Hash) (*SigningSession, bool) {
 	s.mu.Lock()
 	// Session is returned as pointer, still possible for concurrent access to
@@ -81,12 +86,14 @@ func (s *SigningSessionStore) GetSessionFromTxHash(txHash eth_common.Hash) (*Sig
 	return session, ok
 }
 
+// SetSessionID sets the session ID for the given signing session transaction hash.
 func (s *SigningSessionStore) SetSessionID(txHash eth_common.Hash, sessID types.AggregateSigningSessionID) {
 	s.mu.Lock()
 	s.sessionIDToTxHash[sessID.String()] = txHash
 	s.mu.Unlock()
 }
 
+// GetSessionFromID returns the signing session for the given session ID.
 func (s *SigningSessionStore) GetSessionFromID(
 	sessID types.AggregateSigningSessionID,
 ) (*SigningSession, bool) {

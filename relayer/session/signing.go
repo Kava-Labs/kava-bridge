@@ -32,7 +32,7 @@ type SigningSession struct {
 	// "Parent" session store that maps session IDs to SigningSessions (this)
 	// This is used to update the session ID for this session in the "parent" store
 	sessionStore   *SigningSessionStore
-	broadcaster    *broadcast.Broadcaster
+	broadcaster    broadcast.Broadcaster
 	TxHash         eth_common.Hash
 	MsgToSign      *big.Int
 	threshold      int
@@ -61,7 +61,7 @@ type SigningSession struct {
 func NewSigningSession(
 	ctx context.Context,
 	sessionStore *SigningSessionStore,
-	broadcaster *broadcast.Broadcaster,
+	broadcaster broadcast.Broadcaster,
 	txHash eth_common.Hash,
 	msgToSign *big.Int,
 	threshold int,

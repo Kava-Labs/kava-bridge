@@ -15,7 +15,7 @@ import (
 
 // SessionTransport is a transport for a specific session.
 type SessionTransport struct {
-	broadcaster  *broadcast.Broadcaster
+	broadcaster  broadcast.Broadcaster
 	partyIDStore *mp_tss.PartyIDStore
 	sessionID    mp_tss_types.AggregateSigningSessionID
 	participants []peer.ID
@@ -89,7 +89,7 @@ func (mt *SessionTransport) Receive() chan mp_tss.ReceivedPartyState {
 }
 
 func NewSessionTransport(
-	broadcaster *broadcast.Broadcaster,
+	broadcaster broadcast.Broadcaster,
 	sessionID mp_tss_types.AggregateSigningSessionID,
 	partyIDStore *mp_tss.PartyIDStore,
 	participants []peer.ID,

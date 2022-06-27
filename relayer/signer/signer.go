@@ -28,7 +28,7 @@ var log = logging.Logger("signer")
 // for keygen, signing, and resharing.
 type Signer struct {
 	Node         *p2p.Node
-	broadcaster  *broadcast.Broadcaster
+	broadcaster  *broadcast.P2PBroadcaster
 	partyIDStore *mp_tss.PartyIDStore
 	sessions     *session.SessionStore
 	key          keygen.LocalPartySaveData

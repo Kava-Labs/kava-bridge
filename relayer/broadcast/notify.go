@@ -7,7 +7,7 @@ import (
 
 var _ network.Notifiee = (*BroadcastNotif)(nil)
 
-type BroadcastNotif Broadcaster
+type BroadcastNotif P2PBroadcaster
 
 func (p *BroadcastNotif) OpenedStream(n network.Network, s network.Stream) {
 }
