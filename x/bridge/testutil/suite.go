@@ -104,7 +104,7 @@ func (suite *Suite) SetupTest() {
 
 	// Genesis states
 	evmGs := evmtypes.NewGenesisState(
-		evmtypes.NewParams("akava", true, true, evmtypes.DefaultChainConfig()),
+		evmtypes.NewParams("ukava", true, true, evmtypes.DefaultChainConfig()),
 		nil,
 	)
 
