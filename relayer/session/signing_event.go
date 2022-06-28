@@ -7,29 +7,10 @@ import (
 	"github.com/libp2p/go-libp2p-core/peer"
 )
 
-type SigningSessionEventType int
-
-const (
-	SigningSessionEventType_AddCandidate SigningSessionEventType = iota + 1
-	SigningSessionEventType_StartSigner
-	SigningSessionEventType_AddSigningPart
-)
-
-func (e SigningSessionEventType) String() string {
-	switch e {
-	case SigningSessionEventType_AddCandidate:
-		return "AddCandidate"
-	case SigningSessionEventType_StartSigner:
-		return "StartSigner"
-	case SigningSessionEventType_AddSigningPart:
-		return "AddSigningPart"
-	default:
-		return "Unknown"
-	}
-}
-
+// SigningSessionEvent is implemented by all events that are part of a signing
+// session.
 type SigningSessionEvent interface {
-	EventType() SigningSessionEventType
+	SigningSessionEvent()
 }
 
 var _ SigningSessionEvent = (*AddCandidateEvent)(nil)
@@ -55,17 +36,9 @@ type AddSigningPartEvent struct {
 }
 
 // EventType
-func (e *AddCandidateEvent) EventType() SigningSessionEventType {
-	return SigningSessionEventType_AddCandidate
-}
-
-func (e *StartSignerEvent) EventType() SigningSessionEventType {
-	return SigningSessionEventType_StartSigner
-}
-
-func (e *AddSigningPartEvent) EventType() SigningSessionEventType {
-	return SigningSessionEventType_AddSigningPart
-}
+func (e *AddCandidateEvent) SigningSessionEvent()   {}
+func (e *StartSignerEvent) SigningSessionEvent()    {}
+func (e *AddSigningPartEvent) SigningSessionEvent() {}
 
 func NewAddCandidateEvent(
 	partyID *tss.PartyID,

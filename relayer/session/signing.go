@@ -181,7 +181,7 @@ func (s *SigningSession) Update(event SigningSessionEvent) error {
 	s.logger.Debugw(
 		"SigningSessionEvent received",
 		"peerID", s.currentPeerID,
-		"type", event.EventType(),
+		"type", fmt.Sprintf("%T", event),
 	)
 
 	switch ev := event.(type) {
@@ -203,7 +203,7 @@ func (s *SigningSession) UpdateAddCandidateEvent(
 	if !ok {
 		s.logger.Warnw(
 			"invalid state for AddCandidateEvent",
-			"current state", s.state.State(),
+			"current state", fmt.Sprintf("%T", s.state),
 			"from", ev.joinMsg.PeerID,
 			"currentPeerID", s.currentPeerID,
 		)

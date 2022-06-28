@@ -9,43 +9,9 @@ import (
 	"github.com/kava-labs/kava-bridge/relayer/mp_tss/types"
 )
 
-type SigningSessionStateType int
-
-const (
-	SigningSessionStateType_PickingLeader SigningSessionStateType = iota + 1
-	SigningSessionStateType_LeaderWaitingForCandidates
-	SigningSessionStateType_CandidateWaitingForLeader
-	SigningSessionStateType_Signing
-	SigningSessionStateType_Done
-	SigningSessionStateType_DoneNonParticipant
-	SigningSessionStateType_Error
-)
-
-// String returns the string representation of the state.
-func (t SigningSessionStateType) String() string {
-	switch t {
-	case SigningSessionStateType_PickingLeader:
-		return "PickingLeader"
-	case SigningSessionStateType_LeaderWaitingForCandidates:
-		return "LeaderWaitingForCandidates"
-	case SigningSessionStateType_CandidateWaitingForLeader:
-		return "CandidateWaitingForLeader"
-	case SigningSessionStateType_Signing:
-		return "Signing"
-	case SigningSessionStateType_Done:
-		return "Done"
-	case SigningSessionStateType_DoneNonParticipant:
-		return "DoneNonParticipant"
-	case SigningSessionStateType_Error:
-		return "Error"
-	default:
-		return "Unknown"
-	}
-}
-
 // SigningSessionState is the state of a signing session.
 type SigningSessionState interface {
-	State() SigningSessionStateType
+	SigningSessionState()
 }
 
 var _ SigningSessionState = (*PickingLeaderState)(nil)
@@ -173,37 +139,10 @@ func NewErrorState(err *tss.Error) *ErrorState {
 // -----------------------------------------------------------------------------
 // SigningSessionState interface implementations
 
-// State returns the state type of the session state.
-func (s *PickingLeaderState) State() SigningSessionStateType {
-	return SigningSessionStateType_PickingLeader
-}
-
-// State returns the state type of the session state.
-func (s *LeaderWaitingForCandidatesState) State() SigningSessionStateType {
-	return SigningSessionStateType_LeaderWaitingForCandidates
-}
-
-// State returns the state type of the session state.
-func (s *CandidateWaitingForLeaderState) State() SigningSessionStateType {
-	return SigningSessionStateType_CandidateWaitingForLeader
-}
-
-// State returns the state type of the session state.
-func (s *SigningState) State() SigningSessionStateType {
-	return SigningSessionStateType_Signing
-}
-
-// State returns the state type of the session state.
-func (s *DoneState) State() SigningSessionStateType {
-	return SigningSessionStateType_Done
-}
-
-// State returns the state type of the session state.
-func (s *DoneNonParticipantState) State() SigningSessionStateType {
-	return SigningSessionStateType_DoneNonParticipant
-}
-
-// State returns the state type of the session state.
-func (s *ErrorState) State() SigningSessionStateType {
-	return SigningSessionStateType_Error
-}
+func (s *PickingLeaderState) SigningSessionState()              {}
+func (s *LeaderWaitingForCandidatesState) SigningSessionState() {}
+func (s *CandidateWaitingForLeaderState) SigningSessionState()  {}
+func (s *SigningState) SigningSessionState()                    {}
+func (s *DoneState) SigningSessionState()                       {}
+func (s *DoneNonParticipantState) SigningSessionState()         {}
+func (s *ErrorState) SigningSessionState()                      {}

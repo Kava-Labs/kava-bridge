@@ -2,7 +2,6 @@ package mp_tss_test
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	"github.com/binance-chain/tss-lib/ecdsa/keygen"
@@ -79,20 +78,20 @@ func TestKeygen(t *testing.T) {
 		}
 	}
 
-	// Write keys to file for test fixtures for signing
-	// Must be in the same order as PartyIDs
-	for i, partyID := range partyIDs {
-		// Search key for this partyID
-		for _, key := range keys {
-			if key.ShareID.Cmp(partyID.KeyInt()) == 0 {
-				assert.Equal(t, partyIDs[i].KeyInt(), key.ShareID, "saved key part should match party id")
-
-				fmt.Printf("partyID = %v \n", partyID.KeyInt())
-				fmt.Printf("keyID   = %v \n", key.ShareID)
-
-				testutil.WriteTestKey(i, key)
-				break
-			}
-		}
-	}
+	// // Write keys to file for test fixtures for signing
+	// // Must be in the same order as PartyIDs
+	// for i, partyID := range partyIDs {
+	// 	// Search key for this partyID
+	// 	for _, key := range keys {
+	// 		if key.ShareID.Cmp(partyID.KeyInt()) == 0 {
+	// 			assert.Equal(t, partyIDs[i].KeyInt(), key.ShareID, "saved key part should match party id")
+	//
+	// 			fmt.Printf("partyID = %v \n", partyID.KeyInt())
+	// 			fmt.Printf("keyID   = %v \n", key.ShareID)
+	//
+	// 			testutil.WriteTestKey(i, key)
+	// 			break
+	// 		}
+	// 	}
+	// }
 }
