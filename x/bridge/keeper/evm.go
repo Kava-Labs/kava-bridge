@@ -101,7 +101,7 @@ func (k Keeper) CallEVMWithData(
 		GasCap: config.DefaultGasCap,
 	})
 	if err != nil {
-		return nil, err
+		return nil, sdkerrors.Wrap(evmtypes.ErrVMExecution, "failed to estimate gas")
 	}
 
 	msg := ethtypes.NewMessage(
