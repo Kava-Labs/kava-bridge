@@ -25,6 +25,7 @@ type SessionTransport struct {
 
 var _ mp_tss.Transporter = (*SessionTransport)(nil)
 
+// Send sends a tss message with the provided routing data.
 func (mt *SessionTransport) Send(
 	ctx context.Context,
 	data []byte,
@@ -84,10 +85,13 @@ func (mt *SessionTransport) Send(
 	return g.Wait()
 }
 
+// Receive returns the channel for receiving messages from other parties. This
+// can also be used to add messages to be handled from other parties.
 func (mt *SessionTransport) Receive() chan mp_tss.ReceivedPartyState {
 	return mt.recvChan
 }
 
+// NewSessionTransport returns a new Transporter using reliable broadcast.
 func NewSessionTransport(
 	broadcaster broadcast.Broadcaster,
 	sessionID mp_tss_types.AggregateSigningSessionID,
