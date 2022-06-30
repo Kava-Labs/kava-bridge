@@ -168,4 +168,11 @@ func TestSigner(t *testing.T) {
 	assert.True(t, ok, "ecdsa verify must pass")
 
 	t.Logf("ecdsa verify passed")
+
+	t.Run("SignMessage duplicate txHash", func(t *testing.T) {
+		_, err := signers[0].SignMessage(ctx, txHash, msgHash)
+		require.Error(t, err, "already signed signature should fail")
+
+		require.Contains(t, err.Error(), "signing session already exists for txHash")
+	})
 }

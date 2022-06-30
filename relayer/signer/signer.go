@@ -49,7 +49,8 @@ func NewSigner(
 	broadcasterOptions ...broadcast.BroadcasterOption,
 ) (*Signer, error) {
 	signer := &Signer{
-		Node:         node,
+		Node: node,
+		// Broadcaster set later, broadcaster requires signer struct
 		broadcaster:  nil,
 		partyIDStore: mp_tss.NewPartyIDStore(),
 		sessions:     session.NewSessionStore(),
@@ -68,6 +69,8 @@ func NewSigner(
 		return nil, err
 	}
 
+	signer.broadcaster = broadcaster
+
 	var peerMetas []*mp_tss.PeerMetadata
 	for i, peerID := range node.PeerList {
 		// TODO: Use configured monikers that should reside along with peer IDs
@@ -81,8 +84,6 @@ func NewSigner(
 	}
 
 	signer.logger.Infof("signer initialized with partyIDStore: %v", signer.partyIDStore)
-
-	signer.broadcaster = broadcaster
 
 	return signer, nil
 }
