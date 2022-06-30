@@ -78,6 +78,7 @@ Before we can run the keygen process, we need the following:
       wu3BecvKlTxM+/EJ
       =pfC6
       -----END PGP PUBLIC KEY BLOCK-----" | gpg --import
+      ```
    2. List the public key IDs to encrypt with.
       ```bash
       gpg --list-keys
