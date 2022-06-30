@@ -44,4 +44,15 @@ func TestSigningSession(t *testing.T) {
 	// Only accepts StartSignerEvent
 	err = sess.Update(session.NewStartSignerEvent(nil, nil, nil))
 	require.Nil(t, err)
+
+	// --------------------
+	// Now in signing state
+
+	// Cannot add candidate to signing event
+	err = sess.Update(session.NewAddCandidateEvent(nil, types.JoinSessionMessage{}))
+	require.Error(t, err)
+
+	// Cannot start signing again
+	err = sess.Update(session.NewStartSignerEvent(nil, nil, nil))
+	require.Error(t, err)
 }
