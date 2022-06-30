@@ -133,8 +133,15 @@ kava-relayer key precompute-preparams
 
 ### Generate key
 
-TODO:
+This requires some, but minimal, coordination with other peers as this requires
+all peers to be running the keygen process at the same time.
+
+The threshold value should be agreed on before starting this process. The
+threshold should be set in the configuration file or passed as an argument.
 
 ```bash
-kava-relayer join keygen
+# TODO: Not designed/implemented yet
+kava-relayer join keygen 3
 ```
+
+This will wait until all peers are connected before the keygen starts.
