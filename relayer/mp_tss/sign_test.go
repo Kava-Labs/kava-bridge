@@ -21,15 +21,15 @@ func TestSign(t *testing.T) {
 	// err := logging.SetLogLevel("*", "debug")
 	// require.NoError(t, err)
 
-	_, _, keys, signPIDs := testutil.GetTestKeys(t, threshold+1)
+	_, _, keys, signPIDs := testutil.GetTestKeys(t, testutil.TestThreshold+1)
 
 	// 2. Create and connect transport between peers
 	transports := CreateAndConnectTransports(t, signPIDs)
-	require.Len(t, transports, threshold+1)
+	require.Len(t, transports, testutil.TestThreshold+1)
 
 	// 3. Start signing party for each peer
-	outputAgg := make(chan common.SignatureData, threshold)
-	errAgg := make(chan *tss.Error, threshold)
+	outputAgg := make(chan common.SignatureData, testutil.TestThreshold)
+	errAgg := make(chan *tss.Error, testutil.TestThreshold)
 
 	msgHash := big.NewInt(1234)
 
@@ -37,7 +37,7 @@ func TestSign(t *testing.T) {
 	defer cancel()
 
 	for i := range signPIDs {
-		params := mp_tss.CreateParams(signPIDs, signPIDs[i], threshold)
+		params := mp_tss.CreateParams(signPIDs, signPIDs[i], testutil.TestThreshold)
 		t.Log(params.PartyID())
 
 		// big.Int message, would be message hash converted to big int
@@ -75,7 +75,7 @@ func TestSign(t *testing.T) {
 		}
 	}
 
-	require.Len(t, signatures, threshold+1, "each party should get a signature")
+	require.Len(t, signatures, testutil.TestThreshold+1, "each party should get a signature")
 
 	//nolint:govet
 	for i, sig := range signatures {

@@ -11,15 +11,12 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-const partyCount = 3
-const threshold = 1
-
 func TestKeygen(t *testing.T) {
 	// err := logging.SetLogLevel("*", "debug")
 	// require.NoError(t, err)
 
 	// 1. Create party ID for each peer, share with other peers
-	partyIDs := testutil.GetTestPartyIDs(partyCount)
+	partyIDs := testutil.GetTestPartyIDs(testutil.TestPartyCount)
 
 	// 2. Create and connect transport between peers
 	transports := CreateAndConnectTransports(t, partyIDs)
@@ -34,7 +31,7 @@ func TestKeygen(t *testing.T) {
 	for i := range partyIDs {
 		// Load from disk to avoid re-generating
 		preParams := LoadTestPreParam(i)
-		params := mp_tss.CreateParams(partyIDs, partyIDs[i], threshold)
+		params := mp_tss.CreateParams(partyIDs, partyIDs[i], testutil.TestThreshold)
 
 		outputCh, errCh := mp_tss.RunKeyGen(ctx, preParams, params, transports[i])
 		go func(outputCh chan keygen.LocalPartySaveData, errCh chan *tss.Error) {

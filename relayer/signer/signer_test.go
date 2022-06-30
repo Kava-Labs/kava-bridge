@@ -32,8 +32,8 @@ func TestSigner(t *testing.T) {
 	// numPeers := test.TestThreshold + 1
 	// threshold := test.TestThreshold
 
-	numPeers := 3
-	threshold := 1
+	numPeers := testutil.TestThreshold + 1
+	threshold := testutil.TestThreshold
 
 	ctx := context.Background()
 

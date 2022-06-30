@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/binance-chain/tss-lib/ecdsa/keygen"
+	"github.com/kava-labs/kava-bridge/relayer/testutil"
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/tendermint/libs/os"
 )
@@ -40,7 +41,7 @@ func TestCreatePreParamFixtures(t *testing.T) {
 	// more parties
 	t.Skip("skip create pre-param fixtures")
 
-	for i := 0; i < partyCount; i++ {
+	for i := 0; i < testutil.TestPartyCount; i++ {
 		t.Logf("creating pre-params for party %d", i)
 
 		preParams, err := keygen.GeneratePreParams(1 * time.Minute)
