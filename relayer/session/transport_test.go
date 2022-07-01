@@ -41,7 +41,7 @@ func TestSessionTransport_SendBroadcast(t *testing.T) {
 func TestSessionTransport_SendDirect(t *testing.T) {
 	partyIDStore := mp_tss.NewPartyIDStore()
 
-	partyIDStore.AddPeers([]*mp_tss.PeerMetadata{
+	err := partyIDStore.AddPeers([]*mp_tss.PeerMetadata{
 		{
 			PeerID:  testutil.TestPeerIDs[0],
 			Moniker: "one",
@@ -51,6 +51,7 @@ func TestSessionTransport_SendDirect(t *testing.T) {
 			Moniker: "two",
 		},
 	})
+	require.NoError(t, err)
 
 	tp := session.NewSessionTransport(
 		&broadcast.NoOpBroadcaster{},
