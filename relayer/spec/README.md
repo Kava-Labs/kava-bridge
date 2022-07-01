@@ -5,6 +5,10 @@
 The relayer is a multi-party authority that relays information from one chain
 to another, such as bridging tokens between Ethereum and Kava.
 
+## Overview
+
+![Overview Diagram](images/overview.drawio.png)
+
 ## Contents
 
 1. **[Concepts](01_concepts.md)**
