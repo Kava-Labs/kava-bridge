@@ -46,13 +46,57 @@ func TestSigningSession(t *testing.T) {
 	require.Nil(t, err)
 
 	// --------------------
-	// Now in signing state
+	// Now in DoneNonParticipantState
 
-	// Cannot add candidate to signing event
+	// Does not accept any more events
 	err = sess.Update(session.NewAddCandidateEvent(nil, types.JoinSessionMessage{}))
 	require.Error(t, err)
 
-	// Cannot start signing again
 	err = sess.Update(session.NewStartSignerEvent(nil, nil, nil))
+	require.Error(t, err)
+
+	err = sess.Update(session.NewAddSigningPartEvent(nil, nil, false))
+	require.Error(t, err)
+}
+
+func TestSigningSession_Leader(t *testing.T) {
+	store := session.NewSigningSessionStore()
+
+	sess, _, err := session.NewSigningSession(
+		context.Background(),
+		store,
+		&broadcast.NoOpBroadcaster{},
+		common.Hash{1},
+		nil,                     // msg to sign
+		2,                       // threshold
+		testutil.TestPeerIDs[3], // current peer id -- must be 3 to be leader
+		testutil.TestPeerIDs,
+		nil, // current partyID
+		nil, // partyID store
+		keygen.LocalPartySaveData{},
+	)
+
+	require.NoError(t, err)
+	require.NotNil(t, sess)
+
+	// Leader accepts NewAddCandidateEvent
+	err = sess.Update(session.NewAddCandidateEvent(
+		nil,
+		types.NewJoinSigningSessionMessage(
+			testutil.TestPeerIDs[0],
+			common.Hash{1},
+			types.SigningSessionIDPart{1, 2, 3},
+		),
+	))
+	require.NoError(t, err)
+
+	// ----
+	// Does not accept any other events
+
+	err = sess.Update(session.NewStartSignerEvent(nil, nil, nil))
+	require.Error(t, err)
+	require.Equal(t, "not enough candidates to start signing", err.Error())
+
+	err = sess.Update(session.NewAddSigningPartEvent(nil, nil, false))
 	require.Error(t, err)
 }

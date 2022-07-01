@@ -347,8 +347,11 @@ func (s *SigningSession) UpdateStartSignerEvent(
 	ev *StartSignerEvent,
 ) error {
 	// Both leader and candidate will receive this event
-	switch s.state.(type) {
+	switch state := s.state.(type) {
 	case *LeaderWaitingForCandidatesState:
+		if len(state.joinMsgs) < s.threshold {
+			return fmt.Errorf("not enough candidates to start signing")
+		}
 	case *CandidateWaitingForLeaderState:
 	default:
 		return fmt.Errorf(
