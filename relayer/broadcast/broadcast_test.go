@@ -262,7 +262,7 @@ func (suite *BroadcasterTestSuite) TestBroadcast_Responses() {
 			)
 			suite.Require().NoError(err)
 
-			time.Sleep(time.Second * 3)
+			time.Sleep(time.Second * 5)
 
 			suite.RequireHandlersRawCounts(tc.wantRawCounts)
 			suite.RequireHandlersValidCounts(tc.wantValidCounts)
