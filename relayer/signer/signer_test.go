@@ -108,7 +108,7 @@ func TestSigner(t *testing.T) {
 		}
 	}
 
-	time.Sleep(time.Second * 2)
+	time.Sleep(time.Second * 5)
 	t.Log("Starting signing sessions")
 
 	txHash := common.BigToHash(big.NewInt(1))
