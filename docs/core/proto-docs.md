@@ -37,6 +37,10 @@
   
     - [Msg](#bridge.v1beta1.Msg)
   
+- [relayer/broadcast/v1beta1/trace.proto](#relayer/broadcast/v1beta1/trace.proto)
+    - [TraceContext](#relayer.v1beta1.TraceContext)
+    - [TraceContext.CarrierEntry](#relayer.v1beta1.TraceContext.CarrierEntry)
+  
 - [relayer/broadcast/v1beta1/broadcast_message.proto](#relayer/broadcast/v1beta1/broadcast_message.proto)
     - [BroadcastMessage](#relayer.v1beta1.BroadcastMessage)
     - [HelloRequest](#relayer.v1beta1.HelloRequest)
@@ -440,6 +444,54 @@ Msg defines the bridge Msg service.
 
 
 
+<a name="relayer/broadcast/v1beta1/trace.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## relayer/broadcast/v1beta1/trace.proto
+
+
+
+<a name="relayer.v1beta1.TraceContext"></a>
+
+### TraceContext
+TraceContext contains the tracing context of a message, converted to a MapCarrier
+https://pkg.go.dev/go.opentelemetry.io/otel@v1.7.0/propagation#MapCarrier
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `carrier` | [TraceContext.CarrierEntry](#relayer.v1beta1.TraceContext.CarrierEntry) | repeated |  |
+
+
+
+
+
+
+<a name="relayer.v1beta1.TraceContext.CarrierEntry"></a>
+
+### TraceContext.CarrierEntry
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `key` | [string](#string) |  |  |
+| `value` | [string](#string) |  |  |
+
+
+
+
+
+ <!-- end messages -->
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
+
+ <!-- end services -->
+
+
+
 <a name="relayer/broadcast/v1beta1/broadcast_message.proto"></a>
 <p align="right"><a href="#top">Top</a></p>
 
@@ -456,10 +508,13 @@ BroadcastMessage is used between peers to wrap messages for each protocol
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | `id` | [string](#string) |  | Unique ID of this message. |
+| `from` | [string](#string) |  | Original peer.ID that sent this message. |
+| `is_broadcaster` | [bool](#bool) |  | If this message is sent by the original broadcaster, where the from field will match the sender peer.ID. |
 | `recipient_peer_ids` | [string](#string) | repeated | Selected recipients of the message, to partially restrict the broadcast to a subset a peers. |
 | `payload` | [google.protobuf.Any](#google.protobuf.Any) |  | Customtype workaround for not having to use a separate protocgen.sh script |
 | `created` | [google.protobuf.Timestamp](#google.protobuf.Timestamp) |  | Timestamp when the message was broadcasted. |
 | `ttl_seconds` | [uint64](#uint64) |  | Seconds after created time until the message expires. This requires roughly synced times between peers |
+| `trace_context` | [TraceContext](#relayer.v1beta1.TraceContext) |  | Trace is used to track the message with opentelemetry. |
 
 
 

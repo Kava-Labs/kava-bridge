@@ -37,18 +37,19 @@ func newShowNodeMultiAddressCmd() *cobra.Command {
 
 			port := viper.GetInt(p2pFlagPort)
 
-			ipv4, err := GetHostIPv4()
-
+			ipv4s, err := GetHostIPv4s()
 			if err != nil {
 				return err
 			}
 
-			multiAddress, err := ma.NewMultiaddr(fmt.Sprintf("/ip4/%s/tcp/%d/p2p/%s", ipv4, port, peerID))
-			if err != nil {
-				return err
-			}
+			for _, ipv4 := range ipv4s {
+				multiAddress, err := ma.NewMultiaddr(fmt.Sprintf("/ip4/%s/tcp/%d/p2p/%s", ipv4, port, peerID))
+				if err != nil {
+					return err
+				}
 
-			fmt.Print(multiAddress)
+				fmt.Println(multiAddress)
+			}
 
 			return nil
 		},
@@ -61,17 +62,26 @@ func newShowNodeMultiAddressCmd() *cobra.Command {
 	return cmd
 }
 
-// GetHostIPv4 returns the first valid IPv4 address bound to a
+// GetHostIPv4s returns a slice lf valid IPv4 address bound to a
 // network interface for the current host and error (if any).
-func GetHostIPv4() (string, error) {
-	var currentHostsIPv4Address string
-	host, _ := os.Hostname()
-	addrs, _ := net.LookupIP(host)
+func GetHostIPv4s() ([]net.IP, error) {
+	addrs, err := net.InterfaceAddrs()
+	if err != nil {
+		return nil, err
+	}
+
+	var publicIPv4s []net.IP
 	for _, addr := range addrs {
-		if ipv4 := addr.To4(); ipv4 != nil {
-			currentHostsIPv4Address = ipv4.String()
-			return currentHostsIPv4Address, nil
+		if ipnet, ok := addr.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
+			if ipnet.IP.To4() != nil {
+				publicIPv4s = append(publicIPv4s, ipnet.IP.To4())
+			}
 		}
 	}
-	return currentHostsIPv4Address, fmt.Errorf("no IPv4 address exists for current host %s ", host)
+
+	if len(publicIPv4s) == 0 {
+		return nil, fmt.Errorf("no public IPv4 address found")
+	}
+
+	return publicIPv4s, nil
 }

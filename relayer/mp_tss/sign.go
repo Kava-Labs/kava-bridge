@@ -1,6 +1,7 @@
 package mp_tss
 
 import (
+	"context"
 	"math/big"
 
 	"github.com/binance-chain/tss-lib/common"
@@ -12,6 +13,7 @@ import (
 // RunSign starts the local signing party and handles incoming and outgoing
 // messages to other parties.
 func RunSign(
+	ctx context.Context,
 	msg *big.Int,
 	params *tss.Parameters,
 	key keygen.LocalPartySaveData,
@@ -29,7 +31,7 @@ func RunSign(
 	party := signing.NewLocalParty(msg, params, key, outCh, endCh)
 	log.Debugw("local signing party created", "partyID", party.PartyID())
 
-	RunParty(party, errCh, outCh, transport, false)
+	RunParty(ctx, party, errCh, outCh, transport, false)
 
 	return endCh, errCh
 }

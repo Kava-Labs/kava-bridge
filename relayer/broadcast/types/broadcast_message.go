@@ -1,6 +1,7 @@
 package types
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -17,6 +18,7 @@ const (
 
 // NewBroadcastMessage creates a new BroadcastMessage with the payload marshaled as Any.
 func NewBroadcastMessage(
+	ctx context.Context,
 	payload PeerMessage,
 	hostID peer.ID,
 	recipientsPeerIDs []peer.ID,
@@ -32,15 +34,19 @@ func NewBroadcastMessage(
 		return BroadcastMessage{}, err
 	}
 
-	allPeerIDs := append(recipientsPeerIDs, hostID)
-	allPeerIDs = dedupPeerIDs(allPeerIDs)
+	// Add trace context to the message.
+	traceCtx := NewTraceContext()
+	traceCtx.Inject(ctx)
 
 	return BroadcastMessage{
 		ID:               messageID,
+		From:             hostID,
+		IsBroadcaster:    true,
 		Payload:          *anyPayload,
-		RecipientPeerIDs: allPeerIDs,
+		RecipientPeerIDs: recipientsPeerIDs,
 		Created:          time.Now().UTC(),
 		TTLSeconds:       TTLSeconds,
+		TraceContext:     traceCtx,
 	}, nil
 }
 
@@ -55,7 +61,11 @@ func (msg *BroadcastMessage) Validate() error {
 		return fmt.Errorf("invalid message ID: %w", err)
 	}
 
-	if len(msg.RecipientPeerIDs) <= 1 {
+	if err := msg.From.Validate(); err != nil {
+		return fmt.Errorf("invalid from peer.ID: %w", err)
+	}
+
+	if len(msg.RecipientPeerIDs) < 1 {
 		return ErrMsgInsufficientRecipients
 	}
 
@@ -82,6 +92,14 @@ func (msg *BroadcastMessage) Validate() error {
 	}
 
 	return nil
+}
+
+func (msg *BroadcastMessage) GetAllPeersIDs() []peer.ID {
+	recipientsAndSender := make([]peer.ID, len(msg.RecipientPeerIDs)+1)
+	copy(recipientsAndSender, msg.RecipientPeerIDs)
+	recipientsAndSender[len(msg.RecipientPeerIDs)] = msg.From
+
+	return dedupPeerIDs(recipientsAndSender)
 }
 
 // UnpackPayload unpacks the broadcast message payload into a PeerMessage.

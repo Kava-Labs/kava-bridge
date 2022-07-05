@@ -5,26 +5,39 @@ import "gogoproto/gogo.proto";
 import "google/protobuf/any.proto";
 import "google/protobuf/timestamp.proto";
 
+import "relayer/broadcast/v1beta1/trace.proto";
+
 option go_package = "github.com/kava-labs/kava-bridge/relayer/broadcast/types";
 
 // BroadcastMessage is used between peers to wrap messages for each protocol
 message BroadcastMessage {
   // Unique ID of this message.
   string id = 1 [(gogoproto.customname) = "ID"];
+  // Original peer.ID that sent this message.
+  string from = 2 [
+    (gogoproto.nullable)   = false,
+    (gogoproto.customtype) = "github.com/libp2p/go-libp2p-core/peer.ID",
+    (gogoproto.customname) = "From"
+  ];
+  // If this message is sent by the original broadcaster, where the from field
+  // will match the sender peer.ID.
+  bool is_broadcaster = 3;
   // Selected recipients of the message, to partially restrict the broadcast to
   // a subset a peers.
-  repeated string recipient_peer_ids = 2 [
+  repeated string recipient_peer_ids = 4 [
     (gogoproto.customtype) = "github.com/libp2p/go-libp2p-core/peer.ID",
     (gogoproto.customname) = "RecipientPeerIDs"
   ];
   // Customtype workaround for not having to use a separate protocgen.sh script
-  google.protobuf.Any payload = 3
+  google.protobuf.Any payload = 5
       [(gogoproto.nullable) = false, (gogoproto.customtype) = "github.com/gogo/protobuf/types.Any"];
   // Timestamp when the message was broadcasted.
-  google.protobuf.Timestamp created = 4 [(gogoproto.nullable) = false, (gogoproto.stdtime) = true];
+  google.protobuf.Timestamp created = 6 [(gogoproto.nullable) = false, (gogoproto.stdtime) = true];
   // Seconds after created time until the message expires. This requires
   // roughly synced times between peers
-  uint64 ttl_seconds = 5 [(gogoproto.customname) = "TTLSeconds"];
+  uint64 ttl_seconds = 7 [(gogoproto.customname) = "TTLSeconds"];
+  // Trace is used to track the message with opentelemetry.
+  TraceContext trace_context = 8 [(gogoproto.nullable) = true];
 }
 
 message HelloRequest {

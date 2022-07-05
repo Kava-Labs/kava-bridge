@@ -70,7 +70,7 @@ func (pm *PendingMessagesStore) TryNewGroup(msgID string) bool {
 	defer pm.pendingMessagesLock.Unlock()
 
 	if _, found := pm.pendingMessages[msgID]; found {
-		log.Debug("message group already exists", "msgID", msgID)
+		log.Debugw("message group already exists", "msgID", msgID)
 		return false
 	}
 
@@ -88,6 +88,8 @@ func (pm *PendingMessagesStore) DeleteGroup(msgID string) error {
 		return ErrGroupNotFound
 	}
 
+	// TODO: This should not actually delete messages, but rather mark them as
+	// invalid or complete so that they will not be re-broadcasted.
 	delete(pm.pendingMessages, msgID)
 
 	return nil
@@ -113,7 +115,11 @@ func (pm *PendingMessagesStore) AddMessage(msg MessageWithPeerMetadata) error {
 		return fmt.Errorf("invalid message: %w", err)
 	}
 
-	log.Debugw("added message to pending message group", "msgID", msg.BroadcastMessage.ID)
+	log.Debugw(
+		"added message to pending message group",
+		"msgID", msg.BroadcastMessage.ID,
+		"len", peerMsgGroup.Len(),
+	)
 	pm.pendingMessages[msg.BroadcastMessage.ID] = peerMsgGroup
 
 	return nil
@@ -143,6 +149,12 @@ func (pm *PendingMessagesStore) GroupIsCompleted(
 		log.DPanicf("message data not found for completed message ID %s", msgID)
 		return types.BroadcastMessage{}, false
 	}
+
+	log.Debugw(
+		"message group completed",
+		"msgID", msgID,
+		"len", peerMsgGroup.Len(),
+	)
 
 	return msgData, true
 }

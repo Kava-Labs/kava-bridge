@@ -1,6 +1,8 @@
 package mp_tss
 
 import (
+	"context"
+
 	"github.com/binance-chain/tss-lib/ecdsa/keygen"
 	"github.com/binance-chain/tss-lib/ecdsa/resharing"
 	"github.com/binance-chain/tss-lib/tss"
@@ -9,6 +11,7 @@ import (
 // RunReshare starts the local reshare party and handles incoming and outgoing
 // messages to other parties.
 func RunReshare(
+	ctx context.Context,
 	params *tss.ReSharingParameters,
 	key keygen.LocalPartySaveData,
 	transport Transporter,
@@ -24,7 +27,7 @@ func RunReshare(
 	party := resharing.NewLocalParty(params, key, outCh, endCh)
 	log.Debugw("local resharing party created", "partyID", party.PartyID())
 
-	RunParty(party, errCh, outCh, transport, true)
+	RunParty(ctx, party, errCh, outCh, transport, true)
 
 	return endCh, errCh
 }

@@ -22,7 +22,7 @@ message SigningPartyStartMessage {
 // SigningPartMessage is an outgoing message from lib-tss.
 message SigningPartMessage {
   // Signing party session ID.
-  bytes session_id = 1;
+  bytes session_id = 1 [(gogoproto.customname) = "SessionID"];
   // Bytes from lib-tss to send.
   bytes data = 2;
   // If this message is broadcasted to all session peers.

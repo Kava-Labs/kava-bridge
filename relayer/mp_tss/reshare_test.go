@@ -1,6 +1,7 @@
 package mp_tss_test
 
 import (
+	"context"
 	"encoding/json"
 	"testing"
 
@@ -9,6 +10,7 @@ import (
 	"github.com/binance-chain/tss-lib/test"
 	"github.com/binance-chain/tss-lib/tss"
 	"github.com/kava-labs/kava-bridge/relayer/mp_tss"
+	"github.com/kava-labs/kava-bridge/relayer/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -26,7 +28,9 @@ func TestReshare(t *testing.T) {
 	// require.NoError(t, err)
 
 	// 1. Get t+1 current keys
-	oldKeys, oldPartyIDs := GetTestKeys(threshold + 1)
+	oldPartyIDs := testutil.GetTestPartyIDs(testutil.TestPartyCount)
+
+	oldKeys := testutil.GetTestTssKeys(testutil.TestThreshold + 1)
 	require.Equal(t, keygen.TestThreshold+1, len(oldKeys))
 	require.Equal(t, keygen.TestThreshold+1, len(oldPartyIDs))
 
@@ -44,11 +48,20 @@ func TestReshare(t *testing.T) {
 	outputAgg := make(chan keygen.LocalPartySaveData)
 	errAgg := make(chan *tss.Error)
 
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	// Start old parties
 	for i, partyID := range oldPartyIDs {
-		params := mp_tss.CreateReShareParams(oldPartyIDs, newPartyIDs, partyID, threshold, newThreshold)
+		params := mp_tss.CreateReShareParams(
+			oldPartyIDs,
+			newPartyIDs.ToUnSorted(),
+			partyID,
+			testutil.TestThreshold,
+			newThreshold,
+		)
 
-		outputCh, errCh := mp_tss.RunReshare(params, oldKeys[i], oldTransports[i])
+		outputCh, errCh := mp_tss.RunReshare(ctx, params, oldKeys[i], oldTransports[i])
 
 		go func(outputCh chan keygen.LocalPartySaveData, errCh chan *tss.Error) {
 			for {
@@ -64,14 +77,20 @@ func TestReshare(t *testing.T) {
 
 	// Start new parties
 	for i, partyID := range newPartyIDs {
-		params := mp_tss.CreateReShareParams(oldPartyIDs, newPartyIDs, partyID, threshold, newThreshold)
+		params := mp_tss.CreateReShareParams(
+			oldPartyIDs,
+			newPartyIDs.ToUnSorted(),
+			partyID,
+			testutil.TestThreshold,
+			newThreshold,
+		)
 		t.Log(params.PartyID())
 
 		save := keygen.NewLocalPartySaveData(len(newPartyIDs))
 		// Reuse fixture pre-generated preparams
-		save.LocalPreParams = ReadTestKey(i).LocalPreParams
+		save.LocalPreParams = testutil.ReadTestKey(i).LocalPreParams
 
-		outputCh, errCh := mp_tss.RunReshare(params, save, newTransports[i])
+		outputCh, errCh := mp_tss.RunReshare(ctx, params, save, newTransports[i])
 
 		go func(outputCh chan keygen.LocalPartySaveData, errCh chan *tss.Error) {
 			for {

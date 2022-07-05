@@ -1,6 +1,7 @@
 package types_test
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -17,7 +18,7 @@ func MustNewBroadcastMessage(
 	recipients []peer.ID,
 	TTLSeconds uint64,
 ) types.BroadcastMessage {
-	msg, err := types.NewBroadcastMessage(payload, hostPeerID, recipients, TTLSeconds)
+	msg, err := types.NewBroadcastMessage(context.Background(), payload, hostPeerID, recipients, TTLSeconds)
 	if err != nil {
 		panic(err)
 	}
@@ -96,10 +97,13 @@ func TestMessageExpired_Future(t *testing.T) {
 	// Message 5 seconds in future, ie. peers with out of sync times
 	msg := types.BroadcastMessage{
 		MustNewBroadcastMessageID(),
+		testutil.TestPeerIDs[0],
+		true,
 		testutil.TestPeerIDs[:2],
 		prototypes.Any{},
 		time.Now().Add(time.Second),
 		1,
+		&types.TraceContext{},
 	}
 	require.False(t, msg.Expired(), "duration since created should not underflow")
 
@@ -144,7 +148,7 @@ func TestMarshalUnmarshalPayload(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			msg, err := types.NewBroadcastMessage(tc.payload, testutil.TestPeerIDs[0], nil, 1)
+			msg, err := types.NewBroadcastMessage(context.Background(), tc.payload, testutil.TestPeerIDs[0], nil, 1)
 			require.NoError(t, err)
 
 			unpacked, err := msg.UnpackPayload()

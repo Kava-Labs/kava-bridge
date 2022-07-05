@@ -196,7 +196,7 @@ func TestGetSessionID_Order(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Len(t, participantPeerIDs, threshold+1, "there should be t+1 participants")
-		require.True(t, sessionID.Validate(), "session id should be valid")
+		require.NoError(t, sessionID.Validate(), "session id should be valid")
 		require.Equal(t, expectedSessionID, sessionID.Bytes(), "session id should match expected")
 	}
 }

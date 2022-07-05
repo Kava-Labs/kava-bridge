@@ -1,6 +1,7 @@
 package mp_tss
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/binance-chain/tss-lib/tss"
@@ -31,7 +32,7 @@ func NewMemoryTransporter(partyID *tss.PartyID) *MemoryTransporter {
 	return ts
 }
 
-func (mt *MemoryTransporter) Send(data []byte, routing *tss.MessageRouting, isResharing bool) error {
+func (mt *MemoryTransporter) Send(ctx context.Context, data []byte, routing *tss.MessageRouting, isResharing bool) error {
 	if isResharing {
 		return mt.sendReSharing(data, routing)
 	}
@@ -151,7 +152,7 @@ func (mt *MemoryTransporter) GetReceiver() chan ReceivedPartyState {
 
 // Receive returns a channel for the current peer to receive messages from
 // other peers.
-func (mt *MemoryTransporter) Receive() <-chan ReceivedPartyState {
+func (mt *MemoryTransporter) Receive() chan ReceivedPartyState {
 	return mt.recvChan
 }
 
@@ -165,8 +166,8 @@ func (mt *MemoryTransporter) AddNewCommitteeTarget(partyID *tss.PartyID, ch chan
 
 func DataRoutingToMessage(data []byte, routing *tss.MessageRouting) ReceivedPartyState {
 	return ReceivedPartyState{
-		wireBytes:   data,
-		from:        routing.From,
-		isBroadcast: routing.IsBroadcast,
+		WireBytes:   data,
+		From:        routing.From,
+		IsBroadcast: routing.IsBroadcast,
 	}
 }

@@ -10,7 +10,7 @@ import (
 type BroadcasterHook interface {
 	// Run before a raw message is broadcasted and can be used to modify the
 	// message.
-	BeforeBroadcastRawMessage(b *Broadcaster, target peer.ID, pb *proto.Message)
+	BeforeBroadcastRawMessage(b *P2PBroadcaster, target peer.ID, pb *proto.Message)
 }
 
 // NoOpBroadcasterHook is a broadcasterHook that does nothing.
@@ -18,5 +18,5 @@ type noOpBroadcasterHook struct{}
 
 var _ BroadcasterHook = (*noOpBroadcasterHook)(nil)
 
-func (h *noOpBroadcasterHook) BeforeBroadcastRawMessage(b *Broadcaster, target peer.ID, pb *proto.Message) {
+func (h *noOpBroadcasterHook) BeforeBroadcastRawMessage(b *P2PBroadcaster, target peer.ID, pb *proto.Message) {
 }

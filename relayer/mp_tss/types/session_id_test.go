@@ -19,7 +19,7 @@ func TestIsPeerParticipant(t *testing.T) {
 		),
 	)
 
-	require.True(t, sessionID.Validate())
+	require.NoError(t, sessionID.Validate())
 
 	for i := 1; i <= 10; i++ {
 		isParticipant := sessionID.IsPeerParticipant(types.SigningSessionIDPart{byte(i)})

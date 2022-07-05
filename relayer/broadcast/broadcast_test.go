@@ -18,7 +18,7 @@ import (
 )
 
 type TestBroadcaster struct {
-	*broadcast.Broadcaster
+	*broadcast.P2PBroadcaster
 	handler *TestHandler
 }
 
@@ -41,8 +41,8 @@ func NewTestBroadcaster(
 	}
 
 	return &TestBroadcaster{
-		Broadcaster: b,
-		handler:     handler,
+		P2PBroadcaster: b,
+		handler:        handler,
 	}, nil
 }
 
@@ -94,7 +94,10 @@ func (suite *BroadcasterTestSuite) TearDownTest() {
 	}
 }
 
-func (suite *BroadcasterTestSuite) CreateHostBroadcasters(n int, options ...broadcast.BroadcasterOption) {
+func (suite *BroadcasterTestSuite) CreateHostBroadcasters(
+	n int,
+	options ...broadcast.BroadcasterOption,
+) {
 	suite.Hosts = testutil.CreateHosts(suite.T(), suite.Ctx, n)
 
 	suite.CreateBroadcasterWithHosts(suite.Hosts, options...)
@@ -210,37 +213,37 @@ func (suite *BroadcasterTestSuite) TestBroadcast_Responses() {
 			"all including broadcaster",
 			allPeerIDs,
 			[]int{4, 4, 4, 4, 4},
-			[]int{1, 1, 1, 1, 1},
+			[]int{0, 1, 1, 1, 1},
 		},
 		{
 			"all excluding broadcaster",
 			allPeerIDs[1:],
 			[]int{4, 4, 4, 4, 4},
-			[]int{1, 1, 1, 1, 1},
+			[]int{0, 1, 1, 1, 1},
 		},
 		{
 			"partial including broadcaster",
 			allPeerIDs[:4],
 			[]int{3, 3, 3, 3, 0},
-			[]int{1, 1, 1, 1, 0},
+			[]int{0, 1, 1, 1, 0},
 		},
 		{
 			"partial excluding broadcaster",
 			allPeerIDs[1:4],
 			[]int{3, 3, 3, 3, 0},
-			[]int{1, 1, 1, 1, 0},
+			[]int{0, 1, 1, 1, 0},
 		},
 		{
 			"single including broadcaster",
 			allPeerIDs[:2],
 			[]int{1, 1, 0, 0, 0},
-			[]int{1, 1, 0, 0, 0},
+			[]int{0, 1, 0, 0, 0},
 		},
 		{
 			"single excluding broadcaster",
 			allPeerIDs[1:2],
 			[]int{1, 1, 0, 0, 0},
-			[]int{1, 1, 0, 0, 0},
+			[]int{0, 1, 0, 0, 0},
 		},
 	}
 
@@ -259,7 +262,7 @@ func (suite *BroadcasterTestSuite) TestBroadcast_Responses() {
 			)
 			suite.Require().NoError(err)
 
-			time.Sleep(time.Second * 3)
+			time.Sleep(time.Second * 5)
 
 			suite.RequireHandlersRawCounts(tc.wantRawCounts)
 			suite.RequireHandlersValidCounts(tc.wantValidCounts)
@@ -283,7 +286,7 @@ func (suite *BroadcasterTestSuite) TestBroadcast_TTL() {
 	)
 
 	sleepTimeFn := func(
-		b *broadcast.Broadcaster,
+		b *broadcast.P2PBroadcaster,
 		target peer.ID,
 		pb *proto.Message,
 	) time.Duration {
@@ -360,7 +363,7 @@ func (h *TestHandler) MismatchMessage(msg pending_store.MessageWithPeerMetadata)
 // SleepyBroadcasterHook is a broadcasterHook that conditionally delays broadcasting raw messages
 type SleepyBroadcasterHook struct {
 	sleepTimeFn func(
-		b *broadcast.Broadcaster,
+		b *broadcast.P2PBroadcaster,
 		target peer.ID,
 		pb *proto.Message,
 	) time.Duration
@@ -369,7 +372,7 @@ type SleepyBroadcasterHook struct {
 var _ broadcast.BroadcasterHook = (*SleepyBroadcasterHook)(nil)
 
 func (h *SleepyBroadcasterHook) BeforeBroadcastRawMessage(
-	b *broadcast.Broadcaster,
+	b *broadcast.P2PBroadcaster,
 	target peer.ID,
 	pb *proto.Message,
 ) {
