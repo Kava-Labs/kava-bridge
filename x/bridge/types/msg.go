@@ -134,10 +134,8 @@ func NewMsgConvertERC20ToCoin(
 
 // GetSigners returns the addresses of signers that must sign.
 func (msg MsgConvertERC20ToCoin) GetSigners() []sdk.AccAddress {
-	sender, err := sdk.AccAddressFromHex(msg.Initiator[2:])
-	if err != nil {
-		panic(err)
-	}
+	addr := common.HexToAddress(msg.Initiator)
+	sender := sdk.AccAddress(addr.Bytes())
 	return []sdk.AccAddress{sender}
 }
 

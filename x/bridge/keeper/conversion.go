@@ -156,7 +156,6 @@ func (k Keeper) UnlockERC20Tokens(
 
 // LockERC20Tokens transfers the given amount of a conversion pair ERC20 token
 // from the initiator account to the module account.
-// Note that the initiator account must have first approved the module account's access of its tokens.
 func (k Keeper) LockERC20Tokens(
 	ctx sdk.Context,
 	pair types.ConversionPair,
