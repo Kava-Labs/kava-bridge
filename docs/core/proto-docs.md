@@ -34,6 +34,8 @@
     - [MsgBridgeEthereumToKavaResponse](#bridge.v1beta1.MsgBridgeEthereumToKavaResponse)
     - [MsgConvertCoinToERC20](#bridge.v1beta1.MsgConvertCoinToERC20)
     - [MsgConvertCoinToERC20Response](#bridge.v1beta1.MsgConvertCoinToERC20Response)
+    - [MsgConvertERC20ToCoin](#bridge.v1beta1.MsgConvertERC20ToCoin)
+    - [MsgConvertERC20ToCoinResponse](#bridge.v1beta1.MsgConvertERC20ToCoinResponse)
   
     - [Msg](#bridge.v1beta1.Msg)
   
@@ -423,6 +425,35 @@ Msg/ConvertCoinToERC20.
 
 
 
+
+<a name="bridge.v1beta1.MsgConvertERC20ToCoin"></a>
+
+### MsgConvertERC20ToCoin
+MsgConvertERC20ToCoin defines a conversion from Kava ERC20 to sdk.Coin.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `initiator` | [string](#string) |  | EVM 0x hex address initiating the conversion. |
+| `receiver` | [string](#string) |  | Kava bech32 address that will receive the converted sdk.Coin. |
+| `kava_erc20_address` | [string](#string) |  | EVM 0x hex address of the ERC20 contract. |
+| `amount` | [string](#string) |  | ERC20 token amount to convert. |
+
+
+
+
+
+
+<a name="bridge.v1beta1.MsgConvertERC20ToCoinResponse"></a>
+
+### MsgConvertERC20ToCoinResponse
+MsgConvertERC20ToCoinResponse defines the response value from
+Msg/MsgConvertERC20ToCoin.
+
+
+
+
+
  <!-- end messages -->
 
  <!-- end enums -->
@@ -439,6 +470,7 @@ Msg defines the bridge Msg service.
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
 | `BridgeEthereumToKava` | [MsgBridgeEthereumToKava](#bridge.v1beta1.MsgBridgeEthereumToKava) | [MsgBridgeEthereumToKavaResponse](#bridge.v1beta1.MsgBridgeEthereumToKavaResponse) | BridgeEthereumToKava defines a method for bridging ERC20 tokens from Ethereum to Kava. | |
 | `ConvertCoinToERC20` | [MsgConvertCoinToERC20](#bridge.v1beta1.MsgConvertCoinToERC20) | [MsgConvertCoinToERC20Response](#bridge.v1beta1.MsgConvertCoinToERC20Response) | ConvertCoinToERC20 defines a method for converting sdk.Coin to Kava ERC20. | |
+| `ConvertERC20ToCoin` | [MsgConvertERC20ToCoin](#bridge.v1beta1.MsgConvertERC20ToCoin) | [MsgConvertERC20ToCoinResponse](#bridge.v1beta1.MsgConvertERC20ToCoinResponse) |  | |
 
  <!-- end services -->
 

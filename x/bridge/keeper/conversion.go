@@ -68,6 +68,49 @@ func (k Keeper) ConvertCoinToERC20(
 	return nil
 }
 
+// ConvertERC20ToCoin converts an ERC20 coin from the originating account to an
+// sdk.Coin to the receiver account.
+func (k Keeper) ConvertERC20ToCoin(
+	ctx sdk.Context,
+	initiator types.InternalEVMAddress,
+	receiver sdk.AccAddress,
+	contractAddr types.InternalEVMAddress,
+	amount sdk.Int,
+) error {
+	params := k.GetParams(ctx)
+	if !params.BridgeEnabled {
+		return types.ErrBridgeDisabled
+	}
+
+	// Check that the contract is enabled to convert to coin
+	pair, err := k.GetEnabledConversionPairFromERC20Address(ctx, contractAddr)
+	if err != nil {
+		// contract not in enabled conversion pair list
+		return err
+	}
+
+	// lock erc20 tokens
+	if err := k.LockERC20Tokens(ctx, pair, amount.BigInt(), initiator); err != nil {
+		return err
+	}
+
+	// mint conversion pair coin
+	coin, err := k.MintConversionPairCoin(ctx, pair, amount.BigInt(), receiver)
+	if err != nil {
+		return err
+	}
+
+	ctx.EventManager().EmitEvent(sdk.NewEvent(
+		types.EventTypeConvertERC20ToCoin,
+		sdk.NewAttribute(types.AttributeKeyERC20Address, contractAddr.String()),
+		sdk.NewAttribute(types.AttributeKeyInitiator, initiator.String()),
+		sdk.NewAttribute(types.AttributeKeyReceiver, receiver.String()),
+		sdk.NewAttribute(types.AttributeKeyAmount, coin.String()),
+	))
+
+	return nil
+}
+
 // BurnConversionPairCoin transfers the provided amount to the module account
 // then burns it.
 func (k Keeper) BurnConversionPairCoin(
@@ -105,6 +148,28 @@ func (k Keeper) UnlockERC20Tokens(
 		"transfer",                                 // method
 		// Transfer ERC20 args
 		receiver.Address,
+		amount,
+	)
+
+	return err
+}
+
+// LockERC20Tokens transfers the given amount of a conversion pair ERC20 token
+// from the initiator account to the module account.
+func (k Keeper) LockERC20Tokens(
+	ctx sdk.Context,
+	pair types.ConversionPair,
+	amount *big.Int,
+	initiator types.InternalEVMAddress,
+) error {
+	_, err := k.CallEVM(
+		ctx,
+		contract.ERC20MintableBurnableContract.ABI, // abi
+		initiator.Address,                          // from addr
+		pair.GetAddress(),                          // contract addr
+		"transfer",                                 // method
+		// Transfer ERC20 args
+		types.ModuleEVMAddress,
 		amount,
 	)
 

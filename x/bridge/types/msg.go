@@ -3,13 +3,16 @@ package types
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/cosmos/cosmos-sdk/x/auth/legacy/legacytx"
 	"github.com/ethereum/go-ethereum/common"
 )
 
 // ensure Msg interface compliance at compile time
 var (
-	_ sdk.Msg = &MsgBridgeEthereumToKava{}
-	_ sdk.Msg = &MsgConvertCoinToERC20{}
+	_ sdk.Msg            = &MsgBridgeEthereumToKava{}
+	_ sdk.Msg            = &MsgConvertCoinToERC20{}
+	_ sdk.Msg            = &MsgConvertERC20ToCoin{}
+	_ legacytx.LegacyMsg = &MsgConvertERC20ToCoin{}
 )
 
 // NewMsgBridgeEthereumToKava returns a new MsgBridgeEthereumToKava
@@ -112,4 +115,69 @@ func (msg MsgConvertCoinToERC20) ValidateBasic() error {
 
 	// Checks for negative
 	return msg.Amount.Validate()
+}
+
+// NewMsgConvertERC20ToCoin returns a new MsgConvertERC20ToCoin
+func NewMsgConvertERC20ToCoin(
+	initiator InternalEVMAddress,
+	receiver sdk.AccAddress,
+	contractAddr InternalEVMAddress,
+	amount sdk.Int,
+) MsgConvertERC20ToCoin {
+	return MsgConvertERC20ToCoin{
+		Initiator:        initiator.String(),
+		Receiver:         receiver.String(),
+		KavaERC20Address: contractAddr.String(),
+		Amount:           amount,
+	}
+}
+
+// GetSigners returns the addresses of signers that must sign.
+func (msg MsgConvertERC20ToCoin) GetSigners() []sdk.AccAddress {
+	addr := common.HexToAddress(msg.Initiator)
+	sender := sdk.AccAddress(addr.Bytes())
+	return []sdk.AccAddress{sender}
+}
+
+// ValidateBasic does a simple validation check that doesn't require access to any other information.
+func (msg MsgConvertERC20ToCoin) ValidateBasic() error {
+	if !common.IsHexAddress(msg.Initiator) {
+		return sdkerrors.Wrap(
+			sdkerrors.ErrInvalidAddress,
+			"initiator is not a valid hex address",
+		)
+	}
+
+	if !common.IsHexAddress(msg.KavaERC20Address) {
+		return sdkerrors.Wrap(
+			sdkerrors.ErrInvalidAddress,
+			"erc20 contract address is not a valid hex address",
+		)
+	}
+
+	_, err := sdk.AccAddressFromBech32(msg.Receiver)
+	if err != nil {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "receiver is not a valid bech32 address")
+	}
+
+	if msg.Amount.LTE(sdk.ZeroInt()) {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "amount cannot be zero or less")
+	}
+
+	return nil
+}
+
+// GetSignBytes implements the LegacyMsg.GetSignBytes method.
+func (msg MsgConvertERC20ToCoin) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&msg))
+}
+
+// Route implements the LegacyMsg.Route method.
+func (msg MsgConvertERC20ToCoin) Route() string {
+	return RouterKey
+}
+
+// Type implements the LegacyMsg.Type method.
+func (msg MsgConvertERC20ToCoin) Type() string {
+	return "bridge_convert_erc20_to_coin"
 }

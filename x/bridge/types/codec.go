@@ -12,11 +12,13 @@ import (
 // on the provided LegacyAmino codec. These types are used for Amino JSON serialization.
 func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&MsgBridgeEthereumToKava{}, "bridge/MsgBridgeEthereumToKava", nil)
+	cdc.RegisterConcrete(&MsgConvertERC20ToCoin{}, "bridge/MsgConvertERC20ToCoin", nil)
 }
 
 func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 	registry.RegisterImplementations((*sdk.Msg)(nil),
 		&MsgBridgeEthereumToKava{},
+		&MsgConvertERC20ToCoin{},
 	)
 
 	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)
