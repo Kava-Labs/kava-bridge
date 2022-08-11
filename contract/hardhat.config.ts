@@ -42,6 +42,8 @@ const config: HardhatUserConfig = {
         // kava keys unsafe-export-eth-key user --keyring-backend test
         "9549F115B0A21E5071A8AEC1B74AC093190E18DD83D019AC6497B0ADFBEFF26D",
       ],
+      gas: 2100000,
+      gasPrice: 8000000000,
     },
   },
   gasReporter: {
