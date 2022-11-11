@@ -45,5 +45,5 @@ export async function main(
   const mintTx = await erc20.mint(args.to, args.amount);
   await mintTx.wait();
 
-  console.log(`minted ${args.amount} tokens to ${args.to}`, mintTx);
+  console.log(`minted ${args.amount} tokens to ${args.to}`);
 }
