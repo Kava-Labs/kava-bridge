@@ -9,6 +9,9 @@ import "hardhat-gas-reporter";
 import "hardhat-watcher";
 import "solidity-coverage";
 
+import "./tasks/deployERC20";
+import "./tasks/mintERC20";
+
 dotenv.config();
 
 // This is a sample Hardhat task. To learn how to create your own go to
@@ -35,6 +38,12 @@ const config: HardhatUserConfig = {
     localhost: {
       url: "http://127.0.0.1:8555",
       accounts: "remote",
+    },
+    kava17000: {
+      url: "https://evm.app.internal.testnet-17000.us-east.production.kava.io:443",
+      accounts: [
+        // testnet user key
+      ],
     },
     kava: {
       url: "http://127.0.0.1:8545",
