@@ -45,6 +45,12 @@ const config: HardhatUserConfig = {
         // testnet user key
       ],
     },
+    demonet: {
+      url: "https://evm.data.demonet.us-east.production.kava.io:443",
+      accounts: [
+        "247069F0BC3A5914CB2FD41E4133BBDAA6DBED9F47A01B9F110B5602C6E4CDD9",
+      ],
+    },
     kava: {
       url: "http://127.0.0.1:8545",
       accounts: [
