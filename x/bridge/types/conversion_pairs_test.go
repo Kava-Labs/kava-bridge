@@ -148,6 +148,10 @@ func TestConversionPairs_Validate(t *testing.T) {
 					testutil.MustNewInternalEVMAddressFromString("0x000000000000000000000000000000000000000B"),
 					"usdc",
 				),
+				types.NewConversionPair(
+					testutil.MustNewInternalEVMAddressFromString("0x000000000000000000000000000000000000000C"),
+					"wbtc",
+				),
 			),
 			errArgs{
 				expectPass: true,
@@ -167,6 +171,10 @@ func TestConversionPairs_Validate(t *testing.T) {
 				types.NewConversionPair(
 					testutil.MustNewInternalEVMAddressFromString("0x000000000000000000000000000000000000000B"),
 					"usdc",
+				),
+				types.NewConversionPair(
+					testutil.MustNewInternalEVMAddressFromString("0x000000000000000000000000000000000000000C"),
+					"wbtc",
 				),
 			),
 			errArgs{
@@ -205,6 +213,10 @@ func TestConversionPairs_Validate(t *testing.T) {
 				types.NewConversionPair(
 					testutil.MustNewInternalEVMAddressFromString("0x0000000000000000000000000000000000000000"),
 					"usdc",
+				),
+				types.NewConversionPair(
+					testutil.MustNewInternalEVMAddressFromString("0x0000000000000000000000000000000000000001"),
+					"wbtc",
 				),
 				types.NewConversionPair(
 					testutil.MustNewInternalEVMAddressFromString("0x000000000000000000000000000000000000000B"),

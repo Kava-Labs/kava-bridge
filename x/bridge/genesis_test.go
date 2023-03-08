@@ -53,6 +53,13 @@ func (suite *genesisTestSuite) Test_InitGenesis_Validation() {
 							6,
 							testutil.MinUSDCWithdrawAmount,
 						),
+						types.NewEnabledERC20Token(
+							testutil.MustNewExternalEVMAddressFromString("foobar-wbtc"),
+							"Wrapped BTC",
+							"USDC",
+							8,
+							testutil.MinUSDCWithdrawAmount,
+						),
 					},
 					sdk.AccAddress("hi"),
 					types.NewConversionPairs(
@@ -308,7 +315,12 @@ func (suite *genesisTestSuite) Test_InitAndExportGenesis() {
 					testutil.MustNewInternalEVMAddressFromString("0x0000000000000000000000000000000000000001"),
 					"usdc",
 				),
+				types.NewConversionPair(
+					testutil.MustNewInternalEVMAddressFromString("0x0000000000000000000000000000000000000002"),
+					"wbtc",
+				),
 			),
+
 		),
 		types.NewERC20BridgePairs(
 			types.NewERC20BridgePair(
@@ -355,6 +367,10 @@ func (suite *genesisTestSuite) Test_Marshall() {
 				types.NewConversionPair(
 					testutil.MustNewInternalEVMAddressFromString("0x0000000000000000000000000000000000000001"),
 					"usdc",
+				),
+				types.NewConversionPair(
+					testutil.MustNewInternalEVMAddressFromString("0x0000000000000000000000000000000000000002"),
+					"wbtc",
 				),
 			),
 		),
@@ -409,6 +425,10 @@ func (suite *genesisTestSuite) Test_LegacyJSONConversion() {
 				types.NewConversionPair(
 					testutil.MustNewInternalEVMAddressFromString("0x0000000000000000000000000000000000000001"),
 					"usdc",
+				),
+				types.NewConversionPair(
+					testutil.MustNewInternalEVMAddressFromString("0x0000000000000000000000000000000000000002"),
+					"wbtc",
 				),
 			),
 		),

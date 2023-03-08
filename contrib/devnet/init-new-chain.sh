@@ -89,6 +89,13 @@ jq '.app_state.bridge.params.enabled_erc20_tokens = [
         symbol: "USDC",
         decimals: 6,
         minimum_withdraw_amount: "10000000"
+    },
+    {
+        address: "foobar-wbtc",
+        name: "WBTC",
+        symbol: "WBTC",
+        decimals: 8,
+        minimum_withdraw_amount: "1000000000"
     }]' $DATA/config/genesis.json | sponge $DATA/config/genesis.json
 
 # Set enabled conversion pairs - weth address is the first contract bridge module

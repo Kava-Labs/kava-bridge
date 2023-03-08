@@ -47,6 +47,9 @@ func (suite *ConversionHooksTestSuite) SetupTest() {
 	// Cannot be set in genesis since we need to deploy the erc20 contract and get internal addr
 	suite.conversionPair = types.NewConversionPair(bridgePair.GetInternalAddress(), "erc20/usdc")
 
+	// Cannot be set in genesis since we need to deploy the erc20 contract and get internal addr
+	suite.conversionPair = types.NewConversionPair(bridgePair.GetInternalAddress(), "erc20/wbtc")
+
 	// Create a bridge pair that is not enabled for conversion, does not need
 	// to be enabled as a bridge pair, just that it is deployed to EVM.
 	bridgePair2Addr, err := suite.App.BridgeKeeper.DeployMintableERC20Contract(

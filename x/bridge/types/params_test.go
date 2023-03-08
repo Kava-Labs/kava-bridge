@@ -289,6 +289,13 @@ func (suite *ParamsTestSuite) TestUnmarshalJSON() {
 			6,
 			testutil.MinUSDCWithdrawAmount,
 		),
+		types.NewEnabledERC20Token(
+			testutil.MustNewExternalEVMAddressFromString("foobar-wbtc"),
+			"Wrapped BTC",
+			"WBTC",
+			8,
+			testutil.MinUSDCWithdrawAmount,
+		),
 	)
 	enabledTokensJson, err := json.Marshal(enabledTokens)
 	suite.Require().NoError(err)
@@ -335,6 +342,13 @@ func (suite *ParamsTestSuite) TestMarshalYAML() {
 			6,
 			testutil.MinUSDCWithdrawAmount,
 		),
+		types.NewEnabledERC20Token(
+			testutil.MustNewExternalEVMAddressFromString("foobar-wbtc"),
+			"Wrapped BTC",
+			"WBTC",
+			8,
+			testutil.MinUSDCWithdrawAmount,
+		),
 	)
 
 	relayer, err := sdk.AccAddressFromBech32("kava1esagqd83rhqdtpy5sxhklaxgn58k2m3s3mnpea")
@@ -344,6 +358,10 @@ func (suite *ParamsTestSuite) TestMarshalYAML() {
 		types.NewConversionPair(
 			testutil.MustNewInternalEVMAddressFromString("0x0000000000000000000000000000000000000001"),
 			"usdc",
+		),
+		types.NewConversionPair(
+			testutil.MustNewInternalEVMAddressFromString("0x0000000000000000000000000000000000000002"),
+			"wbtc",
 		),
 	)
 

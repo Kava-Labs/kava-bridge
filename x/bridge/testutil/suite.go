@@ -48,6 +48,7 @@ var (
 	MinWETHWithdrawAmount  = sdk.NewInt(10_000_000_000_000_000)
 	MinWKavaWithdrawAmount = sdk.NewInt(2_000_000)
 	MinUSDCWithdrawAmount  = sdk.NewInt(10_000_000)
+	MinWBTCWithdrawAmount  = sdk.NewInt(1_000_000_000)
 )
 
 type Suite struct {
@@ -133,6 +134,13 @@ func (suite *Suite) SetupTest() {
 					6,
 					MinUSDCWithdrawAmount,
 				),
+				types.NewEnabledERC20Token(
+					MustNewExternalEVMAddressFromString("foobar-wbtc"),
+					"Wrapped BTC",
+					"WBTC",
+					8,
+					MinWBTCWithdrawAmount,
+				),
 			},
 			suite.RelayerAddress,
 			types.NewConversionPairs(
@@ -140,6 +148,10 @@ func (suite *Suite) SetupTest() {
 					// First contract bridge module deploys
 					MustNewInternalEVMAddressFromString("0x404F9466d758eA33eA84CeBE9E444b06533b369e"),
 					"erc20/usdc",
+				),
+				types.NewConversionPair(
+					MustNewInternalEVMAddressFromString("foobar-wbtc"),
+					"erc20/wbtc",
 				),
 			),
 		),

@@ -8,8 +8,8 @@ convert between ERC20 tokens on Kava EVM and Kava Cosmos `sdk.Coin`.
 
 This allows the following:
 
-* Transfer between Ethereum ERC20 <-> Kava EVM ERC20. E.g. transferring WETH or
-  USDC to Kava EVM.
+* Transfer between Ethereum ERC20 <-> Kava EVM ERC20. E.g. transferring WETH,
+  USDC, or WBTC to Kava EVM.
 * Conversion between Kava EVM ERC20 <-> Kava Cosmos `sdk.Coin`. E.g. converting
   ERC20 WETH on Kava EVM to Cosmos `sdk.Coin` to be able to use WETH in native
   Kava DeFi modules such as Mint, Lend, Swap, etc.

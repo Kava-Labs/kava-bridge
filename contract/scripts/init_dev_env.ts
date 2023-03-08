@@ -67,6 +67,22 @@ export async function main(): Promise<void> {
     erc20USDC.address
   );
 
+  const wbtcAmounts = new Map<string, BigNumberish>([
+    [signer.address, 100_000_000_000n],
+    [userAddr, 100_000_000_000n],
+  ]);
+  const erc20WBTC = await deployERC20WithAmounts(
+    "Wrapped BTC",
+    "WBTC",
+    8,
+    wbtcAmounts
+  );
+  console.log(
+    "ERC20 deployed:\n\tName:\t%s\n\tAddress: %s",
+    await erc20WBTC.name(),
+    erc20WBTC.address
+  );
+
   const multicall = await deployMulticall();
   console.log("Multicall deployed:\n\tAddress: %s", multicall.address);
 
