@@ -21,6 +21,14 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.ERC20__factory>;
     getContractFactory(
+      name: "IERC20Permit",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.IERC20Permit__factory>;
+    getContractFactory(
+      name: "ERC20Burnable",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.ERC20Burnable__factory>;
+    getContractFactory(
       name: "IERC20Metadata",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IERC20Metadata__factory>;
@@ -32,6 +40,10 @@ declare module "hardhat/types/runtime" {
       name: "Bridge",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.Bridge__factory>;
+    getContractFactory(
+      name: "ERC20KavaWrappedNativeCoin",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.ERC20KavaWrappedNativeCoin__factory>;
     getContractFactory(
       name: "ERC20MintableBurnable",
       signerOrOptions?: ethers.Signer | FactoryOptions
@@ -92,6 +104,16 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.ERC20>;
     getContractAt(
+      name: "IERC20Permit",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.IERC20Permit>;
+    getContractAt(
+      name: "ERC20Burnable",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.ERC20Burnable>;
+    getContractAt(
       name: "IERC20Metadata",
       address: string,
       signer?: ethers.Signer
@@ -106,6 +128,11 @@ declare module "hardhat/types/runtime" {
       address: string,
       signer?: ethers.Signer
     ): Promise<Contracts.Bridge>;
+    getContractAt(
+      name: "ERC20KavaWrappedNativeCoin",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.ERC20KavaWrappedNativeCoin>;
     getContractAt(
       name: "ERC20MintableBurnable",
       address: string,

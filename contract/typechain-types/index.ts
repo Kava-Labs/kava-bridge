@@ -3,9 +3,12 @@
 /* eslint-disable */
 export type { Ownable } from "./Ownable";
 export type { ERC20 } from "./ERC20";
+export type { IERC20Permit } from "./IERC20Permit";
+export type { ERC20Burnable } from "./ERC20Burnable";
 export type { IERC20Metadata } from "./IERC20Metadata";
 export type { IERC20 } from "./IERC20";
 export type { Bridge } from "./Bridge";
+export type { ERC20KavaWrappedNativeCoin } from "./ERC20KavaWrappedNativeCoin";
 export type { ERC20MintableBurnable } from "./ERC20MintableBurnable";
 export type { ERC20EvilMock } from "./ERC20EvilMock";
 export type { ERC20Mock } from "./ERC20Mock";
@@ -21,9 +24,12 @@ export type { WKAVA } from "./WKAVA";
 
 export { Ownable__factory } from "./factories/Ownable__factory";
 export { ERC20__factory } from "./factories/ERC20__factory";
+export { IERC20Permit__factory } from "./factories/IERC20Permit__factory";
+export { ERC20Burnable__factory } from "./factories/ERC20Burnable__factory";
 export { IERC20Metadata__factory } from "./factories/IERC20Metadata__factory";
 export { IERC20__factory } from "./factories/IERC20__factory";
 export { Bridge__factory } from "./factories/Bridge__factory";
+export { ERC20KavaWrappedNativeCoin__factory } from "./factories/ERC20KavaWrappedNativeCoin__factory";
 export { ERC20MintableBurnable__factory } from "./factories/ERC20MintableBurnable__factory";
 export { ERC20EvilMock__factory } from "./factories/ERC20EvilMock__factory";
 export { ERC20Mock__factory } from "./factories/ERC20Mock__factory";

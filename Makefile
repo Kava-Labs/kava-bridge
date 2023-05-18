@@ -75,7 +75,7 @@ watch-integration: ## Run integration tests on file changes
 clean: ## Clean up build and temporary files
 	rm c.out coverage.html
 
-GETH_VERSION := v1.10.17
+GETH_VERSION := v1.10.26
 
 .PHONY: install-devtools
 install-devtools: ## Install solc and abigen used by compile-contracts
@@ -89,7 +89,7 @@ SOLC ?= npx solc
 ABIGEN ?= abigen
 
 .PHONY: compile-contracts
-compile-contracts: contract/ethermint_json/ERC20MintableBurnable.json relayer/bridge.go relayer/erc20.go ## Compiles contracts and creates ethermint compatible json
+compile-contracts: contract/ethermint_json/ERC20MintableBurnable.json contract/ethermint_json/ERC20KavaWrappedNativeCoin.json relayer/bridge.go relayer/erc20.go ## Compiles contracts and creates ethermint compatible json
 
 contract/artifacts/contracts/ERC20MintableBurnable.sol/ERC20MintableBurnable.json: contract/contracts/ERC20MintableBurnable.sol
 	cd contract && $(NPM) run compile
@@ -98,6 +98,13 @@ contract/artifacts/contracts/ERC20MintableBurnable.sol/ERC20MintableBurnable.jso
 # converts the abi field to a stringified array, renames bytecode field name to
 # bin with the leading `0x` trimmed.
 contract/ethermint_json/ERC20MintableBurnable.json: contract/artifacts/contracts/ERC20MintableBurnable.sol/ERC20MintableBurnable.json
+	mkdir -p contract/ethermint_json
+	$(JQ) '.abi = (.abi | tostring) | {abi, bin: .bytecode[2:] }' < $< > $@
+
+contract/artifacts/contracts/ERC20KavaWrappedNativeCoin.sol/ERC20KavaWrappedNativeCoin.json: contract/contracts/ERC20KavaWrappedNativeCoin.sol
+	cd contract && $(NPM) run compile
+
+contract/ethermint_json/ERC20KavaWrappedNativeCoin.json: contract/artifacts/contracts/ERC20KavaWrappedNativeCoin.sol/ERC20KavaWrappedNativeCoin.json
 	mkdir -p contract/ethermint_json
 	$(JQ) '.abi = (.abi | tostring) | {abi, bin: .bytecode[2:] }' < $< > $@
 
