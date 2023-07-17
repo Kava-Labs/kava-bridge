@@ -52,13 +52,13 @@ const config: HardhatUserConfig = {
       ],
     },
     protonet: {
-        url: "https://evm.app.protonet.us-east.production.kava.io:443",
-        accounts: [
-          "247069F0BC3A5914CB2FD41E4133BBDAA6DBED9F47A01B9F110B5602C6E4CDD9",
-        ],
+      url: "https://evm.app.protonet.us-east.production.kava.io:443",
+      accounts: [
+        "247069F0BC3A5914CB2FD41E4133BBDAA6DBED9F47A01B9F110B5602C6E4CDD9",
+      ],
     },
     internal_testnet: {
-      url: "https://evm.data.internal.testnet.us-east.production.kava.io:443",
+      url: "https://evm.app.internal.testnet.us-east.production.kava.io:443",
       accounts: [
         "247069F0BC3A5914CB2FD41E4133BBDAA6DBED9F47A01B9F110B5602C6E4CDD9",
       ],
