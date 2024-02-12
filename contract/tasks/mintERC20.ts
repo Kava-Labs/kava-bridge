@@ -42,8 +42,12 @@ export async function main(
 
   const erc20 = erc20Factory.attach(args.contractAddress);
 
-  const mintTx = await erc20.mint(args.to, args.amount);
+  const mintTx = await erc20.mint(args.to, args.amount, {
+    gasLimit: 100000,
+  });
   await mintTx.wait();
 
-  console.log(`minted ${args.amount} tokens to ${args.to}`);
+  console.log(
+    `minted ${args.amount} tokens to ${args.to} (txhash=${mintTx.hash})`
+  );
 }
