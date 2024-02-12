@@ -53,7 +53,11 @@ export async function deployErc20(
   const erc20Factory = await hre.ethers.getContractFactory(
     "ERC20MintableBurnable"
   );
-  const erc20 = await erc20Factory.deploy(name, symbol, decimals);
+  const erc20 = await erc20Factory.deploy(name, symbol, decimals, {
+    // increase estimated gas to prevent some finnicky CI failures
+    // estimated gas is ~200k
+    gasLimit: 2000000,
+  });
 
   await erc20.deployed();
 
